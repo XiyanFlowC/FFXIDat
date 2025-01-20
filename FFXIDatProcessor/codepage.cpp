@@ -71,10 +71,9 @@ std::wstring CodeCvt::CvtToWString(const std::string &str)
 			auto wc = cp2uc[(current | (ch & 0xFF)) & 0xFFFF];
 			if (wc == 0)
 			{
-				//sb.Append(U'�');
+				sb.Append(U'�');
 
-				// FIXME: 不应这样处理，解决GameStringCodec后立刻改回
-				sb.Append(U"\\x");
+				/*sb.Append(U"\\x");
 				int cb = (current >> 8);
 				cb &= 0xFF;
 				if (cb < 16)
@@ -85,7 +84,7 @@ std::wstring CodeCvt::CvtToWString(const std::string &str)
 				cb &= 0xFF;
 				if (cb < 16)
 					sb.Append('0');
-				sb.Append(xybase::string::itos<char32_t>(cb, 16).c_str());
+				sb.Append(xybase::string::itos<char32_t>(cb, 16).c_str());*/
 			}
 			else
 				sb.Append(wc);

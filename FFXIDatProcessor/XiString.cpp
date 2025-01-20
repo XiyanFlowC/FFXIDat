@@ -189,19 +189,33 @@ std::string XiString::Decode(const std::string &in)
 	return sb.ToString();
 }
 
+// UNDONE: 很可能是错的，但\x01的概念无法分析
+// 很可能是类似XIV的机制，但是没有直接定义的长度标志。
+// 等待样本分析
 struct XiStringControlSequenceStepDefinition {
 	char code[4];
 	char name[12];
 	int step;
 } xiStringControlSequenceStepDefinitions[] = {
-	{"\x83\x01", "", 4},
-	{"\x84\x02", "", 0},
-	{"\x84\x05", "", 0},
-	{"\x89\x0A", "", 0},
-	{"\x89\x06", "", 0},
-	{"\x8B\x01", "", 1},
-	{"\x8C\x03", "", 2},
-	{"\x8E\x01", "", 6},
+	// 80 ???
+	{"\x81\x85", "", 2 + 3},
+	{"\x82\x01", "", 2 + 11}, // if?
+	{"\x83\x01", "", 2 + 4},
+	{"\x84\x02", "", 2 + 0},
+	{"\x84\x05", "", 2 + 0},
+	{"\x84\x0A", "", 2 + 0},
+	{"\x84\x10", "", 2 + 0},
+	{"\x85\x11", "", 2 + 0},
+	{"\x85\x1D", "", 2 + 0},
+	{"\x85\x2A", "", 2 + 0},
+	{"\x86\x08", "", 2 + 0},
+	{"\x86\x0D", "", 2 + 0},
+	{"\x89\x0A", "", 2 + 0},
+	{"\x89\x06", "", 2 + 0},
+	{"\x8B\x01", "", 2 + 1},
+	{"\x8C\x03", "", 2 + 2},
+	// 8D sep?
+	{"\x8E\x01", "", 2 + 6},
 	{"", "", -1}
 };
 
@@ -210,17 +224,43 @@ int XiString::GetStep(const char *p)
 	if (p[0] != 0xFA || p[1] != 0x40) return 0;
 	p += 2;
 
+	if (p[0] == 0x8D)
+	{
+		return 1;
+	}
+
 	auto *d = xiStringControlSequenceStepDefinitions;
 	while (d->step != -1)
 	{
 		if (d->code[0] == p[0] && d->code[1] == p[1])
 		{
-			return 2/*start marker*/ + 2 /*ctrl char*/ + d->step/*step*/;
+			return 2/*start marker*/ + d->step/*step*/;
 		}
 
 		++d;
 	}
 
+	switch (p[0])
+	{
+	case 0x81:
+		return 5;
+	case 0x82:
+		return 13;
+	case 0x83:
+		return 6;
+	case 0x84:
+	case 0x85:
+	case 0x86:
+	case 0x89:
+		return 2;
+	case 0x8B:
+		return 3;
+	case 0x8C:
+		return 4;
+	case 0x8E:
+		return 8;
+	}
+
 	printf("%02X%02X\n", p[0], p[1]);
-	throw std::runtime_error("uknown ctrl char.");
+	throw std::runtime_error("unknown ctrl char.");
 }

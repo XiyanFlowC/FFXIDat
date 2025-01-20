@@ -2,6 +2,8 @@
 
 #include "xystring.h"
 #include <stdio.h>
+#include <cassert>
+#include <stdexcept>
 
 const EventStringControlSeqDef *EventStringCodecUtil::CheckControl(const char *start)
 {
@@ -30,6 +32,45 @@ EventStringCodecUtil::EventStringCodecUtil()
 std::string EventStringCodecUtil::Encode(const std::string &in)
 {
 	// NOTE: 需要直接对string 写入，字符串内存在0值！！！
+	std::string ret;
+
+	std::string_view str(in);
+
+	for (size_t i = 0; i < in.size(); ++i)
+	{
+		// 控制序列处理
+		if (str[i] == '<')
+		{
+			size_t end = str.find('>', i);
+
+			if (end == std::string::npos)
+				throw std::invalid_argument("ctrl tag no end");
+
+			std::string_view tag = str.substr(i + 1, end - i - 1);
+
+			// Name parse
+			auto ps = tag.find(':');
+			auto name = tag.substr(0, ps);
+			auto def = encDist[std::string(name)];
+			ret += def->code[0];
+			while (ps != std::string_view::npos)
+			{
+				// para parse
+				auto pe = tag.find(':', ps + 1);
+				auto p = tag.substr(ps + 1, pe - ps - 1);
+				int v = xybase::string::stoi(p);
+				ret += v & 0xFF;
+				ps = pe;
+			}
+
+			i = end;
+		}
+		else
+		{
+			ret += in[i];
+		}
+	}
+
 	return std::string();
 }
 
@@ -67,7 +108,22 @@ std::string EventStringCodecUtil::Decode(const char *in)
 				for (int i = 0; i < def->parameterCount; ++i)
 				{
 					sb += ":";
-					sb += xybase::string::itos(*p++ & 0xFF);
+					int v = (*p++ & 0xFF);
+					if (v != 130)
+					{
+						sb += xybase::string::itos(v);
+					}
+					else
+					{
+						// 似然？
+						sb += xybase::string::itos(v);
+						sb += ":";
+						sb += xybase::string::itos(*p++ & 0xFF);
+						sb += ":";
+						sb += xybase::string::itos(*p++ & 0xFF);
+						sb += ":";
+						sb += xybase::string::itos(*p++ & 0xFF);
+					}
 					//sb += ">";
 				}
 			}

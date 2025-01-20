@@ -23,6 +23,7 @@ public:
 
 };
 
+// FIXME: 重写此结构体，code不需要是数组，step不需要
 static const struct EventStringControlSeqDef {
 		const char    name[16];
 		const int     parameterCount;
@@ -32,16 +33,17 @@ static const struct EventStringControlSeqDef {
 	{"span", 1, "\x01", 1}, // 不确定，似乎是高亮一部分文字？
 	{"05", 1, "\x05", 1},
 	{"lf", 0, "\x07", 1},
-	{"08", 0, "\x08", 1},
+	{"name", 0, "\x08", 1}, // 登入角色的名字，自己的名字
 	{"num", 1, "\x0A", 1}, // 插入一个变量
 	{"sel", 0, "\x0B", 1}, // 选项文本开始标记
 	{"switch", 1, "\x0C", 1}, // \x0C\xXX[xxx/xxx/xxx]
 	{"faith", 1, "\x11", 1}, // 亲信名？魔法名？普通字符串？
-	{"item", 4, "\x13", 1}, // 道具名？材料名？
-	{"key", 4, "\x16", 1}, // 重要物品名
+	{"item", 1, "\x13", 1}, // 道具名？材料名？
+	{"key", 1, "\x16", 1}, // 重要物品名
 	{"time", 1, "\x18", 1},
-	{"weather", 4, "\x1A", 1}, // 天气名
-	{"pc", 1, "\x1C", 1}, // 一个角色名，自身？
+	{"weather", 1, "\x1A", 1}, // 天气名
+	{"str", 1, "\x1C", 1}, // 一个任意的字符串？
+	{"wanted", 1, "\x1E", 1}, // Unity 通缉令目标？
 	{"color", 1, "\x1F", 1}, // 似乎用于设置样式？颜色？
 	{"7F", 1, "\x7F", 1},
 	{"A1", 0, "\xA1", 1},

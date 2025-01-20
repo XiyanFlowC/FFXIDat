@@ -3,16 +3,25 @@
 A tool to extract and rebuild DAT files used in FFXI. Or at least I hope this tool can do so in the future.
 
 ## Features
-Scan and export all known DAT file.
+- Ability to scan and export all known DAT files.
+	- Event String Data
+	- ```XISTRING``` files (system messages.)
+	- ```d_msg``` files (system messages, menu texts.)
+- Ability to rebuild xistring and d_msg files.
 
-### Known Formats
+### Future Work
+- Ability to extract/rebuild ```menu``` files. Item data is saved in these files, need analysis to extract them.
+- Find out where the battle info stores
+- Implement operation of font file (probably not)
+- extract/rebuild menu images to modify the UI? (someone might already done this, find some info before start...)
+
+### Known DAT Formats
 Currently only pure text files can be processed.
 
-- [ ] XISTRING file (magic header: ```XISTRING```)
+- [x] XISTRING file (magic header: ```XISTRING```)
 	- [x] Export
-	- [ ] String Decode
-	- [ ] String Encode
-	- [ ] Import
+	- [ ] String Control Sequence Parse
+	- [x] Import
 - [x] DMsg file (magic header: ```d_msg```)
 	- [x] Export
 	- [x] Import

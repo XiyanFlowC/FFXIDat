@@ -316,9 +316,9 @@ namespace xybase
 		 * @return Parsed integer.
 		*/
 		template<typename T = char>
-		unsigned long long stoi(const std::basic_string<T> &str, int base = 10)
+		unsigned long long stoi(const std::basic_string_view<T> str, int base = 10)
 		{
-			const T *ptr = str.c_str();
+			const T *ptr = str.data();
 			const T *end = ptr + str.length();
 			unsigned long long ret = 0;
 
@@ -339,6 +339,12 @@ namespace xybase
 				else break;
 			}
 			return ret;
+		}
+
+		template<typename T = char>
+		unsigned long long stoi(const std::basic_string<T> str, int base = 10)
+		{
+			return stoi<T>(std::basic_string_view<T>(str));
 		}
 
 		/**
