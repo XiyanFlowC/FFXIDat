@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\xybase">
+      <UniqueIdentifier>{ce8584fc-f82b-4852-ac99-0b7b627367bc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\xybase">
+      <UniqueIdentifier>{827b23e2-c814-4515-99af-75af0f299b40}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DMsg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CsvFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DataManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Exception\Exception.cpp">
+      <Filter>源文件\xybase</Filter>
+    </ClCompile>
+    <ClCompile Include="Exception\InvalidOperationException.cpp">
+      <Filter>源文件\xybase</Filter>
+    </ClCompile>
+    <ClCompile Include="Exception\InvalidParameterException.cpp">
+      <Filter>源文件\xybase</Filter>
+    </ClCompile>
+    <ClCompile Include="Exception\IOException.cpp">
+      <Filter>源文件\xybase</Filter>
+    </ClCompile>
+    <ClCompile Include="Exception\NotImplementedException.cpp">
+      <Filter>源文件\xybase</Filter>
+    </ClCompile>
+    <ClCompile Include="Exception\OutOfRangeException.cpp">
+      <Filter>源文件\xybase</Filter>
+    </ClCompile>
+    <ClCompile Include="Exception\RuntimeException.cpp">
+      <Filter>源文件\xybase</Filter>
+    </ClCompile>
+    <ClCompile Include="xystring.cpp">
+      <Filter>源文件\xybase</Filter>
+    </ClCompile>
+    <ClCompile Include="xyutils.cpp">
+      <Filter>源文件\xybase</Filter>
+    </ClCompile>
+    <ClCompile Include="codepage.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="FFXIDatProcessor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="XiString.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GameString.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="EventStringBase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DMsg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CsvFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DataManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="FFXIDatProcessor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="xyutils.h">
+      <Filter>头文件\xybase</Filter>
+    </ClInclude>
+    <ClInclude Include="xystring.h">
+      <Filter>头文件\xybase</Filter>
+    </ClInclude>
+    <ClInclude Include="xyapi.h">
+      <Filter>头文件\xybase</Filter>
+    </ClInclude>
+    <ClInclude Include="StringBuilder.h">
+      <Filter>头文件\xybase</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception\RuntimeException.h">
+      <Filter>头文件\xybase</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception\OutOfRangeException.h">
+      <Filter>头文件\xybase</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception\NotImplementedException.h">
+      <Filter>头文件\xybase</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception\IOException.h">
+      <Filter>头文件\xybase</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception\InvalidParameterException.h">
+      <Filter>头文件\xybase</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception\InvalidOperationException.h">
+      <Filter>头文件\xybase</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception\Exception.h">
+      <Filter>头文件\xybase</Filter>
+    </ClInclude>
+    <ClInclude Include="liteopt.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="codepage.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="XiString.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GameString.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EventStringBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
