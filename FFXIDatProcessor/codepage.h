@@ -17,7 +17,7 @@ public:
 
 	std::wstring CvtToWString(const std::string &str);
 
-	void Init(const char *cp);
+	void Init(const char *path);
 };
 
 std::string cvt_to_string(const std::wstring &str);

@@ -17,6 +17,11 @@
 
 #include "EventStringBase.h"
 
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#undef GetMessage
+void CsvToEventStringData(const char *src, const char *out);
+
 int cfg_block = 0, cfg_xor = 0;
 
 int help(const char *para)
@@ -75,14 +80,20 @@ int main(int argc, const char **argv)
     // setlocale(LC_ALL, "ja_JP");
     setlocale(LC_ALL, "");
 
-    std::ifstream cp("cp932.bin", std::ios::in | std::ios::binary);
-    cp.seekg(0, std::ios::end);
-    int size = cp.tellg();
-    cp.seekg(0);
-    char *buffer = new char[size];
-    cp.read(buffer, size);
-    CodeCvt::GetInstance().Init(buffer);
-    delete[] buffer;
+    try
+    {
+        wchar_t module_path[MAX_PATH];
+        GetModuleFileNameW(NULL, module_path, MAX_PATH);
+        std::filesystem::path exePath = module_path;
+        exePath = exePath.replace_filename("cp932.csv");
+        CodeCvt::GetInstance().Init(exePath.string().c_str());
+    }
+    catch (std::exception &ex)
+    {
+        std::wcerr << ex.what() << std::endl;
+        std::wcerr << L"处理代码页cp932.csv失败了。" << std::endl;
+        return -2;
+    }
 
     lopt_regopt("do-xor", 'x', 0, [](const char *str)->int {cfg_xor = 1; return 0; }, L"要求DMsg进行Xor保护。");
     lopt_regopt("block", 'b', 0, [](const char *str)->int {cfg_block = 1; return 0; }, L"要求DMsg以块形式保存。。");
@@ -125,7 +136,7 @@ int main(int argc, const char **argv)
 
     if (argv[1][0] != '-')
     {
-        // TODO：智能多文件处理
+        // 智能多文件处理
         for (int i = 1; i < argc; ++i)
         {
             std::string path(argv[i]);
@@ -137,11 +148,17 @@ int main(int argc, const char **argv)
             {
                 CsvToXiString(argv[i], path.substr(0, path.size() - 8).c_str());
             }
+            if (path.ends_with(".evsb.csv"))
+            {
+                CsvToEventStringData(argv[i], path.substr(0, path.size() - 9).c_str());
+            }
             if (path.ends_with(".DAT"))
             {
                 static char m[8];
                 std::ifstream eye(path, std::ios::binary);
+                auto size = std::filesystem::file_size(path);
                 eye.read(m, 8);
+                int flag = *((int32_t *)m);
 
                 if (strcmp(m, "d_msg") == 0)
                 {
@@ -169,6 +186,23 @@ int main(int argc, const char **argv)
                     catch (std::exception &ex)
                     {
                         std::wcout << "Failed: " << ex.what() << std::endl;
+                    }
+                }
+                else if ((flag & 0xFF000000) == 0x10000000)
+                {
+                    if ((flag & 0xFFFFFF) == size - 4)
+                    {
+                        std::wcout << "evsb p=" << path.c_str() << std::endl;
+                        try
+                        {
+                            EventStringBase esb(path);
+                            esb.Read();
+                            esb.ToCsv(path + ".evsb.csv");
+                        }
+                        catch (std::exception &ex)
+                        {
+                            std::wcout << "Failed: " << ex.what() << std::endl;
+                        }
                     }
                 }
             }
@@ -227,6 +261,29 @@ void CsvToDMsg(const char *src, const char *out)
         f.FromCsv(csvPath);
         f.mode = cfg_block ? DMsg::Mode::Block : DMsg::Mode::Variable;
         f.obs = cfg_xor == 1;
+        f.Write();
+    }
+    catch (xybase::RuntimeException &ex)
+    {
+        std::wcerr << L"发生异常：" << ex.GetMessage() << std::endl;
+    }
+    catch (std::exception &ex) {
+        std::wcerr << L"发生错误：" << ex.what() << std::endl;
+    }
+}
+
+void CsvToEventStringData(const char *src, const char *out)
+{
+    std::string csvPath = src;
+    if (!csvPath.ends_with(".csv"))
+    {
+        std::wcerr << L"指定的文件不是CSV。" << std::endl;
+        return;
+    }
+    std::string datPath = csvPath;
+    EventStringBase f(out ? out : datPath.replace(datPath.find(".csv"), 4, ".DAT"));
+    try {
+        f.FromCsv(csvPath);
         f.Write();
     }
     catch (xybase::RuntimeException &ex)

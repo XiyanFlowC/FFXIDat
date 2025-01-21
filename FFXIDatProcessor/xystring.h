@@ -344,7 +344,7 @@ namespace xybase
 		template<typename T = char>
 		unsigned long long stoi(const std::basic_string<T> str, int base = 10)
 		{
-			return stoi<T>(std::basic_string_view<T>(str));
+			return stoi<T>(std::basic_string_view<T>(str), base);
 		}
 
 		/**

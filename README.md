@@ -25,11 +25,10 @@ Currently only pure text files can be processed.
 - [x] DMsg file (magic header: ```d_msg```)
 	- [x] Export
 	- [x] Import
-- [ ] String Data for Events (per area, e.g. ROM/22/17.DAT)
+- [x] String Data for Events (per area, e.g. ROM/22/17.DAT)
 	- [x] Export
-	- [ ] String Decode (In Progress)
-	- [ ] String Encode
-	- [ ] Import
+	- [ ] String Control Sequence Analysis (In Progress)
+	- [x] Import
 
 #### DMsg file
 ```DMsg.cpp``` ```DMsg.h```.

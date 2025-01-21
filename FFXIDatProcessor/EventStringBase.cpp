@@ -19,7 +19,8 @@ void EventStringBase::Read()
 	Xor(buf.get(), header.size);
 
 	int32_t *cur = (int32_t *)buf.get();
-	while (*cur < header.size)
+	ptrdiff_t limit = *cur;
+	while ((intptr_t)cur - (intptr_t)buf.get() < limit)
 	{
 		strs.push_back(xybase::string::to_utf8(EventStringCodecUtil::Instance().Decode(buf.get() + *cur)));
 		++cur;
@@ -38,10 +39,16 @@ void EventStringBase::Write()
 		encodedString.push_back(cs);
 		*p++ = offset;
 
-		offset += cs.size() + 1;
+		offset += cs.size();
+	}
+	bool endProtect = false;
+	if ((strs.end() - 1)->ends_with(u8"<->"))
+	{
+		endProtect = true;
+		offset += 1;
 	}
 
-	int32_t header = offset + 4;
+	int32_t header = offset;
 	header |= 0x10000000;
 	std::ofstream pen(path, std::ios::out | std::ios::binary);
 	pen.write((char *) & header, 4);
@@ -53,8 +60,10 @@ void EventStringBase::Write()
 		{
 			pen.put(c ^ 0x80);
 		}
-		pen.put(0x80); // NUL terminator
+		// pen.put(0x80); // NUL terminator
 	}
+	if (endProtect)
+		pen.put(0x80);
 }
 
 #include "CsvFile.h"

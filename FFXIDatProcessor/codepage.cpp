@@ -71,9 +71,10 @@ std::wstring CodeCvt::CvtToWString(const std::string &str)
 			auto wc = cp2uc[(current | (ch & 0xFF)) & 0xFFFF];
 			if (wc == 0)
 			{
+#ifdef NDEBUG
 				sb.Append(U'�');
-
-				/*sb.Append(U"\\x");
+#else
+				sb.Append(U"\\x");
 				int cb = (current >> 8);
 				cb &= 0xFF;
 				if (cb < 16)
@@ -84,7 +85,8 @@ std::wstring CodeCvt::CvtToWString(const std::string &str)
 				cb &= 0xFF;
 				if (cb < 16)
 					sb.Append('0');
-				sb.Append(xybase::string::itos<char32_t>(cb, 16).c_str());*/
+				sb.Append(xybase::string::itos<char32_t>(cb, 16).c_str());
+#endif
 			}
 			else
 				sb.Append(wc);
@@ -111,20 +113,25 @@ std::wstring CodeCvt::CvtToWString(const std::string &str)
 	return xybase::string::to_wstring(sb.ToString());
 }
 
-void CodeCvt::Init(const char *cp)
+#include "CsvFile.h"
+
+void CodeCvt::Init(const char *path)
 {
 	uc2cp.clear();
 	cp2uc.clear();
-	uint64_t count = *((uint64_t *)cp);
-	if (count & 3) abort();
-	count >>= 3;
-	CodePageEntry *cpe = (CodePageEntry *)(cp + sizeof(uint64_t));
-	for (uint64_t i = 0; i < count; ++i)
+
+	CsvFile csv(path, std::ios::in | std::ios::binary);
+	while (!csv.IsEof())
 	{
-		if (!uc2cp.contains(cpe[i].wc))
-			uc2cp[cpe[i].wc] = cpe[i].dbc;
-		if (!cp2uc.contains(cpe[i].dbc))
-			cp2uc[cpe[i].dbc] = cpe[i].wc;
+		uint32_t cp = xybase::string::stoi(csv.NextCell(), 16);
+		uint32_t uc = xybase::string::to_codepoint(csv.NextCell());
+
+		if (!uc2cp.contains(uc))
+			uc2cp[uc] = cp;
+		if (!cp2uc.contains(cp))
+			cp2uc[cp] = uc;
+
+		csv.NextLine();
 	}
 
 	xybase::string::set_string_cvt(cvt_to_wstring, cvt_to_string);
