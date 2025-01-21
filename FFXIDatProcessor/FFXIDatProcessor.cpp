@@ -80,6 +80,8 @@ int main(int argc, const char **argv)
     // setlocale(LC_ALL, "ja_JP");
     setlocale(LC_ALL, "");
 
+    PathUtil::Init();
+
     try
     {
         wchar_t module_path[MAX_PATH];
@@ -124,7 +126,7 @@ int main(int argc, const char **argv)
         }, L"转换一个XiString文件到CSV。");
     lopt_regopt("csv-to-xis", 'S', LOPT_FLG_VAL_NEED, [](const char *str) -> int {CsvToXiString(str); return 0; }, L"转换一个CSV文件到XiString。");
     lopt_regopt("install-path", 'I', LOPT_FLG_VAL_NEED, [](const char *str) -> int {
-        DataManager::gameRootPath = str;
+        PathUtil::gameRootPath = xybase::string::sys_mbs_to_wcs(str);
         return 0;
         }, L"指定游戏安装目录。应为第一个开关。");
     lopt_regopt("scan-extract", 'X', 0, [](const char *str)-> int {
@@ -327,7 +329,7 @@ void ExtractSysText()
         {
             for (int n = 0; n < 128; ++n)
             {
-                std::filesystem::path p = DataManager::GetPath(rom, c, n);
+                std::filesystem::path p = PathUtil::GetPath(rom, c, n);
                 if (std::filesystem::exists(p))
                 {
                     auto size = std::filesystem::file_size(p);
@@ -343,7 +345,7 @@ void ExtractSysText()
                             {
                                 EventStringBase esb(p);
                                 esb.Read();
-                                esb.ToCsv(DataManager::GetOutPathConf(rom, c, n) + ".evsb.csv");
+                                esb.ToCsv(PathUtil::GetOutPathConf(rom, c, n) + L".evsb.csv");
                             }
                             catch (std::exception &ex)
                             {
@@ -360,7 +362,7 @@ void ExtractSysText()
         {
             for (int n = 0; n < 128; ++n)
             {
-                std::filesystem::path p = DataManager::GetPath(rom, c, n);
+                std::filesystem::path p = PathUtil::GetPath(rom, c, n);
                 if (std::filesystem::exists(p))
                 {
                     static char m[8];
@@ -374,7 +376,7 @@ void ExtractSysText()
                         {
                             DMsg f(p);
                             f.Read();
-                            f.ToCsv(DataManager::GetOutPathConf(rom, c, n) + ".dmsg.csv");
+                            f.ToCsv(PathUtil::GetOutPathConf(rom, c, n) + L".dmsg.csv");
                         }
                         catch (std::exception &ex)
                         {
@@ -388,7 +390,7 @@ void ExtractSysText()
                         {
                             XiString s(p);
                             s.Read();
-                            s.ToCsv(DataManager::GetOutPathConf(rom, c, n) + ".xis.csv");
+                            s.ToCsv(PathUtil::GetOutPathConf(rom, c, n) + L".xis.csv");
                         }
                         catch (std::exception &ex)
                         {

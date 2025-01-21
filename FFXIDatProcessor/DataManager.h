@@ -2,15 +2,17 @@
 
 #include <string>
 
-class DataManager
+class PathUtil
 {
 public:
-	static std::string gameRootPath;
+	static std::wstring gameRootPath;
 
-	static std::string GetPath(int rom, int cat, int no);
+	static void Init();
 
-	static std::string GetOutPathConf(int rom, int cat, int no);
+	static std::wstring GetPath(int rom, int cat, int no);
 
-	static std::string GetOutPath(int rom, int cat, int no);
+	static std::wstring GetOutPathConf(int rom, int cat, int no);
+
+	static std::wstring GetOutPath(int rom, int cat, int no);
 };
 
