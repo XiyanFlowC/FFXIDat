@@ -146,3 +146,9 @@ void CsvFile::Close()
 {
 	m_stream.close();
 }
+
+void CsvFile::Rewind()
+{
+	if (m_size) m_stream.seekg(0);
+	else m_stream.seekp(0);
+}

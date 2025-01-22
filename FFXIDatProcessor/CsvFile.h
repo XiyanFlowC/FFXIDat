@@ -28,6 +28,8 @@ public:
 
 	void Close();
 
+	void Rewind();
+
 private:
 	std::fstream m_stream;
 	size_t m_size = 0;

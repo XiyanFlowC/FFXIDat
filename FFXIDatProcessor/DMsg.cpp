@@ -27,6 +27,7 @@ void DMsg::Read()
 	// block type
 	if (header.blockSize)
 	{
+		m_blockSize = header.blockSize;
 		if (header.indexSize)
 			throw std::invalid_argument("weird format!!!");
 		mode = Mode::Block;
@@ -72,6 +73,17 @@ void DMsg::Read()
 void DMsg::ToCsv(std::filesystem::path csvPath)
 {
 	CsvFile csv(csvPath, std::ios::out | std::ios::binary);
+	if (mode == Mode::Block)
+	{
+		csv.NewCell(u8"~~TYPE=BLOCK~~");
+		csv.NewCell(xybase::string::itos<char8_t>(m_blockSize));
+		csv.NewLine();
+	}
+	else
+	{
+		csv.NewCell(u8"~~TYPE=LIST~~");
+		csv.NewLine();
+	}
 	for (Row &row : rows)
 	{
 		for (Cell &cell : row.GetCells())
@@ -88,6 +100,24 @@ void DMsg::FromCsv(std::filesystem::path csvPath)
 	rows.clear();
 
 	CsvFile csv(csvPath, std::ios::in | std::ios::binary);
+
+	auto header = csv.NextCell();
+	if (header == u8"~~TYPE=BLOCK~~")
+	{
+		mode = Mode::Block;
+		if (!csv.IsEol())
+			m_blockSize = xybase::string::stoi(csv.NextCell());
+		else
+			m_blockSize = 0;
+	}
+	else if (header == u8"~~TYPE=LIST~~")
+	{
+		mode = Mode::Variable;
+		m_blockSize = 0;
+	}
+	else
+		csv.Rewind();
+
 	while (!csv.IsEof())
 	{
 		Row r;
@@ -114,6 +144,11 @@ void DMsg::Write()
 			if (rowSize > maxSize) maxSize = rowSize;
 		}
 		maxSize = (maxSize + 3) & ~3; // block size
+		if (m_blockSize)
+		{
+			if (m_blockSize > maxSize)
+				maxSize = m_blockSize;
+		}
 
 		// calculates metrics
 		DMsgHeader header{
@@ -238,4 +273,10 @@ void DMsg::Row::WriteRow(Record *buffer, int limit)
 	}
 
 	if (offsetBase > limit) throw std::runtime_error("something went wrong.");
+}
+
+inline int DMsg::Cell::GetSize() const
+{
+	// FIXME: Remove the xybase::string::to_string or try to find some solution!
+	return type ? 4 : 28 + ((xybase::string::to_string(str).size() + 1 + 3) & ~3); // str align
 }

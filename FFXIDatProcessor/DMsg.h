@@ -136,10 +136,7 @@ public:
 			return type;
 		}
 
-		int GetSize() const
-		{
-			return type ? 4 : 28 + ((str.size() + 1 + 3) & ~3); // str align
-		}
+		int GetSize() const;
 
 	protected:
 		std::u8string str;
@@ -207,6 +204,7 @@ public:
 		Variable,
 	};
 	Mode mode = Mode::Variable;
+	int m_blockSize = 0;
 	bool obs = false;
 protected:
 	std::filesystem::path path;
