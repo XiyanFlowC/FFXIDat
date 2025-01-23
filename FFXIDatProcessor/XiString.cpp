@@ -1,7 +1,7 @@
 #include "XiString.h"
 
 #include <cassert>
-#include "GameString.h"
+
 void XiString::Read()
 {
 	entries.clear();
