@@ -15,15 +15,19 @@ EventStringControlSeqDef *EventStringCodecUtil::CheckControl(const char *start)
 	{
 		if (*start == 0x7F)
 		{
-			// Followed by the next sentence, seperated by a 00 and 07(line feed)
+			// Followed by the next sentence, separated by a 00(should be a parameter of 7F?) and 07(line feed)
+			//             Supposed to be a parameter of 7F as any else?
+			//             |
 			// XX XX 7F 31 00 07 YY YY
 			// |                 |
 			// |                 Next string pointer points
 			// This string pointer points
 			// Perhaps the Square use this as a fall-through?
 			// I stop the extration here, for repeatition extraction is awful
-			// NOTE: when write, if find a string ends with \x7F\x31, should write a \x00\x07 after the string!!!
-			static EventStringControlSeqDef con7f31{"-", 0, "\x7F\x31\x00\x07", 2}; // followed by a \x00\x07?
+			// Have no idea how this works.
+			// This special usage does not seen in English files, why?
+			static EventStringControlSeqDef con7f31{"-", 0, "\x7F\x31", 2}; // followed by a \x00\x07?
+			// \x7F\xFX seems have only one parameter
 			static EventStringControlSeqDef con7ffx{ "7F", 1, "\x7F", 1 };
 			if (start[1] == 0x31)
 			{
@@ -81,6 +85,7 @@ std::string EventStringCodecUtil::Encode(const std::string &in)
 
 			if (name == "-")
 			{
+				// It should be safe as for now I only seen it as an ending
 				ret += "\x7F\x31";
 				ret += '\0';
 				ret += '\x07';
@@ -112,6 +117,7 @@ std::string EventStringCodecUtil::Encode(const std::string &in)
 	}
 
 	ret += '\0';
+	ret += '\x07';
 	return ret;
 }
 
