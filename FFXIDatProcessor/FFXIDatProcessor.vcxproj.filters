@@ -66,7 +66,7 @@
     <ClCompile Include="XiString.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GameString.cpp">
+    <ClCompile Include="EventString.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="EventStringBase.cpp">
@@ -128,7 +128,7 @@
     <ClInclude Include="XiString.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GameString.h">
+    <ClInclude Include="EventString.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="EventStringBase.h">

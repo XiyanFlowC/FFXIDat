@@ -1,4 +1,4 @@
-#include "GameString.h"
+#include "EventString.h"
 
 #include "xystring.h"
 #include <stdio.h>

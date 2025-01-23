@@ -3,7 +3,7 @@
 #include <fstream>
 #include <cassert>
 
-#include "GameString.h"
+#include "EventString.h"
 #include"xystring.h"
 
 void EventStringBase::Read()
