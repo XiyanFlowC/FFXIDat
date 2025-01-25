@@ -27,7 +27,8 @@ Currently only pure text files can be processed.
 	- [x] Import
 - [x] String Data for Events (per area, e.g. ROM/22/17.DAT)
 	- [x] Export
-	- [ ] String Control Sequence Analysis (In Progress)
+	- [x] String Control Sequence Analysis (Done, I think?)
+		- [ ] Figure out tags' meaning.
 	- [x] Import
 
 #### DMsg file
@@ -81,3 +82,6 @@ int32 offsets[N]
 
 ## Note
 Square extended the SJIS to represent characters in FR and DE. Further research required.
+
+## Dependencies
+- SQLite 3.48.0

@@ -1,5 +1,4 @@
 ﻿#include "codepage.h"
-#include "xystring.h"
 
 std::string cvt_to_string(const std::wstring &str)
 {
@@ -28,6 +27,24 @@ CodeCvt &CodeCvt::GetInstance()
 {
 	static CodeCvt _inst;
 	return _inst;
+}
+
+bool CodeCvt::ChsOnSJisDirtyThing(xybase::StringBuilder<char> &sb, char32_t code)
+{
+	int a = 0, b = 0;
+	if (code == U'嗨') a = uc2cp[U'口'], b = uc2cp[U'海'];
+	if (code == U'呢') a = uc2cp[U'口'], b = uc2cp[U'尼'];
+	if (code == U'哟') a = uc2cp[U'口'], b = uc2cp[U'约'];
+	if (code == U'唉') a = uc2cp[U'口'], b = uc2cp[U'矣'];
+	if (code == U'哪') a = uc2cp[U'口'], b = uc2cp[U'那'];
+	if (code == U'嗨') a = uc2cp[U'口'], b = uc2cp[U'海'];
+
+	if (a && b) {
+		sb += a;
+		sb += b;
+		return true;
+	}
+	return false;
 }
 
 std::string CodeCvt::CvtToString(const std::wstring &str)
@@ -115,7 +132,7 @@ std::wstring CodeCvt::CvtToWString(const std::string &str)
 
 #include "CsvFile.h"
 
-void CodeCvt::Init(const char *path)
+void CodeCvt::Init(std::filesystem::path path)
 {
 	uc2cp.clear();
 	cp2uc.clear();

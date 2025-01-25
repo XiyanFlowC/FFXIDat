@@ -434,6 +434,69 @@ namespace xybase
 			else if constexpr (std::is_same_v<Ch, char32_t>) return xybase::string::to_utf32(str);
 			else abort();
 		}
+
+		template <typename Ch>
+		std::basic_string<Ch> escape(const std::basic_string<Ch> &str)
+		{
+			std::basic_string<Ch> result;
+			for (const auto &ch : str)
+			{
+				switch (ch)
+				{
+				case '\\':
+					result += static_cast<Ch>('\\');
+					result += static_cast<Ch>('\\');
+					break;
+				case '\r':
+					result += static_cast<Ch>('\\');
+					result += static_cast<Ch>('r');
+					break;
+				case '\n':
+					result += static_cast<Ch>('\\');
+					result += static_cast<Ch>('n');
+					break;
+				default:
+					result += ch;
+					break;
+				}
+			}
+			return result;
+		}
+
+		template <typename Ch>
+		std::basic_string<Ch> unescape(const std::basic_string<Ch> &str)
+		{
+			std::basic_string<Ch> result;
+			auto it = str.begin();
+			while (it != str.end())
+			{
+				if (*it == static_cast<Ch>('\\') && std::next(it) != str.end())
+				{
+					++it; // Skip the backslash
+					switch (*it)
+					{
+					case '\\':
+						result += static_cast<Ch>('\\');
+						break;
+					case 'r':
+						result += static_cast<Ch>('\r');
+						break;
+					case 'n':
+						result += static_cast<Ch>('\n');
+						break;
+					default:
+						result += *it; // Non-standard escape, add as-is
+						break;
+					}
+				}
+				else
+				{
+					result += *it;
+				}
+				++it;
+			}
+			return result;
+		}
 	}
 }
 

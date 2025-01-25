@@ -4,6 +4,7 @@
 #include <iostream>
 #include <clocale>
 #include <format>
+#include <exception>
 
 #include "DMsg.h"
 
@@ -14,6 +15,8 @@
 #include "XiString.h"
 
 #include "liteopt.h"
+
+#include "SQLiteDataSource.h"
 
 #include "EventStringBase.h"
 
@@ -84,11 +87,7 @@ int main(int argc, const char **argv)
 
     try
     {
-        wchar_t module_path[MAX_PATH];
-        GetModuleFileNameW(NULL, module_path, MAX_PATH);
-        std::filesystem::path exePath = module_path;
-        exePath = exePath.replace_filename("cp932.csv");
-        CodeCvt::GetInstance().Init(exePath.string().c_str());
+        CodeCvt::GetInstance().Init(PathUtil::progRootPath + L"/cp932.csv");
     }
     catch (std::exception &ex)
     {
@@ -97,6 +96,24 @@ int main(int argc, const char **argv)
         return -2;
     }
 
+    lopt_regopt("sqlite-init", 0, LOPT_FLG_VAL_NEED, [](const char *str)->int {
+        std::filesystem::remove(PathUtil::progRootPath + L"/text.db");
+        SQLiteDataSource ds;
+        ds.Initialise();
+        CsvFile def(str, std::ios_base::in | std::ios_base::binary);
+        ds.InitialiseFileDefinition(def);
+        return 0;
+        }, L"用指定的定义初始化SQLite数据库。（已经存在的数据库会被删除）");
+    lopt_regopt("sqlite-trans-dat", 'T', 0, [](const char *str)->int {
+        SQLiteDataSource ds;
+        ds.TransAndOut();
+        return 0;
+        }, L"按SQLite中的定义和翻译数据，试图翻译游戏Dat并输出。");
+    lopt_regopt("sqlite-dat-to-sql", 'q', LOPT_FLG_VAL_NEED, [](const char *str)->int {
+        SQLiteDataSource ds;
+        ds.DatToDatabase(str, nullptr, nullptr);
+        return 0;
+        }, L"从游戏安装目录抽取指定语言的文本，并存入SQLite数据库。");
     lopt_regopt("do-xor", 'x', 0, [](const char *str)->int {cfg_xor = 1; return 0; }, L"要求DMsg进行Xor保护。");
     lopt_regopt("block", 'b', 0, [](const char *str)->int {cfg_block = 1; return 0; }, L"要求DMsg以块形式保存。。");
     lopt_regopt("dmsg-to-csv", 'm', LOPT_FLG_VAL_NEED, [](const char *str) -> int {
@@ -212,14 +229,21 @@ int main(int argc, const char **argv)
         return 0;
     }
 
-    int ret = lopt_parse(argc, argv);
-    if (ret)
+    try
     {
-        if (ret < 0)
+        int ret = lopt_parse(argc, argv);
+        if (ret)
         {
-            std::wcerr << std::format(L"{}: 语法有误或是不存在的开关。\n", xybase::string::to_wstring(argv[-ret]));
+            if (ret < 0)
+            {
+                std::wcerr << std::format(L"{}: 语法有误或是不存在的开关。\n", xybase::string::to_wstring(argv[-ret]));
+            }
+            exit(ret);
         }
-        exit(ret);
+    }
+    catch (std::exception &ex)
+    {
+        std::wcout << ex.what() << std::endl;
     }
 
     lopt_finalize();

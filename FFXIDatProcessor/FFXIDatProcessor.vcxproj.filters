@@ -72,6 +72,12 @@
     <ClCompile Include="EventStringBase.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="SQLiteDataSource.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sqlite3\sqlite3.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DMsg.h">
@@ -132,6 +138,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="EventStringBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SQLiteDataSource.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

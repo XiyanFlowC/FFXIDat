@@ -61,6 +61,7 @@ static struct EventStringControlSeqDef {
 	{"wanted", 1, "\x1E", 1}, // Unity 通缉令目标？
 	{"color", 1, "\x1F", 1}, // 似乎用于设置样式？颜色？ 
 	{"7F", 2, "\x7F", 1}, // end? sp proc
+	// {"gender", 0, "\x7F\x85", 2},
 	{"val", 1, "\xEF", 1}, // 一个文本变量？
 	// {"FB", 0, "\xFB", 1},
 	

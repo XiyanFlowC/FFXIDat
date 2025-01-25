@@ -47,6 +47,14 @@ public:
 			: flag1(0), flag2(0), flag3(0) {}
 	};
 
+	using iterator = std::vector<StringEntry>::iterator;
+	using const_iterator = std::vector<StringEntry>::const_iterator;
+
+	iterator begin() { return entries.begin(); }
+	iterator end() { return entries.end(); }
+	const_iterator begin() const { return entries.begin(); }
+	const_iterator end() const { return entries.end(); }
+
 	XiString(std::filesystem::path path)
 		: path(path), id(0) {}
 
@@ -66,8 +74,8 @@ public:
 
 	int id;
 
-protected:
 	std::filesystem::path path;
+protected:
 	std::vector<StringEntry> entries;
 };
 

@@ -3,6 +3,8 @@
 #include <string>
 #include <map>
 #include <cstdint>
+#include <filesystem>
+#include "xystring.h"
 
 class CodeCvt
 {
@@ -13,11 +15,13 @@ public:
 
 	static CodeCvt &GetInstance();
 
+	bool ChsOnSJisDirtyThing(xybase::StringBuilder<char> &sb, char32_t code);
+
 	std::string CvtToString(const std::wstring &str);
 
 	std::wstring CvtToWString(const std::string &str);
 
-	void Init(const char *path);
+	void Init(std::filesystem::path path);
 };
 
 std::string cvt_to_string(const std::wstring &str);

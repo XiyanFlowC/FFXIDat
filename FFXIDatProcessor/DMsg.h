@@ -147,6 +147,13 @@ public:
 	class Row
 	{
 	public:
+		using iterator = std::vector<Cell>::iterator;
+		using const_iterator = std::vector<Cell>::const_iterator;
+
+		iterator begin() { return cells.begin(); }
+		iterator end() { return cells.end(); }
+		const_iterator begin() const { return cells.begin(); }
+		const_iterator end() const { return cells.end(); }
 
 		void ReadRow(Record *buffer, int limit);
 
@@ -183,6 +190,16 @@ public:
 		// int cellCount;
 		std::vector<Cell> cells;
 	};
+
+
+	using iterator = std::vector<Row>::iterator;
+	using const_iterator = std::vector<Row>::const_iterator;
+	
+	iterator begin() { return rows.begin(); }
+	iterator end() { return rows.end(); }
+	const_iterator begin() const { return rows.begin(); }
+	const_iterator end() const { return rows.end(); }
+
 	void Read();
 
 	void ToCsv(std::filesystem::path csvPath);
@@ -206,8 +223,8 @@ public:
 	Mode mode = Mode::Variable;
 	int m_blockSize = 0;
 	bool obs = false;
-protected:
 	std::filesystem::path path;
+protected:
 	std::vector<Row> rows;
 
 	void Xor(char *target, int size)

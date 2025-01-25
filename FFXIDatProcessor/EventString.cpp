@@ -29,9 +29,14 @@ EventStringControlSeqDef *EventStringCodecUtil::CheckControl(const char *start)
 			static EventStringControlSeqDef con7f31{"-", 0, "\x7F\x31", 2}; // followed by a \x00\x07?
 			// \x7F\xFX seems have only one parameter
 			static EventStringControlSeqDef con7ffx{ "7F", 1, "\x7F", 1 };
+			static EventStringControlSeqDef gender{ "gender", 0, "\x7F\x85", 2 };
 			if (start[1] == 0x31)
 			{
 				return &con7f31;
+			}
+			if (start[1] == 0x85)
+			{
+				return &gender;
 			}
 			if (start[1] > 0xF0)
 			{
@@ -91,13 +96,22 @@ std::string EventStringCodecUtil::Encode(const std::string &in)
 				ret += '\x07';
 				return ret;
 			}
+			if (name == "gender")
+			{
+				ret += "\x7F\x85";
+				i = end;
+				continue;
+			}
 
 			auto def = encDist.find(std::string(name));
 
 			if (def == encDist.end())
-				throw std::invalid_argument("unkown ctrl ch");
+			{
+				ret += xybase::string::stoi(name, 16);
+			}
+			else
+				ret += def->second->code[0];
 
-			ret += def->second->code[0];
 			while (ps != std::string_view::npos) // UNDONE
 			{
 				// para parse

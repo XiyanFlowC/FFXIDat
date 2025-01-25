@@ -145,6 +145,8 @@
     <ClCompile Include="Exception\RuntimeException.cpp" />
     <ClCompile Include="FFXIDatProcessor.cpp" />
     <ClCompile Include="EventString.cpp" />
+    <ClCompile Include="sqlite3\sqlite3.c" />
+    <ClCompile Include="SQLiteDataSource.cpp" />
     <ClCompile Include="XiString.cpp" />
     <ClCompile Include="xystring.cpp" />
     <ClCompile Include="xyutils.cpp" />
@@ -165,6 +167,7 @@
     <ClInclude Include="FFXIDatProcessor.h" />
     <ClInclude Include="EventString.h" />
     <ClInclude Include="liteopt.h" />
+    <ClInclude Include="SQLiteDataSource.h" />
     <ClInclude Include="StringBuilder.h" />
     <ClInclude Include="XiString.h" />
     <ClInclude Include="xyapi.h" />
