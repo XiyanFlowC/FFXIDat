@@ -23,7 +23,7 @@ public:
 
 };
 
-// FIXME: 重写此结构体，code不需要是数组，step不需要
+// FIXME: 重新登记控制符
 static struct EventStringControlSeqDef {
 		char    name[16];
 		int     parameterCount;

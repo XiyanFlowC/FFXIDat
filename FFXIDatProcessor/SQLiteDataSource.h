@@ -27,6 +27,14 @@ public:
 
 	void InitialiseFileDefinition(CsvFile &csv);
 
+	void DumpTranslationData();
+
+	void ExportNoTranslation();
+
+	void ImportTranslation();
+
+	void Purge();
+
 	void DropFile(const char *path);
 
 	void DatToDatabase(const char *lang, const char *type, const char *path);

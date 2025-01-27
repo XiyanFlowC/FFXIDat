@@ -33,15 +33,19 @@ bool CodeCvt::ChsOnSJisDirtyThing(xybase::StringBuilder<char> &sb, char32_t code
 {
 	int a = 0, b = 0;
 	if (code == U'嗨') a = uc2cp[U'口'], b = uc2cp[U'海'];
-	if (code == U'呢') a = uc2cp[U'口'], b = uc2cp[U'尼'];
-	if (code == U'哟') a = uc2cp[U'口'], b = uc2cp[U'约'];
+	if (code == U'砰') a = uc2cp[U'石'], b = uc2cp[U'平'];
+	if (code == U'啪') a = uc2cp[U'口'], b = uc2cp[U'拍'];
 	if (code == U'唉') a = uc2cp[U'口'], b = uc2cp[U'矣'];
 	if (code == U'哪') a = uc2cp[U'口'], b = uc2cp[U'那'];
-	if (code == U'嗨') a = uc2cp[U'口'], b = uc2cp[U'海'];
+	if (code == U'跑') a = uc2cp[U'足'], b = uc2cp[U'包'];
+	if (code == U'钐') a = uc2cp[U'金'], b = uc2cp[U'彡'];
+	if (code == U'哼') a = uc2cp[U'口'], b = uc2cp[U'亨'];
 
 	if (a && b) {
-		sb += a;
-		sb += b;
+		sb.Append((a & 0xFF00) >> 8);
+		sb.Append(a & 0xFF);
+		sb.Append((b & 0xFF00) >> 8);
+		sb.Append(b & 0xFF);
 		return true;
 	}
 	return false;
@@ -57,6 +61,8 @@ std::string CodeCvt::CvtToString(const std::wstring &str)
 		auto dbc = uc2cp[code];
 		if (dbc == 0)
 		{
+			if (ChsOnSJisDirtyThing(sb, code)) continue;
+
 			dbc = uc2cp[U'〓'];
 			if (dbc == 0)
 			{

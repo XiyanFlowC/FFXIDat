@@ -102,6 +102,7 @@ void DMsg::FromCsv(std::filesystem::path csvPath)
 	CsvFile csv(csvPath, std::ios::in | std::ios::binary);
 
 	auto header = csv.NextCell();
+	csv.NextLine();
 	if (header == u8"~~TYPE=BLOCK~~")
 	{
 		mode = Mode::Block;
@@ -173,6 +174,7 @@ void DMsg::Write()
 		for (Row &row : rows)
 		{
 			std::unique_ptr<char[]>buffer(new char[maxSize]);
+			memset(buffer.get(), 0, maxSize);
 			row.WriteRow((Record *)buffer.get(), maxSize);
 			Xor(buffer.get(), maxSize);
 			pen.write(buffer.get(), maxSize);
@@ -215,6 +217,7 @@ void DMsg::Write()
 		for (Row &row : rows)
 		{
 			std::unique_ptr<char[]>buffer(new char[row.GetSize()]);
+			memset(buffer.get(), 0, row.GetSize());
 			row.WriteRow((Record *)buffer.get(), row.GetSize());
 			Xor(buffer.get(), row.GetSize());
 			pen.write(buffer.get(), row.GetSize());

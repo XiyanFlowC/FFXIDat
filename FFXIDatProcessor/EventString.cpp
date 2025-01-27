@@ -5,10 +5,22 @@
 #include <cassert>
 #include <stdexcept>
 
-EventStringControlSeqDef *EventStringCodecUtil::CheckControl(const char *start)
+EventStringControlSeqDef *EventStringCodecUtil::CheckControl(const char *start) // FIXME: 使用结构体统一控制
 {
 	//printf("%d %d\n", start[0], start[1]);
 	// std::string test1(start, 1), test2(start, 2); // HACK: 目前只有最大两项的控制序列，先这样
+	if (*start == 0)
+	{
+		if (start[1] != 0x20 && start[1] != 0x07) {
+			return nullptr;
+		}
+		static EventStringControlSeqDef end{ "-", 0, "\x00", 1 };
+		int p = 1;
+		end.parameterCount = 0;
+		while (start[p++] != '\x07')
+			end.parameterCount += 1;
+		return &end;
+	}
 
 	auto i = decDict.find(*start & 0xFF);
 	if (i != decDict.end())
@@ -26,21 +38,25 @@ EventStringControlSeqDef *EventStringCodecUtil::CheckControl(const char *start)
 			// I stop the extration here, for repeatition extraction is awful
 			// Have no idea how this works.
 			// This special usage does not seen in English files, why?
-			static EventStringControlSeqDef con7f31{"-", 0, "\x7F\x31", 2}; // followed by a \x00\x07?
+			// static EventStringControlSeqDef con7f31{"-", 0, "\x7F\x31\x00", 3}; // followed by a string ended with \x07?
 			// \x7F\xFX seems have only one parameter
-			static EventStringControlSeqDef con7ffx{ "7F", 1, "\x7F", 1 };
+			static EventStringControlSeqDef con7f1v{ "7F", 1, "\x7F", 1 };
 			static EventStringControlSeqDef gender{ "gender", 0, "\x7F\x85", 2 };
-			if (start[1] == 0x31)
+			/*if (start[1] == 0x31 && start[2] == 0)
 			{
+				int p = 3;
+				con7f31.parameterCount = 0;
+				while (start[p++] != '\x07')
+					con7f31.parameterCount += 1;
 				return &con7f31;
-			}
+			}*/
 			if (start[1] == 0x85)
 			{
 				return &gender;
 			}
-			if (start[1] > 0xF0)
+			if (start[1] > 0xF0 || start[1] == 0x31)
 			{
-				return &con7ffx;
+				return &con7f1v;
 			}
 
 			return i->second;
@@ -60,7 +76,7 @@ EventStringCodecUtil::EventStringCodecUtil()
 	while (p->parameterCount != -1)
 	{
 		encDist[p->name] = p;
-		decDict[p->code[0] & 0xFF] = p;
+		decDict[p->code[0] & 0xFF] = p; // FIXME: 通用化
 		++p;
 	}
 }
@@ -77,6 +93,7 @@ std::string EventStringCodecUtil::Encode(const std::string &in)
 		// 控制序列处理
 		if (str[i] == '<')
 		{
+			bool endFlag = false;
 			size_t end = str.find('>', i);
 
 			if (end == std::string::npos)
@@ -88,31 +105,34 @@ std::string EventStringCodecUtil::Encode(const std::string &in)
 			auto ps = tag.find(':');
 			auto name = tag.substr(0, ps);
 
-			if (name == "-")
+			if (name == "-") // a \0 .* \7 seq
 			{
 				// It should be safe as for now I only seen it as an ending
-				ret += "\x7F\x31";
+				// ret += "\x7F\x31";
 				ret += '\0';
-				ret += '\x07';
-				return ret;
+				// ret += '\x07';
+				// return ret;
+				endFlag = true;
 			}
-			if (name == "gender")
+			else if (name == "gender") // FIXME: 使用结构体统一控制
 			{
 				ret += "\x7F\x85";
 				i = end;
 				continue;
 			}
-
-			auto def = encDist.find(std::string(name));
-
-			if (def == encDist.end())
-			{
-				ret += xybase::string::stoi(name, 16);
-			}
 			else
-				ret += def->second->code[0];
+			{
+				auto def = encDist.find(std::string(name));
 
-			while (ps != std::string_view::npos) // UNDONE
+				if (def == encDist.end())
+				{
+					ret += xybase::string::stoi(name, 16);
+				}
+				else
+					ret += def->second->code[0]; // FIXME: 通用化
+			}
+
+			while (ps != std::string_view::npos)
 			{
 				// para parse
 				auto pe = tag.find(':', ps + 1);
@@ -120,6 +140,12 @@ std::string EventStringCodecUtil::Encode(const std::string &in)
 				int v = xybase::string::stoi(p, 16);
 				ret += v & 0xFF;
 				ps = pe;
+			}
+
+			if (endFlag)
+			{
+				ret += '\x07';
+				return ret;
 			}
 
 			i = end;
@@ -130,8 +156,7 @@ std::string EventStringCodecUtil::Encode(const std::string &in)
 		}
 	}
 
-	ret += '\0';
-	ret += '\x07';
+	ret += '\x00';
 	return ret;
 }
 
@@ -146,7 +171,7 @@ std::string EventStringCodecUtil::Decode(const char *in, size_t limit)
 	const char *end = limit == (size_t)-1 ? (const char *) -1 : in + limit;
 
 	const char *p = in;
-	while (*p && p < end)
+	while (/**p &&*/ p < end)
 	{
 		// SJIS 双字节第一字节特别处理
 		// NOTE: default char is unsigned char (switch /J in MSVC
@@ -168,21 +193,7 @@ std::string EventStringCodecUtil::Decode(const char *in, size_t limit)
 			{
 				sb += ':';
 				int v = (*p++ & 0xFF);
-				/*if ((v & 0xF0) == 0x80)
-				{
-					sb += '$';
-					sb += xybase::string::itos(v & 0xFF, 16);
-					assert((*p & 0xF0) >= 0x80);
-					sb += xybase::string::itos(*p++ & 0xFF, 16);
-					assert((*p & 0xF0) >= 0x80);
-					sb += xybase::string::itos(*p++ & 0xFF, 16);
-					assert((*p & 0xF0) >= 0x80);
-					sb += xybase::string::itos(*p++ & 0xFF, 16);
-				}
-				else
-				{*/
-					sb += xybase::string::itos(v, 16);
-				//}
+				sb += xybase::string::itos(v, 16);
 			}
 
 			sb += '>';
@@ -193,8 +204,11 @@ std::string EventStringCodecUtil::Decode(const char *in, size_t limit)
 		auto def = CheckControl(p);
 		if (def)
 		{
+			bool endFlag = false;
+
 			sb += '<';
 			sb += def->name;
+			endFlag = def->name[0] == '-';
 			p += def->step;
 			// printf("%s:\n", def->name);
 			//sb += '>';
@@ -205,32 +219,23 @@ std::string EventStringCodecUtil::Decode(const char *in, size_t limit)
 				{
 					sb += ":";
 					int v = (*p++ & 0xFF);
-					//printf("%X\n", v);
-					/*if ((v & 0xFF) != 0x82)
-					{*/
-						sb += xybase::string::itos(v, 16);
-					//}
-					//else
-					//{
-					//	// 似然？
-					//	sb += '$';
-					//	sb += xybase::string::itos(v & 0xFF, 16);
-					//	assert((*p & 0xF0) >= 0x80);
-					//	sb += xybase::string::itos(*p++ & 0xFF, 16);
-					//	assert((*p & 0xF0) >= 0x80);
-					//	sb += xybase::string::itos(*p++ & 0xFF, 16);
-					//	assert((*p & 0xF0) >= 0x80);
-					//	sb += xybase::string::itos(*p++ & 0xFF, 16);
-					//}
+					sb += xybase::string::itos(v, 16);
 				}
 			}
 			sb += '>';
+
+			if (endFlag)
+				return sb.ToString();
 		}
 		else if (*p > 0x7F)
 		{
 			sb += '<';
 			sb += xybase::string::itos(*p++ & 0xFF, 16);
 			sb += '>';
+		}
+		else if (*p == '\0')
+		{
+			break;
 		}
 		else
 		{

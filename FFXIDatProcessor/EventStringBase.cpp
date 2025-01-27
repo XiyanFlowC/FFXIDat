@@ -14,13 +14,17 @@ void EventStringBase::Read()
 	// assert(header.flag == 0x10);
 	flag = header.flag;
 
+	if (!header.size) return; // Read not, no contents
+
 	std::unique_ptr<char[]> buf(new char[header.size]);
 	eye.read(buf.get(), header.size);
 	Xor(buf.get(), header.size);
 
 	uint32_t *cur = (uint32_t *)buf.get();
 	uint32_t limit = header.size;
-	while (*cur <= limit)
+	ptrdiff_t firstTermOffset = *cur;
+	intptr_t endOfIndices = (intptr_t)buf.get() + firstTermOffset;
+	while ((intptr_t)cur < endOfIndices && *cur <= limit)
 	{
 		strs.push_back(xybase::string::to_utf8(EventStringCodecUtil::Instance().Decode(buf.get() + *cur, header.size)));
 		++cur;
@@ -29,6 +33,14 @@ void EventStringBase::Read()
 #include <iostream>
 void EventStringBase::Write()
 {
+	if (!strs.size())
+	{
+		int32_t zero = 0;
+		std::ofstream zeroPen(path, std::ios::out | std::ios::binary);
+		zeroPen.write((char *)&zero, 4);
+		return;
+	}
+
 	int32_t offset = strs.size() * 4;
 	std::unique_ptr<int32_t[]> indexBuffer(new int32_t[strs.size()]);
 	int32_t *p = indexBuffer.get();
@@ -49,6 +61,7 @@ void EventStringBase::Write()
 		header |= 0x10000000;
 	std::ofstream pen(path, std::ios::out | std::ios::binary);
 	pen.write((char *) & header, 4);
+
 	Xor((char *)indexBuffer.get(), strs.size() * 4);
 	pen.write((char *)indexBuffer.get(), strs.size() * 4);
 	if (flag)

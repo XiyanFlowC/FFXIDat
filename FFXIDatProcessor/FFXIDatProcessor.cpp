@@ -109,6 +109,26 @@ int main(int argc, const char **argv)
         ds.TransAndOut();
         return 0;
         }, L"按SQLite中的定义和翻译数据，试图翻译游戏Dat并输出。");
+    lopt_regopt("sqlite-text-purge", 0, 0, [](const char *str)->int {
+        SQLiteDataSource ds;
+        ds.Purge();
+        return 0;
+        }, L"清除SQLite数据库中的无引用文本。");
+    lopt_regopt("sqlite-trans-dump", 0, 0, [](const char *str)->int {
+        SQLiteDataSource ds;
+        ds.DumpTranslationData();
+        return 0;
+        }, L"导出SQLite数据库中的原文和翻译数据到文本文件。");
+    lopt_regopt("sqlite-trans-import", 0, 0, [](const char *str)->int {
+        SQLiteDataSource ds;
+        ds.ImportTranslation();
+        return 0;
+        }, L"导入文本文件中的翻译数据到SQLite数据库中。");
+    lopt_regopt("sqlite-trans-dump-empty", 0, 0, [](const char *str)->int {
+        SQLiteDataSource ds;
+        ds.ExportNoTranslation();
+        return 0;
+        }, L"导出SQLite数据库中没有翻译的数据到文本文件。");
     lopt_regopt("sqlite-dat-to-sql", 'q', LOPT_FLG_VAL_NEED, [](const char *str)->int {
         SQLiteDataSource ds;
         ds.DatToDatabase(str, nullptr, nullptr);

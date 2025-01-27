@@ -34,7 +34,8 @@ void SQLiteDataSource::Initialise()
             path TEXT NOT NULL UNIQUE,
             type TEXT NOT NULL,
             lang TEXT NOT NULL,
-            comment TEXT
+            comment TEXT,
+            cols TEXT
         );
     )");
     Execute(R"(
@@ -59,7 +60,7 @@ void SQLiteDataSource::Initialise()
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             text_id INTEGER NOT NULL UNIQUE,
             text TEXT NOT NULL,
-            FOREIGN KEY (text_id) REFERENCES text(id)
+            FOREIGN KEY (text_id) REFERENCES text(id) ON DELETE CASCADE
         );
     )");
 }
@@ -69,14 +70,13 @@ void SQLiteDataSource::InitialiseFileDefinition(CsvFile &csv)
     sqlite3_stmt *stmt;
     const char *qry = "INSERT INTO file (path, type, lang, comment, cols) VALUES (?, ?, ?, ?, ?);";
 
+    if (sqlite3_prepare_v2(db, qry, -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        throw SQLException(sqlite3_errmsg(db));
+    }
+
     while (!csv.IsEof())
     {
-        if (sqlite3_prepare_v2(db, qry, -1, &stmt, nullptr) != SQLITE_OK)
-        {
-            csv.NextLine();
-            continue;
-        }
-
         auto path = csv.NextCell();
         auto type = csv.NextCell();
         auto lang = csv.NextCell();
@@ -92,14 +92,136 @@ void SQLiteDataSource::InitialiseFileDefinition(CsvFile &csv)
             auto cols = csv.NextCell();
             sqlite3_bind_text(stmt, 5, reinterpret_cast<const char *>(cols.c_str()), -1, SQLITE_TRANSIENT);
         }
+        csv.NextLine();
 
-        if (sqlite3_step(stmt))
+        if (sqlite3_step(stmt) != SQLITE_DONE)
         {
-            std::u8string err = u8"Insert definition for " + path + u8" failed.";
+            std::u8string err = u8"Insert definition for " + path + u8" failed." + (char8_t *)sqlite3_errmsg(db);
             Ring(err.c_str());
         }
+        sqlite3_reset(stmt);
+    }
+    sqlite3_finalize(stmt);
+}
+
+void SQLiteDataSource::DumpTranslationData()
+{
+    sqlite3_stmt *stmt = nullptr;
+
+    try
+    {
+        if (sqlite3_prepare_v2(db, "SELECT text.text, trans.text FROM text JOIN trans ON text.id = trans.text_id;", -1, &stmt, nullptr) != SQLITE_OK) {
+            throw SQLException("failed to prepare");
+        }
+
+        std::ofstream oPen("text.txt", std::ios::out | std::ios::binary),
+            tPen("text_translated.txt", std::ios::out | std::ios::binary);
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            std::u8string text = (const char8_t *)sqlite3_column_text(stmt, 0);
+            std::u8string trans = (const char8_t *)sqlite3_column_text(stmt, 1);
+
+            oPen.write((const char *)text.c_str(), text.size());
+            oPen.put('\n');
+            tPen.write((const char *)trans.c_str(), trans.size());
+            tPen.put('\n');
+        }
+
         sqlite3_finalize(stmt);
     }
+    catch (SQLException &ex)
+    {
+        if (stmt) sqlite3_finalize(stmt);
+        throw;
+    }
+}
+
+void SQLiteDataSource::ExportNoTranslation()
+{
+    sqlite3_stmt *stmt = nullptr;
+
+    try
+    {
+        if (sqlite3_prepare_v2(db, "SELECT text.text FROM text WHERE text.id NOT IN (SELECT text_id FROM trans);", -1, &stmt, nullptr) != SQLITE_OK) {
+            throw SQLException("failed to prepare");
+        }
+
+        std::ofstream oPen("text.txt", std::ios::out | std::ios::binary);
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            std::u8string text = (const char8_t *)sqlite3_column_text(stmt, 0);
+
+            oPen.write((const char *)text.c_str(), text.size());
+            oPen.put('\n');
+        }
+    }
+    catch (SQLException &ex)
+    {
+        if (stmt) sqlite3_finalize(stmt);
+        throw;
+    }
+}
+
+void SQLiteDataSource::ImportTranslation()
+{
+    sqlite3_stmt *qryStmt = nullptr;
+    sqlite3_stmt *insStmt = nullptr;
+
+    std::ifstream oEye("text.txt", std::ios::in | std::ios::binary),
+        tEye("text_translated.txt", std::ios::in | std::ios::binary);
+    try
+    {
+        std::string text;
+        std::string trans;
+
+        if (sqlite3_prepare_v2(db, "SELECT id FROM text WHERE text = ?;", -1, &qryStmt, nullptr) != SQLITE_OK) {
+            throw SQLException(std::string("exist query prepare failed. ") + sqlite3_errmsg(db));
+        }
+
+        if (sqlite3_prepare_v2(db, "INSERT INTO trans (text_id, text) VALUES (:text_id, :text) ON CONFLICT(text_id) DO UPDATE SET text = :text WHERE text_id = :text_id;", -1, &insStmt, nullptr) != SQLITE_OK)
+        {
+            throw SQLException(std::string("insert prepare failed.") + sqlite3_errmsg(db));
+        }
+        int tidId = sqlite3_bind_parameter_index(insStmt, ":text_id");
+        int tId = sqlite3_bind_parameter_index(insStmt, ":text");
+
+        while (std::getline(oEye, text)) {
+            if (!std::getline(tEye, trans))
+            {
+                throw std::runtime_error("text.txt, text_translated.txt number of lines mismatch!!!");
+            }
+            
+            sqlite3_bind_text(qryStmt, 1, text.c_str(), -1, SQLITE_TRANSIENT);
+
+            if (sqlite3_step(qryStmt) != SQLITE_ROW) {
+                throw SQLException("query for index failed.");
+            }
+
+            int text_id = sqlite3_column_int(qryStmt, 0);
+            
+            sqlite3_bind_int(insStmt, tidId, text_id);
+            sqlite3_bind_text(insStmt, tId, trans.c_str(), -1, SQLITE_TRANSIENT);
+
+            if (sqlite3_step(insStmt) != SQLITE_DONE)
+            {
+                throw SQLException("insertion failed.");
+            }
+            sqlite3_reset(qryStmt);
+            sqlite3_reset(insStmt);
+        }
+
+        sqlite3_finalize(qryStmt);
+        sqlite3_finalize(insStmt);
+    }
+    catch (SQLException &ex)
+    {
+        if (qryStmt) sqlite3_finalize(qryStmt);
+        if (insStmt) sqlite3_finalize(insStmt);
+        throw;
+    }
+}
+
+void SQLiteDataSource::Purge()
+{
+    Execute(R"(DELETE FROM text WHERE id NOT IN (SELECT text_id FROM rela);)");
 }
 
 void SQLiteDataSource::DropFile(const char *path)
@@ -240,47 +362,57 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
     auto datPath = PathUtil::GetPath(xybase::string::sys_mbs_to_wcs(path + ".DAT"));
     Ring(xybase::string::to_utf8(datPath).c_str());
 
-    if (type == "dmsg")
+    Execute("BEGIN;");
+    try
     {
-        DMsg dmsg(datPath);
-        dmsg.Read();
-        int rowNum = 1;
-        for (auto &row : dmsg)
+        if (type == "dmsg")
         {
-            int colNum = 1;
-            for (auto &cell : row)
+            DMsg dmsg(datPath);
+            dmsg.Read();
+            int rowNum = 1;
+            for (auto &row : dmsg)
             {
-                if (cell.GetType() == 0) // str
+                int colNum = 1;
+                for (auto &cell : row)
                 {
-                    std::u8string text = xybase::string::escape(cell.Get<std::u8string>());
+                    if (cell.GetType() == 0) // str
+                    {
+                        std::u8string text = xybase::string::escape(cell.Get<std::u8string>());
 
-                    InsertText(reinterpret_cast<const char *>(text.c_str()), file_id, rowNum, colNum);
+                        InsertText(reinterpret_cast<const char *>(text.c_str()), file_id, rowNum, colNum);
+                    }
+                    ++colNum;
                 }
-                ++colNum;
+                ++rowNum;
             }
-            ++rowNum;
         }
-    }
-    else if (type == "xis")
-    {
-        XiString xis(datPath);
-        xis.Read();
-        int rowNum = 1;
-        for (auto &e : xis)
+        else if (type == "xis")
         {
-            InsertText((const char *)xybase::string::to_utf8(xybase::string::escape(xis.Decode(e.str))).c_str(), file_id, rowNum++, 1);
+            XiString xis(datPath);
+            xis.Read();
+            int rowNum = 1;
+            for (auto &e : xis)
+            {
+                InsertText((const char *)xybase::string::to_utf8(xybase::string::escape(xis.Decode(e.str))).c_str(), file_id, rowNum++, 1);
+            }
         }
-    }
-    else if (type == "evsb")
-    {
-        EventStringBase evsb(datPath);
-        evsb.Read();
-        int rowNum = 1;
-        for (auto &str : evsb)
+        else if (type == "evsb")
         {
-            InsertText(reinterpret_cast<const char *>(str.c_str()), file_id, rowNum++, 1);
+            EventStringBase evsb(datPath);
+            evsb.Read();
+            int rowNum = 1;
+            for (auto &str : evsb)
+            {
+                InsertText(reinterpret_cast<const char *>(str.c_str()), file_id, rowNum++, 1);
+            }
         }
     }
+    catch (std::exception &ex)
+    {
+        Execute("ROLLBACK;");
+        throw;
+    }
+    Execute("COMMIT;");
 }
 
 void SQLiteDataSource::InsertText(const char * text, int file_id, int rowNum, int colNum)
