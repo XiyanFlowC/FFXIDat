@@ -62,21 +62,27 @@ std::u32string xybase::string::to_utf32(long codepoint)
 
 long xybase::string::to_codepoint(const std::u8string &str)
 {
-    uint32_t ret = 0;
-    int leng = 0;
+    int leng;
+    return to_codepoint(str, 0, leng);
+}
 
-    if (str[0] & 0x80) {
-        if ((str[0] & 0xE0) == 0xC0) {
+long XY_API xybase::string::to_codepoint(const std::u8string &str, int offset, int &leng)
+{
+    uint32_t ret = 0;
+    leng = 0;
+
+    if (str[offset + 0] & 0x80) {
+        if ((str[offset + 0] & 0xE0) == 0xC0) {
             leng = 2;
-            ret = str[0] & 0x1F;
+            ret = str[offset + 0] & 0x1F;
         }
-        else if ((str[0] & 0xF0) == 0xE0) {
+        else if ((str[offset + 0] & 0xF0) == 0xE0) {
             leng = 3;
-            ret = str[0] & 0x0F;
+            ret = str[offset + 0] & 0x0F;
         }
-        else if ((str[0] & 0xF8) == 0xF0) {
+        else if ((str[offset + 0] & 0xF8) == 0xF0) {
             leng = 4;
-            ret = str[0] & 0x07;
+            ret = str[offset + 0] & 0x07;
         }
         else {
             // Invalid UTF-8 encoding
@@ -84,8 +90,8 @@ long xybase::string::to_codepoint(const std::u8string &str)
         }
 
         for (int i = 1; i < leng; ++i) {
-            if ((str[i] & 0xC0) == 0x80) {
-                ret = (ret << 6) | (str[i] & 0x3F);
+            if ((str[offset + i] & 0xC0) == 0x80) {
+                ret = (ret << 6) | (str[offset + i] & 0x3F);
             }
             else {
                 // Invalid UTF-8 encoding
@@ -94,8 +100,9 @@ long xybase::string::to_codepoint(const std::u8string &str)
         }
     }
     else {
+        leng = 1;
         // ASCII character
-        ret = str[0];
+        ret = str[offset + 0];
     }
 
     return ret;

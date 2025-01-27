@@ -4,6 +4,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.9.34622.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFXIDatProcessor", "FFXIDatProcessor\FFXIDatProcessor.vcxproj", "{50FB2544-10B2-47EA-B139-C2AE04767746}"
+	ProjectSection(ProjectDependencies) = postProject
+		{06EA7A1E-22DE-46BA-9A51-2D6BDFBD5269} = {06EA7A1E-22DE-46BA-9A51-2D6BDFBD5269}
+		{90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE} = {90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xybase", "xybase\xybase.vcxproj", "{90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFXIDat", "FFXIDat\FFXIDat.vcxproj", "{06EA7A1E-22DE-46BA-9A51-2D6BDFBD5269}"
+	ProjectSection(ProjectDependencies) = postProject
+		{90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE} = {90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +32,22 @@ Global
 		{50FB2544-10B2-47EA-B139-C2AE04767746}.Release|x64.Build.0 = Release|x64
 		{50FB2544-10B2-47EA-B139-C2AE04767746}.Release|x86.ActiveCfg = Release|Win32
 		{50FB2544-10B2-47EA-B139-C2AE04767746}.Release|x86.Build.0 = Release|Win32
+		{90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE}.Debug|x64.ActiveCfg = Debug|x64
+		{90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE}.Debug|x64.Build.0 = Debug|x64
+		{90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE}.Debug|x86.ActiveCfg = Debug|Win32
+		{90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE}.Debug|x86.Build.0 = Debug|Win32
+		{90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE}.Release|x64.ActiveCfg = Release|x64
+		{90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE}.Release|x64.Build.0 = Release|x64
+		{90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE}.Release|x86.ActiveCfg = Release|Win32
+		{90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE}.Release|x86.Build.0 = Release|Win32
+		{06EA7A1E-22DE-46BA-9A51-2D6BDFBD5269}.Debug|x64.ActiveCfg = Debug|x64
+		{06EA7A1E-22DE-46BA-9A51-2D6BDFBD5269}.Debug|x64.Build.0 = Debug|x64
+		{06EA7A1E-22DE-46BA-9A51-2D6BDFBD5269}.Debug|x86.ActiveCfg = Debug|Win32
+		{06EA7A1E-22DE-46BA-9A51-2D6BDFBD5269}.Debug|x86.Build.0 = Debug|Win32
+		{06EA7A1E-22DE-46BA-9A51-2D6BDFBD5269}.Release|x64.ActiveCfg = Release|x64
+		{06EA7A1E-22DE-46BA-9A51-2D6BDFBD5269}.Release|x64.Build.0 = Release|x64
+		{06EA7A1E-22DE-46BA-9A51-2D6BDFBD5269}.Release|x86.ActiveCfg = Release|Win32
+		{06EA7A1E-22DE-46BA-9A51-2D6BDFBD5269}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

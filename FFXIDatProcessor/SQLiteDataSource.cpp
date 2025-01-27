@@ -499,6 +499,8 @@ void SQLiteDataSource::TransAndOut()
     }
 }
 
+#include "ChsToSJis.h"
+
 std::u8string SQLiteDataSource::GetTranslation(const std::u8string &text) {
     sqlite3_stmt *stmt = nullptr;
     int textId = -1;
@@ -529,6 +531,9 @@ std::u8string SQLiteDataSource::GetTranslation(const std::u8string &text) {
         const char *translatedText = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
         if (translatedText != nullptr) {
             translation = (const char8_t *)translatedText;
+#ifdef CHS_SPECIFIED_MOD
+            translation = ChsToSJis::Instance().ReplaceHanzi(translation);
+#endif
         }
     }
     else {

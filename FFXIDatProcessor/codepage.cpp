@@ -61,7 +61,9 @@ std::string CodeCvt::CvtToString(const std::wstring &str)
 		auto dbc = uc2cp[code];
 		if (dbc == 0)
 		{
+#ifdef CHS_SPECIFIED_MOD
 			if (ChsOnSJisDirtyThing(sb, code)) continue;
+#endif
 
 			dbc = uc2cp[U'〓'];
 			if (dbc == 0)

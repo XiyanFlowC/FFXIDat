@@ -47,6 +47,8 @@ namespace xybase
 		*/
 		long XY_API to_codepoint(const std::u8string &str);
 
+		long XY_API to_codepoint(const std::u8string &str, int offset, int &leng);
+
 		/**
 		 * @brief Get the codepoint for utf-16 (only process the first character).
 		 * @param str The character need to be processed.

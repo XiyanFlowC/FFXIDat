@@ -15,43 +15,46 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DataManager.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="codepage.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="FFXIDatProcessor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="SQLiteDataSource.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="sqlite3\sqlite3.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ChsToSJis.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
+    <ClInclude Include="framework.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="XiString.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DMsg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EventString.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EventStringBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CsvFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DataManager.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="FFXIDatProcessor.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="liteopt.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="codepage.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="SQLiteDataSource.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ChsToSJis.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
+    <ClCompile Include="pch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DMsg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="EventString.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="EventStringBase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="XiString.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CsvFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
