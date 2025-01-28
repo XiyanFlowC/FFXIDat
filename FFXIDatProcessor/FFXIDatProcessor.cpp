@@ -96,7 +96,7 @@ int main(int argc, const char **argv)
         return -2;
     }
 
-    lopt_regopt("sqlite-init", 0, LOPT_FLG_VAL_NEED, [](const char *str)->int {
+    lopt_regopt("sql-init", 0, LOPT_FLG_VAL_NEED, [](const char *str)->int {
         std::filesystem::remove(PathUtil::progRootPath + L"/text.db");
         SQLiteDataSource ds;
         ds.Initialise();
@@ -104,32 +104,39 @@ int main(int argc, const char **argv)
         ds.InitialiseFileDefinition(def);
         return 0;
         }, L"用指定的定义初始化SQLite数据库。（已经存在的数据库会被删除）");
-    lopt_regopt("sqlite-trans-dat", 'T', 0, [](const char *str)->int {
+    lopt_regopt("sql-file-update", 0, LOPT_FLG_VAL_NEED, [](const char *str)->int {
+        std::filesystem::remove(PathUtil::progRootPath + L"/text.db");
         SQLiteDataSource ds;
-        ds.TransAndOut();
+        CsvFile def(str, std::ios_base::in | std::ios_base::binary);
+        ds.InitialiseFileDefinition(def);
         return 0;
-        }, L"按SQLite中的定义和翻译数据，试图翻译游戏Dat并输出。");
-    lopt_regopt("sqlite-text-purge", 0, 0, [](const char *str)->int {
+        }, L"用指定的定义更新SQLite数据库。");
+    lopt_regopt("sql-purge", 0, 0, [](const char *str)->int {
         SQLiteDataSource ds;
         ds.Purge();
         return 0;
         }, L"清除SQLite数据库中的无引用文本。");
-    lopt_regopt("sqlite-trans-dump", 0, 0, [](const char *str)->int {
+    lopt_regopt("sql-trans-dump", 0, 0, [](const char *str)->int {
         SQLiteDataSource ds;
         ds.DumpTranslationData();
         return 0;
         }, L"导出SQLite数据库中的原文和翻译数据到文本文件。");
-    lopt_regopt("sqlite-trans-import", 0, 0, [](const char *str)->int {
-        SQLiteDataSource ds;
-        ds.ImportTranslation();
-        return 0;
-        }, L"导入文本文件中的翻译数据到SQLite数据库中。");
-    lopt_regopt("sqlite-trans-dump-empty", 0, 0, [](const char *str)->int {
+    lopt_regopt("sql-trans-dump-empty", 0, 0, [](const char *str)->int {
         SQLiteDataSource ds;
         ds.ExportNoTranslation();
         return 0;
         }, L"导出SQLite数据库中没有翻译的数据到文本文件。");
-    lopt_regopt("sqlite-dat-to-sql", 'q', LOPT_FLG_VAL_NEED, [](const char *str)->int {
+    lopt_regopt("sql-trans-import", 0, 0, [](const char *str)->int {
+        SQLiteDataSource ds;
+        ds.ImportTranslation();
+        return 0;
+        }, L"导入文本文件中的翻译数据到SQLite数据库中。");
+    lopt_regopt("sql-dat-trans", 'T', 0, [](const char *str)->int {
+        SQLiteDataSource ds;
+        ds.TransAndOut();
+        return 0;
+        }, L"按SQLite中的定义和翻译数据，试图翻译游戏Dat并输出。");
+    lopt_regopt("sql-dat-read", 'q', LOPT_FLG_VAL_NEED, [](const char *str)->int {
         SQLiteDataSource ds;
         ds.DatToDatabase(str, nullptr, nullptr);
         return 0;

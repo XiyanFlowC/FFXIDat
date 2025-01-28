@@ -167,6 +167,7 @@ void SQLiteDataSource::ImportTranslation()
 
     std::ifstream oEye("text.txt", std::ios::in | std::ios::binary),
         tEye("text_translated.txt", std::ios::in | std::ios::binary);
+    Execute("BEGIN;");
     try
     {
         std::string text;
@@ -210,9 +211,12 @@ void SQLiteDataSource::ImportTranslation()
 
         sqlite3_finalize(qryStmt);
         sqlite3_finalize(insStmt);
+
+        Execute("COMMIT;");
     }
     catch (SQLException &ex)
     {
+        Execute("ROLLBACK;");
         if (qryStmt) sqlite3_finalize(qryStmt);
         if (insStmt) sqlite3_finalize(insStmt);
         throw;
