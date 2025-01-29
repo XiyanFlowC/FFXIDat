@@ -1,7 +1,8 @@
 #pragma once
 
-#include <string>
 #include <map>
+#include <string>
+#include <filesystem>
 
 class ChsToSJis
 {
@@ -9,7 +10,7 @@ class ChsToSJis
 public:
 	std::u8string ReplaceHanzi(std::u8string in);
 
-	ChsToSJis();
+	void Init(std::filesystem::path csv);
 
 	static ChsToSJis &Instance();
 };

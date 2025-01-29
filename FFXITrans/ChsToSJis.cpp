@@ -1,7 +1,7 @@
 #include "ChsToSJis.h"
 
-#include <CsvFile.h>
-#include "DataManager.h"
+#include "ChsToSJis.h"
+
 #include "StringBuilder.h"
 #include "xystring.h"
 
@@ -25,9 +25,11 @@ std::u8string ChsToSJis::ReplaceHanzi(std::u8string in)
     return sb.ToString();
 }
 
-ChsToSJis::ChsToSJis()
+#include "CsvFile.h"
+
+void ChsToSJis::Init(std::filesystem::path csvPath)
 {
-    CsvFile csv(PathUtil::progRootPath + L"/chs2sjis.csv", std::ios::in | std::ios::binary);
+    CsvFile csv(csvPath, std::ios::in | std::ios::binary);
 
     while (!csv.IsEof())
     {

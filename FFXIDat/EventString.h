@@ -6,7 +6,7 @@ struct EventStringControlSeqDef;
 
 class EventStringCodecUtil
 {
-	EventStringControlSeqDef *CheckControl(const char *start);
+	EventStringControlSeqDef *CheckControl(const char *start, const char *end);
 	std::map<int, EventStringControlSeqDef *> decDict;
 	std::map<std::string, EventStringControlSeqDef *> encDist;
 

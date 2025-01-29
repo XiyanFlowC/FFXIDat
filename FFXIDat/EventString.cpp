@@ -5,12 +5,14 @@
 #include <cassert>
 #include <stdexcept>
 
-EventStringControlSeqDef *EventStringCodecUtil::CheckControl(const char *start) // FIXME: 使用结构体统一控制
+EventStringControlSeqDef *EventStringCodecUtil::CheckControl(const char *start, const char *end) // FIXME: 使用结构体统一控制
 {
 	//printf("%d %d\n", start[0], start[1]);
 	// std::string test1(start, 1), test2(start, 2); // HACK: 目前只有最大两项的控制序列，先这样
 	if (*start == 0)
 	{
+		if (start + 1 >= end)
+			return nullptr;
 		if (start[1] != 0x20 && start[1] != 0x07) {
 			return nullptr;
 		}
@@ -201,7 +203,7 @@ std::string EventStringCodecUtil::Decode(const char *in, size_t limit)
 			continue;
 		}
 
-		auto def = CheckControl(p);
+		auto def = CheckControl(p, end);
 		if (def)
 		{
 			bool endFlag = false;
