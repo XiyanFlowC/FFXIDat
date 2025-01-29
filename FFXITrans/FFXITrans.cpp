@@ -148,7 +148,17 @@ int main()
             system("pause");
             return -2;
         }
-        ChsToSJis::Instance().Init(progRoot / L"chs2sjis.csv");
+        try
+        {
+            ChsToSJis::Instance().Init(progRoot / L"chs2sjis.csv");
+        }
+        catch (std::exception &ex)
+        {
+            std::wcerr << ex.what() << std::endl;
+            std::wcerr << L"处理简体汉字转换逻辑chs2sjis.csv失败了。" << std::endl;
+            system("pause");
+            return -3;
+        }
 
         LoadText();
 
