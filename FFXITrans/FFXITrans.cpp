@@ -131,6 +131,7 @@ int main()
     setlocale(LC_ALL, "");
     try
     {
+        std::wcout << L"FFXI汉化插入工具 Ver.0.1-alpha by Hyururu" << std::endl;
         if (PathInit())
         {
             system("pause");
@@ -170,6 +171,10 @@ int main()
                     return -3;
                 }
                 std::wcout << L"备份的恢复完成了。" << std::endl;
+                if ('Y' == YesNoPrompt(L"要退出程序吗？"))
+                {
+                    return 0;
+                }
             }
         }
 

@@ -17,6 +17,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFXIDat", "FFXIDat\FFXIDat.
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFXITrans", "FFXITrans\FFXITrans.vcxproj", "{C66F16ED-67D3-4965-973F-A4B3C8A614B1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{06EA7A1E-22DE-46BA-9A51-2D6BDFBD5269} = {06EA7A1E-22DE-46BA-9A51-2D6BDFBD5269}
+		{90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE} = {90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
