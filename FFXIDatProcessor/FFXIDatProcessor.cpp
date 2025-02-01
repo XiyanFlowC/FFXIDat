@@ -78,6 +78,8 @@ int help(const char *para)
     return 0;
 }
 
+const char *cfg_type = nullptr, *cfg_lang = nullptr, *cfg_path = nullptr;
+
 int main(int argc, const char **argv)
 {
     // setlocale(LC_ALL, "ja_JP");
@@ -104,6 +106,18 @@ int main(int argc, const char **argv)
         ds.InitialiseFileDefinition(def);
         return 0;
         }, L"用指定的定义初始化SQLite数据库。（已经存在的数据库会被删除）");
+    lopt_regopt("sql-cond-type", 0, LOPT_FLG_VAL_NEED, [](const char *str)->int {
+        cfg_type = str;
+        return 0;
+        }, L"指定操作对象的类型。");
+    lopt_regopt("sql-cond-lang", 0, LOPT_FLG_VAL_NEED, [](const char *str)->int {
+        cfg_lang = str;
+        return 0;
+        }, L"指定操作对象的语言。");
+    lopt_regopt("sql-cond-path", 0, LOPT_FLG_VAL_NEED, [](const char *str)->int {
+        cfg_path = str;
+        return 0;
+        }, L"指定操作对象的路径。");
     lopt_regopt("sql-file-update", 0, LOPT_FLG_VAL_NEED, [](const char *str)->int {
         std::filesystem::remove(PathUtil::progRootPath + L"/text.db");
         SQLiteDataSource ds;
@@ -128,7 +142,14 @@ int main(int argc, const char **argv)
         }, L"导出SQLite数据库中没有翻译的数据到文本文件。");
     lopt_regopt("sql-trans-import", 0, 0, [](const char *str)->int {
         SQLiteDataSource ds;
-        ds.ImportTranslation();
+        try
+        {
+            ds.ImportTranslation();
+        }
+        catch (SQLException &ex)
+        {
+            std::wcout << xybase::string::to_wstring(ex.what()) << L"\nSQL 错误。\n";
+        }
         return 0;
         }, L"导入文本文件中的翻译数据到SQLite数据库中。");
     lopt_regopt("sql-dat-trans", 'T', 0, [](const char *str)->int {
@@ -136,9 +157,9 @@ int main(int argc, const char **argv)
         ds.TransAndOut();
         return 0;
         }, L"按SQLite中的定义和翻译数据，试图翻译游戏Dat并输出。");
-    lopt_regopt("sql-dat-read", 'q', LOPT_FLG_VAL_NEED, [](const char *str)->int {
+    lopt_regopt("sql-dat-read", 'q', 0, [](const char *str)->int {
         SQLiteDataSource ds;
-        ds.DatToDatabase(str, nullptr, nullptr);
+        ds.DatToDatabase(cfg_lang, cfg_type, cfg_path);
         return 0;
         }, L"从游戏安装目录抽取指定语言的文本，并存入SQLite数据库。");
     lopt_regopt("do-xor", 'x', 0, [](const char *str)->int {cfg_xor = 1; return 0; }, L"要求DMsg进行Xor保护。");
@@ -234,9 +255,8 @@ int main(int argc, const char **argv)
                         std::wcout << "Failed: " << ex.what() << std::endl;
                     }
                 }
-                else if ((flag & 0xFF000000) == 0x10000000)
+                else if ((flag & 0xFFFFFF) == size - 4)
                 {
-                    if ((flag & 0xFFFFFF) == size - 4)
                     {
                         std::wcout << "evsb p=" << path.c_str() << std::endl;
                         try

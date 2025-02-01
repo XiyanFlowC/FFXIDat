@@ -6,7 +6,7 @@
 #include <exception>
 #include "CsvFile.h"
 
-class SQLException : std::runtime_error {
+class SQLException : public std::runtime_error {
 public:
 	explicit SQLException(const std::string &msg) : std::runtime_error(msg.c_str()) {}
 

@@ -193,7 +193,7 @@ void SQLiteDataSource::ImportTranslation()
             sqlite3_bind_text(qryStmt, 1, text.c_str(), -1, SQLITE_TRANSIENT);
 
             if (sqlite3_step(qryStmt) != SQLITE_ROW) {
-                throw SQLException("query for index failed.");
+                throw SQLException(std::string("failed to query index for ") + xybase::string::to_string((char8_t *)text.c_str()));
             }
 
             int text_id = sqlite3_column_int(qryStmt, 0);
@@ -203,7 +203,7 @@ void SQLiteDataSource::ImportTranslation()
 
             if (sqlite3_step(insStmt) != SQLITE_DONE)
             {
-                throw SQLException("insertion failed.");
+                throw SQLException(sqlite3_errmsg(db));
             }
             sqlite3_reset(qryStmt);
             sqlite3_reset(insStmt);
@@ -225,7 +225,8 @@ void SQLiteDataSource::ImportTranslation()
 
 void SQLiteDataSource::Purge()
 {
-    Execute(R"(DELETE FROM text WHERE id NOT IN (SELECT text_id FROM rela);)");
+    Execute("CREATE TEMP VIEW text_ids AS SELECT text_id FROM rela");
+    Execute(R"(DELETE FROM text WHERE id NOT IN text_ids;)");
 }
 
 void SQLiteDataSource::DropFile(const char *path)
@@ -285,7 +286,10 @@ void SQLiteDataSource::DatToDatabase(const char *lang, const char *type, const c
     }
     else {
         // Search by lang and optionally type
-        query = "SELECT path, type FROM file WHERE lang = ?";
+        query = "SELECT path, type FROM file WHERE 1 = 1";
+        if (lang) {
+            query += " AND lang = ?";
+        }
         if (type) {
             query += " AND type = ?";
         }
@@ -301,9 +305,14 @@ void SQLiteDataSource::DatToDatabase(const char *lang, const char *type, const c
             sqlite3_bind_text(stmt, 1, path, -1, SQLITE_TRANSIENT);
         }
         else {
-            sqlite3_bind_text(stmt, 1, lang, -1, SQLITE_TRANSIENT);
-            if (type) {
-                sqlite3_bind_text(stmt, 2, type, -1, SQLITE_TRANSIENT);
+            if (lang) {
+                sqlite3_bind_text(stmt, 1, lang, -1, SQLITE_TRANSIENT);
+                if (type) {
+                    sqlite3_bind_text(stmt, 2, type, -1, SQLITE_TRANSIENT);
+                }
+            }
+            else if (type) {
+                sqlite3_bind_text(stmt, 1, type, -1, SQLITE_TRANSIENT);
             }
         }
 
@@ -397,7 +406,7 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
             int rowNum = 1;
             for (auto &e : xis)
             {
-                InsertText((const char *)xybase::string::to_utf8(xybase::string::escape(xis.Decode(e.str))).c_str(), file_id, rowNum++, 1);
+                InsertText((const char *)xybase::string::escape(xybase::string::to_utf8(xis.Decode(e.str))).c_str(), file_id, rowNum++, 1);
             }
         }
         else if (type == "evsb")
@@ -585,7 +594,7 @@ void SQLiteDataSource::TranslateDat(int file_id, const char *file_path, const ch
         int rowNum = 1;
         for (auto &str : xis)
         {
-            std::u8string text = xybase::string::escape(xybase::string::to_utf8(str.str));
+            std::u8string text = xybase::string::escape(xybase::string::to_utf8(xis.Decode(str.str)));
 
             str.str = xis.Encode(xybase::string::to_string(xybase::string::unescape(GetTranslation(text))));
         }
