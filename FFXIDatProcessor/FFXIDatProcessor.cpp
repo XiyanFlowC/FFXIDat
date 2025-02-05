@@ -407,8 +407,8 @@ void ExtractSysText()
                     std::ifstream eye(p, std::ios::in | std::ios::binary);
                     int flag;
                     eye.read((char *)&flag, 4);
-                    if ((flag & 0xFF000000) == 0x10000000)
-                    {
+                    /*if ((flag & 0xFF000000) == 0x10000000)
+                    {*/
                         if ((flag & 0xFFFFFF) == size - 4)
                         {
                             std::wcout << "evsb p=" << p << std::endl;
@@ -423,7 +423,7 @@ void ExtractSysText()
                                 std::wcout << "Failed: " << ex.what() << std::endl;
                             }
                         }
-                    }
+                    /*}*/
                 }
             }
         }
