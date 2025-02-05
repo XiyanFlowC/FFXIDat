@@ -362,3 +362,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /FFXIDatProcessor/output
+/FFXIDatProcessor/text.txt
+/FFXIDatProcessor/text_translated.txt
+/FFXIDatProcessor/sqlite3
