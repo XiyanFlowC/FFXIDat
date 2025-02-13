@@ -87,10 +87,19 @@ int PathInit()
     return 0;
 }
 
-void LoadText()
+int LoadText(int seq)
 {
-    std::ifstream oEye(progRoot / "text.txt", std::ios::in | std::ios::binary),
-        tEye(progRoot / "text_translated.txt", std::ios::in | std::ios::binary);
+    fs::path textPath = progRoot / (std::string("text") + std::to_string(seq) + ".txt");
+    fs::path transPath = progRoot / (std::string("text") + std::to_string(seq) + "_translated.txt");
+    if (seq == 0) {
+        textPath = progRoot / "text.txt";
+        transPath = progRoot / "text_translated.txt";
+    }
+    std::wcout << L"读取：" << textPath << L" -=- " << transPath << std::endl;
+
+    std::ifstream
+        oEye(textPath, std::ios::in | std::ios::binary),
+        tEye(transPath, std::ios::in | std::ios::binary);
     std::string text;
     std::string trans;
 
@@ -104,7 +113,8 @@ void LoadText()
         textMapping[(char8_t *)text.c_str()] = (char8_t *)trans.c_str();
         ++i;
     }
-    std::wcout << L"读取了" << i << L"条文本翻译数据。\n";
+    //std::wcout << L"读取了" << i << L"条文本翻译数据。\n";
+    return i;
 }
 
 int YesNoPrompt(const std::wstring &prompt)
@@ -131,7 +141,7 @@ int main()
     setlocale(LC_ALL, "");
     try
     {
-        std::wcout << L"FFXI汉化插入工具 Ver.0.1-alpha by Hyururu" << std::endl;
+        std::wcout << L"FFXI汉化插入工具 Ver.0.2-alpha by Hyururu" << std::endl;
         if (PathInit())
         {
             system("pause");
@@ -160,7 +170,8 @@ int main()
             return -3;
         }
 
-        LoadText();
+        for (int i = 0; LoadText(i); ++i);
+        std::wcout << L"共读取了 " << std::to_wstring(textMapping.size()) << L" 条文本数据。" << std::endl;
 
         bool backupExist = false;
         if (fs::exists(progRoot / "backup")) {
@@ -217,6 +228,10 @@ int main()
             fs::path datPath = gameRoot / relaPath;
             fs::path outPath = overwrite ? datPath : "output" / relaPath;
             if (!fs::exists(datPath)) continue;
+            if (!fs::exists(outPath.parent_path()))
+            {
+                fs::create_directories(outPath.parent_path());
+            }
             if (overwrite)
                 BackupGameFile(relaPath);
             if (type == u8"xis")

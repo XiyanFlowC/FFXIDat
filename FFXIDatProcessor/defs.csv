@@ -41,6 +41,7 @@ ROM/175/32,dmsg,jp,sys/equip_slot,1
 #ROM/176/57,dmsg,jp,sys/mis/pm,2|3
 #ROM/176/58,dmsg,jp,sys/mis/as,2|3
 #ROM/176/59,dmsg,jp,sys/mis/at,2|3
+ROM/180/77,dmsg,jp,sys/titles,
 ROM/180/101,dmsg,jp,sys/status,1
 ROM/181/68,dmsg,jp,sys/weapon_skill,1
 ROM/181/69,dmsg,jp,sys/magic,1

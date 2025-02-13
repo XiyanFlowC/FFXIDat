@@ -161,7 +161,7 @@ int main(int argc, const char **argv)
         SQLiteDataSource ds;
         ds.DatToDatabase(cfg_lang, cfg_type, cfg_path);
         return 0;
-        }, L"从游戏安装目录抽取指定语言的文本，并存入SQLite数据库。");
+        }, L"根据SQLite数据库中定义从游戏安装目录抽取文本，并存入。");
     lopt_regopt("do-xor", 'x', 0, [](const char *str)->int {cfg_xor = 1; return 0; }, L"要求DMsg进行Xor保护。");
     lopt_regopt("block", 'b', 0, [](const char *str)->int {cfg_block = 1; return 0; }, L"要求DMsg以块形式保存。。");
     lopt_regopt("dmsg-to-csv", 'm', LOPT_FLG_VAL_NEED, [](const char *str) -> int {
