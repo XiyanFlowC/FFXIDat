@@ -145,21 +145,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BlockFile.h" />
     <ClInclude Include="CsvFile.h" />
     <ClInclude Include="DMsg.h" />
     <ClInclude Include="EventString.h" />
     <ClInclude Include="EventStringBase.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="Image.h" />
     <ClInclude Include="ItemData.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Record.h" />
     <ClInclude Include="XiString.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BlockFile.cpp" />
     <ClCompile Include="CsvFile.cpp" />
     <ClCompile Include="DMsg.cpp" />
     <ClCompile Include="EventString.cpp" />
     <ClCompile Include="EventStringBase.cpp" />
+    <ClCompile Include="Image.cpp" />
     <ClCompile Include="ItemData.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

@@ -25,7 +25,7 @@ public:
 
 // FIXME: 重新登记控制符
 static struct EventStringControlSeqDef {
-		char    name[16];
+		char    type[16];
 		int     parameterCount;
 		char    code[8];
 		int     step;

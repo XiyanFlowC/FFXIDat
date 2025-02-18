@@ -194,7 +194,7 @@ std::string XiString::Decode(const std::string &in)
 // 等待样本分析
 struct XiStringControlSequenceStepDefinition {
 	char code[4];
-	char name[12];
+	char type[12];
 	int step;
 } xiStringControlSequenceStepDefinitions[] = {
 	// 80 ???

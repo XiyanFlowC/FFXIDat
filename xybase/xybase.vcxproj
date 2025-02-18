@@ -153,6 +153,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="StringBuilder.h" />
+    <ClInclude Include="vec.h" />
     <ClInclude Include="xyapi.h" />
     <ClInclude Include="xystring.h" />
     <ClInclude Include="xyutils.h" />

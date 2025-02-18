@@ -77,7 +77,7 @@ EventStringCodecUtil::EventStringCodecUtil()
 	EventStringControlSeqDef *p = gameStringControlSequenceDefinition;
 	while (p->parameterCount != -1)
 	{
-		encDist[p->name] = p;
+		encDist[p->type] = p;
 		decDict[p->code[0] & 0xFF] = p; // FIXME: 通用化
 		++p;
 	}
@@ -105,9 +105,9 @@ std::string EventStringCodecUtil::Encode(const std::string &in)
 
 			// Name parse
 			auto ps = tag.find(':');
-			auto name = tag.substr(0, ps);
+			auto type = tag.substr(0, ps);
 
-			if (name == "-") // a \0 .* \7 seq
+			if (type == "-") // a \0 .* \7 seq
 			{
 				// It should be safe as for now I only seen it as an ending
 				// ret += "\x7F\x31";
@@ -116,7 +116,7 @@ std::string EventStringCodecUtil::Encode(const std::string &in)
 				// return ret;
 				endFlag = true;
 			}
-			else if (name == "gender") // FIXME: 使用结构体统一控制
+			else if (type == "gender") // FIXME: 使用结构体统一控制
 			{
 				ret += "\x7F\x85";
 				i = end;
@@ -124,11 +124,11 @@ std::string EventStringCodecUtil::Encode(const std::string &in)
 			}
 			else
 			{
-				auto def = encDist.find(std::string(name));
+				auto def = encDist.find(std::string(type));
 
 				if (def == encDist.end())
 				{
-					ret += xybase::string::stoi(name, 16);
+					ret += xybase::string::stoi(type, 16);
 				}
 				else
 					ret += def->second->code[0]; // FIXME: 通用化
@@ -209,8 +209,8 @@ std::string EventStringCodecUtil::Decode(const char *in, size_t limit)
 			bool endFlag = false;
 
 			sb += '<';
-			sb += def->name;
-			endFlag = def->name[0] == '-';
+			sb += def->type;
+			endFlag = def->type[0] == '-';
 			p += def->step;
 			// printf("%s:\n", def->name);
 			//sb += '>';

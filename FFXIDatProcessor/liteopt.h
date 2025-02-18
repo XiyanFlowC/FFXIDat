@@ -67,7 +67,7 @@ static int _lopt_callbystr(const char *opt, const char *_str)
     return -i;
 }
 
-static void lopt_regopt(const char *name, char chname, unsigned char flg, int (*callback)(const char *), const void *desc)
+static void lopt_regopt(const char *type, char chname, unsigned char flg, int (*callback)(const char *), const void *desc)
 {
     static int opt_idx = 0;
     if (_reged_opt == NULL)
@@ -81,10 +81,10 @@ static void lopt_regopt(const char *name, char chname, unsigned char flg, int (*
     {
         flg |= LOPT_FLG_DESC_VLD;
     }
-    if (name != NULL)
+    if (type != NULL)
     {
         flg |= LOPT_FLG_STR_VLD;
-        strcpy(_reged_opt[opt_idx].long_opt, name);
+        strcpy(_reged_opt[opt_idx].long_opt, type);
     }
     if (chname != '\0') flg |= LOPT_FLG_CH_VLD;
     _reged_opt[opt_idx].flg = flg;
