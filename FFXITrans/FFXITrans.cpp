@@ -34,7 +34,10 @@ std::u8string GetTranslation(const std::u8string &text) {
     auto itr = textMapping.find(text);
     if (itr == textMapping.end())
     {
-        std::wcout << L"\n文本：" << xybase::string::to_wstring(text) << L"失配了。" << std::endl;
+        // CP936 环境下会爆，替换掉
+        auto safeStr = xybase::string::replace(xybase::string::to_wstring(text), { L"�" }, { L"?" });
+        safeStr = xybase::string::replace(safeStr, { L"・" }, { L"·" });
+        std::wcout << L"\n文本：" << safeStr << L"失配了。" << std::endl;
         return text;
     }
 
@@ -108,7 +111,7 @@ int LoadText(int seq)
         if (!std::getline(tEye, trans))
         {
             std::wcerr << L"翻译文件和原文文件的行数不一致。\n";
-            return;
+            return i;
         }
         textMapping[(char8_t *)text.c_str()] = (char8_t *)trans.c_str();
         ++i;

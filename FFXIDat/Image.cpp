@@ -182,17 +182,21 @@ void Image::ImportDds(const char *p_dds)
 	char fourCC[5] = { 0 };
 	memcpy(fourCC, &ddsHeader->ddspf.dwFourCC, 4);
 	ImageType newType;
+	int unitSize = 4;
 	if (strcmp(fourCC, "DXT1") == 0)
 	{
 		newType = ImageType::IT_DXT1;
+		unitSize = 2;
 	}
 	else if (strcmp(fourCC, "DXT2") == 0)
 	{
 		newType = ImageType::IT_DXT2;
+		unitSize = 4;
 	}
 	else if (strcmp(fourCC, "DXT3") == 0)
 	{
 		newType = ImageType::IT_DXT3;
+		unitSize = 4;
 	}
 	else if (strcmp(fourCC, "DXT4") == 0)
 	{
@@ -225,7 +229,7 @@ void Image::ImportDds(const char *p_dds)
 
 	memcpy(dxtHeader.fourCC, fourCC, 4);
 	dxtHeader.textureSize = ddsHeader->dwPitchOrLinearSize;
-	dxtHeader.pitch = ddsHeader->dwPitchOrLinearSize;
+	dxtHeader.pitch = ddsHeader->dwWidth * unitSize;//ddsHeader->dwPitchOrLinearSize;
 
 	// 复制纹理数据
 	texture.reset(new char[dxtHeader.textureSize]);
