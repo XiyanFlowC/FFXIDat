@@ -30,6 +30,16 @@ Currently only pure text files can be processed.
 	- [x] String Control Sequence Analysis (Done, I think?)
 		- [ ] Figure out tags' meaning.
 	- [x] Import
+- [ ] Menu Block File
+	- [ ] Texture Block
+		- [x] DXT1
+		- [ ] DXT2
+		- [x] DXT3
+		- [ ] DXT4
+		- [ ] DXT5
+		- [ ] Bitmap
+	- [ ] Menu Layout
+	- [x] Texture Clip and Tile
 
 #### DMsg file
 ```DMsg.cpp``` ```DMsg.h```.
@@ -79,6 +89,15 @@ int32 offsets[N]
 * ```flag``` is always 0x10, the purpose of which is unclear
 * ```offsets``` indicates the byte offset of the corresponding string relative to the starting point of ```offsets```.
 * All bytes are xor-ed with 0x80, except for ```fileSize``` and ```flag```.
+
+#### Menu
+Starts with a "menu" in ASCII.
+
+Related codes in `BlockFile.h` and `BlockFile.cpp`. Not very clear how it works. `ImageBlock` contains textures. `ImageSetBlock` contains multiple image's clip and paste instruction, to form a picture.
+
+You can also view the imageblocks' results in AltanaViewer, using TexHammar to view the textures themselves.
+
+In the `FFXIMenu` a viewer/editor is implemented for the block files is building. Currently can handle only the UI and Lobby stuffs. (ROM/91/14, 91/15, 91/16, 0/1, etc.)
 
 ## Note
 Square extended the SJIS to represent characters in FR and DE. Further research required.
