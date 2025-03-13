@@ -574,7 +574,7 @@ Gdiplus::Bitmap *CFFXIMenuDoc::GetOrCreateNoImageBitmap()
 
 	// 创建图形对象来绘制图像
 	Gdiplus::Graphics graphics(pBitmap);
-	graphics.Clear(Gdiplus::Color::Transparent);  // 清除背景为白色
+	graphics.Clear(Gdiplus::Color::Transparent);
 
 	Gdiplus::FontFamily fontFamily(L"Arial");
 	Gdiplus::REAL fontSize = 36.0f;

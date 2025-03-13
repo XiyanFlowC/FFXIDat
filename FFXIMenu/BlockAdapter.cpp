@@ -358,11 +358,11 @@ void TileNode::GetProperties(CMFCPropertyGridCtrl &grid) {
 	for (int i = 0; i < 4; ++i) {
 		CString strName;
 		strName.Format(_T("参数[%d]"), i + 1);
-		CString strVal;
-		strVal.Format(_T("0x%08X"), imageRef->ukn[i]);
+		/*CString strVal;
+		strVal.Format(_T("0x%08X"), imageRef->ukn[i]);*/
 		pMappingGroup->AddSubItem(new CMFCPropertyGridProperty(
 			strName,
-			(_variant_t)strVal,
+			(_variant_t)(int)imageRef->ukn[i],
 			_T("未解析映射参数。")));
 	}
 
@@ -893,8 +893,12 @@ void ImageBlockNode::GetProperties(CMFCPropertyGridCtrl &grid)
 		if (dxtHeader.textureSize > 1024 * 1024) {
 			strSize.Format(_T("%.2f MiB"), dxtHeader.textureSize / (1024.0f * 1024));
 		}
-		else {
+		else if (dxtHeader.textureSize > 1024) {
 			strSize.Format(_T("%d KiB"), dxtHeader.textureSize / 1024);
+		}
+		else
+		{
+			strSize.Format(_T("%d B"), dxtHeader.textureSize);
 		}
 		pDxtGroup->AddSubItem(new CMFCPropertyGridProperty(
 			_T("纹理大小"),

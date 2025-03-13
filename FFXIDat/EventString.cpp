@@ -43,6 +43,7 @@ EventStringControlSeqDef *EventStringCodecUtil::CheckControl(const char *start, 
 			// static EventStringControlSeqDef con7f31{"-", 0, "\x7F\x31\x00", 3}; // followed by a string ended with \x07?
 			// \x7F\xFX seems have only one parameter
 			static EventStringControlSeqDef con7f1v{ "7F", 1, "\x7F", 1 };
+			static EventStringControlSeqDef con7f38v{ "7F", 3, "\x7F", 1 };
 			static EventStringControlSeqDef gender{ "gender", 0, "\x7F\x85", 2 };
 			/*if (start[1] == 0x31 && start[2] == 0)
 			{
@@ -55,6 +56,10 @@ EventStringControlSeqDef *EventStringCodecUtil::CheckControl(const char *start, 
 			if (start[1] == 0x85)
 			{
 				return &gender;
+			}
+			if (start[1] == 0x38)
+			{
+				return &con7f38v;
 			}
 			if (start[1] > 0xF0 || start[1] == 0x31)
 			{

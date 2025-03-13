@@ -193,7 +193,10 @@ void SQLiteDataSource::ImportTranslation()
             sqlite3_bind_text(qryStmt, 1, text.c_str(), -1, SQLITE_TRANSIENT);
 
             if (sqlite3_step(qryStmt) != SQLITE_ROW) {
-                throw SQLException(std::string("failed to query index for ") + xybase::string::to_string((char8_t *)text.c_str()));
+
+                sqlite3_reset(qryStmt);
+                continue;
+                // throw SQLException(std::string("failed to query index for ") + xybase::string::to_string((char8_t *)text.c_str()));
             }
 
             int text_id = sqlite3_column_int(qryStmt, 0);
