@@ -30,18 +30,18 @@ struct BlockFileHeader
 enum class BlockType : uint8_t
 {
 	BT_MENU_FORM = 0x30,
-	BT_MENU_FORM2 = 0xB0,
-	BT_IMAGE_SET2 = 0xB1,
+	//BT_MENU_FORM2 = 0xB0,
+	//BT_IMAGE_SET2 = 0xB1,
 	BT_IMAGE_SET = 0x31,
 	BT_IMAGE = 0x20, //? image
-	BT_END = 0x80,
+	BT_END = 0x00,
 };
 
 struct BlockHeader
 {
 	char name[4];
-	BlockType type;
-	uint8_t flags[3];
+	uint32_t type : 7;
+	uint32_t size : 25;
 	uint32_t padding[2];
 };
 
@@ -161,9 +161,11 @@ public:
 
 		virtual void Write(std::ofstream &pen) = 0;
 
+		virtual ~Block() { if (rawData) delete[] rawData; }
+
 	protected:
 
-		char *rawData;
+		char *rawData; // should be char [], by new[]
 	};
 
 	// 没有体的块
@@ -173,6 +175,23 @@ public:
 		EmptyBlock() {}
 		virtual void Read(std::ifstream &eye) {}
 		virtual void Write(std::ofstream &pen) {}
+	};
+
+	class UnknownBlock : public Block
+	{
+	public:
+		virtual void Read(std::ifstream &eye)
+		{
+			size_t size = blockHeader.size * 16 - 16; // block header size === 16
+			rawData = new char[size];
+			eye.read(rawData, size);
+		}
+
+		virtual void Write(std::ofstream &pen)
+		{
+			size_t size = blockHeader.size * 16 - 16;
+			pen.write(rawData, size);
+		}
 	};
 
 	// 保存了一个图像的块

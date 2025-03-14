@@ -14,37 +14,39 @@ void BlockFile::Read()
 		eye.read((char *)&hdr, sizeof(BlockHeader));
 
 		Block *rst;
-		switch (hdr.type)
+		switch ((BlockType)hdr.type)
 		{
 		case BlockType::BT_MENU_FORM:
-		case BlockType::BT_MENU_FORM2:
 			rst = new MenuBlock();
 			break;
 		case BlockType::BT_IMAGE:
 			rst = new ImageBlock();
 			break;
 		case BlockType::BT_IMAGE_SET:
-		case BlockType::BT_IMAGE_SET2:
 			rst = new ImageSetBlock();
 			break;
 		case BlockType::BT_END:
 			rst = new EmptyBlock();
 			break;
 		default:
-			abort();
+			rst = new UnknownBlock();
 			break;
 		}
 		memcpy(&rst->blockHeader, &hdr, sizeof(BlockHeader));
 		rst->Read(eye);
 		blocks.push_back(rst);
 
-		int pos = eye.tellg();
-		int pad = XY_ALIGN(pos, 16) - pos;
+		size_t pos = eye.tellg();
+		if (pos == -1)
+		{
+			throw std::runtime_error("File format error.");
+		}
+		size_t pad = XY_ALIGN(pos, 16) - pos;
 		while (pad--)
 		{
 			eye.get();
 		}
-	} while (hdr.type != BlockType::BT_END);
+	} while ((BlockType)hdr.type != BlockType::BT_END);
 }
 
 void BlockFile::Write()
@@ -53,6 +55,9 @@ void BlockFile::Write()
 	pen.write((char *)&header, sizeof(header));
 	for (Block *block : blocks)
 	{
+		// FIXME: 设计写入前的计算方法而不是事后补救
+		size_t startPos = pen.tellp();
+
 		pen.write((char *)&block->blockHeader, sizeof(BlockHeader));
 		block->Write(pen);
 
@@ -62,6 +67,13 @@ void BlockFile::Write()
 		{
 			pen.put(0);
 		}
+
+		size_t endPos = pen.tellp();
+		size_t size = endPos - startPos;
+		block->blockHeader.size = size / 16;
+		pen.seekp(startPos);
+		pen.write((char *)&block->blockHeader, sizeof(BlockHeader));
+		pen.seekp(endPos);
 	}
 	pen.close();
 }

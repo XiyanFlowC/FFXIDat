@@ -707,9 +707,9 @@ void BlockNode::GetProperties(CMFCPropertyGridCtrl &grid) {
 		(_variant_t)CString(block->blockHeader.name, 4),
 		_T("此块的名字")));
 	group->AddSubItem(new CMFCPropertyGridProperty(
-		_T("块旗标"),
-		(_variant_t) * (int *)&block->blockHeader.flags,
-		_T("此块的旗标")));
+		_T("块大小"),
+		(_variant_t) (int)(block->blockHeader.size * 16),
+		_T("此块的大小")));
 
 	group->AllowEdit(FALSE);
 	grid.AddProperty(group);
@@ -717,10 +717,9 @@ void BlockNode::GetProperties(CMFCPropertyGridCtrl &grid) {
 
 FileNode::FileNode(BlockFile *file, CFFXIMenuDoc *doc) : file(file), doc(doc) {
 	for (auto &block : file->blocks) {
-		switch (block->blockHeader.type)
+		switch ((BlockType)block->blockHeader.type)
 		{
 		case BlockType::BT_IMAGE_SET:
-		case BlockType::BT_IMAGE_SET2:
 			children.push_back(new ImageSetBlockNode(this, dynamic_cast<BlockFile::ImageSetBlock *>(block)));
 			break;
 		case BlockType::BT_IMAGE:
