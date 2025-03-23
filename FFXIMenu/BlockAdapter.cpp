@@ -193,36 +193,46 @@ void DecodeDXT3(char *dst, const char *src, int w, int h) {
 }
 
 // 解码 DXT5 纹理
-void DecodeDXT5(char *dst, const char *src, int w, int h) {
-	int numBlocksX = w / 4;
-	int numBlocksY = h / 4;
+void DecodeDXT5(uint32_t *dst, const uint8_t *src, int w, int h) {
+	int numBlocksX = (w + 3) / 4;
+	int numBlocksY = (h + 3) / 4;
 
 	for (int blockY = 0; blockY < numBlocksY; ++blockY) {
 		for (int blockX = 0; blockX < numBlocksX; ++blockX) {
-			int blockOffset = (blockY * numBlocksX + blockX) * 16;
-			uint16_t color0 = *(uint16_t *)(src + blockOffset);
-			uint16_t color1 = *(uint16_t *)(src + blockOffset + 2);
+			const uint8_t *blockSrc = src + (blockY * numBlocksX + blockX) * 16;
+			uint32_t *blockDst = dst + blockY * 4 * w + blockX * 4;
 
-			uint32_t color0Decoded = DecodeRGB565(color0);
-			uint32_t color1Decoded = DecodeRGB565(color1);
+			// Decode alpha
+			uint8_t alpha0 = blockSrc[0];
+			uint8_t alpha1 = blockSrc[1];
+			uint64_t alphaBits = 0;
+			memcpy(&alphaBits, blockSrc + 2, 6);
+			uint8_t alphaTable[8];
+			// Generate alphaTable based on alpha0 and alpha1...
 
-			uint32_t *block = (uint32_t *)(dst + (blockY * numBlocksX + blockX) * 16);
+			// Decode color
+			uint16_t color0 = *(uint16_t *)(blockSrc + 8);
+			uint16_t color1 = *(uint16_t *)(blockSrc + 10);
+			uint32_t colors[4];
+			// Generate color palette from color0 and color1...
 
-			uint32_t alphaTable = *(uint32_t *)(src + blockOffset + 4);
-			uint32_t *alphaTableDecoded = new uint32_t[8];
-			for (int i = 0; i < 8; ++i) {
-				uint32_t alpha = (alphaTable >> (i * 4)) & 0xF;
-				alphaTableDecoded[i] = alpha * 255 / 15;
-			}
+			uint32_t colorIndices = *(uint32_t *)(blockSrc + 12);
 
 			for (int i = 0; i < 16; ++i) {
-				uint8_t alphaIndex = (alphaTable >> (2 * i)) & 0x03;
-				uint32_t alphaValue = alphaTableDecoded[alphaIndex];
+				int pxX = i % 4;
+				int pxY = i / 4;
+				uint32_t *pixel = blockDst + pxY * w + pxX;
 
-				block[i] = (alphaValue << 24) | (color0Decoded & 0x00FFFFFF);
+				// Decode alpha
+				uint8_t alphaIdx = (alphaBits >> (3 * i)) & 0x07;
+				uint8_t alpha = alphaTable[alphaIdx];
+
+				// Decode color
+				uint8_t colorIdx = (colorIndices >> (2 * i)) & 0x03;
+				uint32_t color = colors[colorIdx];
+
+				*pixel = (alpha << 24) | (color & 0x00FFFFFF);
 			}
-
-			delete[] alphaTableDecoded;
 		}
 	}
 }
@@ -237,7 +247,7 @@ void DecodeTexture(char *dst, const char *src, int w, int h, int type) {
 		DecodeDXT3(dst, src, w, h);
 		break;
 	case 5:
-		DecodeDXT5(dst, src, w, h);
+		DecodeDXT5((uint32_t *)dst, (const uint8_t *)src, w, h);
 		break;
 	default:
 		// 不支持的类型
@@ -318,6 +328,64 @@ void ClipNode::DeleteNode()
 	{
 		ig->DeleteClipTileOf(m_index);
 	}
+}
+
+CString ClipNode::GetIni() const
+{
+	CString strIni;
+
+	// 序列化裁切区域
+	strIni.AppendFormat(_T("X=%d\n"), imageRef->x);
+	strIni.AppendFormat(_T("Y=%d\n"), imageRef->y);
+	strIni.AppendFormat(_T("Width=%d\n"), imageRef->w);
+	strIni.AppendFormat(_T("Height=%d\n"), imageRef->h);
+
+	// 序列化纹理来源（使用CA2T转换ANSI到Unicode）
+	strIni.AppendFormat(_T("Group=%s\n"), CString(CA2T(BlockNameGetCleanName(imageRef->group).c_str(), CP_UTF8)));
+	strIni.AppendFormat(_T("Name=%s"), CString(CA2T(BlockNameGetCleanName(imageRef->name).c_str(), CP_UTF8)));
+
+	return strIni;
+}
+
+void ClipNode::SetIni(const CString &str) const
+{
+	int pos = 0;
+	CString strLine;
+
+	// 逐行解析
+	while (!(strLine = str.Tokenize(_T("\n"), pos)).IsEmpty()) {
+		int nEquals = strLine.Find('=');
+		if (nEquals == -1) continue;
+
+		CString strKey = strLine.Left(nEquals).Trim();
+		CString strValue = strLine.Mid(nEquals + 1).Trim();
+
+		// 根据键名设置值
+		if (strKey == _T("X")) {
+			imageRef->x = static_cast<uint16_t>(_ttoi(strValue));
+		}
+		else if (strKey == _T("Y")) {
+			imageRef->y = static_cast<uint16_t>(_ttoi(strValue));
+		}
+		else if (strKey == _T("Width")) {
+			imageRef->w = static_cast<uint16_t>(_ttoi(strValue));
+		}
+		else if (strKey == _T("Height")) {
+			imageRef->h = static_cast<uint16_t>(_ttoi(strValue));
+		}
+		else if (strKey == _T("Group")) {
+			BlockNamePutPaddedName(imageRef->group,
+				(LPSTR)CT2A(strValue.GetString(), CP_UTF8));
+		}
+		else if (strKey == _T("Name")) {
+			BlockNamePutPaddedName(imageRef->name,
+				(LPSTR)CT2A(strValue.GetString(), CP_UTF8));
+		}
+	}
+
+	// FIXME: 深耦合，此操作完全依赖ImageGroupNode的当前结构！！
+	// 为更好处理、考虑，将ClipNode等改为ImageGroupNode之内部类？
+	GetParent()->GetParent()->GetChildren()[1]->GetChildren()[m_index]->Flush();
 }
 
 // 创建带校验的纹理名称属性
@@ -517,6 +585,87 @@ void TileNode::DeleteNode()
 	}
 }
 
+CString TileNode::GetIni() const
+{
+	CString strIni;
+
+	// 序列化纹理映射属性
+	strIni.AppendFormat(_T("Flip=%d\n"), static_cast<int>(imageRef->type));
+	for (int i = 0; i < 4; ++i) {
+		strIni.AppendFormat(_T("Param%d=%d\n"), i + 1, imageRef->ukn[i]);
+	}
+
+	// 序列化顶点属性（使用前缀标识位置）
+	SerializeVertex(strIni, _T("TL"), imageRef->tlPoint, imageRef->tlColour);  // 左上
+	SerializeVertex(strIni, _T("TR"), imageRef->trPoint, imageRef->trColour);  // 右上
+	SerializeVertex(strIni, _T("BL"), imageRef->blPoint, imageRef->blColour);  // 左下
+	SerializeVertex(strIni, _T("BR"), imageRef->brPoint, imageRef->brColour);  // 右下
+
+	return strIni;
+}
+
+void TileNode::SetIni(const CString &str)
+{
+	int pos = 0;
+	CString strLine;
+
+	while (!(strLine = str.Tokenize(_T("\n"), pos)).IsEmpty()) {
+		int nEquals = strLine.Find('=');
+		if (nEquals == -1) continue;
+
+		CString strKey = strLine.Left(nEquals).Trim();
+		CString strValue = strLine.Mid(nEquals + 1).Trim();
+
+		// 解析通用属性
+		if (strKey == _T("Flip")) {
+			imageRef->type = static_cast<decltype(imageRef->type)>(_ttoi(strValue));
+		}
+		else if (strKey.Left(5) == _T("Param")) {
+			int index = _ttoi(strKey.Mid(5)) - 1; // Param1 -> index 0
+			if (index >= 0 && index < 4) {
+				imageRef->ukn[index] = _ttoi(strValue);
+			}
+		}
+		// 解析顶点属性（TL/TR/BL/BR）
+		else if (strKey.GetLength() > 3 && strKey[2] == '_') {
+			CString prefix = strKey.Left(2);  // 获取前缀（如 TL/TR）
+			CString field = strKey.Mid(3);    // 获取字段名（如 X/Red）
+
+			// 获取对应顶点的引用
+			xybase::Vec2<int16_t> *pPoint = nullptr;
+			RGBA *pColor = nullptr;
+			GetVertexByPrefix(prefix, pPoint, pColor);
+
+			if (pPoint && pColor) {
+				if (field == _T("X")) {
+					pPoint->x = static_cast<int16_t>(_ttoi(strValue));
+				}
+				else if (field == _T("Y")) {
+					pPoint->y = static_cast<int16_t>(_ttoi(strValue));
+				}
+				else if (field == _T("Red")) {
+					pColor->r = static_cast<uint8_t>(_ttoi(strValue));
+				}
+				else if (field == _T("Green")) {
+					pColor->g = static_cast<uint8_t>(_ttoi(strValue));
+				}
+				else if (field == _T("Blue")) {
+					pColor->b = static_cast<uint8_t>(_ttoi(strValue));
+				}
+				else if (field == _T("Alpha")) {
+					pColor->a = static_cast<uint8_t>(_ttoi(strValue));
+				}
+			}
+		}
+	}
+
+	m_bDirtyBitmap = TRUE;
+	if (TileCategoryNode *p = dynamic_cast<TileCategoryNode *>(parent))
+	{
+		p->UpdateData();
+	}
+}
+
 BYTE Lerp(BYTE a, BYTE b, float t) {
 	return static_cast<BYTE>(a + (b - a) * t);
 }
@@ -528,6 +677,42 @@ Gdiplus::Color LerpColor(Gdiplus::Color a, Gdiplus::Color b, float t) {
 		Lerp(a.GetG(), b.GetG(), t),
 		Lerp(a.GetB(), b.GetB(), t)
 	);
+}
+
+void TileNode::SerializeVertex(CString &strIni, LPCTSTR prefix, const xybase::Vec2<int16_t> &point, const RGBA &color) const
+{
+	// 坐标
+	strIni.AppendFormat(_T("%s_X=%d\n"), prefix, point.x);
+	strIni.AppendFormat(_T("%s_Y=%d\n"), prefix, point.y);
+
+	// 颜色
+	strIni.AppendFormat(_T("%s_Red=%d\n"), prefix, color.r);
+	strIni.AppendFormat(_T("%s_Green=%d\n"), prefix, color.g);
+	strIni.AppendFormat(_T("%s_Blue=%d\n"), prefix, color.b);
+	strIni.AppendFormat(_T("%s_Alpha=%d\n"), prefix, color.a);
+}
+
+void TileNode::GetVertexByPrefix(const CString &prefix, xybase::Vec2<int16_t> *&pPoint, RGBA *&pColor) const
+{
+	pPoint = nullptr;
+	pColor = nullptr;
+
+	if (prefix == _T("TL")) {
+		pPoint = &imageRef->tlPoint;
+		pColor = &imageRef->tlColour;
+	}
+	else if (prefix == _T("TR")) {
+		pPoint = &imageRef->trPoint;
+		pColor = &imageRef->trColour;
+	}
+	else if (prefix == _T("BL")) {
+		pPoint = &imageRef->blPoint;
+		pColor = &imageRef->blColour;
+	}
+	else if (prefix == _T("BR")) {
+		pPoint = &imageRef->brPoint;
+		pColor = &imageRef->brColour;
+	}
 }
 
 void TileNode::PrepareBitmap(Gdiplus::Bitmap *source)
@@ -962,7 +1147,7 @@ void ImageBlockNode::UpdateBitmap()
 		DecodeDXT3(buffer.get(), imageBlock->image.texture.get(), w, h);
 		break;
 	case 'DXT5':
-		DecodeDXT5(buffer.get(), imageBlock->image.texture.get(), w, h);
+		DecodeDXT5((uint32_t *)buffer.get(), (uint8_t *)imageBlock->image.texture.get(), w, h);
 		break;
 	}
 
@@ -1078,6 +1263,90 @@ void TileCategoryNode::UpdateChildren()
 	}
 }
 
+CString TileCategoryNode::GetIni() const
+{
+	CString strIni;
+
+	// 遍历所有子节点并序列化到不同节
+	for (size_t i = 0; i < children.size(); ++i) {
+		if (auto pTileNode = dynamic_cast<TileNode *>(children[i])) {
+			// 添加节头 [TileNode0]
+			strIni.AppendFormat(_T("[TileNode%d]\n"), i);
+
+			// 获取子节点数据并缩进
+			CString childIni = pTileNode->GetIni();
+			// childIni.Replace(_T("\n"), _T("\n\t"));
+			strIni += childIni;
+
+			// 节间分隔
+			strIni += _T("\n\n");
+		}
+	}
+
+	return strIni;
+}
+
+void TileCategoryNode::SetIni(const CString &str) {
+	int pos = 0;
+	CString strLine;
+	CString currentSection;
+	CString currentSectionData;
+
+	// 逐行解析（不清除现有子节点）
+	while (!(strLine = str.Tokenize(_T("\n"), pos)).IsEmpty()) {
+		strLine.Trim();
+
+		// 检测节头 [SectionName]
+		if (strLine.GetLength() > 2 &&
+			strLine[0] == _T('[') &&
+			strLine[strLine.GetLength() - 1] == _T(']'))
+		{
+			// 处理已收集的上一个节
+			if (!currentSection.IsEmpty()) {
+				ProcessIniSection(currentSection, currentSectionData);
+			}
+
+			// 开始新节
+			currentSection = strLine.Mid(1, strLine.GetLength() - 2);
+			currentSectionData.Empty();
+		}
+		else {
+			// 累积节内容
+			currentSectionData += strLine + _T("\n");
+		}
+	}
+
+	// 处理最后一个节
+	if (!currentSection.IsEmpty()) {
+		ProcessIniSection(currentSection, currentSectionData);
+	}
+}
+
+void TileCategoryNode::ProcessIniSection(const CString &sectionName, const CString &sectionData) {
+	// 仅处理 TileNode 前缀的节
+	if (sectionName.Left(8) != _T("TileNode")) return;
+
+	// 提取索引（支持TileNode123或TileNode_123等格式）
+	int index = 0;
+	if (_stscanf_s(sectionName.Mid(8), _T("%d"), &index) != 1) return;
+
+	// 验证索引范围
+	if (index < 0 || index >= static_cast<int>(children.size())) {
+		TRACE(_T("Invalid TileNode index: %d\n"), index);
+		return; // 忽略无效索引
+	}
+
+	// 获取目标节点并更新
+	if (auto pTileNode = dynamic_cast<TileNode *>(children[index])) {
+		CString cleanData = sectionData;
+		cleanData.Trim(_T("\n\r"));
+		pTileNode->SetIni(cleanData);
+	}
+	else {
+		TRACE(_T("Child %d is not a TileNode!\n"), index);
+	}
+}
+
 void ImageGroupNode::DeleteClipTileOf(int index)
 {
 	for (size_t i = index; i < group->imageRefs.size() - 1; ++i)
@@ -1172,5 +1441,91 @@ void ClipCategoryNode::InsertChildAfter(size_t index, ContentNode *child)
 	{
 		ClipNode *cn = (ClipNode *)children[i];
 		cn->SetIndex(i);
+	}
+}
+
+CString ClipCategoryNode::GetIni() const
+{
+	CString strIni;
+
+	// 遍历所有子节点并序列化到不同节
+	for (size_t i = 0; i < children.size(); ++i) {
+		if (auto pTileNode = dynamic_cast<ClipNode *>(children[i])) {
+			// 添加节头 [TileNode0]
+			strIni.AppendFormat(_T("[ClipNode%d]\n"), i);
+
+			// 获取子节点数据并缩进
+			CString childIni = pTileNode->GetIni();
+			// childIni.Replace(_T("\n"), _T("\n\t"));
+			strIni += childIni;
+
+			// 节间分隔
+			strIni += _T("\n\n");
+		}
+	}
+
+	return strIni;
+}
+
+void ClipCategoryNode::SetIni(const CString &str)
+{
+	int pos = 0;
+	CString strLine;
+	CString currentSection;
+	CString currentSectionData;
+
+	// 逐行解析（不清除现有子节点）
+	while (!(strLine = str.Tokenize(_T("\n"), pos)).IsEmpty()) {
+		strLine.Trim();
+
+		// 检测节头 [SectionName]
+		if (strLine.GetLength() > 2 &&
+			strLine[0] == _T('[') &&
+			strLine[strLine.GetLength() - 1] == _T(']'))
+		{
+			// 处理已收集的上一个节
+			if (!currentSection.IsEmpty()) {
+				ProcessIniSection(currentSection, currentSectionData);
+			}
+
+			// 开始新节
+			currentSection = strLine.Mid(1, strLine.GetLength() - 2);
+			currentSectionData.Empty();
+		}
+		else {
+			// 累积节内容
+			currentSectionData += strLine + _T("\n");
+		}
+	}
+
+	// 处理最后一个节
+	if (!currentSection.IsEmpty()) {
+		ProcessIniSection(currentSection, currentSectionData);
+	}
+}
+
+void ClipCategoryNode::ProcessIniSection(const CString &sectionName, const CString &sectionData)
+{
+	// 仅处理 TileNode 前缀的节
+	if (sectionName.Left(8) != _T("ClipNode")) return;
+
+	// 提取索引（支持TileNode123或TileNode_123等格式）
+	int index = 0;
+	if (_stscanf_s(sectionName.Mid(8), _T("%d"), &index) != 1) return;
+
+	// 验证索引范围
+	if (index < 0 || index >= static_cast<int>(children.size())) {
+		TRACE(_T("Invalid ClipNode index: %d\n"), index);
+		return; // 忽略无效索引
+	}
+
+	// 获取目标节点并更新
+	if (auto pTileNode = dynamic_cast<ClipNode *>(children[index])) {
+		CString cleanData = sectionData;
+		cleanData.Trim(_T("\n\r"));
+		pTileNode->SetIni(cleanData);
+	}
+	else {
+		TRACE(_T("Child %d is not a ClipNode!\n"), index);
 	}
 }

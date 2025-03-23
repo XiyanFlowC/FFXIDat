@@ -82,8 +82,8 @@
 #define IDS_FIND_TAB                    302
 #define IDS_EXPLORER                    305
 #define IDS_EDIT_MENU                   306
-#define IDR_MENU1                       310
 #define IDR_POPUP_TEXTURE               310
+#define IDR_POPUP_CLIP                  312
 #define ID_DELETE_ITEM                  32771
 #define ID_VIEW_RESET                   32772
 #define ID_32773                        32773
@@ -94,13 +94,17 @@
 #define ID_32778                        32778
 #define ID_TEXTURE_EXPORT               32779
 #define ID_TEXTURE_IMPORT               32780
+#define ID_32781                        32781
+#define ID_32782                        32782
+#define ID_32783                        32783
+#define ID_32784                        32784
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        311
-#define _APS_NEXT_COMMAND_VALUE         32781
+#define _APS_NEXT_RESOURCE_VALUE        313
+#define _APS_NEXT_COMMAND_VALUE         32795
 #define _APS_NEXT_CONTROL_VALUE         1000
 #define _APS_NEXT_SYMED_VALUE           310
 #endif

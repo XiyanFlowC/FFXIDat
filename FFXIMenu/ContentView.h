@@ -49,6 +49,10 @@ protected:
 	afx_msg void OnUpdateSort(CCmdUI* pCmdUI);
 	afx_msg void OnTextureExport();
 	afx_msg void OnTextureImport();
+	afx_msg void OnCopy();
+	afx_msg void OnPaste();
+	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateEditCopy(CCmdUI *pCmdUI);
 	afx_msg LRESULT OnTreeUpdate(WPARAM, LPARAM);
 	afx_msg void OnSelChanged(NMHDR *, LRESULT *pResult);
 	afx_msg void OnRClicked(NMHDR *, LRESULT *pResult);

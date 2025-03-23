@@ -196,5 +196,5 @@ std::string BlockNameGetCleanName(const char *str)
 void BlockNamePutPaddedName(char *dst, const std::string &name)
 {
 	memset(dst, ' ', 8);
-	memcpy(dst, name.c_str(), name.size());
+	memcpy(dst, name.c_str(), XY_MIN(8, name.size()));
 }

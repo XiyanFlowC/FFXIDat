@@ -44,6 +44,7 @@ protected:  // 控件条嵌入成员
 	CContentView      m_wndContentView;
 	COutputWnd        m_wndOutput;
 	CPropertiesWnd    m_wndProperties;
+	HACCEL			  m_hAccelTable;
 
 // 生成的消息映射函数
 protected:
@@ -66,6 +67,8 @@ protected:
 	void SetDockingWindowIcons(BOOL bHiColorIcons);
 private:
 	BOOL m_bSuppressPropUpd;
+public:
+	virtual BOOL OnCmdMsg(UINT nID, int nCode, void *pExtra, AFX_CMDHANDLERINFO *pHandlerInfo);
 };
 
 

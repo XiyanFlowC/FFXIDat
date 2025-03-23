@@ -322,6 +322,7 @@ LRESULT CMainFrame::OnPropertiesChanged(WPARAM, LPARAM)
 	if (m_wndProperties)
 		m_wndProperties.ReloadProperties();
 	GetActiveDocument()->SetModifiedFlag();
+	GetActiveDocument()->UpdateAllViews(NULL, HINT_PROPERTIES_CHANGED);
 	return 0;
 }
 
@@ -430,6 +431,7 @@ void CMainFrame::OnLoadExtraTexture()
 			CString path = fileDlg.GetPathName();
 
 			doc->LoadExtraTexture(path.GetString());
+			OutputLog(_T("加载了额外的纹理。"));
 		}
 	}
 }
@@ -480,6 +482,17 @@ LRESULT CMainFrame::OnTextureUpdated(WPARAM, LPARAM)
 	if (CFFXIMenuDoc *doc = dynamic_cast<CFFXIMenuDoc *>(GetActiveDocument()))
 	{
 		doc->FlushNodes();
+		doc->SetModifiedFlag();
 	}
 	return 0;
+}
+
+
+BOOL CMainFrame::OnCmdMsg(UINT nID, int nCode, void *pExtra, AFX_CMDHANDLERINFO *pHandlerInfo)
+{
+	// 优先让CContentView处理命令
+	if (m_wndContentView.OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
+		return TRUE;
+
+	return CFrameWndEx::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
 }

@@ -203,6 +203,7 @@ void CFFXIMenuApp::PreLoadState()
 	ASSERT(bNameValid);
 	GetContextMenuManager()->AddMenu(strName, IDR_POPUP_EXPLORER);
 	GetContextMenuManager()->AddMenu(_T("纹理菜单"), IDR_POPUP_TEXTURE);
+	GetContextMenuManager()->AddMenu(_T("剪贴画菜单"), IDR_POPUP_CLIP);
 }
 
 void CFFXIMenuApp::LoadCustomState()

@@ -89,6 +89,9 @@ public:
 	// 使用上特别注意
 	void SetIndex(int index) { m_index = index; }
 
+	CString GetIni() const;
+	void SetIni(const CString &str) const;
+
 private:
 	BlockFile::ImageSetBlock::ImageGroup::ImageRef *imageRef;
 	CMFCPropertyGridCtrl *m_propGrid;
@@ -141,8 +144,12 @@ public:
 	virtual void DeleteChild(size_t index) override;
 	virtual void InsertChildAfter(size_t index, ContentNode *child) override;
 
+	CString GetIni() const;
+	void SetIni(const CString &str);
+
 private:
 	BlockFile::ImageSetBlock::ImageGroup *group;
+	void ProcessIniSection(const CString &sectionName, const CString &sectionData);
 };
 
 class TileNode : public ContentNode {
@@ -194,12 +201,18 @@ public:
 	// 使用上特别注意
 	void SetIndex(int index) { m_index = index; }
 
+	CString GetIni() const;
+	void SetIni(const CString &str);
+
 private:
 	BlockFile::ImageSetBlock::ImageGroup::ImageRef *imageRef;
 	CMFCPropertyGridCtrl *m_propGrid = NULL;
 	Gdiplus::Bitmap *m_bitmap = NULL;
 	BOOL m_bDirtyBitmap = TRUE;
 	int m_index;
+
+	void SerializeVertex(CString &strIni, LPCTSTR prefix, const xybase::Vec2<int16_t> &point, const RGBA &color) const;
+	void GetVertexByPrefix(const CString &prefix, xybase::Vec2<int16_t> *&pPoint, RGBA *&pColor) const;
 
 	void PrepareBitmap(Gdiplus::Bitmap *source);
 
@@ -249,10 +262,14 @@ public:
 		m_bDirtyBitmap = TRUE;
 	}
 
+	CString GetIni() const;
+	void SetIni(const CString &str);
+
 private:
 	BlockFile::ImageSetBlock::ImageGroup *group;
 	Gdiplus::Bitmap *m_bitmap = NULL;
 	BOOL m_bDirtyBitmap = TRUE;
+	void ProcessIniSection(const CString &sectionName, const CString &sectionData);
 };
 
 

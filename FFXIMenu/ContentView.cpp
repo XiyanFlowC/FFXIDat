@@ -64,6 +64,10 @@ BEGIN_MESSAGE_MAP(CContentView, CDockablePane)
 	ON_COMMAND_RANGE(ID_SORTING_GROUPBYTYPE, ID_SORTING_SORTBYACCESS, OnSort)
 	ON_COMMAND(ID_TEXTURE_EXPORT, OnTextureExport)
 	ON_COMMAND(ID_TEXTURE_IMPORT, OnTextureImport)
+	ON_COMMAND(ID_EDIT_COPY, OnCopy)
+	ON_COMMAND(ID_EDIT_PASTE, OnPaste)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditCopy)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditCopy)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_SORTING_GROUPBYTYPE, ID_SORTING_SORTBYACCESS, OnUpdateSort)
 	ON_NOTIFY(TVN_SELCHANGED, 2, OnSelChanged)
 	ON_NOTIFY(NM_RCLICK, 2, OnRClicked)
@@ -178,8 +182,35 @@ void CContentView::AdjustLayout()
 	m_wndContentView.SetWindowPos(nullptr, rectClient.left + 1, rectClient.top + cyTlb + 1, rectClient.Width() - 2, rectClient.Height() - cyTlb - 2, SWP_NOACTIVATE | SWP_NOZORDER);
 }
 
-BOOL CContentView::PreTranslateMessage(MSG* pMsg)
+BOOL CContentView::PreTranslateMessage(MSG *pMsg)
 {
+	CWnd *pFocus = GetFocus();
+	BOOL bFocus = (pFocus != nullptr) &&
+		(pFocus == this || IsChild(pFocus));
+	if (bFocus)
+	{
+		if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DELETE)
+		{
+			OnDeleteItem();
+			return TRUE;
+		}
+		else if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_INSERT)
+		{
+			OnNewItem();
+			return TRUE;
+		}
+		else if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_F3)
+		{
+			OnTextureExport();
+			return TRUE;
+		}
+		else if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_F4)
+		{
+			OnTextureImport();
+			return TRUE;
+		}
+	}
+
 	return CDockablePane::PreTranslateMessage(pMsg);
 }
 
@@ -217,6 +248,7 @@ void CContentView::OnTextureExport()
 	if (!in) return;
 
 	CString name(in->GetTextureId(), 16);
+	name.Append(_T(".dds"));
 	CFileDialog fileDlg(
 		FALSE,
 		_T("dds"),
@@ -247,6 +279,7 @@ void CContentView::OnTextureImport()
 	if (!in) return;
 
 	CString name(in->GetTextureId(), 16);
+	name.Append(_T(".dds"));
 	CFileDialog fileDlg(
 		TRUE,
 		_T("dds"),
@@ -268,6 +301,220 @@ void CContentView::OnTextureImport()
 		AfxGetMainWnd()->SendMessage(WM_NODE_FOCUS_CHANGE_MSG);
 		AfxGetMainWnd()->SendMessage(WM_TEXTURE_UPDATE_MSG);
 	}
+}
+
+void CContentView::OnCopy()
+{
+	CWnd *pFocus = GetFocus();
+	BOOL bFocus = (pFocus != nullptr) &&
+		(pFocus == this || IsChild(pFocus));
+	if (!bFocus) return;
+
+	HTREEITEM hItem = m_wndContentView.GetSelectedItem();
+	ContentNode *node = NULL;
+
+	if (hItem) {
+		ContentNode *pNode = reinterpret_cast<ContentNode *>(
+			m_wndContentView.GetItemData(hItem)
+			);
+
+		if (!pNode) {
+			return;
+		}
+		node = pNode;
+	}
+
+	CString strData;
+
+	if (ClipNode *cl = dynamic_cast<ClipNode *>(node))
+	{
+		strData = cl->GetIni();
+	}
+	if (TileNode *tl = dynamic_cast<TileNode *>(node))
+	{
+		strData = tl->GetIni();
+	}
+	if (ClipCategoryNode *cl = dynamic_cast<ClipCategoryNode *>(node))
+	{
+		strData = cl->GetIni();
+	}
+	if (TileCategoryNode *tl = dynamic_cast<TileCategoryNode *>(node))
+	{
+		strData = tl->GetIni();
+	}
+
+	if (OpenClipboard()) { // 尝试打开剪贴板
+		EmptyClipboard();  // 清空剪贴板内容
+
+		HGLOBAL hClipData = GlobalAlloc(
+			GMEM_MOVEABLE,
+			(strData.GetLength() + 1) * sizeof(TCHAR)
+		);
+		if (hClipData != nullptr) {
+			// 锁定内存并复制数据
+			if (TCHAR *pData = static_cast<TCHAR *>(GlobalLock(hClipData)))
+			{
+				_tcscpy_s(pData, strData.GetLength() + 1, strData);
+				GlobalUnlock(hClipData);
+
+				// 设置剪贴板数据格式（根据项目字符集选择）
+#ifdef _UNICODE
+				SetClipboardData(CF_UNICODETEXT, hClipData);
+#else
+				SetClipboardData(CF_TEXT, hClipData);
+#endif
+			}
+		}
+		CloseClipboard(); // 关闭剪贴板
+	}
+	else {
+		// 处理打开失败（例如其他程序占用剪贴板）
+		AfxMessageBox(_T("无法访问剪贴板！"));
+	}
+}
+
+void CContentView::OnPaste()
+{
+	CWnd *pFocus = GetFocus();
+	BOOL bFocus = (pFocus != nullptr) &&
+		(pFocus == this || IsChild(pFocus));
+	if (!bFocus) return;
+
+	HTREEITEM hItem = m_wndContentView.GetSelectedItem();
+	ContentNode *node = NULL;
+
+	if (hItem) {
+		ContentNode *pNode = reinterpret_cast<ContentNode *>(
+			m_wndContentView.GetItemData(hItem)
+			);
+
+		if (!pNode) {
+			return;
+		}
+		node = pNode;
+	}
+
+	CString strData;
+	if (OpenClipboard()) { // 打开剪贴板
+#ifdef _UNICODE
+		UINT nFormat = CF_UNICODETEXT;
+#else
+		UINT nFormat = CF_TEXT;
+#endif
+		if (IsClipboardFormatAvailable(nFormat)) { // 检查格式是否可用
+			HGLOBAL hClipData = GetClipboardData(nFormat);
+			if (hClipData != nullptr) {
+				// 锁定内存并读取数据
+				const TCHAR *pData = static_cast<const TCHAR *>(GlobalLock(hClipData));
+				if (pData != nullptr) {
+					strData = pData;
+					GlobalUnlock(hClipData);
+				}
+			}
+		}
+		CloseClipboard(); // 关闭剪贴板
+	}
+	else {
+		AfxMessageBox(_T("无法访问剪贴板！"));
+	}
+
+	if (ClipNode *cl = dynamic_cast<ClipNode *>(node))
+	{
+		cl->SetIni(strData);
+	}
+	if (TileNode *tl = dynamic_cast<TileNode *>(node))
+	{
+		tl->SetIni(strData);
+	}
+	if (ClipCategoryNode *cl = dynamic_cast<ClipCategoryNode *>(node))
+	{
+		cl->SetIni(strData);
+	}
+	if (TileCategoryNode *tl = dynamic_cast<TileCategoryNode *>(node))
+	{
+		tl->SetIni(strData);
+	}
+
+	AfxGetMainWnd()->SendMessage(WM_PROPERTIES_CHANGE_MSG);
+	// AfxGetMainWnd()->SendMessage(WM_NODE_FOCUS_CHANGE_MSG);
+}
+
+void CContentView::OnUpdateEditPaste(CCmdUI *pCmdUI)
+{
+	HTREEITEM hItem = m_wndContentView.GetSelectedItem();
+	ContentNode *node = NULL;
+
+	if (hItem) {
+		ContentNode *pNode = reinterpret_cast<ContentNode *>(
+			m_wndContentView.GetItemData(hItem)
+			);
+
+		if (!pNode) {
+			return;
+		}
+		node = pNode;
+	}
+
+	if (ClipNode *cl = dynamic_cast<ClipNode *>(node))
+	{
+		pCmdUI->Enable(TRUE);
+		return;
+	}
+	if (TileNode *tl = dynamic_cast<TileNode *>(node))
+	{
+		pCmdUI->Enable(TRUE);
+		return;
+	}
+	if (ClipCategoryNode *cl = dynamic_cast<ClipCategoryNode *>(node))
+	{
+		pCmdUI->Enable(TRUE);
+		return;
+	}
+	if (TileCategoryNode *tl = dynamic_cast<TileCategoryNode *>(node))
+	{
+		pCmdUI->Enable(TRUE);
+		return;
+	}
+	pCmdUI->Enable(FALSE);
+}
+
+void CContentView::OnUpdateEditCopy(CCmdUI *pCmdUI)
+{
+	HTREEITEM hItem = m_wndContentView.GetSelectedItem();
+	ContentNode *node = NULL;
+
+	if (hItem) {
+		ContentNode *pNode = reinterpret_cast<ContentNode *>(
+			m_wndContentView.GetItemData(hItem)
+			);
+
+		if (!pNode) {
+			return;
+		}
+		node = pNode;
+	}
+
+	if (ClipNode *cl = dynamic_cast<ClipNode *>(node))
+	{
+		pCmdUI->Enable(TRUE);
+		return;
+	}
+	if (TileNode *tl = dynamic_cast<TileNode *>(node))
+	{
+		pCmdUI->Enable(TRUE);
+		return;
+	}
+	if (ClipCategoryNode *cl = dynamic_cast<ClipCategoryNode *>(node))
+	{
+		pCmdUI->Enable(TRUE);
+		return;
+	}
+	if (TileCategoryNode *tl = dynamic_cast<TileCategoryNode *>(node))
+	{
+		pCmdUI->Enable(TRUE);
+		return;
+	}
+	pCmdUI->Enable(FALSE);
 }
 
 LRESULT CContentView::OnTreeUpdate(WPARAM, LPARAM)
@@ -318,6 +565,22 @@ void CContentView::OnRClicked(NMHDR *, LRESULT *pResult)
 			/*menu.GetSubMenu(0)->TrackPopupMenu(TPM_LEFTALIGN |
 				TPM_RIGHTBUTTON, point.x, point.y, this, NULL);*/
 			theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_TEXTURE, point.x, point.y, this, TRUE);
+		}
+		if (ClipNode *cl = dynamic_cast<ClipNode *>(node))
+		{
+			theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_CLIP, point.x, point.y, this, TRUE);
+		}
+		if (TileNode *tl = dynamic_cast<TileNode *>(node))
+		{
+			theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_CLIP, point.x, point.y, this, TRUE);
+		}
+		if (ClipCategoryNode *cl = dynamic_cast<ClipCategoryNode *>(node))
+		{
+			theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_CLIP, point.x, point.y, this, TRUE);
+		}
+		if (TileCategoryNode *tl = dynamic_cast<TileCategoryNode *>(node))
+		{
+			theApp.GetContextMenuManager()->ShowPopupMenu(IDR_POPUP_CLIP, point.x, point.y, this, TRUE);
 		}
 	}
 }

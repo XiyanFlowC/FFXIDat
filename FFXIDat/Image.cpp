@@ -19,6 +19,7 @@ int Image::GetHeight() const
 void Image::Read(std::ifstream &eye)
 {
 	int type = eye.get();
+	// TODO: Support bitmap
 	if (type != 0xA1)
 		throw std::invalid_argument("unknown type");
 	eye.seekg(-1, std::ios::cur);

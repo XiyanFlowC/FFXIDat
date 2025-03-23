@@ -432,6 +432,13 @@ BOOL CFFXIMenuDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	if (!CDocument::OnOpenDocument(lpszPathName)) // 必须调用基类
 		return FALSE;
 
+	if (CMainFrame *frm = dynamic_cast<CMainFrame *>(AfxGetMainWnd()))
+	{
+		CString msg;
+		msg.Format(_T("正在打开文件 %s。"), lpszPathName);
+		frm->OutputLog(msg.GetString());
+	}
+
 	// 先清空旧数据
 	DeleteContents();
 
@@ -440,6 +447,16 @@ BOOL CFFXIMenuDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
 	try {
 		tempBlock->Read(); // 直接读取文件
+	}
+	catch (std::exception &ex)
+	{
+		AfxMessageBox(_T("文件读取失败"));
+		if (CMainFrame *frm = dynamic_cast<CMainFrame *>(AfxGetMainWnd()))
+		{
+			CString msg;
+			msg.Format(_T("打开文件 %s 失败。%s"), lpszPathName, CA2T(ex.what()));
+			frm->OutputLog(msg.GetString(), 1);
+		}
 	}
 	catch (...) {
 		AfxMessageBox(_T("文件读取失败"));
@@ -451,6 +468,13 @@ BOOL CFFXIMenuDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	blockFileInstance = tempBlock.release();
 	rootNode = tempRoot.release();
 	focusNode = nullptr;
+
+	if (CMainFrame *frm = dynamic_cast<CMainFrame *>(AfxGetMainWnd()))
+	{
+		CString msg;
+		msg.Format(_T("打开了文件 %s。"), lpszPathName);
+		frm->OutputLog(msg.GetString());
+	}
 
 	// 通知视图更新
 	UpdateAllViews(NULL, HINT_FILE_CHANGED);
@@ -481,6 +505,13 @@ BOOL CFFXIMenuDoc::OnSaveDocument(LPCTSTR lpszPathName)
 	catch (...) {
 		AfxMessageBox(_T("文件保存失败"));
 		return FALSE;
+	}
+
+	if (CMainFrame *frm = dynamic_cast<CMainFrame *>(AfxGetMainWnd()))
+	{
+		CString msg;
+		msg.Format(_T("保存了文件 %s。"), lpszPathName);
+		frm->OutputLog(msg.GetString());
 	}
 
 	SetModifiedFlag(FALSE);
