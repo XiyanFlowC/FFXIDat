@@ -78,7 +78,6 @@ void BlockNamePutPaddedName(char *dst, const std::string &name);
 
 
 #include <vec.h>
-#include "Image.h"
 
 struct ImageClipBlock
 {

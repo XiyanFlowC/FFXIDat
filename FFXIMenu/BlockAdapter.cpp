@@ -739,12 +739,13 @@ void TileNode::PrepareBitmap(Gdiplus::Bitmap *source)
 
 	Gdiplus::Bitmap flipped(imageRef->w, imageRef->h, PixelFormat32bppARGB);
 	Gdiplus::Graphics flipGraphics(&flipped);
+	flipGraphics.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHalf);
 	if ((int)imageRef->type & 1) {
-		flipGraphics.ScaleTransform(-1, 1);
+		flipGraphics.ScaleTransform(-1.f, 1.f);
 		flipGraphics.TranslateTransform(imageRef->w, 0, Gdiplus::MatrixOrderAppend);
 	}
 	if ((int)imageRef->type & 2) {
-		flipGraphics.ScaleTransform(1, -1);
+		flipGraphics.ScaleTransform(1.f, -1.f);
 		flipGraphics.TranslateTransform(0, imageRef->h, Gdiplus::MatrixOrderAppend);
 	}
 	flipGraphics.DrawImage(target, 0, 0, imageRef->w, imageRef->h);
