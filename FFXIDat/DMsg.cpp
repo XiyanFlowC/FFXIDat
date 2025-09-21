@@ -102,7 +102,6 @@ void DMsg::FromCsv(std::filesystem::path csvPath)
 	CsvFile csv(csvPath, std::ios::in | std::ios::binary);
 
 	auto header = csv.NextCell();
-	csv.NextLine();
 	if (header == u8"~~TYPE=BLOCK~~")
 	{
 		mode = Mode::Block;
@@ -110,11 +109,13 @@ void DMsg::FromCsv(std::filesystem::path csvPath)
 			m_blockSize = xybase::string::stoi(csv.NextCell());
 		else
 			m_blockSize = 0;
+		csv.NextLine();
 	}
 	else if (header == u8"~~TYPE=LIST~~")
 	{
 		mode = Mode::Variable;
 		m_blockSize = 0;
+		csv.NextLine();
 	}
 	else
 		csv.Rewind();

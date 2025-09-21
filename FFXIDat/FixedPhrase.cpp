@@ -144,8 +144,8 @@ void FixedPhrase::FromCsv(std::wstring path)
 		std::u8string catEnt = csv.IsEol() ? u8"" : csv.NextCell();
 		std::u8string text = csv.IsEol() ? u8"" : csv.NextCell();
 		std::u8string pron = csv.IsEol() ? u8"" : csv.NextCell();
-		std::u8string categoryName = csv.IsEol() ? u8"" : csv.NextCell();
-		std::u8string categoryPron = csv.IsEol() ? u8"" : csv.NextCell();
+		/*std::u8string categoryName = csv.IsEol() ? u8"" : csv.NextCell();
+		std::u8string categoryPron = csv.IsEol() ? u8"" : csv.NextCell();*/
 
 		csv.NextLine();
 
@@ -171,8 +171,8 @@ void FixedPhrase::FromCsv(std::wstring path)
 			categories.emplace_back();
 			currentCategory = &categories.back();
 			currentCategory->cat = cat;
-			currentCategory->categoryName = categoryName.empty() ? text : categoryName;
-			currentCategory->categoryPron = categoryPron.empty() ? pron : categoryPron;
+			currentCategory->categoryName = text;
+			currentCategory->categoryPron = pron;
 		} else {
 			// This is an entry within a category
 			if (!currentCategory || currentCategory->cat.cat != cat.cat) {
@@ -182,8 +182,8 @@ void FixedPhrase::FromCsv(std::wstring path)
 				currentCategory = &categories.back();
 				currentCategory->cat = cat;
 				currentCategory->cat.ent = 0; // Set category ent to 0
-				currentCategory->categoryName = categoryName;
-				currentCategory->categoryPron = categoryPron;
+				currentCategory->categoryName = text;
+				currentCategory->categoryPron = pron;
 			}
 
 			// Create entry

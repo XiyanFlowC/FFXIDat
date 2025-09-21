@@ -12,7 +12,7 @@ void Row::ReadRow(Record *buffer, int limit)
 		ptrdiff_t offset = buffer->spec[i].offset;
 		if (buffer->spec[i].type)
 		{
-			cells.push_back(Cell(*(int32_t *)base + offset));
+			cells.push_back(Cell(*(int32_t*)(base + offset)));
 		}
 		else
 		{

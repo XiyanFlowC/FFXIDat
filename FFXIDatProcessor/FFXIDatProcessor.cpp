@@ -365,9 +365,9 @@ void CsvToDMsg(const char *src, const char *out)
     std::string datPath = csvPath;
     DMsg f(out ? out : datPath.replace(datPath.find(".csv"), 4, ".DAT"));
     try {
-        f.FromCsv(csvPath);
         f.mode = cfg_block ? DMsg::Mode::Block : DMsg::Mode::Variable;
         f.obs = cfg_xor == 1;
+        f.FromCsv(csvPath);
         f.Write();
     }
     catch (xybase::RuntimeException &ex)
