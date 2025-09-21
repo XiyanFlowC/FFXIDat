@@ -33,4 +33,8 @@
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="defs_sample.csv" />
+    <None Include="README.md" />
+  </ItemGroup>
 </Project>

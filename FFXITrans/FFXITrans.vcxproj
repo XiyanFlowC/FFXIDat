@@ -144,6 +144,10 @@
     <ClInclude Include="..\FFXIDatProcessor\codepage.h" />
     <ClInclude Include="ChsToSJis.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="defs_sample.csv" />
+    <None Include="README.md" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

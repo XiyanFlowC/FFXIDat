@@ -6,6 +6,15 @@
 #include <exception>
 #include "CsvFile.h"
 
+// Forward declarations for ItemData structures
+struct ItemWeaponSpec;
+struct ItemArmourSpec;
+struct ItemUsableSpec;
+struct ItemNormalSpec;
+struct ItemEquipSlot;
+struct ItemRaceApplicability;
+struct ItemJobApplicability;
+
 class SQLException : public std::runtime_error {
 public:
 	explicit SQLException(const std::string &msg) : std::runtime_error(msg.c_str()) {}
@@ -54,5 +63,19 @@ protected:
 
 	void TranslateDat(int file_id, const char *file_path, const char *type);
 
+	// ItemData support methods
+	void ImportItemDat(const int file_id, const std::wstring &path, const std::wstring &type);
+	void TranslateItemDat(int file_id, const wchar_t *file_path, const char *type);
+	int InsertOrGetItemRecord(int file_id, uint32_t item_id, const std::wstring &type);
+	int InsertOrGetText(const std::u8string &text);
+	
+	// Spec-specific insertion methods
+	void InsertWeaponSpec(int item_id, const ItemWeaponSpec &spec);
+	void InsertArmourSpec(int item_id, const ItemArmourSpec &spec);
+	void InsertUsableSpec(int item_id, const ItemUsableSpec &spec);
+	void InsertNormalSpec(int item_id, const ItemNormalSpec &spec);
+	void InsertEquipSlots(int item_id, const ItemEquipSlot &slots);
+	void InsertRaceApplicability(int item_id, const ItemRaceApplicability &races);
+	void InsertJobApplicability(int item_id, const ItemJobApplicability &jobs);
 };
 

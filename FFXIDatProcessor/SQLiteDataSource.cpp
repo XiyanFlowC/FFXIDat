@@ -4,6 +4,8 @@
 #include "xystring.h"
 #include <iostream>
 #include "DataManager.h"
+#include "ItemData.h"
+#include "StatusData.h"
 
 void SQLiteDataSource::Ring(const char8_t *msg)
 {
@@ -61,6 +63,201 @@ void SQLiteDataSource::Initialise()
             text_id INTEGER NOT NULL UNIQUE,
             text TEXT NOT NULL,
             FOREIGN KEY (text_id) REFERENCES text(id) ON DELETE CASCADE
+        );
+    )");
+    
+    // Main items table with header fields
+    Execute(R"(
+        CREATE TABLE IF NOT EXISTS items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_id INTEGER NOT NULL,
+            item_id INTEGER NOT NULL,
+            spec_type TEXT NOT NULL,
+            name_text_id INTEGER,
+            description_text_id INTEGER,
+            
+            -- Header fields
+            stack_size INTEGER,
+            item_type INTEGER,
+            resource_id INTEGER,
+            valid_targets INTEGER,
+            
+            -- Header flags (flag set 1)
+            is_scroll INTEGER,
+            is_not_listable INTEGER,
+            is_inscribable INTEGER,
+            is_alt INTEGER,
+            ukn_flg1 INTEGER,
+            is_mystery_box_consumable INTEGER,
+            ukn_flg2 INTEGER,
+            is_wall_decoration INTEGER,
+            
+            -- Header flags (flag set 2)
+            is_rare INTEGER,
+            is_untradeable INTEGER,
+            is_unmailable INTEGER,
+            is_unbazaarable INTEGER,
+            is_equipment INTEGER,
+            is_npc_tradeable INTEGER,
+            is_usable INTEGER,
+            is_linkshell INTEGER,
+            
+            -- Image data
+            image_length INTEGER,
+            image_data BLOB,
+            end_marker INTEGER,
+            
+            FOREIGN KEY (file_id) REFERENCES file(id) ON DELETE CASCADE,
+            FOREIGN KEY (name_text_id) REFERENCES text(id),
+            FOREIGN KEY (description_text_id) REFERENCES text(id),
+            UNIQUE(file_id, item_id)
+        );
+    )");
+    
+    // Equipment slots table (for weapons and armour)
+    Execute(R"(
+        CREATE TABLE IF NOT EXISTS item_equip_slots (
+            item_id INTEGER PRIMARY KEY,
+            main_hand INTEGER,
+            sub_hand INTEGER,
+            ranged INTEGER,
+            ammo INTEGER,
+            head INTEGER,
+            body INTEGER,
+            hands INTEGER,
+            legs INTEGER,
+            feet INTEGER,
+            neck INTEGER,
+            waist INTEGER,
+            left_ear INTEGER,
+            right_ear INTEGER,
+            left_ring INTEGER,
+            right_ring INTEGER,
+            back INTEGER,
+            FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+        );
+    )");
+    
+    // Race applicability table (for weapons and armour)
+    Execute(R"(
+        CREATE TABLE IF NOT EXISTS item_race_applicability (
+            item_id INTEGER PRIMARY KEY,
+            none INTEGER,
+            hume_male INTEGER,
+            hume_female INTEGER,
+            elvaan_male INTEGER,
+            elvaan_female INTEGER,
+            taru_male INTEGER,
+            taru_female INTEGER,
+            mithra INTEGER,
+            galka INTEGER,
+            rsv INTEGER,
+            FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+        );
+    )");
+    
+    // Job applicability table (for weapons and armour)
+    Execute(R"(
+        CREATE TABLE IF NOT EXISTS item_job_applicability (
+            item_id INTEGER PRIMARY KEY,
+            pld INTEGER,
+            thf INTEGER,
+            rdm INTEGER,
+            blm INTEGER,
+            whm INTEGER,
+            mnk INTEGER,
+            war INTEGER,
+            rsv1 INTEGER,
+            smn INTEGER,
+            drg INTEGER,
+            nin INTEGER,
+            sam INTEGER,
+            rng INTEGER,
+            brd INTEGER,
+            bst INTEGER,
+            drk INTEGER,
+            mon INTEGER,
+            run INTEGER,
+            geo INTEGER,
+            sch INTEGER,
+            dnc INTEGER,
+            pup INTEGER,
+            cor INTEGER,
+            blu INTEGER,
+            rsv2 INTEGER,
+            FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+        );
+    )");
+    
+    // Weapon-specific fields
+    Execute(R"(
+        CREATE TABLE IF NOT EXISTS item_weapon_spec (
+            item_id INTEGER PRIMARY KEY,
+            level INTEGER,
+            ukn INTEGER,
+            ukn2 INTEGER,
+            dmg INTEGER,
+            delay INTEGER,
+            ukn5 INTEGER,
+            ukn6 INTEGER,
+            ukn12 INTEGER,
+            ukn7 INTEGER,
+            ukn9 INTEGER,
+            max_charges INTEGER,
+            cast_factor INTEGER,
+            use_time INTEGER,
+            reuse_time INTEGER,
+            ukn20 INTEGER,
+            ukn21 INTEGER,
+            ilvl INTEGER,
+            ukn22 INTEGER,
+            ukn23 INTEGER,
+            FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+        );
+    )");
+    
+    // Armour-specific fields
+    Execute(R"(
+        CREATE TABLE IF NOT EXISTS item_armour_spec (
+            item_id INTEGER PRIMARY KEY,
+            level INTEGER,
+            ukn INTEGER,
+            shield_size INTEGER,
+            max_charges INTEGER,
+            cast_factor INTEGER,
+            use_time INTEGER,
+            reuse_time INTEGER,
+            ukn1 INTEGER,
+            ukn2 INTEGER,
+            ilvl INTEGER,
+            ukn3 INTEGER,
+            ukn4 INTEGER,
+            FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+        );
+    )");
+    
+    // Usable-specific fields
+    Execute(R"(
+        CREATE TABLE IF NOT EXISTS item_usable_spec (
+            item_id INTEGER PRIMARY KEY,
+            cast_factor INTEGER,
+            ukn1 INTEGER,
+            ukn2 INTEGER,
+            ukn3 INTEGER,
+            FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+        );
+    )");
+    
+    // Normal-specific fields
+    Execute(R"(
+        CREATE TABLE IF NOT EXISTS item_normal_spec (
+            item_id INTEGER PRIMARY KEY,
+            ukn1 INTEGER,
+            ukn2 INTEGER,
+            ukn3 INTEGER,
+            ukn4 INTEGER,
+            ukn5 INTEGER,
+            FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
         );
     )");
 }
@@ -217,7 +414,7 @@ void SQLiteDataSource::ImportTranslation()
 
         Execute("COMMIT;");
     }
-    catch (SQLException &ex)
+    catch ( SQLException &ex)
     {
         Execute("ROLLBACK;");
         if (qryStmt) sqlite3_finalize(qryStmt);
@@ -341,6 +538,7 @@ void SQLiteDataSource::DatToDatabase(const char *lang, const char *type, const c
 #include "XiString.h"
 #include "EventStringBase.h"
 #include "DataManager.h"
+#include "ItemData.h"
 
 void SQLiteDataSource::ImportDat(const std::string &path, const std::string &type)
 {
@@ -368,6 +566,15 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
         }
         sqlite3_finalize(stmt);
 
+        // Also clean up items data for this file
+        if (type.starts_with("i")) {
+            if (sqlite3_prepare_v2(db, "DELETE FROM items WHERE file_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+            {
+                sqlite3_bind_int(stmt, 1, file_id);
+                sqlite3_step(stmt);
+            }
+            sqlite3_finalize(stmt);
+        }
     }
     catch (SQLException &ex)
     {
@@ -421,6 +628,23 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
             {
                 InsertText(reinterpret_cast<const char *>(str.c_str()), file_id, rowNum++, 1);
             }
+        }
+        else if (type == "sd")
+        {
+            StatusData statusData;
+            statusData.Read(datPath);
+            int rowNum = 1;
+            for (const auto &datum : statusData.data) {
+                if (!datum.description.empty()) {
+                    std::string descStr = reinterpret_cast<const char*>(xybase::string::escape(datum.description).c_str());
+                    InsertText(descStr.c_str(), file_id, rowNum, 1);
+                }
+                ++rowNum;
+            }
+        }
+        else if (type == "ieb" || type == "inb" || type == "iub" || type == "iwb" || type == "iab")
+        {
+            ImportItemDat(file_id, datPath, xybase::string::sys_mbs_to_wcs(type));
         }
     }
     catch (std::exception &ex)
@@ -590,7 +814,7 @@ void SQLiteDataSource::TranslateDat(int file_id, const char *file_path, const ch
         dmsg.path = outPath;
         dmsg.Write();
     }
-    if (t == "xis")
+    else if (t == "xis")
     {
         XiString xis(datPath);
         xis.Read();
@@ -604,7 +828,7 @@ void SQLiteDataSource::TranslateDat(int file_id, const char *file_path, const ch
         xis.path = outPath;
         xis.Write();
     }
-    if (t == "evsb")
+    else if (t == "evsb")
     {
         EventStringBase evsb(datPath);
         evsb.Read();
@@ -615,6 +839,23 @@ void SQLiteDataSource::TranslateDat(int file_id, const char *file_path, const ch
         }
         evsb.path = outPath;
         evsb.Write();
+    }
+    else if (t == "sd")
+    {
+        StatusData statusData;
+        statusData.Read(datPath);
+        int rowNum = 1;
+        for (auto &datum : statusData.data) {
+            if (!datum.description.empty()) {
+                datum.description = xybase::string::unescape(GetTranslation((datum.description)));
+            }
+            ++rowNum;
+        }
+        statusData.Write(outPath);
+    }
+    else if (t == "ieb" || t == "inb" || t == "iub" || t == "iwb" || t == "iab")
+    {
+        TranslateItemDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str(), t.c_str());
     }
 }
 
@@ -630,4 +871,515 @@ void SQLiteDataSource::Execute(const std::string &qry)
 void SQLiteDataSource::SetRing(void(*callback)(const char8_t *msg))
 {
     ring = callback;
+}
+
+void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path, const std::wstring &type)
+{
+    sqlite3_stmt *stmt = nullptr;
+    
+    ItemData itemData;
+    ItemSpecType specType = ItemSpecType::NORMAL;
+    
+    // Determine spec type based on type parameter
+    if (type == L"ieb") specType = ItemSpecType::ARMOUR;
+    else if (type == L"inb") specType = ItemSpecType::NORMAL;
+    else if (type == L"iub") specType = ItemSpecType::USABLE;
+    else if (type == L"iwb") specType = ItemSpecType::WEAPON;
+    else if (type == L"iab") specType = ItemSpecType::ARMOUR;
+    
+    itemData.Read(path, specType);
+    
+    for (const auto &datum : itemData.data) {
+		int item_record_id = -1;
+        try
+        {
+            item_record_id = InsertOrGetItemRecord(file_id, datum.id, type);
+        }
+        catch (SQLException &ex)
+        {
+            Ring(xybase::string::to_utf8(std::string("Failed to insert or get item record for item ID ") + std::to_string(datum.id) + ": " + ex.what()).c_str());
+            continue;
+		}
+        
+        // Update main items table with all header fields
+        const char *updateMainSQL = R"(
+            UPDATE items SET 
+                spec_type = ?, stack_size = ?, item_type = ?, resource_id = ?, valid_targets = ?,
+                is_scroll = ?, is_not_listable = ?, is_inscribable = ?, is_alt = ?, ukn_flg1 = ?,
+                is_mystery_box_consumable = ?, ukn_flg2 = ?, is_wall_decoration = ?,
+                is_rare = ?, is_untradeable = ?, is_unmailable = ?, is_unbazaarable = ?,
+                is_equipment = ?, is_npc_tradeable = ?, is_usable = ?, is_linkshell = ?,
+                image_length = ?, image_data = ?, end_marker = ?
+            WHERE id = ?
+        )";
+        
+        if (sqlite3_prepare_v2(db, updateMainSQL, -1, &stmt, nullptr) == SQLITE_OK)
+        {
+            std::string specTypeStr;
+            switch (datum.spec_type) {
+                case ItemSpecType::WEAPON: specTypeStr = "WEAPON"; break;
+                case ItemSpecType::ARMOUR: specTypeStr = "ARMOUR"; break;
+                case ItemSpecType::USABLE: specTypeStr = "USABLE"; break;
+                case ItemSpecType::NORMAL: default: specTypeStr = "NORMAL"; break;
+            }
+            
+            sqlite3_bind_text(stmt, 1, specTypeStr.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_int(stmt, 2, datum.stack_size());
+            sqlite3_bind_int(stmt, 3, datum.item_type());
+            sqlite3_bind_int(stmt, 4, datum.resource_id());
+            sqlite3_bind_int(stmt, 5, datum.valid_targets());
+            sqlite3_bind_int(stmt, 6, datum.flags().is_scroll ? 1 : 0);
+            sqlite3_bind_int(stmt, 7, datum.flags().is_not_listable ? 1 : 0);
+            sqlite3_bind_int(stmt, 8, datum.flags().is_inscribable ? 1 : 0);
+            sqlite3_bind_int(stmt, 9, datum.flags().is_alt ? 1 : 0);
+            sqlite3_bind_int(stmt, 10, datum.flags().ukn_flg1 ? 1 : 0);
+            sqlite3_bind_int(stmt, 11, datum.flags().is_mystery_box_consumable ? 1 : 0);
+            sqlite3_bind_int(stmt, 12, datum.flags().ukn_flg2 ? 1 : 0);
+            sqlite3_bind_int(stmt, 13, datum.flags().is_wall_decoration ? 1 : 0);
+            sqlite3_bind_int(stmt, 14, datum.flags().is_rare ? 1 : 0);
+            sqlite3_bind_int(stmt, 15, datum.flags().is_untradeable ? 1 : 0);
+            sqlite3_bind_int(stmt, 16, datum.flags().is_unmailable ? 1 : 0);
+            sqlite3_bind_int(stmt, 17, datum.flags().is_unbazaarable ? 1 : 0);
+            sqlite3_bind_int(stmt, 18, datum.flags().is_equipment ? 1 : 0);
+            sqlite3_bind_int(stmt, 19, datum.flags().is_npc_tradeable ? 1 : 0);
+            sqlite3_bind_int(stmt, 20, datum.flags().is_usable ? 1 : 0);
+            sqlite3_bind_int(stmt, 21, datum.flags().is_linkshell ? 1 : 0);
+            sqlite3_bind_int(stmt, 22, datum.originalEntry.image_length);
+            
+            // Handle image data
+            if (datum.originalEntry.image_length > 0) {
+                sqlite3_bind_blob(stmt, 23, datum.originalEntry.image_data, datum.originalEntry.image_length, SQLITE_STATIC);
+            } else {
+                sqlite3_bind_null(stmt, 23);
+            }
+            
+            sqlite3_bind_int(stmt, 24, datum.originalEntry.end_marker);
+            sqlite3_bind_int(stmt, 25, item_record_id);
+            sqlite3_step(stmt);
+        }
+        sqlite3_finalize(stmt);
+        
+        // Insert spec-specific data based on type
+        switch (datum.spec_type) {
+            case ItemSpecType::WEAPON:
+                InsertWeaponSpec(item_record_id, datum.originalEntry.spec.weapon);
+                InsertEquipSlots(item_record_id, datum.originalEntry.spec.weapon.equip_slots);
+                InsertRaceApplicability(item_record_id, datum.originalEntry.spec.weapon.races);
+                InsertJobApplicability(item_record_id, datum.originalEntry.spec.weapon.jobs);
+                break;
+                
+            case ItemSpecType::ARMOUR:
+                InsertArmourSpec(item_record_id, datum.originalEntry.spec.armour);
+                InsertEquipSlots(item_record_id, datum.originalEntry.spec.armour.equip_slots);
+                InsertRaceApplicability(item_record_id, datum.originalEntry.spec.armour.equip_races);
+                InsertJobApplicability(item_record_id, datum.originalEntry.spec.armour.equip_jobs);
+                break;
+                
+            case ItemSpecType::USABLE:
+                InsertUsableSpec(item_record_id, datum.originalEntry.spec.usable);
+                break;
+                
+            case ItemSpecType::NORMAL:
+            default:
+                InsertNormalSpec(item_record_id, datum.originalEntry.spec.normal);
+                break;
+        }
+        
+        // Insert name text if not empty
+        if (!datum.name.empty()) {
+            int name_text_id = InsertOrGetText(xybase::string::escape(datum.name));
+            if (sqlite3_prepare_v2(db, "UPDATE items SET name_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+            {
+                sqlite3_bind_int(stmt, 1, name_text_id);
+                sqlite3_bind_int(stmt, 2, item_record_id);
+                sqlite3_step(stmt);
+            }
+            sqlite3_finalize(stmt);
+        }
+        
+        // Insert description text if not empty
+        if (!datum.description.empty()) {
+            int desc_text_id = InsertOrGetText(xybase::string::escape(datum.description));
+            if (sqlite3_prepare_v2(db, "UPDATE items SET description_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+            {
+                sqlite3_bind_int(stmt, 1, desc_text_id);
+                sqlite3_bind_int(stmt, 2, item_record_id);
+                sqlite3_step(stmt);
+            }
+            sqlite3_finalize(stmt);
+        }
+    }
+}
+
+void SQLiteDataSource::InsertWeaponSpec(int item_id, const ItemWeaponSpec &spec)
+{
+    sqlite3_stmt *stmt = nullptr;
+    
+    const char *sql = R"(
+        INSERT OR REPLACE INTO item_weapon_spec (
+            item_id, level, ukn, ukn2, dmg, delay, ukn5, ukn6, ukn12, ukn7, ukn9,
+            max_charges, cast_factor, use_time, reuse_time, ukn20, ukn21, ilvl, ukn22, ukn23
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    )";
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_int(stmt, 1, item_id);
+        sqlite3_bind_int(stmt, 2, spec.level);
+        sqlite3_bind_int(stmt, 3, spec.ukn);
+        sqlite3_bind_int(stmt, 4, spec.ukn2);
+        sqlite3_bind_int(stmt, 5, spec.dmg);
+        sqlite3_bind_int(stmt, 6, spec.delay);
+        sqlite3_bind_int(stmt, 7, spec.ukn5);
+        sqlite3_bind_int(stmt, 8, spec.ukn6);
+        sqlite3_bind_int(stmt, 9, spec.ukn12);
+        sqlite3_bind_int(stmt, 10, spec.ukn7);
+        sqlite3_bind_int(stmt, 11, spec.ukn9);
+        sqlite3_bind_int(stmt, 12, spec.max_charges);
+        sqlite3_bind_int(stmt, 13, spec.cast_factor);
+        sqlite3_bind_int(stmt, 14, spec.use_time);
+        sqlite3_bind_int(stmt, 15, spec.reuse_time);
+        sqlite3_bind_int(stmt, 16, spec.ukn20);
+        sqlite3_bind_int(stmt, 17, spec.ukn21);
+        sqlite3_bind_int(stmt, 18, spec.ilvl);
+        sqlite3_bind_int(stmt, 19, spec.ukn22);
+        sqlite3_bind_int(stmt, 20, spec.ukn23);
+        sqlite3_step(stmt);
+    }
+    sqlite3_finalize(stmt);
+}
+
+void SQLiteDataSource::InsertArmourSpec(int item_id, const ItemArmourSpec &spec)
+{
+    sqlite3_stmt *stmt = nullptr;
+    
+    const char *sql = R"(
+        INSERT OR REPLACE INTO item_armour_spec (
+            item_id, level, ukn, shield_size, max_charges, cast_factor, 
+            use_time, reuse_time, ukn1, ukn2, ilvl, ukn3, ukn4
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    )";
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_int(stmt, 1, item_id);
+        sqlite3_bind_int(stmt, 2, spec.level);
+        sqlite3_bind_int(stmt, 3, spec.ukn);
+        sqlite3_bind_int(stmt, 4, spec.shield_size);
+        sqlite3_bind_int(stmt, 5, spec.max_charges);
+        sqlite3_bind_int(stmt, 6, spec.cast_factor);
+        sqlite3_bind_int(stmt, 7, spec.use_time);
+        sqlite3_bind_int(stmt, 8, spec.reuse_time);
+        sqlite3_bind_int(stmt, 9, spec.ukn1);
+        sqlite3_bind_int(stmt, 10, spec.ukn2);
+        sqlite3_bind_int(stmt, 11, spec.ilvl);
+        sqlite3_bind_int(stmt, 12, spec.ukn3);
+        sqlite3_bind_int(stmt, 13, spec.ukn4);
+        sqlite3_step(stmt);
+    }
+    sqlite3_finalize(stmt);
+}
+
+void SQLiteDataSource::InsertUsableSpec(int item_id, const ItemUsableSpec &spec)
+{
+    sqlite3_stmt *stmt = nullptr;
+    
+    const char *sql = R"(
+        INSERT OR REPLACE INTO item_usable_spec (
+            item_id, cast_factor, ukn1, ukn2, ukn3
+        ) VALUES (?, ?, ?, ?, ?)
+    )";
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_int(stmt, 1, item_id);
+        sqlite3_bind_int(stmt, 2, spec.cast_factor);
+        sqlite3_bind_int(stmt, 3, spec.ukn1);
+        sqlite3_bind_int(stmt, 4, spec.ukn2);
+        sqlite3_bind_int(stmt, 5, spec.ukn3);
+        sqlite3_step(stmt);
+    }
+    sqlite3_finalize(stmt);
+}
+
+void SQLiteDataSource::InsertNormalSpec(int item_id, const ItemNormalSpec &spec)
+{
+    sqlite3_stmt *stmt = nullptr;
+    
+    const char *sql = R"(
+        INSERT OR REPLACE INTO item_normal_spec (
+            item_id, ukn1, ukn2, ukn3, ukn4, ukn5
+        ) VALUES (?, ?, ?, ?, ?, ?)
+    )";
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_int(stmt, 1, item_id);
+        sqlite3_bind_int(stmt, 2, spec.ukn1);
+        sqlite3_bind_int(stmt, 3, spec.ukn2);
+        sqlite3_bind_int(stmt, 4, spec.ukn3);
+        sqlite3_bind_int(stmt, 5, spec.ukn4);
+        sqlite3_bind_int(stmt, 6, spec.ukn5);
+        sqlite3_step(stmt);
+    }
+    sqlite3_finalize(stmt);
+}
+
+void SQLiteDataSource::InsertEquipSlots(int item_id, const ItemEquipSlot &slots)
+{
+    sqlite3_stmt *stmt = nullptr;
+    
+    const char *sql = R"(
+        INSERT OR REPLACE INTO item_equip_slots (
+            item_id, main_hand, sub_hand, ranged, ammo, head, body, hands, legs,
+            feet, neck, waist, left_ear, right_ear, left_ring, right_ring, back
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    )";
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_int(stmt, 1, item_id);
+        sqlite3_bind_int(stmt, 2, slots.main_hand ? 1 : 0);
+        sqlite3_bind_int(stmt, 3, slots.sub_hand ? 1 : 0);
+        sqlite3_bind_int(stmt, 4, slots.ranged ? 1 : 0);
+        sqlite3_bind_int(stmt, 5, slots.ammo ? 1 : 0);
+        sqlite3_bind_int(stmt, 6, slots.head ? 1 : 0);
+        sqlite3_bind_int(stmt, 7, slots.body ? 1 : 0);
+        sqlite3_bind_int(stmt, 8, slots.hands ? 1 : 0);
+        sqlite3_bind_int(stmt, 9, slots.legs ? 1 : 0);
+        sqlite3_bind_int(stmt, 10, slots.feet ? 1 : 0);
+        sqlite3_bind_int(stmt, 11, slots.neck ? 1 : 0);
+        sqlite3_bind_int(stmt, 12, slots.waist ? 1 : 0);
+        sqlite3_bind_int(stmt, 13, slots.left_ear ? 1 : 0);
+        sqlite3_bind_int(stmt, 14, slots.right_ear ? 1 : 0);
+        sqlite3_bind_int(stmt, 15, slots.left_ring ? 1 : 0);
+        sqlite3_bind_int(stmt, 16, slots.right_ring ? 1 : 0);
+        sqlite3_bind_int(stmt, 17, slots.back ? 1 : 0);
+        sqlite3_step(stmt);
+    }
+    sqlite3_finalize(stmt);
+}
+
+void SQLiteDataSource::InsertRaceApplicability(int item_id, const ItemRaceApplicability &races)
+{
+    sqlite3_stmt *stmt = nullptr;
+    
+    const char *sql = R"(
+        INSERT OR REPLACE INTO item_race_applicability (
+            item_id, none, hume_male, hume_female, elvaan_male, elvaan_female,
+            taru_male, taru_female, mithra, galka, rsv
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    )";
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_int(stmt, 1, item_id);
+        sqlite3_bind_int(stmt, 2, races.None ? 1 : 0);
+        sqlite3_bind_int(stmt, 3, races.HumeMale ? 1 : 0);
+        sqlite3_bind_int(stmt, 4, races.HumeFemale ? 1 : 0);
+        sqlite3_bind_int(stmt, 5, races.ElvaanMale ? 1 : 0);
+        sqlite3_bind_int(stmt, 6, races.ElvaanFemale ? 1 : 0);
+        sqlite3_bind_int(stmt, 7, races.TaruMale ? 1 : 0);
+        sqlite3_bind_int(stmt, 8, races.TaruFemale ? 1 : 0);
+        sqlite3_bind_int(stmt, 9, races.Mithra ? 1 : 0);
+        sqlite3_bind_int(stmt, 10, races.Galka ? 1 : 0);
+        sqlite3_bind_int(stmt, 11, races.Rsv);
+        sqlite3_step(stmt);
+    }
+    sqlite3_finalize(stmt);
+}
+
+void SQLiteDataSource::InsertJobApplicability(int item_id, const ItemJobApplicability &jobs)
+{
+    sqlite3_stmt *stmt = nullptr;
+    
+    const char *sql = R"(
+        INSERT OR REPLACE INTO item_job_applicability (
+            item_id, pld, thf, rdm, blm, whm, mnk, war, rsv1,
+            smn, drg, nin, sam, rng, brd, bst, drk,
+            mon, run, geo, sch, dnc, pup, cor, blu, rsv2
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    )";
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_int(stmt, 1, item_id);
+        sqlite3_bind_int(stmt, 2, jobs.pld ? 1 : 0);
+        sqlite3_bind_int(stmt, 3, jobs.thf ? 1 : 0);
+        sqlite3_bind_int(stmt, 4, jobs.rdm ? 1 : 0);
+        sqlite3_bind_int(stmt, 5, jobs.blm ? 1 : 0);
+        sqlite3_bind_int(stmt, 6, jobs.whm ? 1 : 0);
+        sqlite3_bind_int(stmt, 7, jobs.mnk ? 1 : 0);
+        sqlite3_bind_int(stmt, 8, jobs.war ? 1 : 0);
+        sqlite3_bind_int(stmt, 9, jobs.rsv1 ? 1 : 0);
+        sqlite3_bind_int(stmt, 10, jobs.smn ? 1 : 0);
+        sqlite3_bind_int(stmt, 11, jobs.drg ? 1 : 0);
+        sqlite3_bind_int(stmt, 12, jobs.nin ? 1 : 0);
+        sqlite3_bind_int(stmt, 13, jobs.sam ? 1 : 0);
+        sqlite3_bind_int(stmt, 14, jobs.rng ? 1 : 0);
+        sqlite3_bind_int(stmt, 15, jobs.brd ? 1 : 0);
+        sqlite3_bind_int(stmt, 16, jobs.bst ? 1 : 0);
+        sqlite3_bind_int(stmt, 17, jobs.drk ? 1 : 0);
+        sqlite3_bind_int(stmt, 18, jobs.mon ? 1 : 0);
+        sqlite3_bind_int(stmt, 19, jobs.run ? 1 : 0);
+        sqlite3_bind_int(stmt, 20, jobs.geo ? 1 : 0);
+        sqlite3_bind_int(stmt, 21, jobs.sch ? 1 : 0);
+        sqlite3_bind_int(stmt, 22, jobs.dnc ? 1 : 0);
+        sqlite3_bind_int(stmt, 23, jobs.pup ? 1 : 0);
+        sqlite3_bind_int(stmt, 24, jobs.cor ? 1 : 0);
+        sqlite3_bind_int(stmt, 25, jobs.blu ? 1 : 0);
+        sqlite3_bind_int(stmt, 26, jobs.rsv2);
+        sqlite3_step(stmt);
+    }
+    sqlite3_finalize(stmt);
+}
+
+void SQLiteDataSource::TranslateItemDat(int file_id, const wchar_t *file_path, const char *type)
+{
+    std::wstring inputPath = file_path;
+    if (!inputPath.ends_with(L".DAT")) {
+        inputPath += L".DAT";
+    }
+    auto datPath = PathUtil::GetPath(inputPath);
+    auto outPath = PathUtil::GetOutPathConf(inputPath);
+    
+    ItemData itemData;
+    ItemSpecType specType = ItemSpecType::NORMAL;
+    
+    // Determine spec type based on type parameter
+    std::string typeStr(type);
+    if (typeStr == "ieb") specType = ItemSpecType::ARMOUR;
+    else if (typeStr == "inb") specType = ItemSpecType::NORMAL;
+    else if (typeStr == "iub") specType = ItemSpecType::USABLE;
+    else if (typeStr == "iwb") specType = ItemSpecType::WEAPON;
+    else if (typeStr == "iab") specType = ItemSpecType::ARMOUR;
+    
+    // Read original data first
+    itemData.Read(datPath, specType);
+    
+    sqlite3_stmt *stmt = nullptr;
+    
+    // Get translations for each item
+    for (auto &datum : itemData.data) {
+        // Get name translation
+        if (sqlite3_prepare_v2(db, 
+            "SELECT tr.text FROM items i "
+            "JOIN text t ON i.name_text_id = t.id "
+            "JOIN trans tr ON t.id = tr.text_id "
+            "WHERE i.file_id = ? AND i.item_id = ?", 
+            -1, &stmt, nullptr) == SQLITE_OK)
+        {
+            sqlite3_bind_int(stmt, 1, file_id);
+            sqlite3_bind_int(stmt, 2, datum.id);
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                const char* translatedName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                if (translatedName) {
+                    std::u8string transName(reinterpret_cast<const char8_t*>(translatedName));
+                    datum.name = transName;
+                }
+            }
+        }
+        sqlite3_finalize(stmt);
+        
+        // Get description translation
+        if (sqlite3_prepare_v2(db, 
+            "SELECT tr.text FROM items i "
+            "JOIN text t ON i.description_text_id = t.id "
+            "JOIN trans tr ON t.id = tr.text_id "
+            "WHERE i.file_id = ? AND i.item_id = ?", 
+            -1, &stmt, nullptr) == SQLITE_OK)
+        {
+            sqlite3_bind_int(stmt, 1, file_id);
+            sqlite3_bind_int(stmt, 2, datum.id);
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                const char* translatedDesc = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                if (translatedDesc) {
+                    std::u8string transDesc(reinterpret_cast<const char8_t*>(translatedDesc));
+                    datum.description = transDesc;
+                }
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+    
+    itemData.Write(outPath);
+}
+
+int SQLiteDataSource::InsertOrGetItemRecord(int file_id, uint32_t item_id, const std::wstring &type)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int record_id = -1;
+    
+    // Try to get existing record
+    if (sqlite3_prepare_v2(db, "SELECT id FROM items WHERE file_id = ? AND item_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_int(stmt, 1, file_id);
+        sqlite3_bind_int(stmt, 2, item_id);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            record_id = sqlite3_column_int(stmt, 0);
+        }
+    }
+    sqlite3_finalize(stmt);
+    
+    if (record_id == -1)
+    {
+        // Insert new record
+        if (sqlite3_prepare_v2(db, "INSERT INTO items (file_id, item_id, spec_type) VALUES (?, ?, '')", -1, &stmt, nullptr) == SQLITE_OK)
+        {
+            sqlite3_bind_int(stmt, 1, file_id);
+            sqlite3_bind_int(stmt, 2, item_id);
+            if (sqlite3_step(stmt) == SQLITE_DONE)
+            {
+                record_id = static_cast<int>(sqlite3_last_insert_rowid(db));
+            }
+            else
+            {
+                sqlite3_finalize(stmt);
+                throw SQLException(sqlite3_errmsg(db));
+            }
+        }
+        else
+        {
+            throw SQLException(sqlite3_errmsg(db));
+        }
+        sqlite3_finalize(stmt);
+    }
+    
+    return record_id;
+}
+
+int SQLiteDataSource::InsertOrGetText(const std::u8string &text)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int text_id = -1;
+    
+    std::string textStr = reinterpret_cast<const char*>(text.c_str());
+    
+    // Try to get existing text
+    if (sqlite3_prepare_v2(db, "SELECT id FROM text WHERE text = ?", -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, textStr.c_str(), -1, SQLITE_TRANSIENT);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            text_id = sqlite3_column_int(stmt, 0);
+        }
+    }
+    sqlite3_finalize(stmt);
+    
+    if (text_id == -1)
+    {
+        // Insert new text
+        if (sqlite3_prepare_v2(db, "INSERT INTO text (text) VALUES (?)", -1, &stmt, nullptr) == SQLITE_OK)
+        {
+            sqlite3_bind_text(stmt, 1, textStr.c_str(), -1, SQLITE_TRANSIENT);
+            if (sqlite3_step(stmt) == SQLITE_DONE)
+            {
+                text_id = static_cast<int>(sqlite3_last_insert_rowid(db));
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+    
+    return text_id;
 }

@@ -69,12 +69,25 @@ public:
 	
 	int GetHeight() const;
 
-	void Read(std::ifstream &eye);
+	void Read(std::istream &eye);
 
-	void Write(std::ofstream &pen);
+	/**
+	 * @brief Read image data from memory buffer
+	 * @param data Pointer to the image data in memory
+	 * @param size Size of the image data buffer
+	 */
+	void ReadFromMemory(const char* data, size_t size);
+
+	void Write(std::ostream &pen) const;
+
+	void WriteToMemory(char* data, size_t& size) const;
 
 	std::unique_ptr<char[]> GetDds() const;
 
+	std::unique_ptr<char[]> GetBitmap() const;
+
 	void ImportDds(const char *p_dds);
+
+	void ImportBitmap(const char* p_bmp);
 };
 

@@ -9,6 +9,9 @@
 #include <exception>
 #include <filesystem>
 #include <xystring.h>
+#include <vector>
+#include <sstream>
+#include <set>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -18,6 +21,8 @@
 #include <XiString.h>
 #include <DMsg.h>
 #include <EventStringBase.h>
+#include <StatusData.h>
+#include <ItemData.h>
 
 namespace fs = std::filesystem;
 
@@ -28,16 +33,25 @@ fs::path gameRoot, progRoot;
 
 std::map<std::u8string, std::u8string> textMapping;
 
+// 失配文本统计和文件输出
+int mismatchCount = 0;
+std::ofstream mismatchFile;
+
 std::u8string GetTranslation(const std::u8string &text) {
     std::u8string translation;
 
     auto itr = textMapping.find(text);
     if (itr == textMapping.end())
     {
-        // CP936 环境下会爆，替换掉
-        auto safeStr = xybase::string::replace(xybase::string::to_wstring(text), { L"�" }, { L"?" });
-        safeStr = xybase::string::replace(safeStr, { L"・" }, { L"·" });
-        std::wcout << L"\n文本：" << safeStr << L"失配了。" << std::endl;
+        // 统计失配文本数量
+        mismatchCount++;
+        
+        // 将失配文本写入文件
+        if (mismatchFile.is_open()) {
+            mismatchFile.write(reinterpret_cast<const char*>(text.c_str()), text.length());
+            mismatchFile << "\n";
+        }
+        
         return text;
     }
 
@@ -45,6 +59,32 @@ std::u8string GetTranslation(const std::u8string &text) {
     translation = ChsToSJis::Instance().ReplaceHanzi(translation);
 
     return translation;
+}
+
+// 解析cell索引字符串，如 "2|3" 返回 {2, 3}
+std::set<int> ParseCellIndices(const std::u8string &cellIndicesStr) {
+    std::set<int> indices;
+    if (cellIndicesStr.empty()) {
+        return indices;
+    }
+    
+    std::string str = reinterpret_cast<const char*>(cellIndicesStr.c_str());
+    std::stringstream ss(str);
+    std::string token;
+    
+    while (std::getline(ss, token, '|')) {
+        try {
+            int index = std::stoi(token);
+            if (index > 0) { // 确保索引有效（从1开始）
+                indices.insert(index);
+            }
+        }
+        catch (const std::exception&) {
+            // 忽略无效的索引
+        }
+    }
+    
+    return indices;
 }
 
 int PathInit()
@@ -144,12 +184,20 @@ int main()
     setlocale(LC_ALL, "");
     try
     {
-        std::wcout << L"FFXI汉化插入工具 Ver.0.2-alpha by Hyururu" << std::endl;
+        std::wcout << L"FFXI汉化插入工具 Ver.0.5-alpha by Hyururu" << std::endl;
         if (PathInit())
         {
             system("pause");
             exit(-1);
         };
+        
+        // 初始化失配文件（UTF-8无BOM）
+        fs::path mismatchPath = progRoot / "text_mismatch.txt";
+        mismatchFile.open(mismatchPath, std::ios::out | std::ios::binary);
+        if (!mismatchFile.is_open()) {
+            std::wcerr << L"无法创建失配文本文件：" << mismatchPath << std::endl;
+        }
+        
         try
         {
             CodeCvt::GetInstance().Init(progRoot / L"cp932.csv");
@@ -221,6 +269,13 @@ int main()
             std::u8string type = def.NextCell();
             std::u8string lang = def.NextCell();
             std::u8string comm = def.NextCell();
+            
+            // 读取可选的第5个cell，用于指定dmsg的特定cell进行翻译
+            std::u8string cellIndicesStr;
+            if (!def.IsEol()) {
+                cellIndicesStr = def.NextCell();
+            }
+            
             std::wcout << L"处理中：文件 "
                 << xybase::string::to_wstring(path)
                 << L"(" << xybase::string::to_wstring(type)
@@ -267,6 +322,11 @@ int main()
             {
                 DMsg dmsg(datPath);
                 dmsg.Read();
+                
+                // 解析要翻译的cell索引
+                std::set<int> targetCells = ParseCellIndices(cellIndicesStr);
+                bool translateAllCells = targetCells.empty(); // 如果没有指定索引，翻译所有cell
+                
                 int rowNum = 1;
                 for (auto &row : dmsg)
                 {
@@ -275,9 +335,13 @@ int main()
                     {
                         if (cell.GetType() == 0) // str
                         {
-                            std::u8string text = xybase::string::escape(cell.Get<std::u8string>());
-
-                            cell.Set(xybase::string::unescape(GetTranslation(text)));
+                            // 检查是否需要翻译这个cell
+                            bool shouldTranslate = translateAllCells || targetCells.count(colNum) > 0;
+                            
+                            if (shouldTranslate) {
+                                std::u8string text = xybase::string::escape(cell.Get<std::u8string>());
+                                cell.Set(xybase::string::unescape(GetTranslation(text)));
+                            }
                         }
                         ++colNum;
                     }
@@ -286,12 +350,75 @@ int main()
                 dmsg.path = outPath;
                 dmsg.Write();
             }
+            else if (type == u8"sd")
+            {
+                StatusData statusData;
+                statusData.Read(datPath);
+                for (auto &datum : statusData.data)
+                {
+                    if (!datum.description.empty())
+                    {
+                        std::u8string text = xybase::string::escape(datum.description);
+                        datum.description = xybase::string::unescape(GetTranslation(text));
+                    }
+                }
+                statusData.Write(outPath);
+            }
+            else if (type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb")
+            {
+                ItemData itemData;
+                ItemSpecType specType = ItemSpecType::NORMAL;
+                
+                // Determine spec type based on type parameter
+                if (type == u8"iab") {
+                    specType = ItemSpecType::ARMOUR;
+                }
+                else if (type == u8"iwb") {
+                    specType = ItemSpecType::WEAPON;
+                }
+                else if (type == u8"iub") {
+                    specType = ItemSpecType::USABLE;
+                }
+                else if (type == u8"inb") {
+                    specType = ItemSpecType::NORMAL;
+                }
+                
+                itemData.Read(datPath, specType);
+                for (auto &datum : itemData.data)
+                {
+                    // Process name
+                    if (!datum.name.empty())
+                    {
+                        std::u8string text = xybase::string::escape(datum.name);
+                        datum.name = xybase::string::unescape(GetTranslation(text));
+                    }
+                    
+                    // Process description
+                    if (!datum.description.empty())
+                    {
+                        std::u8string text = xybase::string::escape(datum.description);
+                        datum.description = xybase::string::unescape(GetTranslation(text));
+                    }
+                }
+                itemData.Write(outPath);
+            }
         }
+        
+        // 关闭失配文件
+        if (mismatchFile.is_open()) {
+            mismatchFile.close();
+        }
+        
         std::wcout << L"处理完毕。" << std::endl;
+        std::wcout << L"共有 " << std::to_wstring(mismatchCount) << L" 条文本失配。失配文本已经保存到 text_mismatch.txt 中。" << std::endl;
         system("pause");
     }
     catch (std::exception &ex)
     {
+        // 确保在异常情况下也关闭文件
+        if (mismatchFile.is_open()) {
+            mismatchFile.close();
+        }
         std::wcerr << L"发生了意外错误。" << std::endl;
         std::wcerr << xybase::string::sys_mbs_to_wcs(ex.what()) << std::endl;
         system("pause");

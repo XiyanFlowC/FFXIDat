@@ -1,8 +1,259 @@
 #pragma once
 
+#include <cstdint>
+#include <vector>
+#include <string>
+
 #include "Record.h"
+#include "Image.h"
+
+// Sample Files: 0/6 0/7 0/8 286/72 0/5 0/4 （整个文件ror5）
+
+#pragma pack(push, 1)
+
+struct ItemHeader
+{
+	uint32_t id;
+	
+	// flag set 1
+	uint8_t is_scroll : 1;
+	uint8_t is_not_listable : 1; // cannot be listed in auction house
+	uint8_t is_inscribable : 1; // can be inscribed
+	uint8_t is_alt : 1; // can be sent to another character hold by same account
+	uint8_t ukn_flg1 : 1;
+	uint8_t is_mystery_box_consumable : 1; // can be consumed for mystery box
+	uint8_t ukn_flg2 : 1;
+	uint8_t is_wall_decoration : 1; // can be hung on wall
+
+	// flag set 2
+	uint8_t is_rare : 1;
+	uint8_t is_untradeable : 1; // cannot be traded
+	uint8_t is_unmailable : 1; // cannot be mailed
+	uint8_t is_unbazaarable : 1; // cannot be sold in bazaar
+	uint8_t is_equipment : 1; // can be equipped
+	uint8_t is_npc_tradeable : 1; // can be traded with NPCs
+	uint8_t is_usable : 1; // can be used
+	uint8_t is_linkshell : 1;
+
+	uint16_t stack_size;
+	uint16_t item_type;
+	uint16_t resource_id;
+	uint16_t valid_targets;
+};
+
+struct ItemJobApplicability
+{
+	uint32_t pld : 1;
+	uint32_t thf : 1;
+	uint32_t rdm : 1;
+	uint32_t blm : 1;
+	uint32_t whm : 1;
+	uint32_t mnk : 1;
+	uint32_t war : 1;
+	uint32_t rsv1 : 1;
+
+	uint32_t smn : 1;
+	uint32_t drg : 1;
+	uint32_t nin : 1;
+	uint32_t sam : 1;
+	uint32_t rng : 1;
+	uint32_t brd : 1;
+	uint32_t bst : 1;
+	uint32_t drk : 1;
+
+	uint32_t mon : 1;
+	uint32_t run : 1;
+	uint32_t geo : 1;
+	uint32_t sch : 1;
+	uint32_t dnc : 1;
+	uint32_t pup : 1;
+	uint32_t cor : 1;
+	uint32_t blu : 1;
+
+	uint32_t rsv2 : 8;
+};
+
+struct ItemEquipSlot
+{
+	uint16_t main_hand : 1;
+	uint16_t sub_hand : 1;
+	uint16_t ranged : 1;
+	uint16_t ammo : 1;
+	uint16_t head : 1;
+	uint16_t body : 1;
+	uint16_t hands : 1;
+	uint16_t legs : 1;
+
+	uint16_t feet : 1;
+	uint16_t neck : 1;
+	uint16_t waist : 1;
+	uint16_t left_ear : 1;
+	uint16_t right_ear : 1;
+	uint16_t left_ring : 1;
+	uint16_t right_ring : 1;
+	uint16_t back : 1;
+};
+
+struct ItemRaceApplicability
+{
+	uint16_t None : 1;
+	uint16_t HumeMale : 1;
+	uint16_t HumeFemale : 1;
+	uint16_t ElvaanMale : 1;
+	uint16_t ElvaanFemale : 1;
+	uint16_t TaruMale : 1;
+	uint16_t TaruFemale : 1;
+	uint16_t Mithra : 1;
+	uint16_t Galka : 1;
+	uint16_t Rsv : 7;
+};
+
+struct ItemArmourSpec
+{
+	int16_t level;
+	ItemEquipSlot equip_slots;
+	ItemRaceApplicability equip_races;
+	ItemJobApplicability equip_jobs;
+	uint16_t ukn;
+	uint16_t shield_size;
+	uint8_t max_charges;
+	uint8_t cast_factor; // 使用后到效果生效的延迟时间系数，1/4秒，动画硬直时间
+	uint16_t use_time;
+	uint16_t reuse_time;
+	uint16_t ukn1;
+	uint16_t ukn2;
+	uint16_t ilvl;
+	uint16_t ukn3;
+	uint16_t ukn4;
+	Record info_rec;
+};
+
+struct ItemNormalSpec
+{
+	int16_t ukn1;
+	int16_t ukn2;
+	int16_t ukn3;
+	int16_t ukn4;
+	int16_t ukn5;
+	Record info_rec;
+};
+
+struct ItemUsableSpec
+{
+	int16_t cast_factor;
+	int32_t ukn1;
+	int32_t ukn2;
+	int32_t ukn3;
+
+	Record info_rec;
+};
+
+struct ItemWeaponSpec
+{
+	uint16_t level;
+	ItemEquipSlot equip_slots;
+	ItemRaceApplicability races;
+	ItemJobApplicability jobs;
+	uint16_t ukn;
+
+	uint16_t ukn2;
+	uint16_t dmg;
+	uint16_t delay;
+	uint16_t ukn5;
+	uint8_t ukn6;
+	uint8_t ukn12;
+	uint16_t ukn7;
+	uint16_t ukn9;
+
+	uint8_t max_charges;
+	uint8_t cast_factor; // 使用后到效果生效的延迟时间系数，1/4秒，动画硬直时间
+	uint16_t use_time;
+	uint16_t reuse_time;
+	uint16_t ukn20;
+	uint16_t ukn21;
+	uint16_t ilvl;
+	uint16_t ukn22;
+	uint16_t ukn23;
+
+	Record info_rec;
+};
+
+union ItemSpecData
+{
+	char raw[626];
+	ItemArmourSpec armour;
+	ItemNormalSpec normal;
+	ItemUsableSpec usable;
+	ItemWeaponSpec weapon;
+};
+
+struct ItemEntry
+{
+	ItemHeader header;
+	ItemSpecData spec;
+	uint32_t image_length;
+	char image_data[2427]; // 不确定是否是定数
+	uint8_t end_marker; // must be 0xFF
+};
+
+#pragma pack(pop)
+
+// Enum to specify the type of item spec data
+enum class ItemSpecType {
+    NORMAL,
+    USABLE,
+    WEAPON,
+    ARMOUR
+};
 
 class ItemData
 {
+public:
+	class ItemDatum
+	{
+	public:
+		uint32_t id;
+		std::u8string name;
+		std::u8string description;
+		Image image;
+		
+		// Store the complete original entry to preserve ALL fields including unknown ones
+		ItemEntry originalEntry;
+		
+		// Store the spec type for this item
+		ItemSpecType spec_type;
+		
+		// Convenience accessors for commonly used fields
+		uint16_t& stack_size() { return originalEntry.header.stack_size; }
+		const uint16_t& stack_size() const { return originalEntry.header.stack_size; }
+		uint16_t& item_type() { return originalEntry.header.item_type; }
+		const uint16_t& item_type() const { return originalEntry.header.item_type; }
+		uint16_t& resource_id() { return originalEntry.header.resource_id; }
+		const uint16_t& resource_id() const { return originalEntry.header.resource_id; }
+		uint16_t& valid_targets() { return originalEntry.header.valid_targets; }
+		const uint16_t& valid_targets() const { return originalEntry.header.valid_targets; }
+		
+		// Direct access to flags via header
+		ItemHeader& flags() { return originalEntry.header; }
+		const ItemHeader& flags() const { return originalEntry.header; }
+		
+		ItemDatum() : originalEntry{}, spec_type(ItemSpecType::NORMAL)
+		{
+			// Initialize originalEntry with default values
+			originalEntry.header.id = 0;
+			originalEntry.header.stack_size = 1;
+			originalEntry.header.item_type = 0;
+			originalEntry.header.resource_id = 0;
+			originalEntry.header.valid_targets = 0;
+			originalEntry.image_length = 0;
+			originalEntry.end_marker = 0xFF;
+			memset(&originalEntry.spec, 0, sizeof(originalEntry.spec));
+			memset(originalEntry.image_data, 0, sizeof(originalEntry.image_data));
+		}
+	};
+
+	void Read(std::wstring path, ItemSpecType defaultSpecType = ItemSpecType::NORMAL);
+	void Write(std::wstring path);
+	std::vector<ItemDatum> data;
 };
 

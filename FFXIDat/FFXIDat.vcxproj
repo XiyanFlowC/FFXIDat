@@ -155,6 +155,7 @@
     <ClInclude Include="ItemData.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Record.h" />
+    <ClInclude Include="StatusData.h" />
     <ClInclude Include="XiString.h" />
   </ItemGroup>
   <ItemGroup>
@@ -172,6 +173,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Record.cpp" />
+    <ClCompile Include="StatusData.cpp" />
     <ClCompile Include="XiString.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
