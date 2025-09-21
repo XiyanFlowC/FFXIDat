@@ -438,7 +438,7 @@ namespace xybase
 		}
 
 		template <typename Ch>
-		std::basic_string<Ch> escape(const std::basic_string<Ch> &str)
+		std::basic_string<Ch> escape(const std::basic_string<Ch> &str, bool esc_ascii_ctrl = false, bool esc_non_ascii = false)
 		{
 			std::basic_string<Ch> result;
 			for (const auto &ch : str)
@@ -458,7 +458,24 @@ namespace xybase
 					result += static_cast<Ch>('n');
 					break;
 				default:
-					result += ch;
+					if (ch < 32 && esc_ascii_ctrl)
+					{
+						result += static_cast<Ch>('\\');
+						result += static_cast<Ch>('x');
+						result += static_cast<Ch>("0123456789ABCDEF"[(ch >> 4) & 0xF]);
+						result += static_cast<Ch>("0123456789ABCDEF"[ch & 0xF]);
+					}
+					else if (ch > 126 && esc_non_ascii)
+					{
+						result += static_cast<Ch>('\\');
+						result += static_cast<Ch>('u');
+						result += static_cast<Ch>("0123456789ABCDEF"[(ch >> 12) & 0xF]);
+						result += static_cast<Ch>("0123456789ABCDEF"[(ch >> 8) & 0xF]);
+						result += static_cast<Ch>("0123456789ABCDEF"[(ch >> 4) & 0xF]);
+						result += static_cast<Ch>("0123456789ABCDEF"[ch & 0xF]);
+					}
+					else
+						result += ch;
 					break;
 				}
 			}

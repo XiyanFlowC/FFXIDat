@@ -13,6 +13,7 @@
 #include "FFXIDatProcessor.h"
 #include "codepage.h"
 #include "XiString.h"
+#include "../FFXIDat/FixedPhrase.h"
 
 #include "liteopt.h"
 
@@ -24,6 +25,7 @@
 #include <Windows.h>
 #undef GetMessage
 void CsvToEventStringData(const char *src, const char *out);
+void CsvToFixedPhrase(const char *src, const char *out = nullptr);
 
 int cfg_block = 0, cfg_xor = 0;
 
@@ -190,6 +192,19 @@ int main(int argc, const char **argv)
         return 0;
         }, L"转换一个XiString文件到CSV。");
     lopt_regopt("csv-to-xis", 'S', LOPT_FLG_VAL_NEED, [](const char *str) -> int {CsvToXiString(str); return 0; }, L"转换一个CSV文件到XiString。");
+    lopt_regopt("fp-to-csv", 'p', LOPT_FLG_VAL_NEED, [](const char *str) -> int {
+        std::string path(str);
+        FixedPhrase f;
+        try {
+            f.Read(xybase::string::to_wstring(str));
+            f.ToCsv(xybase::string::to_wstring(path.replace(path.find(".DAT"), 4, ".csv")));
+        }
+        catch (std::exception &ex) {
+            std::wcerr << L"发生错误：" << ex.what() << std::endl;
+        }
+        return 0;
+        }, L"转换一个FixedPhrase文件到CSV。");
+    lopt_regopt("csv-to-fp", 'P', LOPT_FLG_VAL_NEED, [](const char *str) -> int {CsvToFixedPhrase(str); return 0; }, L"转换一个CSV文件到FixedPhrase。");
     lopt_regopt("install-path", 'I', LOPT_FLG_VAL_NEED, [](const char *str) -> int {
         PathUtil::gameRootPath = xybase::string::sys_mbs_to_wcs(str);
         return 0;
@@ -218,6 +233,10 @@ int main(int argc, const char **argv)
             if (path.ends_with(".evsb.csv"))
             {
                 CsvToEventStringData(argv[i], path.substr(0, path.size() - 9).c_str());
+            }
+            if (path.ends_with(".fp.csv"))
+            {
+                CsvToFixedPhrase(argv[i], path.substr(0, path.size() - 7).c_str());
             }
             if (path.ends_with(".DAT"))
             {
@@ -251,6 +270,21 @@ int main(int argc, const char **argv)
                         s.ToCsv(path + ".xis.csv");
                     }
                     catch (std::exception &ex)
+                    {
+                        std::wcout << "Failed: " << ex.what() << std::endl;
+                    }
+                }
+                else if (memcmp(m, "\x02\x01\x01", 4) == 0)
+                {
+                    std::wcout << "fp p=" << path.c_str() << std::endl;
+                    try
+                    {
+                        FixedPhrase fp;
+                        std::wstring wpath = xybase::string::to_wstring(path);
+                        fp.Read(wpath);
+                        fp.ToCsv(wpath + L".fp.csv");
+                    }
+                    catch (std::exception& ex)
                     {
                         std::wcout << "Failed: " << ex.what() << std::endl;
                     }
@@ -391,6 +425,29 @@ void CsvToXiString(const char *src, const char *out)
     }
 }
 
+void CsvToFixedPhrase(const char *src, const char *out)
+{
+    std::string csvPath = src;
+    if (!csvPath.ends_with(".csv"))
+    {
+        std::wcerr << L"指定的文件不是CSV。" << std::endl;
+        return;
+    }
+    std::string datPath = csvPath;
+    FixedPhrase f;
+    try {
+        f.FromCsv(xybase::string::to_wstring(csvPath));
+        f.Write(xybase::string::to_wstring(out ? out : datPath.replace(datPath.find(".csv"), 4, ".DAT")));
+    }
+    catch (xybase::RuntimeException &ex)
+    {
+        std::wcerr << L"发生异常：" << ex.GetMessage() << std::endl;
+    }
+    catch (std::exception &ex) {
+        std::wcerr << L"发生错误：" << ex.what() << std::endl;
+    }
+}
+
 void ExtractSysText()
 {
     for (int rom = 1; rom < 12; ++rom)
@@ -464,6 +521,21 @@ void ExtractSysText()
                             s.ToCsv(PathUtil::GetOutPathConf(rom, c, n) + L".xis.csv");
                         }
                         catch (std::exception &ex)
+                        {
+                            std::wcout << "Failed: " << ex.what() << std::endl;
+                        }
+                    }
+                    else if (memcmp(m, "\x02\x01\x01", 4) == 0)
+                    {
+                        std::wcout << "fp p=" << p.c_str() << std::endl;
+                        try
+                        {
+                            FixedPhrase fp;
+                            std::wstring wpath = xybase::string::to_wstring(p);
+                            fp.Read(wpath);
+                            fp.ToCsv(PathUtil::GetOutPathConf(rom, c, n) + L".fp.csv");
+                        }
+                        catch (std::exception& ex)
                         {
                             std::wcout << "Failed: " << ex.what() << std::endl;
                         }

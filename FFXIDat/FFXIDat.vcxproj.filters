@@ -51,6 +51,9 @@
     <ClInclude Include="StatusData.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="FixedPhrase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -84,6 +87,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="StatusData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="FixedPhrase.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

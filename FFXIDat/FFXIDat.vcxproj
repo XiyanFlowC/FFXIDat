@@ -150,6 +150,7 @@
     <ClInclude Include="DMsg.h" />
     <ClInclude Include="EventString.h" />
     <ClInclude Include="EventStringBase.h" />
+    <ClInclude Include="FixedPhrase.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="ItemData.h" />
@@ -164,6 +165,7 @@
     <ClCompile Include="DMsg.cpp" />
     <ClCompile Include="EventString.cpp" />
     <ClCompile Include="EventStringBase.cpp" />
+    <ClCompile Include="FixedPhrase.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="ItemData.cpp" />
     <ClCompile Include="pch.cpp">
