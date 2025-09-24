@@ -88,7 +88,7 @@ void SQLiteDataSource::Initialise()
             is_inscribable INTEGER,
             is_alt INTEGER,
             ukn_flg1 INTEGER,
-            is_mystery_box_consumable INTEGER,
+            is_in_mystery_box INTEGER,
             ukn_flg2 INTEGER,
             is_wall_decoration INTEGER,
             
@@ -642,7 +642,7 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
                 ++rowNum;
             }
         }
-        else if (type == "ieb" || type == "inb" || type == "iub" || type == "iwb" || type == "iab")
+        else if (type == "ieb" || type == "inb" || type == "iub" || type == "iwb" || type == "iab" || type == "ipb" || type == "isb")
         {
             ImportItemDat(file_id, datPath, xybase::string::sys_mbs_to_wcs(type));
         }
@@ -886,6 +886,8 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
     else if (type == L"iub") specType = ItemSpecType::USABLE;
     else if (type == L"iwb") specType = ItemSpecType::WEAPON;
     else if (type == L"iab") specType = ItemSpecType::ARMOUR;
+    else if (type == L"isb") specType = ItemSpecType::SLIP;
+    else if (type == L"ipb") specType = ItemSpecType::PUPPET;
     
     itemData.Read(path, specType);
     
@@ -906,7 +908,7 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
             UPDATE items SET 
                 spec_type = ?, stack_size = ?, item_type = ?, resource_id = ?, valid_targets = ?,
                 is_scroll = ?, is_not_listable = ?, is_inscribable = ?, is_alt = ?, ukn_flg1 = ?,
-                is_mystery_box_consumable = ?, ukn_flg2 = ?, is_wall_decoration = ?,
+                is_in_mystery_box = ?, ukn_flg2 = ?, is_wall_decoration = ?,
                 is_rare = ?, is_untradeable = ?, is_unmailable = ?, is_unbazaarable = ?,
                 is_equipment = ?, is_npc_tradeable = ?, is_usable = ?, is_linkshell = ?,
                 image_length = ?, image_data = ?, end_marker = ?
@@ -920,6 +922,8 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
                 case ItemSpecType::WEAPON: specTypeStr = "WEAPON"; break;
                 case ItemSpecType::ARMOUR: specTypeStr = "ARMOUR"; break;
                 case ItemSpecType::USABLE: specTypeStr = "USABLE"; break;
+				case ItemSpecType::PUPPET: specTypeStr = "PUPPET"; break;
+				case ItemSpecType::SLIP: specTypeStr = "SLIP"; break;
                 case ItemSpecType::NORMAL: default: specTypeStr = "NORMAL"; break;
             }
             
@@ -933,7 +937,7 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
             sqlite3_bind_int(stmt, 8, datum.flags().is_inscribable ? 1 : 0);
             sqlite3_bind_int(stmt, 9, datum.flags().is_alt ? 1 : 0);
             sqlite3_bind_int(stmt, 10, datum.flags().ukn_flg1 ? 1 : 0);
-            sqlite3_bind_int(stmt, 11, datum.flags().is_mystery_box_consumable ? 1 : 0);
+            sqlite3_bind_int(stmt, 11, datum.flags().is_in_mystery_box ? 1 : 0);
             sqlite3_bind_int(stmt, 12, datum.flags().ukn_flg2 ? 1 : 0);
             sqlite3_bind_int(stmt, 13, datum.flags().is_wall_decoration ? 1 : 0);
             sqlite3_bind_int(stmt, 14, datum.flags().is_rare ? 1 : 0);
@@ -1253,6 +1257,8 @@ void SQLiteDataSource::TranslateItemDat(int file_id, const wchar_t *file_path, c
     else if (typeStr == "iub") specType = ItemSpecType::USABLE;
     else if (typeStr == "iwb") specType = ItemSpecType::WEAPON;
     else if (typeStr == "iab") specType = ItemSpecType::ARMOUR;
+    else if (typeStr == "isb") specType = ItemSpecType::SLIP;
+	else if (typeStr == "ipb") specType = ItemSpecType::PUPPET;
     
     // Read original data first
     itemData.Read(datPath, specType);

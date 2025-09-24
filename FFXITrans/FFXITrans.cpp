@@ -364,7 +364,7 @@ int main()
                 }
                 statusData.Write(outPath);
             }
-            else if (type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb")
+            else if (type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb" || type == u8"ipb" || type == u8"isb")
             {
                 ItemData itemData;
                 ItemSpecType specType = ItemSpecType::NORMAL;
@@ -382,6 +382,12 @@ int main()
                 else if (type == u8"inb") {
                     specType = ItemSpecType::NORMAL;
                 }
+                else if (type == u8"ipb") {
+                    specType = ItemSpecType::PUPPET;
+                }
+                else if (type == u8"isb") {
+                    specType = ItemSpecType::SLIP;
+				}
                 
                 itemData.Read(datPath, specType);
                 for (auto &datum : itemData.data)

@@ -21,7 +21,7 @@ struct ItemHeader
 	uint8_t is_inscribable : 1; // can be inscribed
 	uint8_t is_alt : 1; // can be sent to another character hold by same account
 	uint8_t ukn_flg1 : 1;
-	uint8_t is_mystery_box_consumable : 1; // can be consumed for mystery box
+	uint8_t is_in_mystery_box : 1; // can be yielded by mystery box
 	uint8_t ukn_flg2 : 1;
 	uint8_t is_wall_decoration : 1; // can be hung on wall
 
@@ -128,6 +128,31 @@ struct ItemArmourSpec
 	Record info_rec;
 };
 
+struct ItemPuppetSlot
+{
+	uint16_t head : 1;
+	uint16_t body : 1;
+	uint16_t attachment : 1;
+	uint16_t rsv : 13;
+};
+
+struct ItemPuppetSpec
+{
+	ItemPuppetSlot equip_slots;
+	uint8_t fire : 4;
+	uint8_t ice : 4;
+	uint8_t air : 4;
+	uint8_t earth : 4;
+	uint8_t thunder : 4;
+	uint8_t water : 4;
+	uint8_t light : 4;
+	uint8_t dark : 4;
+	uint8_t ukn;
+	uint16_t ukn2;
+	uint16_t ukn3;
+	Record info_rec;
+};
+
 struct ItemNormalSpec
 {
 	int16_t ukn1;
@@ -178,13 +203,21 @@ struct ItemWeaponSpec
 	Record info_rec;
 };
 
+struct ItemSlipSpec
+{
+	uint8_t ukn[70];
+	Record info_rec;
+};
+
 union ItemSpecData
 {
 	char raw[626];
 	ItemArmourSpec armour;
 	ItemNormalSpec normal;
 	ItemUsableSpec usable;
+	ItemPuppetSlot puppet;
 	ItemWeaponSpec weapon;
+	ItemSlipSpec slip;
 };
 
 struct ItemEntry
@@ -203,7 +236,9 @@ enum class ItemSpecType {
     NORMAL,
     USABLE,
     WEAPON,
-    ARMOUR
+    ARMOUR,
+	PUPPET,
+	SLIP
 };
 
 class ItemData

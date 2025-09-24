@@ -210,7 +210,7 @@ void ItemData::Write(std::wstring path)
         
         // Handle image data if present
         if (datum.image.texture) {
-            size_t imgSize = 0;
+            size_t imgSize = sizeof(entry.image_data);
             datum.image.WriteToMemory(entry.image_data, imgSize);
             if (imgSize > sizeof(entry.image_data)) {
                 throw std::runtime_error("Image size exceeds maximum allowed size");
