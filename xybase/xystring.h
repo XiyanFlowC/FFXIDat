@@ -503,6 +503,30 @@ namespace xybase
 					case 'n':
 						result += static_cast<Ch>('\n');
 						break;
+					case 'x':
+						std::basic_string_view<Ch> hexStr(it + 1, std::min<size_t>(2, std::distance(it + 1, str.end())));
+						if (hexStr.length() == 2 && std::isxdigit(hexStr[0]) && std::isxdigit(hexStr[1]))
+						{
+							result += static_cast<Ch>(stoi(hexStr, 16));
+							it += 2; // Skip the two hex digits
+						}
+						else
+						{
+							result += static_cast<Ch>('\\');
+							result += static_cast<Ch>('x');
+						}
+					case 'u':
+						std::basic_string_view<Ch> uniStr(it + 1, std::min<size_t>(4, std::distance(it + 1, str.end())));
+						if (uniStr.length() == 4 && std::isxdigit(uniStr[0]) && std::isxdigit(uniStr[1]) && std::isxdigit(uniStr[2]) && std::isxdigit(uniStr[3]))
+						{
+							result += static_cast<Ch>(stoi(uniStr, 16));
+							it += 4; // Skip the four hex digits
+						}
+						else
+						{
+							result += static_cast<Ch>('\\');
+							result += static_cast<Ch>('u');
+						}
 					default:
 						result += *it; // Non-standard escape, add as-is
 						break;
