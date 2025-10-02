@@ -32,6 +32,7 @@ fs::path gameRoot, progRoot;
 #include "ChsToSJis.h"
 
 std::map<std::u8string, std::u8string> textMapping;
+std::set<std::u8string> mismatchSet;
 
 // 失配文本统计和文件输出
 int mismatchCount = 0;
@@ -47,10 +48,13 @@ std::u8string GetTranslation(const std::u8string &text) {
         mismatchCount++;
         
         // 将失配文本写入文件
-        if (mismatchFile.is_open()) {
-            mismatchFile.write(reinterpret_cast<const char*>(text.c_str()), text.length());
-            mismatchFile << "\n";
-        }
+        if (mismatchSet.find(text) == mismatchSet.end()) {
+            mismatchSet.insert(text);
+            if (mismatchFile.is_open()) {
+                mismatchFile.write(reinterpret_cast<const char*>(text.c_str()), text.length());
+                mismatchFile << "\n";
+            }
+		}
         
         return text;
     }
@@ -179,8 +183,31 @@ void BackupGameFile(fs::path path)
     fs::copy(gamePath, backPath, fs::copy_options::skip_existing);
 }
 
-int main()
+int main(int argc, char **argv)
 {
+	bool in_situ = false;
+
+    if (argc > 1)
+    {
+        if (argc != 2)
+        {
+            std::wcerr << L"参数错误。\n";
+            return -1;
+		}
+
+		std::string cmd{ argv[1] };
+	    if (cmd == "insitu")
+			in_situ = true;
+        else
+        {
+            std::wcout << L"FFXI汉化插入工具 Ver.0.5-alpha by Hyururu\n"
+                L"用法：FFXITrans [insitu]\n"
+                L"  insitu：直接在游戏目录修改文件，否则输出到output目录\n"
+				L"  无参数则进入交互模式\n";
+            return 0;
+		}
+	}
+
     setlocale(LC_ALL, "");
     try
     {
@@ -227,25 +254,42 @@ int main()
         bool backupExist = false;
         if (fs::exists(progRoot / "backup")) {
             backupExist = true;
-            int key = YesNoPrompt(L"发现了备份数据。您希望先恢复备份吗？");
 
-            if (key == 'Y')
+            if (in_situ)
             {
+				std::wcout << L"恢复备份中..." << std::endl;
                 std::error_code ec;
                 fs::copy(progRoot / "backup", gameRoot, fs::copy_options::overwrite_existing | fs::copy_options::recursive, ec);
-                /*if ('Y' == YesNoPrompt(L"您希望删除备份吗？"))
-                    fs::remove_all(progRoot / "backup");*/
-
                 if (ec)
                 {
                     std::wcerr << L"恢复备份时发生了问题：" << ec.message().c_str();
                     system("pause");
                     return -3;
                 }
-                std::wcout << L"备份的恢复完成了。" << std::endl;
-                if ('Y' == YesNoPrompt(L"要退出程序吗？"))
+				std::wcout << L"备份的恢复完成了。" << std::endl;
+            }
+            else
+            {
+                int key = YesNoPrompt(L"发现了备份数据。您希望先恢复备份吗？");
+
+                if (key == 'Y')
                 {
-                    return 0;
+                    std::error_code ec;
+                    fs::copy(progRoot / "backup", gameRoot, fs::copy_options::overwrite_existing | fs::copy_options::recursive, ec);
+                    /*if ('Y' == YesNoPrompt(L"您希望删除备份吗？"))
+                        fs::remove_all(progRoot / "backup");*/
+
+                    if (ec)
+                    {
+                        std::wcerr << L"恢复备份时发生了问题：" << ec.message().c_str();
+                        system("pause");
+                        return -3;
+                    }
+                    std::wcout << L"备份的恢复完成了。" << std::endl;
+                    if ('Y' == YesNoPrompt(L"要退出程序吗？"))
+                    {
+                        return 0;
+                    }
                 }
             }
         }
@@ -254,7 +298,10 @@ int main()
         std::wcout << L"如果不希望使用插件，请在原位修改。" << std::endl;
         bool overwrite;
         
-        overwrite = YesNoPrompt(L"要在原位修改游戏文件吗？") == 'Y';
+        if (in_situ)
+            overwrite = true;
+        else 
+            overwrite = YesNoPrompt(L"要在原位修改游戏文件吗？") == 'Y';
 
         if (overwrite)
         {
@@ -366,6 +413,11 @@ int main()
             }
             else if (type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb" || type == u8"ipb" || type == u8"isb")
             {
+
+                // 解析要翻译的cell索引
+                std::set<int> targetCells = ParseCellIndices(cellIndicesStr);
+                bool translateAllCells = targetCells.empty(); // 如果没有指定索引，翻译所有cell
+
                 ItemData itemData;
                 ItemSpecType specType = ItemSpecType::NORMAL;
                 
@@ -393,14 +445,14 @@ int main()
                 for (auto &datum : itemData.data)
                 {
                     // Process name
-                    if (!datum.name.empty())
+                    if (!datum.name.empty() && (translateAllCells || targetCells.find(1) != targetCells.end()))
                     {
                         std::u8string text = xybase::string::escape(datum.name);
                         datum.name = xybase::string::unescape(GetTranslation(text));
                     }
                     
                     // Process description
-                    if (!datum.description.empty())
+                    if (!datum.description.empty() && (translateAllCells || targetCells.find(2) != targetCells.end()))
                     {
                         std::u8string text = xybase::string::escape(datum.description);
                         datum.description = xybase::string::unescape(GetTranslation(text));

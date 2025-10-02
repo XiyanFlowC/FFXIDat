@@ -134,6 +134,9 @@ struct ItemPuppetSlot
 	uint16_t body : 1;
 	uint16_t attachment : 1;
 	uint16_t rsv : 13;
+	uint32_t ukn1;
+	uint32_t ukn2;
+	Record info_rec;
 };
 
 struct ItemPuppetSpec

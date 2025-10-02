@@ -116,8 +116,13 @@ void ItemData::Read(std::wstring path, ItemSpecType defaultSpecType)
                 rec = &entry.spec.usable.info_rec;
                 break;
             case ItemSpecType::NORMAL:
-            default:
                 rec = &entry.spec.normal.info_rec;
+                break;
+            case ItemSpecType::PUPPET:
+                rec = &entry.spec.puppet.info_rec;
+				break;
+            case ItemSpecType::SLIP:
+				rec = &entry.spec.slip.info_rec;
                 break;
         }
         
@@ -193,9 +198,14 @@ void ItemData::Write(std::wstring path)
                 rec = &entry.spec.usable.info_rec;
                 break;
             case ItemSpecType::NORMAL:
-            default:
                 rec = &entry.spec.normal.info_rec;
                 break;
+			case ItemSpecType::PUPPET:
+				rec = &entry.spec.puppet.info_rec;
+                break;
+			case ItemSpecType::SLIP:
+                rec = &entry.spec.slip.info_rec;
+				break;
         }
         
         if (rec) {

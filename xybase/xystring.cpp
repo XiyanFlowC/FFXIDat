@@ -200,7 +200,7 @@ std::u32string xybase::string::to_utf32(const std::u16string &str) noexcept
     {
         if (str[i] >= 0xD800 && str[i] <= 0xDBFF) {
             // Singular lead surrogate
-            if (i + 1 < str.length())
+            if (i + 1 >= str.length())
             {
                 sb += u'�';
                 break;
@@ -382,7 +382,7 @@ std::u8string xybase::string::to_utf8(const std::u16string &str) noexcept
         }
         else if (c >= 0xD800 && c <= 0xDBFF) {
             // Singular lead surrogate
-            if (i + 1 < str.length())
+            if (i + 1 >= str.length())
             {
                 sb += 0xEF;
                 sb += 0xBF;

@@ -504,7 +504,8 @@ namespace xybase
 						result += static_cast<Ch>('\n');
 						break;
 					case 'x':
-						std::basic_string_view<Ch> hexStr(it + 1, std::min<size_t>(2, std::distance(it + 1, str.end())));
+					{
+						std::basic_string_view<Ch> hexStr(&it[1], std::min<size_t>(2, std::distance(it + 1, str.end())));
 						if (hexStr.length() == 2 && std::isxdigit(hexStr[0]) && std::isxdigit(hexStr[1]))
 						{
 							result += static_cast<Ch>(stoi(hexStr, 16));
@@ -515,8 +516,11 @@ namespace xybase
 							result += static_cast<Ch>('\\');
 							result += static_cast<Ch>('x');
 						}
+					}
+						break;
 					case 'u':
-						std::basic_string_view<Ch> uniStr(it + 1, std::min<size_t>(4, std::distance(it + 1, str.end())));
+					{
+						std::basic_string_view<Ch> uniStr(&it[1], std::min<size_t>(4, std::distance(it + 1, str.end())));
 						if (uniStr.length() == 4 && std::isxdigit(uniStr[0]) && std::isxdigit(uniStr[1]) && std::isxdigit(uniStr[2]) && std::isxdigit(uniStr[3]))
 						{
 							result += static_cast<Ch>(stoi(uniStr, 16));
@@ -527,6 +531,8 @@ namespace xybase
 							result += static_cast<Ch>('\\');
 							result += static_cast<Ch>('u');
 						}
+					}
+						break;
 					default:
 						result += *it; // Non-standard escape, add as-is
 						break;
