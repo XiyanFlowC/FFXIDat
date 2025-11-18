@@ -20,6 +20,10 @@ void FixedPhrase::Read(std::wstring path)
 			throw std::runtime_error("Failed to read full header from file " + xybase::string::to_string(path));
 		}
 
+		bool isEng = false;
+		if (header.cat.b == 2)
+			isEng = true;
+
 		FixedPhraseCategory category;
 		category.cat = header.cat;
 		// Ensure proper null-termination for fixed-size char arrays
@@ -42,9 +46,13 @@ void FixedPhrase::Read(std::wstring path)
 			uint8_t textLen = *((uint8_t*)ptr++);
 			entry.text = xybase::string::to_utf8(std::string(ptr));
 			ptr += textLen;
-			uint8_t pronLen = *((uint8_t*)ptr++);
-			entry.pron = xybase::string::to_utf8(std::string(ptr));
-			ptr += pronLen;
+
+			// Read pronunciation only if not English
+			if (!isEng) {
+				uint8_t pronLen = *((uint8_t*)ptr++);
+				entry.pron = xybase::string::to_utf8(std::string(ptr));
+				ptr += pronLen;
+			}
 			
 			category.entries.push_back(entry);
 		}
@@ -62,6 +70,10 @@ void FixedPhrase::Write(std::wstring path)
 	for (const auto& category : categories) {
 		fixed_phrase_category_header header;
 		header.cat = category.cat;
+
+		bool isEng = false;
+		if (header.cat.b == 2)
+			isEng = true;
 		
 		// Convert category name and pronunciation to fixed-size char arrays
 		std::string catName = xybase::string::to_string(category.categoryName);
@@ -81,8 +93,11 @@ void FixedPhrase::Write(std::wstring path)
 			entriesSize += sizeof(fixed_phrase_category); // category
 			entriesSize += 1; // text length byte
 			entriesSize += static_cast<int32_t>(xybase::string::to_string(entry.text).length() + 1); // text
-			entriesSize += 1; // pron length byte
-			entriesSize += static_cast<int32_t>(xybase::string::to_string(entry.pron).length() + 1); // pron
+			if (!isEng)
+			{
+				entriesSize += 1; // pron length byte
+				entriesSize += static_cast<int32_t>(xybase::string::to_string(entry.pron).length() + 1); // pron
+			}
 		}
 		header.size = entriesSize;
 
@@ -101,8 +116,11 @@ void FixedPhrase::Write(std::wstring path)
 			
 			output.write((char*)&textLen, 1);
 			output.write(text.c_str(), textLen);
-			output.write((char*)&pronLen, 1);
-			output.write(pron.c_str(), pronLen);
+			if (!isEng)
+			{
+				output.write((char*)&pronLen, 1);
+				output.write(pron.c_str(), pronLen);
+			}
 		}
 	}
 }

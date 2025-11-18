@@ -23,6 +23,9 @@ FFXITrans 是一个专为《最终幻想XI》设计的汉化文本插入工具，支持多种游戏数据文件格
 | `iwb` | ItemData Weapon | 武器数据（名称、描述） |
 | `iub` | ItemData Usable | 可使用物品数据 |
 | `inb` | ItemData Normal | 普通物品数据 |
+| `ipb` | ItemData Puppet | 人偶用装备 |
+| `isb` | ItemData Slip | 莫古寄存存单 |
+| `fp` | FixedPhrase | 定型文辞书 |
 
 ## 使用方法
 
@@ -41,9 +44,8 @@ FFXITrans 是一个专为《最终幻想XI》设计的汉化文本插入工具，支持多种游戏数据文件格
 
 **示例配置：**
 ```csv
-ROM/120/77,xis,1,菜单字符串
-ROM/118/44,dmsg,1,对话消息
-ROM/176/46,dmsg,jp,任务对话,2|3
+ROM/97/8,xis,1,大厅消息
+ROM/176/46,dmsg,jp,任务信息,2|3
 ROM/119/7,evsb,1,事件字符串
 ROM/76/14,sd,1,状态数据
 ROM/5/8,iab,1,防具数据

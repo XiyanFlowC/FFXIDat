@@ -23,6 +23,7 @@
 #include <EventStringBase.h>
 #include <StatusData.h>
 #include <ItemData.h>
+#include <FixedPhrase.h>
 
 namespace fs = std::filesystem;
 
@@ -410,6 +411,31 @@ int main(int argc, char **argv)
                     }
                 }
                 statusData.Write(outPath);
+            }
+            else if (type == u8"fp")
+            {
+				FixedPhrase fixedPhrase;
+				fixedPhrase.Read(datPath);
+                for (auto& category : fixedPhrase.categories)
+                {
+                    category.categoryName = GetTranslation(category.categoryName);
+                    category.categoryPron = GetTranslation(category.categoryPron);
+                    for (auto&& entry : category.entries)
+                    {
+                        std::u8string text = entry.text;
+                        std::u8string pron = entry.pron;
+
+                        if (!text.empty())
+                        {
+                            entry.text = GetTranslation(text);
+                        }
+                        if (!pron.empty())
+                        {
+                            entry.pron = GetTranslation(pron);
+                        }
+                    }
+                }
+				fixedPhrase.Write(outPath);
             }
             else if (type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb" || type == u8"ipb" || type == u8"isb")
             {

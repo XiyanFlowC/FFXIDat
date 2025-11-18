@@ -274,7 +274,7 @@ int main(int argc, const char **argv)
                         std::wcout << "Failed: " << ex.what() << std::endl;
                     }
                 }
-                else if (memcmp(m, "\x02\x01\x01", 4) == 0)
+                else if (memcmp(m, "\x02\x01\x01", 4) == 0 || memcmp(m, "\x02\x02\x01", 4) == 0)
                 {
                     std::wcout << "fp p=" << path.c_str() << std::endl;
                     try
