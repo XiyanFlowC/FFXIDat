@@ -259,6 +259,8 @@ int XiString::GetStep(const char *p)
 		return 4;
 	case 0x8E:
 		return 8;
+	case 0xFA:
+		return 3;
 	}
 
 	printf("%02X%02X\n", p[0], p[1]);

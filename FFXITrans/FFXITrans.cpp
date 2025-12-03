@@ -12,6 +12,7 @@
 #include <vector>
 #include <sstream>
 #include <set>
+#include <unordered_set>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -33,7 +34,7 @@ fs::path gameRoot, progRoot;
 #include "ChsToSJis.h"
 
 std::map<std::u8string, std::u8string> textMapping;
-std::set<std::u8string> mismatchSet;
+std::unordered_set<std::u8string> mismatchSet;
 
 // 失配文本统计和文件输出
 int mismatchCount = 0;
@@ -186,6 +187,7 @@ void BackupGameFile(fs::path path)
 
 int main(int argc, char **argv)
 {
+    setlocale(LC_ALL, "");
 	bool in_situ = false;
 
     if (argc > 1)
@@ -201,18 +203,16 @@ int main(int argc, char **argv)
 			in_situ = true;
         else
         {
-            std::wcout << L"FFXI汉化插入工具 Ver.0.5-alpha by Hyururu\n"
+            std::wcout << L"FFXI汉化插入工具 Ver.0.7-alpha by Hyururu\n"
                 L"用法：FFXITrans [insitu]\n"
                 L"  insitu：直接在游戏目录修改文件，否则输出到output目录\n"
 				L"  无参数则进入交互模式\n";
             return 0;
 		}
 	}
-
-    setlocale(LC_ALL, "");
     try
     {
-        std::wcout << L"FFXI汉化插入工具 Ver.0.5-alpha by Hyururu" << std::endl;
+        std::wcout << L"FFXI汉化插入工具 Ver.0.7-alpha by Hyururu" << std::endl;
         if (PathInit())
         {
             system("pause");

@@ -96,7 +96,7 @@ void SQLiteDataSource::Initialise()
             is_rare INTEGER,
             is_untradeable INTEGER,
             is_unmailable INTEGER,
-            is_unbazaarable INTEGER,
+            is_ex INTEGER,
             is_equipment INTEGER,
             is_npc_tradeable INTEGER,
             is_usable INTEGER,
@@ -909,7 +909,7 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
                 spec_type = ?, stack_size = ?, item_type = ?, resource_id = ?, valid_targets = ?,
                 is_scroll = ?, is_not_listable = ?, is_inscribable = ?, is_alt = ?, ukn_flg1 = ?,
                 is_in_mystery_box = ?, ukn_flg2 = ?, is_wall_decoration = ?,
-                is_rare = ?, is_untradeable = ?, is_unmailable = ?, is_unbazaarable = ?,
+                is_rare = ?, is_untradeable = ?, is_unmailable = ?, is_ex = ?,
                 is_equipment = ?, is_npc_tradeable = ?, is_usable = ?, is_linkshell = ?,
                 image_length = ?, image_data = ?, end_marker = ?
             WHERE id = ?
@@ -943,7 +943,7 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
             sqlite3_bind_int(stmt, 14, datum.flags().is_rare ? 1 : 0);
             sqlite3_bind_int(stmt, 15, datum.flags().is_untradeable ? 1 : 0);
             sqlite3_bind_int(stmt, 16, datum.flags().is_unmailable ? 1 : 0);
-            sqlite3_bind_int(stmt, 17, datum.flags().is_unbazaarable ? 1 : 0);
+            sqlite3_bind_int(stmt, 17, datum.flags().is_ex ? 1 : 0);
             sqlite3_bind_int(stmt, 18, datum.flags().is_equipment ? 1 : 0);
             sqlite3_bind_int(stmt, 19, datum.flags().is_npc_tradeable ? 1 : 0);
             sqlite3_bind_int(stmt, 20, datum.flags().is_usable ? 1 : 0);

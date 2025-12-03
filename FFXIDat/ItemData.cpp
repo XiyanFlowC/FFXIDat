@@ -75,7 +75,8 @@ void ItemData::Read(std::wstring path, ItemSpecType defaultSpecType)
     file.close();
     
     // Decrypt the entire file using ROR 5
-    decryptRor5(fileBuffer.get(), fileSize);
+	if (!encryptionSuppression)
+        decryptRor5(fileBuffer.get(), fileSize);
     
     // Process entries from decrypted buffer
     size_t offset = 0;
@@ -138,9 +139,20 @@ void ItemData::Read(std::wstring path, ItemSpecType defaultSpecType)
             }
             
             if (row.GetCells().size() >= 2) {
-                // Convert description
-                auto descStr = row.GetCells()[1].Get<std::u8string>();
-                datum.description = descStr;
+                // English handling (this num seems indicates there are two string for log form)
+				// e.g. "Stone", 0, "a stone", "a lot of stones", "A small rock."
+				// Not sure if all items follow this pattern, so we check type for now
+                if (row.GetCells()[1].GetType() == 1) {
+                    if (row.GetCells().size() >= 5) {
+                        datum.description = row.GetCells()[4].Get<std::u8string>();
+                    }
+                }
+                else
+                {
+                    // Convert description
+                    auto descStr = row.GetCells()[1].Get<std::u8string>();
+                    datum.description = descStr;
+                }
             }
         }
         
@@ -239,7 +251,8 @@ void ItemData::Write(std::wstring path)
     }
     
     // Encrypt the entire buffer using ROL 5 before writing
-    encryptRol5(buffer.data(), buffer.size());
+	if (!encryptionSuppression)
+        encryptRol5(buffer.data(), buffer.size());
     
     // Write the encrypted buffer to file
     file.write(buffer.data(), buffer.size());
@@ -249,4 +262,30 @@ void ItemData::Write(std::wstring path)
     }
     
     file.close();
+}
+
+#include "CsvFile.h"
+
+void ItemData::ToICsv(const std::wstring& path) const
+{
+    CsvFile csv(path, std::ios::out);
+
+    if (data.empty()) {
+        return; // No data to write
+	}
+
+	// Get first datum for header extraction
+	auto&& first_datum = data.front();
+	// Write header
+	csv.NewCell(u8"ID");
+	csv.NewCell(u8"Name");
+	csv.NewCell(u8"Description");
+    // TODO: Implement this
+    switch (first_datum.item_type()) {
+        
+    }
+
+    for (auto &&datum : data) {
+
+	}
 }

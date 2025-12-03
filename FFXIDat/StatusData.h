@@ -38,6 +38,7 @@ public:
 
 	void Read(std::wstring path);
 	void Write(std::wstring path);
+	void ToICsv(const std::wstring& path) const;
 	std::vector<StatusDatum> data;
 };
 

@@ -49,7 +49,7 @@ static struct EventStringControlSeqDef {
 	{"int", 1, "\x12", 1}, // 插入一个变量
 	{"item", 1, "\x13", 1}, // 道具名？材料名
 	{"14", 1, "\x14", 1}, // 
-	{"15", 1, "\x15", 1}, // 
+	{"zwsp", 0, "\x15", 1}, // zero width space?
 	{"key", 1, "\x16", 1}, // 重要物品名
 	{"17", 1, "\x17", 1},
 	{"time", 1, "\x18", 1},

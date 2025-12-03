@@ -16,24 +16,24 @@ struct ItemHeader
 	uint32_t id;
 	
 	// flag set 1
-	uint8_t is_scroll : 1;
-	uint8_t is_not_listable : 1; // cannot be listed in auction house
-	uint8_t is_inscribable : 1; // can be inscribed
-	uint8_t is_alt : 1; // can be sent to another character hold by same account
-	uint8_t ukn_flg1 : 1;
-	uint8_t is_in_mystery_box : 1; // can be yielded by mystery box
-	uint8_t ukn_flg2 : 1;
 	uint8_t is_wall_decoration : 1; // can be hung on wall
+	uint8_t ukn_flg2 : 1;
+	uint8_t is_in_mystery_box : 1; // can be yielded by mystery box
+	uint8_t ukn_flg1 : 1;
+	uint8_t is_alt : 1; // can be sent to another character hold by same account
+	uint8_t is_inscribable : 1; // can be inscribed
+	uint8_t is_not_listable : 1; // cannot be listed in auction house
+	uint8_t is_scroll : 1;
 
 	// flag set 2
-	uint8_t is_rare : 1;
-	uint8_t is_untradeable : 1; // cannot be traded
-	uint8_t is_unmailable : 1; // cannot be mailed
-	uint8_t is_unbazaarable : 1; // cannot be sold in bazaar
-	uint8_t is_equipment : 1; // can be equipped
-	uint8_t is_npc_tradeable : 1; // can be traded with NPCs
-	uint8_t is_usable : 1; // can be used
 	uint8_t is_linkshell : 1;
+	uint8_t is_usable : 1; // can be used
+	uint8_t is_npc_tradeable : 1; // can be traded with NPCs
+	uint8_t is_equipment : 1; // can be equipped
+	uint8_t is_ex : 1; // cannot be sold in bazaar
+	uint8_t is_unmailable : 1; // cannot be mailed
+	uint8_t is_untradeable : 1; // cannot be traded
+	uint8_t is_rare : 1;
 
 	uint16_t stack_size;
 	uint16_t item_type;
@@ -43,34 +43,33 @@ struct ItemHeader
 
 struct ItemJobApplicability
 {
-	uint32_t pld : 1;
-	uint32_t thf : 1;
-	uint32_t rdm : 1;
-	uint32_t blm : 1;
-	uint32_t whm : 1;
-	uint32_t mnk : 1;
-	uint32_t war : 1;
-	uint32_t rsv1 : 1;
+	uint32_t rsv1 : 1; // Bit 0
+	uint32_t war : 1;  // Bit 1
+	uint32_t mnk : 1;  // Bit 2
+	uint32_t whm : 1;  // Bit 3
+	uint32_t blm : 1;  // Bit 4
+	uint32_t rdm : 1;  // Bit 5
+	uint32_t thf : 1;  // Bit 6
+	uint32_t pld : 1;  // Bit 7
 
-	uint32_t smn : 1;
-	uint32_t drg : 1;
-	uint32_t nin : 1;
-	uint32_t sam : 1;
-	uint32_t rng : 1;
-	uint32_t brd : 1;
-	uint32_t bst : 1;
-	uint32_t drk : 1;
+	uint32_t drk : 1;  // Bit 8
+	uint32_t bst : 1;  // Bit 9
+	uint32_t brd : 1;  // Bit 10
+	uint32_t rng : 1;  // Bit 11
+	uint32_t sam : 1;  // Bit 12
+	uint32_t nin : 1;  // Bit 13
+	uint32_t drg : 1;  // Bit 14
+	uint32_t smn : 1;  // Bit 15
 
-	uint32_t mon : 1;
-	uint32_t run : 1;
-	uint32_t geo : 1;
-	uint32_t sch : 1;
-	uint32_t dnc : 1;
-	uint32_t pup : 1;
-	uint32_t cor : 1;
-	uint32_t blu : 1;
-
-	uint32_t rsv2 : 8;
+	uint32_t blu : 1;  // Bit 16
+	uint32_t cor : 1;  // Bit 17
+	uint32_t pup : 1;  // Bit 18
+	uint32_t dnc : 1;  // Bit 19
+	uint32_t sch : 1;  // Bit 20
+	uint32_t geo : 1;  // Bit 21
+	uint32_t run : 1;  // Bit 22
+	uint32_t mon : 1;  // Bit 23
+	uint32_t rsv2 : 8; // Remaining bits
 };
 
 struct ItemEquipSlot
@@ -247,6 +246,8 @@ enum class ItemSpecType {
 class ItemData
 {
 public:
+	bool encryptionSuppression = false;
+
 	class ItemDatum
 	{
 	public:
@@ -292,6 +293,9 @@ public:
 
 	void Read(std::wstring path, ItemSpecType defaultSpecType = ItemSpecType::NORMAL);
 	void Write(std::wstring path);
+
+	// For inspection only, not designed for full fidelity round-trip
+	void ToICsv(const std::wstring &path) const;
 	std::vector<ItemDatum> data;
 };
 

@@ -161,6 +161,27 @@ void StatusData::Read(std::wstring path)
     file.close();
 }
 
+#include "CsvFile.h"
+void StatusData::ToICsv(const std::wstring& path) const
+{
+    CsvFile csv(path, std::ios::out);
+
+	// Write header
+    csv.NewCell(u8"ID");
+    csv.NewCell(u8"Flag");
+    csv.NewCell(u8"Description");
+    csv.NewCell(u8"HasImage");
+    csv.NewLine();
+    for (const auto& datum : data) {
+        csv.NewCell(xybase::string::itos<char8_t>(datum.id));
+        csv.NewCell(xybase::string::itos<char8_t>(datum.flg));
+        csv.NewCell(datum.description);
+        csv.NewCell(datum.image.texture ? u8"Yes" : u8"No");
+        csv.NewLine();
+	}
+}
+
+
 void StatusData::Write(std::wstring path)
 {
     std::ofstream file(path, std::ios::binary);

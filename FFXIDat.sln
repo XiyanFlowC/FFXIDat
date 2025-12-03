@@ -28,6 +28,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFXIMenu", "FFXIMenu\FFXIMe
 		{90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE} = {90F32F0F-21BB-40C0-9B06-FDB0EF4DD5FE}
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		data\cp932.csv = data\cp932.csv
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64

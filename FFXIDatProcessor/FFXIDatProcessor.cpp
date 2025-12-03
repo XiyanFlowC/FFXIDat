@@ -121,7 +121,7 @@ int main(int argc, const char **argv)
         return 0;
         }, L"指定操作对象的路径。");
     lopt_regopt("sql-file-update", 0, LOPT_FLG_VAL_NEED, [](const char *str)->int {
-        std::filesystem::remove(PathUtil::progRootPath + L"/text.db");
+        // std::filesystem::remove(PathUtil::progRootPath + L"/text.db");
         SQLiteDataSource ds;
         CsvFile def(str, std::ios_base::in | std::ios_base::binary);
         ds.InitialiseFileDefinition(def);
@@ -161,6 +161,14 @@ int main(int argc, const char **argv)
         }, L"按SQLite中的定义和翻译数据，试图翻译游戏Dat并输出。");
     lopt_regopt("sql-dat-read", 'q', 0, [](const char *str)->int {
         SQLiteDataSource ds;
+        if (cfg_type && strcmp(cfg_type, "item") == 0)
+        {
+			const char* types[] = {"ieb", "inb", "iub", "iwb", "iab", "isb", "ipb", "icb"};
+            for (const auto& type : types)
+            {
+				ds.DatToDatabase(cfg_lang, type, cfg_path);
+            }
+        }
         ds.DatToDatabase(cfg_lang, cfg_type, cfg_path);
         return 0;
         }, L"根据SQLite数据库中定义从游戏安装目录抽取文本，并存入。");
