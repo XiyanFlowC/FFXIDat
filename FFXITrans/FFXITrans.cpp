@@ -13,6 +13,7 @@
 #include <sstream>
 #include <set>
 #include <unordered_set>
+#include <regex>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -29,11 +30,17 @@
 namespace fs = std::filesystem;
 
 fs::path gameRoot, progRoot;
+fs::path outRoot = "./output";
+bool englishMode = false; // if true, only process English files (PlayOnlineEU)
+bool in_situ_noprompt = false;
+bool backup_enabled = true;
+bool backup_noprompt = false;
 
 #include "../FFXIDatProcessor/codepage.h"
 #include "ChsToSJis.h"
 
 std::map<std::u8string, std::u8string> textMapping;
+std::map<std::u8string, std::u8string> commentToJpPath;
 std::unordered_set<std::u8string> mismatchSet;
 
 // 失配文本统计和文件输出
@@ -96,26 +103,76 @@ std::set<int> ParseCellIndices(const std::u8string &cellIndicesStr) {
 int PathInit()
 {
     HKEY hKey;
-    const wchar_t *subKey = L"SOFTWARE\\WOW6432Node\\PlayOnline\\InstallFolder";
+    const wchar_t *subKey1 = L"SOFTWARE\\WOW6432Node\\PlayOnline\\InstallFolder";
+    const wchar_t *subKey2 = L"SOFTWARE\\WOW6432Node\\PlayOnlineEU\\InstallFolder";
+    const wchar_t* subKey3 = L"SOFTWARE\\WOW6432Node\\PlayOnlineUS\\InstallFolder";
     const wchar_t *valueName = L"0001";
     wchar_t valueData[MAX_PATH];
     DWORD bufferSize = sizeof(valueData);
 
     DWORD valueType;
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, subKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+    // Try primary key first (priority for JP)
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, subKey1,0, KEY_READ, &hKey) == ERROR_SUCCESS) {
         if (RegQueryValueExW(hKey, valueName, nullptr, &valueType, reinterpret_cast<LPBYTE>(valueData), &bufferSize) == ERROR_SUCCESS) {
             if (valueType == REG_SZ) {
                 gameRoot = valueData;
+                englishMode = false;
             }
             else
             {
                 std::wcerr << L"未能正确读取注册表信息，请检查游戏安装信息。\n";
+                RegCloseKey(hKey);
                 return -1;
             }
         }
         else
         {
             std::wcerr << L"发现了POL的安装信息，但是没有找到游戏的。\n";
+            RegCloseKey(hKey);
+            return -1;
+        }
+        RegCloseKey(hKey);
+    }
+    else if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, subKey2,0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        // Fallback: PlayOnlineEU -> only process English
+        if (RegQueryValueExW(hKey, valueName, nullptr, &valueType, reinterpret_cast<LPBYTE>(valueData), &bufferSize) == ERROR_SUCCESS) {
+            if (valueType == REG_SZ) {
+                gameRoot = valueData;
+                englishMode = true;
+            }
+            else
+            {
+                std::wcerr << L"未能正确读取注册表信息，请检查游戏安装信息（EU）。\n";
+                RegCloseKey(hKey);
+                return -1;
+            }
+        }
+        else
+        {
+            std::wcerr << L"发现了POL(EU)的安装信息，但是没有找到游戏的。\n";
+            RegCloseKey(hKey);
+            return -1;
+        }
+        RegCloseKey(hKey);
+    }
+    else if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, subKey3, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        // Fallback: PlayOnlineEU -> only process English
+        if (RegQueryValueExW(hKey, valueName, nullptr, &valueType, reinterpret_cast<LPBYTE>(valueData), &bufferSize) == ERROR_SUCCESS) {
+            if (valueType == REG_SZ) {
+                gameRoot = valueData;
+                englishMode = true;
+            }
+            else
+            {
+                std::wcerr << L"未能正确读取注册表信息，请检查游戏安装信息（US）。\n";
+                RegCloseKey(hKey);
+                return -1;
+            }
+        }
+        else
+        {
+            std::wcerr << L"发现了POL(EU)的安装信息，但是没有找到游戏的。\n";
+            RegCloseKey(hKey);
             return -1;
         }
         RegCloseKey(hKey);
@@ -133,6 +190,7 @@ int PathInit()
         progRoot = exePath.parent_path();
     }
     std::wcout << L"路径初始化完毕。\n游戏路径：" << gameRoot << L"\n程序数据路径：" << progRoot << std::endl;
+    if (englishMode) std::wcout << L"注意：检测到 PlayOnlineEU 注册表项，程序将仅处理英文文件。" << std::endl;
     return 0;
 }
 
@@ -218,6 +276,56 @@ int main(int argc, char **argv)
             system("pause");
             exit(-1);
         };
+
+        if (fs::exists(progRoot / "config.ini"))
+        {
+			// 读取配置文件
+            std::wcout << L"读取配置文件中..." << std::endl;
+            std::wifstream configFile(progRoot / "config.ini");
+            std::wstring line;
+            while (std::getline(configFile, line))
+            {
+                // game_path=
+				// in_situ=
+				// english_mode=
+				// output_path=
+                
+				// 读取有效 INI 配置，忽略注释空行，允许空格
+                line = std::regex_replace(line, std::wregex(L"^\\s+|\\s+$"), L""); // trim
+                if (line.empty() || line[0] == L';' || line[0] == L'#')
+                    continue;
+                auto delimiterPos = line.find(L'=');
+                if (delimiterPos == std::wstring::npos)
+                    continue;
+                std::wstring key = line.substr(0, delimiterPos);
+                std::wstring value = line.substr(delimiterPos + 1);
+                key = std::regex_replace(key, std::wregex(L"^\\s+|\\s+$"), L""); // trim
+                value = std::regex_replace(value, std::wregex(L"^\\s+|\\s+$"), L""); // trim
+                if (key == L"game_path")
+                {
+                    gameRoot = value;
+                    std::wcout << L"使用配置文件中的游戏路径：" << gameRoot << std::endl;
+				}
+                else if (key == L"in_situ")
+                {
+					in_situ = (value == L"1" || value == L"true" || value == L"yes");
+                    in_situ_noprompt = true;
+                }
+                else if (key == L"english_mode")
+                {
+                    englishMode = (value == L"1" || value == L"true" || value == L"yes");
+				}
+                else if (key == L"output_path")
+                {
+                    if (!in_situ)
+                    {
+						outRoot = value;
+                        std::wcout << L"使用配置文件中的输出路径：" << gameRoot << std::endl;
+                    }
+                }
+            }
+			configFile.close();
+        }
         
         // 初始化失配文件（UTF-8无BOM）
         fs::path mismatchPath = progRoot / "text_mismatch.txt";
@@ -263,7 +371,7 @@ int main(int argc, char **argv)
                 fs::copy(progRoot / "backup", gameRoot, fs::copy_options::overwrite_existing | fs::copy_options::recursive, ec);
                 if (ec)
                 {
-                    std::wcerr << L"恢复备份时发生了问题：" << ec.message().c_str();
+                    std::wcerr << L"恢复备份时发生了问题：" << xybase::string::sys_mbs_to_wcs(ec.message()) << std::endl;
                     system("pause");
                     return -3;
                 }
@@ -282,7 +390,7 @@ int main(int argc, char **argv)
 
                     if (ec)
                     {
-                        std::wcerr << L"恢复备份时发生了问题：" << ec.message().c_str();
+                        std::wcerr << L"恢复备份时发生了问题：" << xybase::string::sys_mbs_to_wcs(ec.message()) << std::endl;
                         system("pause");
                         return -3;
                     }
@@ -302,7 +410,7 @@ int main(int argc, char **argv)
         if (in_situ)
             overwrite = true;
         else 
-            overwrite = YesNoPrompt(L"要在原位修改游戏文件吗？") == 'Y';
+            overwrite = in_situ_noprompt ? false : (YesNoPrompt(L"要在原位修改游戏文件吗？") == 'Y');
 
         if (overwrite)
         {
@@ -311,6 +419,25 @@ int main(int argc, char **argv)
         std::wcout << L"开始处理文件，请勿关闭程序。" << std::endl;
 
         CsvFile def(progRoot / "defs.csv", std::ios::in | std::ios::binary);
+        // No cross-language mapping pass. We'll process only the detected language:
+        // if englishMode == true -> only process entries with lang == "en"
+        // else -> only process entries with lang == "jp"
+        if (englishMode) {
+            // First pass: build commentToJpPath mapping from jp entries
+            while (!def.IsEof())
+            { 
+                std::u8string path = def.NextCell();
+                std::u8string type = def.NextCell();
+                std::u8string lang = def.NextCell();
+                std::u8string comm = def.NextCell();
+                def.NextLine();
+                if (lang == u8"jp") {
+                    commentToJpPath[comm] = path;
+                }
+            }
+            def.Rewind();
+		}
+
         while (!def.IsEof())
         { 
             std::u8string path = def.NextCell();
@@ -323,16 +450,29 @@ int main(int argc, char **argv)
             if (!def.IsEol()) {
                 cellIndicesStr = def.NextCell();
             }
+            def.NextLine();
+
+			// 仅处理日文和英文文件
+            if (englishMode)
+            {
+                if (lang != u8"en")
+                    continue;
+            }
+            else
+            {
+                if (lang != u8"jp")
+                    continue;
+			}
             
-            std::wcout << L"处理中：文件 "
+            // 输出处理信息（语言 + 文件路径 + 类型 + 注释）
+            std::wcout << L"处理中：" << L" 文件 "
                 << xybase::string::to_wstring(path)
                 << L"(" << xybase::string::to_wstring(type)
                 << L") [" << xybase::string::to_wstring(comm) << L"]\r";
-            def.NextLine();
 
             fs::path relaPath = path + u8".DAT";
             fs::path datPath = gameRoot / relaPath;
-            fs::path outPath = overwrite ? datPath : "output" / relaPath;
+            fs::path outPath = overwrite ? datPath : outRoot / relaPath;
             if (!fs::exists(datPath)) continue;
             if (!fs::exists(outPath.parent_path()))
             {
@@ -358,10 +498,10 @@ int main(int argc, char **argv)
             {
                 EventStringBase evsb(datPath);
                 evsb.Read();
-                for (auto &str : evsb)
+                for (auto &s : evsb)
                 {
-                    auto res = GetTranslation(str);
-                    str = res;
+                    auto res = GetTranslation(s);
+                    s = res;
                 }
                 evsb.path = outPath;
                 evsb.Write();

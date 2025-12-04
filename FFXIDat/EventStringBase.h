@@ -34,6 +34,14 @@ public:
 
 	void FromCsv(std::filesystem::path path);
 
+	size_t Size() const { return strs.size(); }
+	size_t size() const { return strs.size(); }
+
+	void EmplaceBack(const std::u8string& str) { strs.emplace_back(str); }
+
+	std::u8string &operator[](size_t idx) { return strs[idx]; }
+	const std::u8string &operator[](size_t idx) const { return strs[idx]; }
+
 	std::filesystem::path path;
 protected:
 	void Xor(char *tar, int size);
