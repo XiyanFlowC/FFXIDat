@@ -425,9 +425,9 @@ CJK字符,对应的Shift-JIS字符或组合
 
 ### 备份策略
 
-- ? 程序会自动备份修改的文件到 `backup` 目录
-- ? 每次处理都会更新备份（不保留历史版本）
-- ? 建议在处理重要文件前手动备份整个 ROM 目录
+- 程序会自动备份修改的文件到 `backup` 目录
+- 每次处理都会更新备份（不保留历史版本）
+- 建议在处理重要文件前手动备份整个 ROM 目录
 
 ### 最佳实践
 
@@ -451,15 +451,15 @@ CJK字符,对应的Shift-JIS字符或组合
 ## 更新日志
 
 ### v1.0.0
-- ? 初始版本发布
-- ? 支持基本文件格式
-- ? 实现自动备份功能
-- ? 添加 dmsg Cell 指定翻译
+- 初始版本发布
+- 支持基本文件格式
+- 实现自动备份功能
+- 添加 dmsg Cell 指定翻译
 
 ### v1.1.0 (2025-12-04)
-- ? 改进编码转换精度
-- ? 优化性能
-- ? 增强错误报告
+- 改进编码转换精度
+- 优化性能
+- 增强错误报告
 
 ## 技术细节
 
@@ -514,6 +514,11 @@ FFXITrans 使用 FFXIDat 库解析以下格式：
 - [FFXIDat GitHub](https://github.com/XiyanFlowC/FFXIDat)
 - [最终幻想XI官网](https://www.ffxiah.com/)
 - [PlayOnline](https://www.playonline.com/)
+
+## 声明
+本工具非官方产品，与 Square Enix 无任何关联。使用本工具可能违反游戏的使用条款，请自行承担风险。建议仅用于个人学习和研究目的。
+
+FINAL FANTASY XI 及 PLAYONLINE 等是 Square Enix Co., Ltd. 的商标或注册商标。版权所有 ? SQUARE ENIX CO., LTD.。
 
 ---
 
