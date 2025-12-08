@@ -45,6 +45,8 @@ EventStringControlSeqDef *EventStringCodecUtil::CheckControl(const char *start, 
 			static EventStringControlSeqDef con7f1v{ "7F", 1, "\x7F", 1 };
 			static EventStringControlSeqDef con7f38v{ "7F", 3, "\x7F", 1 };
 			static EventStringControlSeqDef gender{ "gender", 0, "\x7F\x85", 2 };
+			static EventStringControlSeqDef gender2{ "gender-src", 0, "\x7F\x90", 2 };
+			static EventStringControlSeqDef gender3{ "gender-dst", 0, "\x7F\x91", 2 };
 			/*if (start[1] == 0x31 && start[2] == 0)
 			{
 				int p = 3;
@@ -56,6 +58,10 @@ EventStringControlSeqDef *EventStringCodecUtil::CheckControl(const char *start, 
 			if (start[1] == 0x85)
 			{
 				return &gender;
+			}
+			if (start[1] == 0x90)
+			{
+				return &gender2;
 			}
 			if (start[1] == 0x38)
 			{
@@ -127,13 +133,36 @@ std::string EventStringCodecUtil::Encode(const std::string &in)
 				i = end;
 				continue;
 			}
+			else if (type == "gender2") // Compatibility
+			{
+				ret += "\x7F\x90";
+				i = end;
+				continue;
+			}
+			else if (type == "gender-src")
+			{
+				ret += "\x7F\x90";
+				i = end;
+				continue;
+			}
+			else if (type == "gender-dst")
+			{
+				ret += "\x7F\x91";
+				i = end;
+				continue;
+			}
 			else
 			{
 				auto def = encDist.find(std::string(type));
 
 				if (def == encDist.end())
 				{
-					ret += xybase::string::stoi(type, 16);
+					if (!xybase::string::is_intstr(type, 16))
+					{
+						ret += type;
+					}
+					else
+						ret += xybase::string::stoi(type, 16);
 				}
 				else
 					ret += def->second->code[0]; // FIXME: อจำรปฏ

@@ -44,13 +44,13 @@ static struct EventStringControlSeqDef {
 	{"switch", 1, "\x0C", 1}, // \x0C\xXX[xxx/xxx/xxx]
 	{"0D", 1, "\x0D", 1}, //
 	{"0E", 1, "\x0E", 1}, //
-	{"10", 1, "\x10", 1},
+	{"magic", 1, "\x10", 1}, // 插入一个魔法名
 	{"faith", 1, "\x11", 1}, // 亲信名？魔法名？普通字符串？
 	{"int", 1, "\x12", 1}, // 插入一个变量
 	{"item", 1, "\x13", 1}, // 道具名？材料名
 	{"14", 1, "\x14", 1}, // 
 	{"zwsp", 0, "\x15", 1}, // zero width space?
-	{"key", 1, "\x16", 1}, // 重要物品名
+	{"ws", 1, "\x16", 1}, // Weapon Skill
 	{"17", 1, "\x17", 1},
 	{"time", 1, "\x18", 1},
 	{"19", 1, "\x19", 1},
@@ -58,7 +58,7 @@ static struct EventStringControlSeqDef {
 	{"1B", 1, "\x1B", 1}, 
 	{"str", 1, "\x1C", 1}, // 一个任意的字符串？
 	{"1D", 0, "\x1D", 1},
-	{"wanted", 1, "\x1E", 1}, // Unity 通缉令目标？
+	{"color2", 1, "\x1E", 1}, // 也是颜色设置？
 	{"color", 1, "\x1F", 1}, // 似乎用于设置样式？颜色？ 
 	{"7F", 2, "\x7F", 1}, // end? sp proc
 	// {"gender", 0, "\x7F\x85", 2},

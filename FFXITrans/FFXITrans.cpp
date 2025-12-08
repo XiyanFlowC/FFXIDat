@@ -217,6 +217,13 @@ int LoadText(int seq)
             std::wcerr << L"翻译文件和原文文件的行数不一致。\n";
             return i;
         }
+		// trim trailing \r if exists
+        if (!text.empty() && text.back() == '\r') {
+            text.pop_back();
+        }
+        if (!trans.empty() && trans.back() == '\r') {
+            trans.pop_back();
+        }
         textMapping[(char8_t *)text.c_str()] = (char8_t *)trans.c_str();
         ++i;
     }

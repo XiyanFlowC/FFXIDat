@@ -344,6 +344,31 @@ namespace xybase
 		}
 
 		template<typename T = char>
+		bool is_intstr(const std::basic_string_view<T> str, int base = 10)
+		{
+			const T *ptr = str.data();
+			const T *end = ptr + str.length();
+			if (ptr == end) return false;
+			while (ptr < end)
+			{
+				if (*ptr >= static_cast<T>('0') && *ptr <= std::min<T>(static_cast<T>('9'), static_cast<T>('0') + base - 1))
+				{
+					ptr++;
+				}
+				else if (*ptr >= static_cast<T>('a') && *ptr <= std::max<T>(static_cast<T>('a') - 1, static_cast<T>('a') + base - 11))
+				{
+					ptr++;
+				}
+				else if (*ptr >= static_cast<T>('A') && *ptr <= std::max<T>(static_cast<T>('A') - 1, static_cast<T>('A') + base - 11))
+				{
+					ptr++;
+				}
+				else return false;
+			}
+			return true;
+		}
+
+		template<typename T = char>
 		unsigned long long stoi(const std::basic_string<T> str, int base = 10)
 		{
 			return stoi<T>(std::basic_string_view<T>(str), base);
