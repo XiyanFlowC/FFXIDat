@@ -89,12 +89,12 @@ void SQLiteDataSource::Initialise()
             is_alt INTEGER,
             ukn_flg1 INTEGER,
             is_in_mystery_box INTEGER,
-            ukn_flg2 INTEGER,
+            is_gm_item INTEGER,
             is_wall_decoration INTEGER,
             
             -- Header flags (flag set 2)
             is_rare INTEGER,
-            is_untradeable INTEGER,
+            is_unsellable INTEGER,
             is_unmailable INTEGER,
             is_ex INTEGER,
             is_equipment INTEGER,
@@ -908,8 +908,8 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
             UPDATE items SET 
                 spec_type = ?, stack_size = ?, item_type = ?, resource_id = ?, valid_targets = ?,
                 is_scroll = ?, is_not_listable = ?, is_inscribable = ?, is_alt = ?, ukn_flg1 = ?,
-                is_in_mystery_box = ?, ukn_flg2 = ?, is_wall_decoration = ?,
-                is_rare = ?, is_untradeable = ?, is_unmailable = ?, is_ex = ?,
+                is_in_mystery_box = ?, is_gm_item = ?, is_wall_decoration = ?,
+                is_rare = ?, is_unsellable = ?, is_unmailable = ?, is_ex = ?,
                 is_equipment = ?, is_npc_tradeable = ?, is_usable = ?, is_linkshell = ?,
                 image_length = ?, image_data = ?, end_marker = ?
             WHERE id = ?
@@ -938,10 +938,10 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
             sqlite3_bind_int(stmt, 9, datum.flags().is_alt ? 1 : 0);
             sqlite3_bind_int(stmt, 10, datum.flags().ukn_flg1 ? 1 : 0);
             sqlite3_bind_int(stmt, 11, datum.flags().is_in_mystery_box ? 1 : 0);
-            sqlite3_bind_int(stmt, 12, datum.flags().ukn_flg2 ? 1 : 0);
+            sqlite3_bind_int(stmt, 12, datum.flags().is_gm_item ? 1 : 0);
             sqlite3_bind_int(stmt, 13, datum.flags().is_wall_decoration ? 1 : 0);
             sqlite3_bind_int(stmt, 14, datum.flags().is_rare ? 1 : 0);
-            sqlite3_bind_int(stmt, 15, datum.flags().is_untradeable ? 1 : 0);
+            sqlite3_bind_int(stmt, 15, datum.flags().is_unsellable ? 1 : 0);
             sqlite3_bind_int(stmt, 16, datum.flags().is_unmailable ? 1 : 0);
             sqlite3_bind_int(stmt, 17, datum.flags().is_ex ? 1 : 0);
             sqlite3_bind_int(stmt, 18, datum.flags().is_equipment ? 1 : 0);

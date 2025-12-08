@@ -17,7 +17,7 @@ struct ItemHeader
 	
 	// flag set 1
 	uint8_t is_wall_decoration : 1; // can be hung on wall
-	uint8_t ukn_flg2 : 1;
+	uint8_t is_gm_item : 1;
 	uint8_t is_in_mystery_box : 1; // can be yielded by mystery box
 	uint8_t ukn_flg1 : 1;
 	uint8_t is_alt : 1; // can be sent to another character hold by same account
@@ -30,9 +30,9 @@ struct ItemHeader
 	uint8_t is_usable : 1; // can be used
 	uint8_t is_npc_tradeable : 1; // can be traded with NPCs
 	uint8_t is_equipment : 1; // can be equipped
-	uint8_t is_ex : 1; // cannot be sold in bazaar
+	uint8_t is_unsellable : 1; // cannot be sold to vendor
 	uint8_t is_unmailable : 1; // cannot be mailed
-	uint8_t is_untradeable : 1; // cannot be traded
+	uint8_t is_ex : 1; // cannot be traded
 	uint8_t is_rare : 1;
 
 	uint16_t stack_size;
