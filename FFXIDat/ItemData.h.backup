@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <vector>
 #include <string>
-#include <stdexcept>
 
 #include "Record.h"
 #include "Image.h"
@@ -250,7 +249,7 @@ enum class ItemSpecType {
     ARMOUR,
 	PUPPET,
 	SLIP,
-	CURRENCY  // ?? Special: Currency files have exactly 1 entry and fixed 0xC000 byte size
+	CURRENCY
 };
 
 class ItemData
@@ -262,246 +261,17 @@ public:
 	{
 	public:
 		uint32_t id;
+		std::u8string name;
+		std::u8string description;
 		Image image;
 		
 		// Store the complete original entry to preserve ALL fields including unknown ones
 		ItemEntry originalEntry;
 		
-		// Store the original Row structure - THIS IS THE SOURCE OF TRUTH for text fields
-		// Row doesn't know what it contains - ItemDatum is responsible for interpreting it
-		Row originalRow;
-		bool hasOriginalRow = false;
-		
-		// Optional: for debugging/logging only, not used in core logic
-		RecordFormat recordFormat = RecordFormat::Unknown;
-		
 		// Store the spec type for this item
 		ItemSpecType spec_type;
 		
-		// ============ Text Field Accessors ============
-		
-		// Get primary item name (Cell 0)
-		// Throws: std::out_of_range if cell doesn't exist
-		//         std::runtime_error if cell is not string type
-		std::u8string name() const {
-			if (!hasOriginalRow) {
-				throw std::runtime_error("No original row data");
-			}
-			
-			const auto& cells = originalRow.GetCellsConst();
-			if (cells.empty()) {
-				throw std::out_of_range("Cell 0 does not exist");
-			}
-			
-			if (cells[0].GetType() != 0) {
-				throw std::runtime_error("Cell 0 is not a string");
-			}
-			
-			return cells[0].Get<std::u8string>();
-		}
-		
-		// Set primary item name (Cell 0)
-		// Returns: true if successful, false if cell doesn't exist
-		bool setName(const std::u8string& newName) {
-			if (!hasOriginalRow) return false;
-			
-			auto& cells = originalRow.GetCells();
-			if (cells.empty()) {
-				// Allow creating cell 0 for new items
-				cells.emplace_back(newName);
-				return true;
-			}
-			
-			cells[0].Set(newName);
-			return true;
-		}
-		
-		// Get singular form (Cell 2, English only)
-		// Throws: std::out_of_range if cell doesn't exist
-		std::u8string name_sg() const {
-			if (!hasOriginalRow) {
-				throw std::runtime_error("No original row data");
-			}
-			
-			const auto& cells = originalRow.GetCellsConst();
-			if (cells.size() < 3) {
-				throw std::out_of_range("Cell 2 (singular form) does not exist");
-			}
-			
-			if (cells[2].GetType() != 0) {
-				throw std::runtime_error("Cell 2 is not a string");
-			}
-			
-			return cells[2].Get<std::u8string>();
-		}
-		
-		// Set singular form (Cell 2, English only)
-		// Returns: true if successful, false if cell doesn't exist
-		bool setName_sg(const std::u8string& newName) {
-			if (!hasOriginalRow) return false;
-			
-			auto& cells = originalRow.GetCells();
-			if (cells.size() < 3) return false;  // Not English format
-			
-			cells[2].Set(newName);
-			return true;
-		}
-		
-		// Get plural form (Cell 3, English only)
-		std::u8string name_pl() const {
-			if (!hasOriginalRow) {
-				throw std::runtime_error("No original row data");
-			}
-			
-			const auto& cells = originalRow.GetCellsConst();
-			if (cells.size() < 4) {
-				throw std::out_of_range("Cell 3 (plural form) does not exist");
-			}
-			
-			if (cells[3].GetType() != 0) {
-				throw std::runtime_error("Cell 3 is not a string");
-			}
-			
-			return cells[3].Get<std::u8string>();
-		}
-		
-		// Set plural form (Cell 3, English only)
-		bool setName_pl(const std::u8string& newName) {
-			if (!hasOriginalRow) return false;
-			
-			auto& cells = originalRow.GetCells();
-			if (cells.size() < 4) return false;  // Not English format
-			
-			cells[3].Set(newName);
-			return true;
-		}
-		
-		// Get description (auto-detect Japanese/English format)
-		// Japanese: Cell 1, English: Cell 4
-		std::u8string description() const {
-			if (!hasOriginalRow) {
-				throw std::runtime_error("No original row data");
-			}
-			
-			const auto& cells = originalRow.GetCellsConst();
-			
-			// Try English format first (cell 4)
-			if (cells.size() >= 5 && cells[4].GetType() == 0) {
-				return cells[4].Get<std::u8string>();
-			}
-			
-			// Try Japanese format (cell 1)
-			if (cells.size() >= 2 && cells[1].GetType() == 0) {
-				return cells[1].Get<std::u8string>();
-			}
-			
-			throw std::out_of_range("Description cell not found");
-		}
-		
-		// Set description (auto-detect format)
-		// Returns: true if successful, false if appropriate cell doesn't exist
-		bool setDescription(const std::u8string& newDesc) {
-			if (!hasOriginalRow) return false;
-			
-			auto& cells = originalRow.GetCells();
-			
-			// Try English format first (cell 4)
-			if (cells.size() >= 5) {
-				cells[4].Set(newDesc);
-				return true;
-			}
-			
-			// Try Japanese format (cell 1)
-			if (cells.size() >= 2) {
-				cells[1].Set(newDesc);
-				return true;
-			}
-			
-			return false;
-		}
-		
-		// Get log flag (Cell 1, English only, integer)
-		int logFlag() const {
-			if (!hasOriginalRow) {
-				throw std::runtime_error("No original row data");
-			}
-			
-			const auto& cells = originalRow.GetCellsConst();
-			if (cells.size() < 2) {
-				throw std::out_of_range("Cell 1 (log flag) does not exist");
-			}
-			
-			if (cells[1].GetType() != 1) {
-				throw std::runtime_error("Cell 1 is not an integer");
-			}
-			
-			return cells[1].Get<int>();
-		}
-		
-		// Set log flag (Cell 1, English only)
-		bool setLogFlag(int flag) {
-			if (!hasOriginalRow) return false;
-			
-			auto& cells = originalRow.GetCells();
-			if (cells.size() < 2) return false;
-			if (cells[1].GetType() != 1) return false;  // Not an int cell
-			
-			cells[1].Set(flag);
-			return true;
-		}
-		
-		// ============ Direct Row Access (for advanced users/debugging) ============
-		
-		Row& row() { return originalRow; }
-		const Row& row() const { return originalRow; }
-		
-		size_t cellCount() const {
-			return hasOriginalRow ? originalRow.GetCellsConst().size() : 0;
-		}
-		
-		const Cell& cell(size_t index) const {
-			if (!hasOriginalRow) {
-				throw std::runtime_error("No original row data");
-			}
-			if (index >= originalRow.GetCellsConst().size()) {
-				throw std::out_of_range("Cell index out of range");
-			}
-			return originalRow.GetCellsConst()[index];
-		}
-		
-		// ============ Format Detection (optional, for debugging) ============
-		
-		void detectFormat() {
-			if (!hasOriginalRow) {
-				recordFormat = RecordFormat::Unknown;
-				return;
-			}
-			
-			const auto& cells = originalRow.GetCells();
-			size_t count = cells.size();
-			
-			// Japanese format: 2 cells, both strings
-			if (count == 2 && cells[0].GetType() == 0 && cells[1].GetType() == 0) {
-				recordFormat = RecordFormat::ItemJapanese;
-				return;
-			}
-			
-			// English format: 5+ cells, specific pattern
-			if (count >= 5 && 
-				cells[0].GetType() == 0 &&  // name (string)
-				cells[1].GetType() == 1 &&  // logFlag (int)
-				cells[2].GetType() == 0 &&  // singular (string)
-				cells[3].GetType() == 0 &&  // plural (string)
-				cells[4].GetType() == 0) {  // description (string)
-				recordFormat = RecordFormat::ItemEnglish;
-				return;
-			}
-			
-			recordFormat = RecordFormat::Unknown;
-		}
-		
-		// ============ Existing Accessors (unchanged) ============
-		
+		// Convenience accessors for commonly used fields
 		uint16_t& stack_size() { return originalEntry.header.stack_size; }
 		const uint16_t& stack_size() const { return originalEntry.header.stack_size; }
 		uint16_t& item_type() { return originalEntry.header.item_type; }
@@ -511,11 +281,13 @@ public:
 		uint16_t& valid_targets() { return originalEntry.header.valid_targets; }
 		const uint16_t& valid_targets() const { return originalEntry.header.valid_targets; }
 		
+		// Direct access to flags via header
 		ItemHeader& flags() { return originalEntry.header; }
 		const ItemHeader& flags() const { return originalEntry.header; }
 		
 		ItemDatum() : originalEntry{}, spec_type(ItemSpecType::NORMAL)
 		{
+			// Initialize originalEntry with default values
 			originalEntry.header.id = 0;
 			originalEntry.header.stack_size = 1;
 			originalEntry.header.item_type = 0;
@@ -535,3 +307,4 @@ public:
 	void ToICsv(const std::wstring &path) const;
 	std::vector<ItemDatum> data;
 };
+

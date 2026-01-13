@@ -7,6 +7,30 @@
 #include <cstring>
 #include "xystring.h"
 
+// ============================================================================
+// Currency File Special Handling
+// ============================================================================
+// Currency files (ItemSpecType::CURRENCY) have unique characteristics:
+// 
+// 1. FIXED SIZE: Always exactly 0xC000 (49152) bytes
+// 2. SINGLE ENTRY: Contains exactly 1 ItemEntry
+// 3. ZERO PADDING: Remaining space after the entry is filled with 0x00
+//
+// Read behavior:
+//   - Validates file size is exactly 0xC000 bytes
+//   - Reads only the first ItemEntry
+//   - Ignores zero-padding
+//   - Asserts exactly 1 entry was read
+//
+// Write behavior:
+//   - Validates data contains exactly 1 entry
+//   - Writes the single ItemEntry
+//   - Pads with 0x00 to reach 0xC000 bytes
+//   - Verifies final file size is exactly 0xC000 bytes
+//
+// These assertions ensure data integrity and prevent corruption.
+// ============================================================================
+
 // Helper function to perform byte-wise right rotation by specified bits
 inline uint8_t ror_byte(uint8_t value, int bits) {
     bits &= 7; // Ensure bits is in range 0-7 for byte rotation
@@ -70,6 +94,15 @@ void ItemData::Read(std::wstring path, ItemSpecType defaultSpecType)
     size_t fileSize = file.tellg();
     file.seekg(0, std::ios::beg);
     
+    // Currency files have a fixed size of 0xC000 bytes
+    const size_t CURRENCY_FILE_SIZE = 0xC000;
+    if (defaultSpecType == ItemSpecType::CURRENCY) {
+        if (fileSize != CURRENCY_FILE_SIZE) {
+            throw std::runtime_error("Currency file size must be exactly 0xC000 bytes, got: " + 
+                                   std::to_string(fileSize));
+        }
+    }
+    
     std::unique_ptr<char[]> fileBuffer(new char[fileSize]);
     file.read(fileBuffer.get(), fileSize);
     file.close();
@@ -80,7 +113,12 @@ void ItemData::Read(std::wstring path, ItemSpecType defaultSpecType)
     
     // Process entries from decrypted buffer
     size_t offset = 0;
-    while (offset < fileSize) {
+    
+    // Currency files: only read the first entry, rest is zero-padding
+    size_t maxEntries = (defaultSpecType == ItemSpecType::CURRENCY) ? 1 : fileSize / sizeof(ItemEntry);
+    size_t entryCount = 0;
+    
+    while (offset < fileSize && entryCount < maxEntries) {
         ItemEntry entry;
         
         // Check if we have enough bytes for a complete entry
@@ -125,35 +163,21 @@ void ItemData::Read(std::wstring path, ItemSpecType defaultSpecType)
             case ItemSpecType::SLIP:
 				rec = &entry.spec.slip.info_rec;
                 break;
+			case ItemSpecType::CURRENCY:
+				rec = &entry.spec.currency.info_rec;
+                break;
         }
         
         if (rec && rec->cellCount > 0) {
-            Row row;
-            row.ReadRow(rec, sizeof(entry.spec.raw));
+            // Read and save the complete original Row
+            datum.originalRow.ReadRow(rec, sizeof(entry.spec.raw));
+            datum.hasOriginalRow = true;
             
-            // Typically item records have: name, description, and other fields
-            if (row.GetCells().size() >= 1) {
-                // Convert name
-                auto nameStr = row.GetCells()[0].Get<std::u8string>();
-                datum.name = nameStr;
-            }
+            // Auto-detect format (optional, for debugging)
+            datum.detectFormat();
             
-            if (row.GetCells().size() >= 2) {
-                // English handling (this num seems indicates there are two string for log form)
-				// e.g. "Stone", 0, "a stone", "a lot of stones", "A small rock."
-				// Not sure if all items follow this pattern, so we check type for now
-                if (row.GetCells()[1].GetType() == 1) {
-                    if (row.GetCells().size() >= 5) {
-                        datum.description = row.GetCells()[4].Get<std::u8string>();
-                    }
-                }
-                else
-                {
-                    // Convert description
-                    auto descStr = row.GetCells()[1].Get<std::u8string>();
-                    datum.description = descStr;
-                }
-            }
+            // That's it! No manual field extraction needed.
+            // Users access via datum.name(), datum.description(), etc.
         }
         
         // Process image data if present
@@ -171,6 +195,20 @@ void ItemData::Read(std::wstring path, ItemSpecType defaultSpecType)
         
         data.push_back(std::move(datum));
         offset += sizeof(ItemEntry);
+        entryCount++;
+        
+        // Currency files: break after first entry
+        if (defaultSpecType == ItemSpecType::CURRENCY && entryCount >= 1) {
+            break;
+        }
+    }
+    
+    // Currency files: verify we read exactly 1 entry
+    if (defaultSpecType == ItemSpecType::CURRENCY) {
+        if (data.size() != 1) {
+            throw std::runtime_error("Currency file must contain exactly 1 entry, got: " + 
+                                   std::to_string(data.size()));
+        }
     }
 }
 
@@ -181,23 +219,25 @@ void ItemData::Write(std::wstring path)
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open file for writing: " + xybase::string::sys_wcs_to_mbs(path));
     }
+    
+    // Currency files: must have exactly 1 entry
+    bool isCurrency = !data.empty() && data[0].spec_type == ItemSpecType::CURRENCY;
+    if (isCurrency && data.size() != 1) {
+        throw std::runtime_error("Currency file must contain exactly 1 entry, got: " + 
+                               std::to_string(data.size()));
+    }
 
     // Prepare buffer for all entries
     std::vector<char> buffer;
     
-    for (const ItemDatum &datum : data) {
+    for (ItemDatum &datum : data) {  // 注意：需要非 const 引用，因为要 WriteRow
         // Use the preserved original entry as the base, which maintains all unknown fields
         ItemEntry entry = datum.originalEntry;
         
         // Update the ID field that might have been modified
         entry.header.id = datum.id;
         
-        // Prepare the record data for name and description
-        Row row;
-        row.GetCells().emplace_back(datum.name);
-        row.GetCells().emplace_back(datum.description);
-        
-        // Use the stored spec type to update the appropriate record
+        // Use the stored spec type to write the appropriate record
         Record* rec = nullptr;
         switch (datum.spec_type) {
             case ItemSpecType::WEAPON:
@@ -218,16 +258,14 @@ void ItemData::Write(std::wstring path)
 			case ItemSpecType::SLIP:
                 rec = &entry.spec.slip.info_rec;
 				break;
+            case ItemSpecType::CURRENCY:
+				rec = &entry.spec.currency.info_rec;
+                break;
         }
         
-        if (rec) {
-            int recSize = row.GetSize();
-            if (recSize > sizeof(entry.spec.raw)) {
-                throw std::runtime_error("Record size exceeds maximum allowed size");
-            }
-            
-            // Write the record data into the spec
-            row.WriteRow(rec, sizeof(entry.spec.raw));
+        if (rec && datum.hasOriginalRow) {
+            // Simply write the Row as-is (it's already updated via setters)
+            datum.originalRow.WriteRow(rec, sizeof(entry.spec.raw));
         }
         
         // Handle image data if present
@@ -250,6 +288,19 @@ void ItemData::Write(std::wstring path)
         memcpy(buffer.data() + oldSize, &entry, sizeof(ItemEntry));
     }
     
+    // Currency files: pad to exactly 0xC000 bytes with zeros
+    const size_t CURRENCY_FILE_SIZE = 0xC000;
+    if (isCurrency) {
+        if (buffer.size() > CURRENCY_FILE_SIZE) {
+            throw std::runtime_error("Currency entry size exceeds maximum: " + 
+                                   std::to_string(buffer.size()) + " > " + std::to_string(CURRENCY_FILE_SIZE));
+        }
+        
+        // Pad with zeros to reach exactly 0xC000 bytes
+        size_t paddingSize = CURRENCY_FILE_SIZE - buffer.size();
+        buffer.resize(CURRENCY_FILE_SIZE, 0x00);
+    }
+    
     // Encrypt the entire buffer using ROL 5 before writing
 	if (!encryptionSuppression)
         encryptRol5(buffer.data(), buffer.size());
@@ -259,6 +310,17 @@ void ItemData::Write(std::wstring path)
     
     if (!file) {
         throw std::runtime_error("Failed to write data to file");
+    }
+    
+    // Currency files: verify written size
+    if (isCurrency) {
+        file.seekp(0, std::ios::end);
+        size_t writtenSize = file.tellp();
+        if (writtenSize != CURRENCY_FILE_SIZE) {
+            throw std::runtime_error("Currency file write failed: expected " + 
+                                   std::to_string(CURRENCY_FILE_SIZE) + " bytes, wrote " + 
+                                   std::to_string(writtenSize) + " bytes");
+        }
     }
     
     file.close();

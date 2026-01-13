@@ -1,0 +1,118 @@
+#pragma once
+
+#include <cstdint>
+#include <vector>
+#include <string>
+
+#include "Record.h"
+#include "Image.h"
+
+#pragma pack(push, 1)
+
+// All of these structures are encrypted with ROR 5 for the entire file
+// ROM/307/15 - Individual quest/objective entries
+struct RoeQuestEntry
+{
+	uint32_t id;
+	uint32_t qid;
+	uint32_t repeatable; // 0 = no, 1 = yes
+	uint32_t target_count; 
+	uint32_t emi_reward;
+	uint32_t exp_reward;
+	uint32_t cap_reward;
+	uint32_t uni_reward;
+	union {
+		char raw[3039];
+		Record info_rec;
+		// For Japanese, 3 cells in total, cell 0 is quest name, cell 1 is description, cell 2 is empty
+		// For English, 5 cells in total, cell 0&1 are quest name (seems identical, or singular/plural form?),
+		// cell 2 is empty, cell 3 is description, cell 4 is empty
+	} info;
+	char terminator; // must be 0xFF
+};
+
+// ROM/307/23 - Category entries that organize quests
+struct RoeCategoryEntry
+{
+	uint32_t id;
+	uint32_t count_of_children;
+	struct {
+		uint32_t child_id; // refers to RoeQuestEntry.id or RoeCategoryEntry.id
+		uint32_t quest_flag; // 0 = category, non-zero = actual quest
+		uint32_t ukn[3]; // unknown, seems to be always 0
+	} children[20];
+	union {
+		char raw[2503];
+		Record info_rec; // Cell 0 is category name
+	} info;
+	char terminator; // must be 0xFF
+};
+#pragma pack(pop)
+
+class RecordsOfEminence
+{
+public:
+	// Data structure for ROM/307/15 (Quest entries)
+	class RoeQuestDatum
+	{
+	public:
+		uint32_t id;
+		uint32_t qid;
+		std::u8string questName;      // from info_rec cell 0
+		std::u8string description;    // from info_rec cell 1 (JP) or cell 3 (EN)
+		
+		// Store the complete original entry to preserve ALL fields
+		RoeQuestEntry originalEntry;
+		
+		RoeQuestDatum() : id(0), qid(0), originalEntry{}
+		{
+			// Initialize originalEntry with default values
+			originalEntry.id = 0;
+			originalEntry.qid = 0;
+			originalEntry.repeatable = 0;
+			originalEntry.target_count = 0;
+			originalEntry.emi_reward = 0;
+			originalEntry.exp_reward = 0;
+			originalEntry.cap_reward = 0;
+			originalEntry.uni_reward = 0;
+			memset(&originalEntry.info, 0, sizeof(originalEntry.info));
+			originalEntry.terminator = 0xFF;
+		}
+	};
+	
+	// Data structure for ROM/307/23 (Category entries)
+	class RoeCategoryDatum
+	{
+	public:
+		uint32_t id;
+		std::u8string categoryName;   // from info_rec cell 0
+		
+		// Store the complete original entry to preserve ALL fields
+		RoeCategoryEntry originalEntry;
+		
+		RoeCategoryDatum() : id(0), originalEntry{}
+		{
+			// Initialize originalEntry with default values
+			originalEntry.id = 0;
+			originalEntry.count_of_children = 0;
+			memset(originalEntry.children, 0, sizeof(originalEntry.children));
+			memset(&originalEntry.info, 0, sizeof(originalEntry.info));
+			originalEntry.terminator = 0xFF;
+		}
+	};
+
+	// ROM/307/15 methods (Quest entries)
+	void ReadQuest(const char* path);
+	void ReadQuest(const std::wstring& path);
+	void WriteQuest(const char* path);
+	void WriteQuest(const std::wstring& path);
+	
+	// ROM/307/23 methods (Category entries)
+	void ReadCategory(const char* path);
+	void ReadCategory(const std::wstring& path);
+	void WriteCategory(const char* path);
+	void WriteCategory(const std::wstring& path);
+
+	std::vector<RoeQuestDatum> questData;     // ROM/307/15 data
+	std::vector<RoeCategoryDatum> categoryData; // ROM/307/23 data
+};

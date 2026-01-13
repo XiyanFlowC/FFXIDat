@@ -6,6 +6,8 @@
 #include "DataManager.h"
 #include "ItemData.h"
 #include "StatusData.h"
+#include "MonBridge.h"
+#include "RecordsOfEminence.h"
 
 void SQLiteDataSource::Ring(const char8_t *msg)
 {
@@ -260,6 +262,84 @@ void SQLiteDataSource::Initialise()
             FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
         );
     )");
+    
+    // MonBridge table
+    Execute(R"(
+        CREATE TABLE IF NOT EXISTS monbridge (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_id INTEGER NOT NULL,
+            mb_id INTEGER NOT NULL,
+            mb_idx INTEGER NOT NULL,
+            display_name_text_id INTEGER,
+            
+            -- Icon data
+            icon_data BLOB,
+            
+            FOREIGN KEY (file_id) REFERENCES file(id) ON DELETE CASCADE,
+            FOREIGN KEY (display_name_text_id) REFERENCES text(id),
+            UNIQUE(file_id, mb_id)
+        );
+    )");
+    
+    // RecordsOfEminence Quest table (ROM/307/15)
+    Execute(R"(
+        CREATE TABLE IF NOT EXISTS roe_quest (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_id INTEGER NOT NULL,
+            roe_id INTEGER NOT NULL,
+            roe_release_date INTEGER NOT NULL,
+            quest_name_text_id INTEGER,
+            description_text_id INTEGER,
+            
+            -- Quest configuration fields
+            repeatable INTEGER NOT NULL DEFAULT 0,
+            target_count INTEGER NOT NULL DEFAULT 0,
+            emi_reward INTEGER NOT NULL DEFAULT 0,
+            exp_reward INTEGER NOT NULL DEFAULT 0,
+            cap_reward INTEGER NOT NULL DEFAULT 0,
+            uni_reward INTEGER NOT NULL DEFAULT 0,
+            
+            FOREIGN KEY (file_id) REFERENCES file(id) ON DELETE CASCADE,
+            FOREIGN KEY (quest_name_text_id) REFERENCES text(id),
+            FOREIGN KEY (description_text_id) REFERENCES text(id),
+            UNIQUE(file_id, roe_id)
+        );
+    )");
+    
+    // RecordsOfEminence Category table (ROM/307/23)
+    Execute(R"(
+        CREATE TABLE IF NOT EXISTS roe_category (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_id INTEGER NOT NULL,
+            roe_id INTEGER NOT NULL,
+            category_name_text_id INTEGER,
+            
+            FOREIGN KEY (file_id) REFERENCES file(id) ON DELETE CASCADE,
+            FOREIGN KEY (category_name_text_id) REFERENCES text(id),
+            UNIQUE(file_id, roe_id)
+        );
+    )");
+    
+    // RecordsOfEminence Category-Child relationship table (preserves tree structure)
+    Execute(R"(
+        CREATE TABLE IF NOT EXISTS roe_category_children (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category_id INTEGER NOT NULL,
+            child_index INTEGER NOT NULL,
+            child_id INTEGER NOT NULL,
+            quest_flag INTEGER NOT NULL,
+            ukn1 INTEGER DEFAULT 0,
+            ukn2 INTEGER DEFAULT 0,
+            ukn3 INTEGER DEFAULT 0,
+            
+            FOREIGN KEY (category_id) REFERENCES roe_category(id) ON DELETE CASCADE,
+            UNIQUE(category_id, child_index)
+        );
+    )");
+    
+    // Index for faster tree traversal
+    Execute("CREATE INDEX IF NOT EXISTS idx_roe_category_children_parent ON roe_category_children(category_id);");
+    Execute("CREATE INDEX IF NOT EXISTS idx_roe_category_children_child ON roe_category_children(child_id, quest_flag);");
 }
 
 void SQLiteDataSource::InitialiseFileDefinition(CsvFile &csv)
@@ -575,6 +655,36 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
             }
             sqlite3_finalize(stmt);
         }
+        
+        // Also clean up monbridge data for this file
+        if (type == "mbd") {
+            if (sqlite3_prepare_v2(db, "DELETE FROM monbridge WHERE file_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+            {
+                sqlite3_bind_int(stmt, 1, file_id);
+                sqlite3_step(stmt);
+            }
+            sqlite3_finalize(stmt);
+        }
+        
+        // Also clean up ROE quest data for this file (ROM/307/15)
+        if (type == "erc") {
+            if (sqlite3_prepare_v2(db, "DELETE FROM roe_quest WHERE file_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+            {
+                sqlite3_bind_int(stmt, 1, file_id);
+                sqlite3_step(stmt);
+            }
+            sqlite3_finalize(stmt);
+        }
+        
+        // Also clean up ROE category data for this file (ROM/307/23)
+        if (type == "erq") {
+            if (sqlite3_prepare_v2(db, "DELETE FROM roe_category WHERE file_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+            {
+                sqlite3_bind_int(stmt, 1, file_id);
+                sqlite3_step(stmt);
+            }
+            sqlite3_finalize(stmt);
+        }
     }
     catch (SQLException &ex)
     {
@@ -642,9 +752,21 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
                 ++rowNum;
             }
         }
-        else if (type == "ieb" || type == "inb" || type == "iub" || type == "iwb" || type == "iab" || type == "ipb" || type == "isb")
+        else if (type == "ieb" || type == "inb" || type == "iub" || type == "iwb" || type == "iab" || type == "ipb" || type == "isb" || type == "icb")
         {
             ImportItemDat(file_id, datPath, xybase::string::sys_mbs_to_wcs(type));
+        }
+        else if (type == "mbd")
+        {
+            ImportMonBridgeDat(file_id, datPath);
+        }
+        else if (type == "erc") // ROM/307/15 - Quest entries
+        {
+            ImportRoeQuestDat(file_id, datPath);
+        }
+        else if (type == "erq") // ROM/307/23 - Category entries
+        {
+            ImportRoeCategoryDat(file_id, datPath);
         }
     }
     catch (std::exception &ex)
@@ -853,9 +975,21 @@ void SQLiteDataSource::TranslateDat(int file_id, const char *file_path, const ch
         }
         statusData.Write(outPath);
     }
-    else if (t == "ieb" || t == "inb" || t == "iub" || t == "iwb" || t == "iab")
+    else if (t == "ieb" || t == "inb" || t == "iub" || t == "iwb" || t == "iab" || type == "ipb" || type == "isb" || type == "icb")
     {
         TranslateItemDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str(), t.c_str());
+    }
+    else if (t == "mbd")
+    {
+        TranslateMonBridgeDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str());
+    }
+    else if (t == "erc") // ROM/307/15 - Quest entries
+    {
+        TranslateRoeQuestDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str());
+    }
+    else if (t == "erq") // ROM/307/23 - Category entries
+    {
+        TranslateRoeCategoryDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str());
     }
 }
 
@@ -888,6 +1022,7 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
     else if (type == L"iab") specType = ItemSpecType::ARMOUR;
     else if (type == L"isb") specType = ItemSpecType::SLIP;
     else if (type == L"ipb") specType = ItemSpecType::PUPPET;
+    else if (type == L"icb") specType = ItemSpecType::CURRENCY;
     
     itemData.Read(path, specType);
     
@@ -990,28 +1125,34 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
         }
         
         // Insert name text if not empty
-        if (!datum.name.empty()) {
-            int name_text_id = InsertOrGetText(xybase::string::escape(datum.name));
-            if (sqlite3_prepare_v2(db, "UPDATE items SET name_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
-            {
-                sqlite3_bind_int(stmt, 1, name_text_id);
-                sqlite3_bind_int(stmt, 2, item_record_id);
-                sqlite3_step(stmt);
+        try {
+            std::u8string itemName = datum.name();
+            if (!itemName.empty()) {
+                int name_text_id = InsertOrGetText(xybase::string::escape(itemName));
+                if (sqlite3_prepare_v2(db, "UPDATE items SET name_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+                {
+                    sqlite3_bind_int(stmt, 1, name_text_id);
+                    sqlite3_bind_int(stmt, 2, item_record_id);
+                    sqlite3_step(stmt);
+                }
+                sqlite3_finalize(stmt);
             }
-            sqlite3_finalize(stmt);
-        }
+        } catch (...) { /* Ignore missing fields */ }
         
         // Insert description text if not empty
-        if (!datum.description.empty()) {
-            int desc_text_id = InsertOrGetText(xybase::string::escape(datum.description));
-            if (sqlite3_prepare_v2(db, "UPDATE items SET description_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
-            {
-                sqlite3_bind_int(stmt, 1, desc_text_id);
-                sqlite3_bind_int(stmt, 2, item_record_id);
-                sqlite3_step(stmt);
+        try {
+            std::u8string itemDesc = datum.description();
+            if (!itemDesc.empty()) {
+                int desc_text_id = InsertOrGetText(xybase::string::escape(itemDesc));
+                if (sqlite3_prepare_v2(db, "UPDATE items SET description_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+                {
+                    sqlite3_bind_int(stmt, 1, desc_text_id);
+                    sqlite3_bind_int(stmt, 2, item_record_id);
+                    sqlite3_step(stmt);
+                }
+                sqlite3_finalize(stmt);
             }
-            sqlite3_finalize(stmt);
-        }
+        } catch (...) { /* Ignore missing fields */ }
     }
 }
 
@@ -1258,7 +1399,8 @@ void SQLiteDataSource::TranslateItemDat(int file_id, const wchar_t *file_path, c
     else if (typeStr == "iwb") specType = ItemSpecType::WEAPON;
     else if (typeStr == "iab") specType = ItemSpecType::ARMOUR;
     else if (typeStr == "isb") specType = ItemSpecType::SLIP;
-	else if (typeStr == "ipb") specType = ItemSpecType::PUPPET;
+    else if (typeStr == "ipb") specType = ItemSpecType::PUPPET;
+    else if (typeStr == "icb") specType = ItemSpecType::CURRENCY;
     
     // Read original data first
     itemData.Read(datPath, specType);
@@ -1281,7 +1423,7 @@ void SQLiteDataSource::TranslateItemDat(int file_id, const wchar_t *file_path, c
                 const char* translatedName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
                 if (translatedName) {
                     std::u8string transName(reinterpret_cast<const char8_t*>(translatedName));
-                    datum.name = transName;
+                    datum.setName(transName);
                 }
             }
         }
@@ -1301,7 +1443,7 @@ void SQLiteDataSource::TranslateItemDat(int file_id, const wchar_t *file_path, c
                 const char* translatedDesc = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
                 if (translatedDesc) {
                     std::u8string transDesc(reinterpret_cast<const char8_t*>(translatedDesc));
-                    datum.description = transDesc;
+                    datum.setDescription(transDesc);
                 }
             }
         }
@@ -1388,4 +1530,146 @@ int SQLiteDataSource::InsertOrGetText(const std::u8string &text)
     }
     
     return text_id;
+}
+
+void SQLiteDataSource::ImportMonBridgeDat(const int file_id, const std::wstring &path)
+{
+    sqlite3_stmt *stmt = nullptr;
+    
+    MonBridge monBridge;
+    monBridge.Read(path);
+    
+    for (const auto &datum : monBridge.data) {
+		int mb_record_id = -1;
+        try
+        {
+            mb_record_id = InsertOrGetMonBridgeRecord(file_id, datum.id);
+        }
+        catch (SQLException &ex)
+        {
+            Ring(xybase::string::to_utf8(std::string("Failed to insert or get MonBridge record for ID ") + std::to_string(datum.id) + ": " + ex.what()).c_str());
+            continue;
+		}
+        
+        // Update main monbridge table
+        const char *updateMainSQL = R"(
+            UPDATE monbridge SET 
+                mb_idx = ?, icon_data = ?
+            WHERE id = ?
+        )";
+        
+        if (sqlite3_prepare_v2(db, updateMainSQL, -1, &stmt, nullptr) == SQLITE_OK)
+        {
+            sqlite3_bind_int(stmt, 1, datum.idx);
+            
+            // Handle icon data
+            if (datum.originalEntry.icon_data[0] != 0) {
+                sqlite3_bind_blob(stmt, 2, datum.originalEntry.icon_data, sizeof(datum.originalEntry.icon_data), SQLITE_STATIC);
+            } else {
+                sqlite3_bind_null(stmt, 2);
+            }
+            
+            sqlite3_bind_int(stmt, 3, mb_record_id);
+            sqlite3_step(stmt);
+        }
+        sqlite3_finalize(stmt);
+        
+        // Insert display name text if not empty (internal name is NOT translated)
+        if (!datum.displayName.empty()) {
+            int display_name_text_id = InsertOrGetText(xybase::string::escape(datum.displayName));
+            if (sqlite3_prepare_v2(db, "UPDATE monbridge SET display_name_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+            {
+                sqlite3_bind_int(stmt, 1, display_name_text_id);
+                sqlite3_bind_int(stmt, 2, mb_record_id);
+                sqlite3_step(stmt);
+            }
+            sqlite3_finalize(stmt);
+        }
+    }
+}
+
+void SQLiteDataSource::TranslateMonBridgeDat(int file_id, const wchar_t *file_path)
+{
+    std::wstring inputPath = file_path;
+    if (!inputPath.ends_with(L".DAT")) {
+        inputPath += L".DAT";
+    }
+    auto datPath = PathUtil::GetPath(inputPath);
+    auto outPath = PathUtil::GetOutPathConf(inputPath);
+    
+    MonBridge monBridge;
+    
+    // Read original data first
+    monBridge.Read(datPath);
+    
+    sqlite3_stmt *stmt = nullptr;
+    
+    // Get translations for each entry
+    for (auto &datum : monBridge.data) {
+        // Only translate display name (internal name must remain unchanged for game to find entries)
+        if (sqlite3_prepare_v2(db, 
+            "SELECT tr.text FROM monbridge mb "
+            "JOIN text t ON mb.display_name_text_id = t.id "
+            "JOIN trans tr ON t.id = tr.text_id "
+            "WHERE mb.file_id = ? AND mb.mb_id = ?", 
+            -1, &stmt, nullptr) == SQLITE_OK)
+        {
+            sqlite3_bind_int(stmt, 1, file_id);
+            sqlite3_bind_int(stmt, 2, datum.id);
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                const char* translatedDisplay = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                if (translatedDisplay) {
+                    std::u8string transDisplay(reinterpret_cast<const char8_t*>(translatedDisplay));
+                    datum.displayName = transDisplay;
+                }
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+    
+    monBridge.Write(outPath);
+}
+
+int SQLiteDataSource::InsertOrGetMonBridgeRecord(int file_id, uint32_t mb_id)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int record_id = -1;
+    
+    // Try to get existing record
+    if (sqlite3_prepare_v2(db, "SELECT id FROM monbridge WHERE file_id = ? AND mb_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_int(stmt, 1, file_id);
+        sqlite3_bind_int(stmt, 2, mb_id);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            record_id = sqlite3_column_int(stmt, 0);
+        }
+    }
+    sqlite3_finalize(stmt);
+    
+    if (record_id == -1)
+    {
+        // Insert new record
+        if (sqlite3_prepare_v2(db, "INSERT INTO monbridge (file_id, mb_id, mb_idx) VALUES (?, ?, 0)", -1, &stmt, nullptr) == SQLITE_OK)
+        {
+            sqlite3_bind_int(stmt, 1, file_id);
+            sqlite3_bind_int(stmt, 2, mb_id);
+            if (sqlite3_step(stmt) == SQLITE_DONE)
+            {
+                record_id = static_cast<int>(sqlite3_last_insert_rowid(db));
+            }
+            else
+            {
+                sqlite3_finalize(stmt);
+                throw SQLException(sqlite3_errmsg(db));
+            }
+        }
+        else
+        {
+            throw SQLException(sqlite3_errmsg(db));
+        }
+        sqlite3_finalize(stmt);
+    }
+    
+    return record_id;
 }

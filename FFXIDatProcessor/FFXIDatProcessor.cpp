@@ -14,6 +14,8 @@
 #include "codepage.h"
 #include "XiString.h"
 #include "../FFXIDat/FixedPhrase.h"
+#include "../FFXIDat/RecordsOfEminence.h"
+#include "../FFXIDat/MonBridge.h"
 
 #include "liteopt.h"
 
@@ -213,6 +215,42 @@ int main(int argc, const char **argv)
         return 0;
         }, L"转换一个FixedPhrase文件到CSV。");
     lopt_regopt("csv-to-fp", 'P', LOPT_FLG_VAL_NEED, [](const char *str) -> int {CsvToFixedPhrase(str); return 0; }, L"转换一个CSV文件到FixedPhrase。");
+    lopt_regopt("roe-quest-to-csv", 0, LOPT_FLG_VAL_NEED, [](const char *str) -> int {
+        std::string path(str);
+        RecordsOfEminence roe;
+        try {
+            roe.ReadQuest(str);
+            roe.QuestToICsv(path.replace(path.find(".DAT"), 4, ".quest.csv").c_str());
+        }
+        catch (std::exception &ex) {
+            std::wcerr << L"发生错误：" << ex.what() << std::endl;
+        }
+        return 0;
+        }, L"转换一个Records of Eminence Quest文件到CSV。");
+    lopt_regopt("roe-category-to-csv", 0, LOPT_FLG_VAL_NEED, [](const char *str) -> int {
+        std::string path(str);
+        RecordsOfEminence roe;
+        try {
+            roe.ReadCategory(str);
+            roe.CategoryToICsv(path.replace(path.find(".DAT"), 4, ".category.csv").c_str());
+        }
+        catch (std::exception &ex) {
+            std::wcerr << L"发生错误：" << ex.what() << std::endl;
+        }
+        return 0;
+        }, L"转换一个Records of Eminence Category文件到CSV。");
+    lopt_regopt("mb-to-csv", 0, LOPT_FLG_VAL_NEED, [](const char *str) -> int {
+        std::string path(str);
+        MonBridge mb;
+        try {
+            mb.Read(str);
+            mb.ToICsv(xybase::string::to_wstring(path.replace(path.find(".DAT"), 4, ".mb.csv")));
+        }
+        catch (std::exception &ex) {
+            std::wcerr << L"发生错误：" << ex.what() << std::endl;
+        }
+        return 0;
+        }, L"转换一个MonBridge文件到CSV。");
     lopt_regopt("install-path", 'I', LOPT_FLG_VAL_NEED, [](const char *str) -> int {
         PathUtil::gameRootPath = xybase::string::sys_mbs_to_wcs(str);
         return 0;

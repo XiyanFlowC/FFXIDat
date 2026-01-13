@@ -54,6 +54,18 @@
     <ClInclude Include="FixedPhrase.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="MonBridge.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RecordsOfEminence.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RecordFormat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemData_new.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -90,6 +102,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="FixedPhrase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MonBridge.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RecordsOfEminence.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

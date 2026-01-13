@@ -26,6 +26,8 @@
 #include <StatusData.h>
 #include <ItemData.h>
 #include <FixedPhrase.h>
+#include <MonBridge.h>
+#include <RecordsOfEminence.h>
 
 namespace fs = std::filesystem;
 
@@ -584,7 +586,7 @@ int main(int argc, char **argv)
                 }
 				fixedPhrase.Write(outPath);
             }
-            else if (type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb" || type == u8"ipb" || type == u8"isb")
+            else if (type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb" || type == u8"ipb" || type == u8"isb" || type == u8"icb")
             {
 
                 // 解析要翻译的cell索引
@@ -613,25 +615,89 @@ int main(int argc, char **argv)
                 else if (type == u8"isb") {
                     specType = ItemSpecType::SLIP;
 				}
+                else if (type == u8"icb") {
+                    specType = ItemSpecType::CURRENCY;
+				}
                 
                 itemData.Read(datPath, specType);
                 for (auto &datum : itemData.data)
                 {
-                    // Process name
-                    if (!datum.name.empty() && (translateAllCells || targetCells.find(1) != targetCells.end()))
+                    int cellIndex = 1;
+                    for (auto& cell : datum.row())
                     {
-                        std::u8string text = xybase::string::escape(datum.name);
-                        datum.name = xybase::string::unescape(GetTranslation(text));
-                    }
-                    
-                    // Process description
-                    if (!datum.description.empty() && (translateAllCells || targetCells.find(2) != targetCells.end()))
-                    {
-                        std::u8string text = xybase::string::escape(datum.description);
-                        datum.description = xybase::string::unescape(GetTranslation(text));
+                        if (cell.GetType() == 0) // str
+                        {
+                            bool shouldTranslate = translateAllCells || targetCells.count(cellIndex) > 0;
+                            if (shouldTranslate) {
+                                std::u8string text = xybase::string::escape(cell.Get<std::u8string>());
+                                cell.Set(xybase::string::unescape(GetTranslation(text)));
+                            }
+                        }
+						++cellIndex;
                     }
                 }
                 itemData.Write(outPath);
+            }
+            else if (type == u8"mbd")
+            {
+                MonBridge monBridge;
+                monBridge.Read(datPath);
+                
+                for (auto &datum : monBridge.data)
+                {
+                    // Only translate display name (internal name must NOT be translated)
+                    // Internal name is the ASCII identifier that the game uses to find entries
+                    if (!datum.displayName.empty())
+                    {
+                        std::u8string text = xybase::string::escape(datum.displayName);
+                        datum.displayName = xybase::string::unescape(GetTranslation(text));
+                    }
+                }
+                monBridge.Write(outPath);
+            }
+            else if (type == u8"erq") // ROM/307/15 - Quest entries
+            {
+                RecordsOfEminence roe;
+                roe.ReadQuest(datPath);
+
+				std::set<int> targetCells = ParseCellIndices(cellIndicesStr);
+                
+                for (auto &datum : roe.questData)
+                {
+					int cellIndex = 1;
+                    for (auto& cell : datum.row())
+                    {
+                        if (cell.GetType() == 0) // str
+                        {
+							bool shouldTranslate = targetCells.empty() || targetCells.count(cellIndex) > 0;
+                            if (shouldTranslate) {
+                                std::u8string text = xybase::string::escape(cell.Get<std::u8string>());
+                                cell.Set(xybase::string::unescape(GetTranslation(text)));
+							}
+						}
+						++cellIndex;
+                    }
+                }
+                roe.WriteQuest(outPath);
+            }
+            else if (type == u8"erc") // ROM/307/23 - Category entries
+            {
+                RecordsOfEminence roe;
+                roe.ReadCategory(datPath);
+                
+                for (auto &datum : roe.categoryData)
+                {
+                    // Translate category name
+                    try {
+                        std::u8string catName = datum.categoryName();
+                        if (!catName.empty())
+                        {
+                            std::u8string text = xybase::string::escape(catName);
+                            datum.setCategoryName(xybase::string::unescape(GetTranslation(text)));
+                        }
+                    } catch (...) { /* Ignore if field doesn't exist */ }
+                }
+                roe.WriteCategory(outPath);
             }
         }
         

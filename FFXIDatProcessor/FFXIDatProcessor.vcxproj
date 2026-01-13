@@ -143,6 +143,7 @@
     <ClCompile Include="FFXIDatProcessor.cpp" />
     <ClCompile Include="sqlite3\sqlite3.c" />
     <ClCompile Include="SQLiteDataSource.cpp" />
+    <ClCompile Include="SQLiteDataSource_ROE.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ChsToSJis.h" />

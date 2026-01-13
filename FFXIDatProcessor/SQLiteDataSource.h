@@ -77,5 +77,19 @@ protected:
 	void InsertEquipSlots(int item_id, const ItemEquipSlot &slots);
 	void InsertRaceApplicability(int item_id, const ItemRaceApplicability &races);
 	void InsertJobApplicability(int item_id, const ItemJobApplicability &jobs);
+	
+	// MonBridge support methods
+	void ImportMonBridgeDat(const int file_id, const std::wstring &path);
+	void TranslateMonBridgeDat(int file_id, const wchar_t *file_path);
+	int InsertOrGetMonBridgeRecord(int file_id, uint32_t mb_id);
+	
+	// RecordsOfEminence support methods
+	void ImportRoeCategoryDat(const int file_id, const std::wstring &path);
+	void TranslateRoeCategoryDat(int file_id, const wchar_t *file_path);
+	int InsertOrGetRoeCategoryRecord(int file_id, uint32_t roe_id);
+	
+	void ImportRoeQuestDat(const int file_id, const std::wstring &path);
+	void TranslateRoeQuestDat(int file_id, const wchar_t *file_path);
+	int InsertOrGetRoeQuestRecord(int file_id, uint32_t roe_id);
 };
 

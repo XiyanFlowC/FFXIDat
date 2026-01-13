@@ -154,6 +154,11 @@ public:
 	{
 		return cells;
 	}
+	
+	const std::vector<Cell> &GetCellsConst() const
+	{
+		return cells;
+	}
 protected:
 	// int cellCount;
 	std::vector<Cell> cells;
