@@ -223,6 +223,7 @@ void MainFrame::OnCreate()
 	// Load saved font from config
 	std::wstring savedFont = FFXIDatEGApp::Instance().GetConfig().GetFontName();
 	m_contentView->SetFontName(savedFont);
+	m_contentView->SetFontSize(FFXIDatEGApp::Instance().GetConfig().GetInt(L"Font", L"Size", 12));
 
 	// Create Status Bar
 	m_hStatusBar = CreateWindowExW(
@@ -480,8 +481,9 @@ void MainFrame::OnSelectFont()
 	
 	// Set current font
 	std::wstring currentFont = m_contentView->GetFontName();
+	int fontSize = m_contentView->GetFontSize();
 	wcscpy_s(lf.lfFaceName, LF_FACESIZE, currentFont.c_str());
-	lf.lfHeight = -16;
+	lf.lfHeight = -MulDiv(fontSize, GetDeviceCaps(GetDC(m_hwnd), LOGPIXELSY), 72);
 	lf.lfCharSet = SHIFTJIS_CHARSET;
 	
 	if (ChooseFontW(&cf))
@@ -489,9 +491,13 @@ void MainFrame::OnSelectFont()
 		// User selected a font
 		std::wstring newFontName = lf.lfFaceName;
 		m_contentView->SetFontName(newFontName);
+		m_contentView->SetFontSize(
+			abs(MulDiv(lf.lfHeight, 72, GetDeviceCaps(GetDC(m_hwnd), LOGPIXELSY))));
 		
 		// Save font to config
 		FFXIDatEGApp::Instance().GetConfig().SetFontName(newFontName);
+		FFXIDatEGApp::Instance().GetConfig().SetInt(L"Font", L"Size", 
+			m_contentView->GetFontSize());
 		
 		std::wstring statusText = L"Font changed to: ";
 		statusText += newFontName;
