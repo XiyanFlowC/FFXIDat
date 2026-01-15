@@ -1,4 +1,5 @@
 #include "Config.h"
+#include "IniParser.h"
 #include <sstream>
 #include <algorithm>
 
@@ -11,72 +12,28 @@ Config& Config::Instance()
 bool Config::Load(const std::wstring& filePath)
 {
 	m_filePath = filePath;
-	m_data.clear();
-
-	std::wifstream file(filePath);
-	if (!file.is_open())
+	
+	IniParser parser;
+	if (!parser.Load(filePath))
 		return false;
-
-	std::wstring currentSection;
-	std::wstring line;
-
-	while (std::getline(file, line))
-	{
-		// Trim whitespace
-		line.erase(0, line.find_first_not_of(L" \t\r\n"));
-		line.erase(line.find_last_not_of(L" \t\r\n") + 1);
-
-		// Skip empty lines and comments
-		if (line.empty() || line[0] == L';' || line[0] == L'#')
-			continue;
-
-		// Check for section header
-		if (line[0] == L'[' && line[line.length() - 1] == L']')
-		{
-			currentSection = line.substr(1, line.length() - 2);
-			continue;
-		}
-
-		// Parse key=value
-		size_t pos = line.find(L'=');
-		if (pos != std::wstring::npos)
-		{
-			std::wstring key = line.substr(0, pos);
-			std::wstring value = line.substr(pos + 1);
-
-			// Trim key and value
-			key.erase(key.find_last_not_of(L" \t") + 1);
-			value.erase(0, value.find_first_not_of(L" \t"));
-
-			m_data[currentSection][key] = value;
-		}
-	}
-
+	
+	m_data = parser.GetData();
 	return true;
 }
 
 bool Config::Save(const std::wstring& filePath)
 {
-	std::wofstream file(filePath);
-	if (!file.is_open())
-		return false;
-
+	IniParser parser;
+	// Copy data to parser
 	for (const auto& section : m_data)
 	{
-		if (!section.first.empty())
-		{
-			file << L"[" << section.first << L"]\n";
-		}
-
 		for (const auto& kv : section.second)
 		{
-			file << kv.first << L"=" << kv.second << L"\n";
+			parser.SetString(section.first, kv.first, kv.second);
 		}
-
-		file << L"\n";
 	}
-
-	return true;
+	
+	return parser.Save(filePath);
 }
 
 std::wstring Config::GetString(const std::wstring& section, const std::wstring& key, const std::wstring& defaultValue)
@@ -134,6 +91,30 @@ std::wstring Config::GetUILanguage() const
 void Config::SetUILanguage(const std::wstring& language)
 {
 	m_data[L"General"][L"UILanguage"] = language;
+	
+	// Auto-save configuration
+	if (!m_filePath.empty())
+	{
+		Save(m_filePath);
+	}
+}
+
+std::wstring Config::GetFontName() const
+{
+	auto secIt = m_data.find(L"General");
+	if (secIt == m_data.end())
+		return L"MS Gothic";  // Default font for Japanese/Chinese text
+
+	auto keyIt = secIt->second.find(L"FontName");
+	if (keyIt == secIt->second.end())
+		return L"MS Gothic";  // Default font
+
+	return keyIt->second;
+}
+
+void Config::SetFontName(const std::wstring& fontName)
+{
+	m_data[L"General"][L"FontName"] = fontName;
 	
 	// Auto-save configuration
 	if (!m_filePath.empty())

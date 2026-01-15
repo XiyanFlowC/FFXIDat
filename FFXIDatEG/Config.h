@@ -31,6 +31,9 @@ public:
 	// Convenience methods for common settings
 	std::wstring GetUILanguage() const;
 	void SetUILanguage(const std::wstring& language);
+	
+	std::wstring GetFontName() const;
+	void SetFontName(const std::wstring& fontName);
 
 private:
 	Config() = default;

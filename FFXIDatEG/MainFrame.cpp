@@ -190,7 +190,10 @@ void MainFrame::OnCreate()
 
 	// Help menu
 	HMENU hHelpMenu = CreateMenu();
+	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_QUICKSTART, LOCS(L"menu_help_quickstart"));
 	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_ABOUT, LOCS(L"menu_help_about"));
+	AppendMenuW(hHelpMenu, MF_SEPARATOR, 0, nullptr);
+	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_CLEANPREFS, LOCS(L"menu_help_cleanprefs"));
 
 	// Add to menu bar
 	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hFileMenu, LOCS(L"menu_file"));
@@ -216,6 +219,10 @@ void MainFrame::OnCreate()
 	// Create ContentView (right panel)
 	m_contentView = std::make_unique<ContentView>();
 	m_contentView->Create(m_hwnd, 250, 0, 950, 600);
+	
+	// Load saved font from config
+	std::wstring savedFont = FFXIDatEGApp::Instance().GetConfig().GetFontName();
+	m_contentView->SetFontName(savedFont);
 
 	// Create Status Bar
 	m_hStatusBar = CreateWindowExW(
@@ -360,8 +367,14 @@ void MainFrame::OnCommand(WPARAM wParam)
 	case IDM_VIEW_FILTER_DE:
 		OnFilterLanguage("de");
 		break;
+	case IDM_HELP_QUICKSTART:
+		OnQuickStartHelp();
+		break;
 	case IDM_HELP_ABOUT:
 		OnAbout();
+		break;
+	case IDM_HELP_CLEANPREFS:
+		OnCleanPreferencesAndExit();
 		break;
 	default:
 		// Handle dynamic UI language menu items
@@ -477,6 +490,9 @@ void MainFrame::OnSelectFont()
 		std::wstring newFontName = lf.lfFaceName;
 		m_contentView->SetFontName(newFontName);
 		
+		// Save font to config
+		FFXIDatEGApp::Instance().GetConfig().SetFontName(newFontName);
+		
 		std::wstring statusText = L"Font changed to: ";
 		statusText += newFontName;
 		SendMessageW(m_hStatusBar, SB_SETTEXTW, 0,
@@ -494,6 +510,62 @@ void MainFrame::OnAbout()
 		L"https://github.com/XiyanFlowC/FFXIDat";
 	
 	MessageBoxW(m_hwnd, message.c_str(), L"About", MB_OK | MB_ICONINFORMATION);
+}
+
+void MainFrame::OnQuickStartHelp()
+{
+	std::wstring title = LOC(L"quickstart_title");
+	std::wstring message = LOC(L"quickstart_message");
+	
+	MessageBoxW(m_hwnd, message.c_str(), title.c_str(), MB_OK | MB_ICONINFORMATION);
+}
+
+void MainFrame::OnCleanPreferencesAndExit()
+{
+	// Confirm with user
+	std::wstring confirmTitle = LOC(L"cleanprefs_confirm_title");
+	std::wstring confirmMessage = LOC(L"cleanprefs_confirm_message");
+	
+	int result = MessageBoxW(m_hwnd, confirmMessage.c_str(), confirmTitle.c_str(), 
+							MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
+	
+	if (result != IDYES)
+		return;
+	
+	// Get config path from app
+	FFXIDatEGApp& app = FFXIDatEGApp::Instance();
+	std::filesystem::path configPath = app.GetConfigPath();
+	
+	try
+	{
+		// Delete config file if exists
+		if (std::filesystem::exists(configPath))
+		{
+			std::filesystem::remove(configPath);
+		}
+		
+		// Delete config directory if exists and is empty
+		std::filesystem::path configDir = configPath.parent_path();
+		if (std::filesystem::exists(configDir) && std::filesystem::is_empty(configDir))
+		{
+			std::filesystem::remove(configDir);
+		}
+		
+		// Show success message
+		std::wstring successMsg = LOC(L"cleanprefs_success");
+		MessageBoxW(m_hwnd, successMsg.c_str(), confirmTitle.c_str(), MB_OK | MB_ICONINFORMATION);
+		
+		// Exit application
+		PostMessage(m_hwnd, WM_CLOSE, 0, 0);
+	}
+	catch (const std::exception& e)
+	{
+		// Show error message
+		std::wstring failedMsg = LOC(L"cleanprefs_failed");
+		std::string errStr = e.what();
+		std::wstring errMsg = failedMsg + std::wstring(errStr.begin(), errStr.end());
+		MessageBoxW(m_hwnd, errMsg.c_str(), confirmTitle.c_str(), MB_OK | MB_ICONERROR);
+	}
 }
 
 void MainFrame::OnFind()
@@ -769,7 +841,10 @@ void MainFrame::RefreshUIText()
 
 	// Help menu
 	HMENU hHelpMenu = CreateMenu();
+	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_QUICKSTART, LOCS(L"menu_help_quickstart"));
 	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_ABOUT, LOCS(L"menu_help_about"));
+	AppendMenuW(hHelpMenu, MF_SEPARATOR, 0, nullptr);
+	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_CLEANPREFS, LOCS(L"menu_help_cleanprefs"));
 
 	// Add to menu bar
 	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hFileMenu, LOCS(L"menu_file"));

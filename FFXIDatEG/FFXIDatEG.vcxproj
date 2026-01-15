@@ -149,6 +149,7 @@
     <ClInclude Include="ContentView.h" />
     <ClInclude Include="DatFileManager.h" />
     <ClInclude Include="FFXIDatEGApp.h" />
+    <ClInclude Include="IniParser.h" />
     <ClInclude Include="Localization.h" />
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="SearchDialog.h" />
@@ -161,6 +162,7 @@
     <ClCompile Include="ContentView.cpp" />
     <ClCompile Include="DatFileManager.cpp" />
     <ClCompile Include="FFXIDatEGApp.cpp" />
+    <ClCompile Include="IniParser.cpp" />
     <ClCompile Include="Localization.cpp" />
     <ClCompile Include="MainFrame.cpp" />
     <ClCompile Include="SearchDialog.cpp" />

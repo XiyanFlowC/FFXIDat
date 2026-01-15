@@ -16,6 +16,7 @@ public:
     
     HINSTANCE GetInstance() const { return m_hInstance; }
     std::filesystem::path GetGamePath() const { return m_gamePath; }
+    std::filesystem::path GetConfigPath() const { return m_configPath; }
     void SetGamePath(const std::filesystem::path& path);
     class Config& GetConfig();
     

@@ -40,6 +40,8 @@ private:
     void OnAbout();
     void OnFind();
     void OnFindNext();
+    void OnQuickStartHelp();
+    void OnCleanPreferencesAndExit();
     
     HWND m_hwnd = nullptr;
     HWND m_hTreeView = nullptr;
@@ -74,5 +76,7 @@ private:
     static constexpr int IDM_VIEW_FILTER_DE = 2154;
     static constexpr int IDM_VIEW_FILTER_ALL = 2155;
     static constexpr int IDM_VIEW_UILANG_BASE = 2160;  // Base ID for dynamic UI language menu items
+    static constexpr int IDM_HELP_QUICKSTART = 2200;
     static constexpr int IDM_HELP_ABOUT = 2201;
+    static constexpr int IDM_HELP_CLEANPREFS = 2202;
 };
