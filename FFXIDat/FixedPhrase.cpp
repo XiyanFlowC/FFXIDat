@@ -135,7 +135,7 @@ void FixedPhrase::FromCsv(std::wstring path)
 		std::u8string firstCell = csv.NextCell();
 		// If the first cell looks like "Category_A" or contains letters, it's likely a header
 		bool isHeader = firstCell.find(u8"Category") != std::u8string::npos || 
-		                firstCell.find(u8"Text") != std::u8string::npos ||
+		                firstCell.find(u8"SingleLine") != std::u8string::npos ||
 		                !std::isdigit(static_cast<unsigned char>(firstCell[0]));
 		
 		if (isHeader) {
@@ -224,7 +224,7 @@ void FixedPhrase::ToCsv(std::wstring path)
 	csv.NewCell(u8"Category_B");
 	csv.NewCell(u8"Category_Index");
 	csv.NewCell(u8"Entry_Index");
-	csv.NewCell(u8"Text");
+	csv.NewCell(u8"SingleLine");
 	csv.NewCell(u8"Pronunciation");
 	csv.NewCell(u8"Type");
 	csv.NewCell(u8"Notes");

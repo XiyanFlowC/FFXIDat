@@ -4,7 +4,8 @@
 #include "Record.h"
 #include "Image.h"
 
-// 0/9 data ror 7, image raw
+// ROM/0/12 ROM/119/57 
+// data ror 7, image raw
 
 #pragma pack(push,1)
 union StatusSpecData

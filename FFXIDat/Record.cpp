@@ -10,6 +10,7 @@ void Row::ReadRow(Record *buffer, int limit)
 	for (int i = 0; i < buffer->cellCount; ++i)
 	{
 		ptrdiff_t offset = buffer->spec[i].offset;
+		if (offset >= limit || offset < 0) throw std::out_of_range("Record cell offset out of range.");
 		if (buffer->spec[i].type)
 		{
 			cells.push_back(Cell(*(int32_t*)(base + offset)));

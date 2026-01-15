@@ -33,6 +33,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{02EA681E-C
 		data\cp932.csv = data\cp932.csv
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决方案项", "{9FA3D6BD-1EC1-3BA5-80CB-CE02773A58D5}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE.txt = LICENSE.txt
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFXIDatEG", "FFXIDatEG\FFXIDatEG.vcxproj", "{C0BAA145-F1CF-492A-85C5-FCC0D7C2CC30}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -81,6 +89,14 @@ Global
 		{DFA16CB3-1F16-49BD-8314-34252B8880C5}.Release|x64.Build.0 = Release|x64
 		{DFA16CB3-1F16-49BD-8314-34252B8880C5}.Release|x86.ActiveCfg = Release|Win32
 		{DFA16CB3-1F16-49BD-8314-34252B8880C5}.Release|x86.Build.0 = Release|Win32
+		{C0BAA145-F1CF-492A-85C5-FCC0D7C2CC30}.Debug|x64.ActiveCfg = Debug|x64
+		{C0BAA145-F1CF-492A-85C5-FCC0D7C2CC30}.Debug|x64.Build.0 = Debug|x64
+		{C0BAA145-F1CF-492A-85C5-FCC0D7C2CC30}.Debug|x86.ActiveCfg = Debug|Win32
+		{C0BAA145-F1CF-492A-85C5-FCC0D7C2CC30}.Debug|x86.Build.0 = Debug|Win32
+		{C0BAA145-F1CF-492A-85C5-FCC0D7C2CC30}.Release|x64.ActiveCfg = Release|x64
+		{C0BAA145-F1CF-492A-85C5-FCC0D7C2CC30}.Release|x64.Build.0 = Release|x64
+		{C0BAA145-F1CF-492A-85C5-FCC0D7C2CC30}.Release|x86.ActiveCfg = Release|Win32
+		{C0BAA145-F1CF-492A-85C5-FCC0D7C2CC30}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,106 +1,97 @@
 # FFXIDat
 
-A tool to extract and rebuild DAT files used in FFXI. Or at least I hope this tool can do so in the future.
+A comprehensive toolset for extracting, editing, and rebuilding DAT files used in Final Fantasy XI.
 
-## Features
-- Ability to scan and export all known DAT files.
-	- Event String Data
-	- ```XISTRING``` files (system messages.)
-	- ```d_msg``` files (system messages, menu texts.)
-- Ability to rebuild xistring and d_msg files.
+## Overview
 
-### Future Work
-- Ability to extract/rebuild ```menu``` files. Item data is saved in these files, need analysis to extract them.
-- Find out where the battle info stores
-- Implement operation of font file (probably not)
-- extract/rebuild menu images to modify the UI? (someone might already done this, find some info before start...)
+This project provides tools to work with FFXI's game data files, including text strings, item data, status effects, menu textures, and more. It consists of multiple components:
 
-### Known DAT Formats
-Currently only pure text files can be processed.
+- **FFXIDat**: Core library for reading and writing DAT file formats
+- **FFXIDatProcessor**: Command-line tool for batch extraction and database management
+- **FFXITrans**: Translation injection tool for localization projects
+- **FFXIMenu**: GUI editor for menu textures and UI elements
+- **xybase**: Utility library for string conversion and data handling
 
-- [x] XISTRING file (magic header: ```XISTRING```)
-	- [x] Export
-	- [ ] String Control Sequence Parse
-	- [x] Import
-- [x] DMsg file (magic header: ```d_msg```)
-	- [x] Export
-	- [x] Import
-- [x] String Data for Events (per area, e.g. ROM/22/17.DAT)
-	- [x] Export
-	- [x] String Control Sequence Analysis (Done, I think?)
-		- [ ] Figure out tags' meaning.
-	- [x] Import
-- [ ] Menu Block File
-	- [ ] Texture Block
-		- [x] DXT1
-		- [ ] DXT2
-		- [x] DXT3
-		- [ ] DXT4
-		- [ ] DXT5
-		- [ ] Bitmap
-	- [ ] Menu Layout
-	- [x] Texture Clip and Tile
+## Supported File Formats
 
-#### DMsg file
-```DMsg.cpp``` ```DMsg.h```.
-```
-[Header][Index(Optional)][Row][Row][Row]...
-```
-```
-[Num of Cells][Cell1 Metadata][Cell2 Metadata]...[Cell1 Data][Cell2 Data]...
+### Text and String Data
+- **XISTRING** (magic: `XISTRING`) - System messages
+	- Basic string handling is done but the format of entity insertion is not documented yet
+- **DMsg** (magic: `d_msg`) - System messages and menu text
+- **Event Strings** - Per-area dialogue and event text (e.g., ROM/22/17.DAT)
+	- Basic string handling is done, the control sequences are not fully documented yet
+- **Fixed Phrase** - Auto-translate dictionary entries
+
+### Game Data
+- **Item Data** - Equipment, weapons, usables, currency, etc.
+- **Status Data** - Status effects and buffs
+- **Records of Eminence** - Quest and category data
+- **Monster Bridge** - Monster name data
+
+### Menu and UI
+- **Block Files** (magic: `menu`) - Menu layouts and textures
+  - Image blocks (DXT1, DXT3 texture compression)
+  - Image set blocks (texture clipping and tiling)
+  - Menu layout blocks
+
+## Quick Start
+
+### Extraction
+
+Extract all known text files from game directory:
+```bash
+FFXIDatProcessor.exe --scan-extract
 ```
 
-#### XISTRING
-```cpp
-struct XiStringHeader {
-	char magicHeader[8];
-	int32_t version; // always 0x20000
-	int32_t zero[5]; // always 0
-	int32_t fileSize;
-	int32_t entriesCount;
-	int32_t indicesSize;
-	int32_t dataSize;
-	int32_t reserved; // always 0
-	int32_t id; // seems an id ? Xistring files have same perpose have the same id
-};
-
-struct XiStringIndex {
-	int32_t offset;
-	uint16_t size;
-	uint16_t flag1;
-	uint16_t flag2;
-	uint16_t flag3;
-};
+Extract specific file types:
+```bash
+FFXIDatProcessor.exe --dmsg-to-csv path/to/file.DAT
+FFXIDatProcessor.exe --xis-to-csv path/to/file.DAT
 ```
-File structure is:
+
+### Editing
+
+Most files can be converted to CSV for editing, then converted back:
+```bash
+# Edit the CSV file with your changes
+FFXIDatProcessor.exe --csv-to-dmsg edited_file.csv
 ```
-Header
-Index
-Strings
+
+### Translation Workflow
+
+FFXITrans provides automated translation injection:
+```bash
+# Interactive mode
+FFXITrans.exe
+
+# In-place modification
+FFXITrans.exe insitu
 ```
-Index comes with the header. The ```offset``` is relative to the beginning of ```Strings``` block.
 
-#### Events Strings
-```
-int24 fileSize
-int8  flag
-int32 offsets[N]
-```
-* ```flag``` is always 0x10, the purpose of which is unclear
-* ```offsets``` indicates the byte offset of the corresponding string relative to the starting point of ```offsets```.
-* All bytes are xor-ed with 0x80, except for ```fileSize``` and ```flag```.
+## Building
 
-#### Menu
-Starts with a "menu" in ASCII.
+Requires:
+- Visual Studio 2019 or later
+- C++20 support
+- SQLite 3.48.0
 
-Related codes in `BlockFile.h` and `BlockFile.cpp`. Not very clear how it works. `ImageBlock` contains textures. `ImageSetBlock` contains multiple image's clip and paste instruction, to form a picture.
+Open `FFXIDat.sln` and build the solution.
 
-You can also view the imageblocks' results in AltanaViewer, using TexHammar to view the textures themselves.
+## Documentation
 
-In the `FFXIMenu` a viewer/editor is implemented for the block files is building. Currently can handle only the UI and Lobby stuffs. (ROM/91/14, 91/15, 91/16, 0/1, etc.)
+- [File Format Specifications](docs/FILE_FORMATS.md)
+- [Tool Usage Guide](docs/TOOLS.md)
 
-## Note
-Square extended the SJIS to represent characters in FR and DE. Further research required.
+## Notes
+
+- FFXI uses extended Shift-JIS encoding to represent French and German characters
+- Some file formats are partially documented
+- Always backup original files before modification
 
 ## Dependencies
+
 - SQLite 3.48.0
+
+## License
+
+See LICENSE.txt for details.

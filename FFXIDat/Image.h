@@ -51,6 +51,55 @@ struct RGBA
 class Image
 {
 public:
+	Image()
+		: type(ImageType::IT_BITMAP)
+		, texture(nullptr)
+		, header(0)
+		, dxtHeader(0) {}
+
+	Image(const Image& other)
+	{
+		this->type = other.type;
+		this->header = other.header;
+		this->dxtHeader = other.dxtHeader;
+		if (other.texture)
+		{
+			size_t textureSize = 0;
+			if (this->type != ImageType::IT_BITMAP)
+			{
+				textureSize = other.dxtHeader.textureSize;
+			}
+			else
+			{
+				if (header.bitCount == 8)
+				{
+					textureSize = 256 * 4 + header.width * header.height;
+				}
+				else if (header.bitCount == 16)
+				{
+					textureSize = header.width * header.height * 2;
+				}
+				else if (header.bitCount == 24)
+				{
+					textureSize = header.width * header.height * 3;
+				}
+				else if (header.bitCount == 32)
+				{
+					textureSize = header.width * header.height * 4;
+				}
+				else
+				{
+					throw std::invalid_argument("unknown bitCount");
+				}
+			}
+			texture.reset(new char[textureSize]);
+			std::memcpy(texture.get(), other.texture.get(), textureSize);
+		}
+		else
+		{
+			texture.reset();
+		}
+	}
 
 	enum class ImageType {
 		IT_BITMAP,

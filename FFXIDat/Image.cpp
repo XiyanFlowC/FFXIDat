@@ -7,6 +7,7 @@
 #include <cassert>
 #include <d3d10.h>
 
+
 int Image::GetWidth() const
 {
 	return header.width;
@@ -244,9 +245,9 @@ std::unique_ptr<char[]> Image::GetDds() const
 #pragma pack(push,1)
 // RGB565位掩码结构
 struct RGB565_MASKS {
-    uint32_t redMask;   // 0xF800
-    uint32_t greenMask; // 0x07E0
-    uint32_t blueMask;  // 0x001F
+	uint32_t redMask;   // 0xF800
+	uint32_t greenMask; // 0x07E0
+	uint32_t blueMask;  // 0x001F
 };
 //
 //struct BITMAPFILEHEADER {
@@ -322,7 +323,7 @@ std::unique_ptr<char[]> Image::GetBitmap() const
 	// 信息头设置
 	infoHeader.biSize = sizeof(BITMAPINFOHEADER);
 	infoHeader.biWidth = header.width;
-	infoHeader.biHeight = -static_cast<int32_t>(header.height); // 负值表示从上到下
+	infoHeader.biHeight = header.height; //-static_cast<int32_t>(header.height); // 负值表示从上到下
 	infoHeader.biPlanes = 1;
 	infoHeader.biBitCount = header.bitCount;
 	
