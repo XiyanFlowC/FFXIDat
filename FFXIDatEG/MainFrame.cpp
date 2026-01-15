@@ -1,5 +1,7 @@
 #include "MainFrame.h"
 #include "FFXIDatEGApp.h"
+#include "Localization.h"
+#include "Config.h"
 #include <windowsx.h>
 #include <shobjidl.h>
 #include <commdlg.h>
@@ -8,6 +10,9 @@
 
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "comdlg32.lib")
+
+// Helper macro to convert localized string to LPCWSTR
+#define LOCS(key) LOC(key).c_str()
 
 MainFrame::MainFrame()
 {
@@ -131,49 +136,67 @@ LRESULT CALLBACK MainFrame::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 
 void MainFrame::OnCreate()
 {
+	// Initialize UI language from config
+	m_uiLanguage = FFXIDatEGApp::Instance().GetConfig().GetUILanguage();
+	
+	// Get exe path and set local directory
+	wchar_t exePath[MAX_PATH];
+	GetModuleFileNameW(nullptr, exePath, MAX_PATH);
+	std::filesystem::path exeDir = std::filesystem::path(exePath).parent_path();
+	m_localDir = exeDir / L"local";
+	
+	// Scan available UI languages
+	Localization& loc = Localization::Instance();
+	m_availableUILanguages = loc.ScanAvailableLanguages(m_localDir);
+	
 	// Create menu bar
 	m_hMenu = CreateMenu();
 
 	// File menu
 	HMENU hFileMenu = CreateMenu();
-	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_CHANGEPATH, L"&Change Game Path...");
-	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_RESETPATH, L"&Reset Game Path from Registry");
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_CHANGEPATH, LOCS(L"menu_file_changepath"));
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_RESETPATH, LOCS(L"menu_file_resetpath"));
 	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
-	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_EXIT, L"E&xit");
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_EXIT, LOCS(L"menu_file_exit"));
 
 	// Edit menu
 	HMENU hEditMenu = CreateMenu();
-	AppendMenuW(hEditMenu, MF_STRING, IDM_EDIT_FIND, L"&Find...\tCtrl+F");
-	AppendMenuW(hEditMenu, MF_STRING, IDM_EDIT_FINDNEXT, L"Find &Next\tF3");
+	AppendMenuW(hEditMenu, MF_STRING, IDM_EDIT_FIND, LOCS(L"menu_edit_find"));
+	AppendMenuW(hEditMenu, MF_STRING, IDM_EDIT_FINDNEXT, LOCS(L"menu_edit_findnext"));
 
 	// View menu - with Language Filter submenu
 	HMENU hViewMenu = CreateMenu();
-	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_FONT, L"&Font...");
+	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_FONT, LOCS(L"menu_view_font"));
 	AppendMenuW(hViewMenu, MF_SEPARATOR, 0, nullptr);
 
 	// Language Filter submenu
 	m_hLanguageFilterMenu = CreateMenu();
-	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_ALL, L"&All Languages");
+	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_ALL, LOCS(L"menu_view_filter_all"));
 	AppendMenuW(m_hLanguageFilterMenu, MF_SEPARATOR, 0, nullptr);
-	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_JP, L"&Japanese (jp)");
-	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_EN, L"&English (en)");
-	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_FR, L"&French (fr)");
-	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_DE, L"&German (de)");
+	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_JP, LOCS(L"menu_view_filter_jp"));
+	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_EN, LOCS(L"menu_view_filter_en"));
+	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_FR, LOCS(L"menu_view_filter_fr"));
+	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_DE, LOCS(L"menu_view_filter_de"));
 
 	// Set default checked item (All Languages)
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_ALL, MF_CHECKED);
 
-	AppendMenuW(hViewMenu, MF_POPUP, (UINT_PTR)m_hLanguageFilterMenu, L"&Language Filter");
+	AppendMenuW(hViewMenu, MF_POPUP, (UINT_PTR)m_hLanguageFilterMenu, LOCS(L"menu_view_langfilter"));
+
+	// UI Language submenu - Build dynamically
+	m_hUILanguageMenu = CreateMenu();
+	BuildUILanguageMenu(m_hUILanguageMenu);
+	AppendMenuW(hViewMenu, MF_POPUP, (UINT_PTR)m_hUILanguageMenu, LOCS(L"menu_view_uilang"));
 
 	// Help menu
 	HMENU hHelpMenu = CreateMenu();
-	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_ABOUT, L"&About");
+	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_ABOUT, LOCS(L"menu_help_about"));
 
 	// Add to menu bar
-	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hFileMenu, L"&File");
-	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hEditMenu, L"&Edit");
-	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hViewMenu, L"&View");
-	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hHelpMenu, L"&Help");
+	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hFileMenu, LOCS(L"menu_file"));
+	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hEditMenu, LOCS(L"menu_edit"));
+	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hViewMenu, LOCS(L"menu_view"));
+	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hHelpMenu, LOCS(L"menu_help"));
 
 	SetMenu(m_hwnd, m_hMenu);
 
@@ -207,7 +230,7 @@ void MainFrame::OnCreate()
 		nullptr
 	);
 
-	SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(L"Ready"));
+	SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"Status.Ready").c_str()));
 
 	// Initialize file manager
 	m_fileManager = std::make_unique<DatFileManager>(
@@ -257,7 +280,8 @@ void MainFrame::OnTreeItemActivated(HTREEITEM hItem)
 	if (!info)
 		return;
 	
-	std::wstring statusText = L"Loading ";
+	std::wstring statusText = LOC(L"Status.Loading");
+	statusText += L" ";
 	std::string nameUtf8 = info->friendlyName;
 	auto name = xybase::string::to_wstring((char8_t *) nameUtf8.c_str());
 	statusText += name;
@@ -266,14 +290,15 @@ void MainFrame::OnTreeItemActivated(HTREEITEM hItem)
 	
 	if (m_fileManager->LoadDatFile(*info, m_contentView.get()))
 	{
-		statusText = L"Loaded: ";
+		statusText = LOC(L"Status.Loaded");
+		statusText += L": ";
 		statusText += name;
-		statusText += L" (" + std::to_wstring(info->fileId) + L")";
+		statusText += L" (" + m_fileManager->GetDatFilePath(info->fileId, info->romFolder).wstring() + L")";
 		SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
 	}
 	else
 	{
-		SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(L"Failed to load file"));
+		SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"Status.LoadFailed").c_str()));
 	}
 }
 
@@ -338,6 +363,18 @@ void MainFrame::OnCommand(WPARAM wParam)
 	case IDM_HELP_ABOUT:
 		OnAbout();
 		break;
+	default:
+		// Handle dynamic UI language menu items
+		if (LOWORD(wParam) >= IDM_VIEW_UILANG_BASE && 
+			LOWORD(wParam) < IDM_VIEW_UILANG_BASE + 100)
+		{
+			size_t langIndex = LOWORD(wParam) - IDM_VIEW_UILANG_BASE;
+			if (langIndex < m_availableUILanguages.size())
+			{
+				OnChangeUILanguage(m_availableUILanguages[langIndex].code);
+			}
+		}
+		break;
 	}
 }
 
@@ -362,7 +399,7 @@ void MainFrame::OnChangeGamePath()
 			pFileDialog->SetOptions(dwOptions | FOS_PICKFOLDERS | FOS_PATHMUSTEXIST);
 		}
 		
-		pFileDialog->SetTitle(L"Select FFXI Installation Directory");
+		pFileDialog->SetTitle(LOCS(L"select_ffxi_dir"));
 		
 		// Show the dialog
 		hr = pFileDialog->Show(m_hwnd);
@@ -382,8 +419,8 @@ void MainFrame::OnChangeGamePath()
 					if (!std::filesystem::exists(selectedPath / "ROM"))
 					{
 						MessageBoxW(m_hwnd,
-								   L"Invalid FFXI installation directory. ROM folder not found.",
-								   L"Error", MB_OK | MB_ICONERROR);
+								   LOCS(L"invalid_ffxi_dir_msg"),
+								   LOCS(L"error_msg_title"), MB_OK | MB_ICONERROR);
 						CoTaskMemFree(pszPath);
 						pItem->Release();
 						pFileDialog->Release();
@@ -401,7 +438,7 @@ void MainFrame::OnChangeGamePath()
 					LoadROMDefinitions();
 					
 					SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, 
-								reinterpret_cast<LPARAM>(L"Game path changed successfully"));
+							reinterpret_cast<LPARAM>(LOC(L"Status.GamePathChanged").c_str()));
 					
 					CoTaskMemFree(pszPath);
 				}
@@ -489,13 +526,16 @@ void MainFrame::OnFindNext()
 	
 	if (!found)
 	{
-		std::wstring msg = L"Cannot find \"" + searchText + L"\"";
-		MessageBoxW(m_hwnd, msg.c_str(), L"Find", MB_OK | MB_ICONINFORMATION);
+		std::wstring msg = LOC(L"Status.TextNotFound");
+		msg += L": \"" + searchText + L"\"";
+		MessageBoxW(m_hwnd, msg.c_str(), LOC(L"Search.Dialog.Title").c_str(), MB_OK | MB_ICONINFORMATION);
 	}
 	else
 	{
+		std::wstring statusMsg = LOC(L"Status.Found");
+		statusMsg += L": \"" + searchText + L"\"";
 		SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, 
-					reinterpret_cast<LPARAM>(L"SingleLine found"));
+					reinterpret_cast<LPARAM>(statusMsg.c_str()));
 	}
 }
 void MainFrame::OnResetGamePath()
@@ -548,9 +588,8 @@ void MainFrame::OnResetGamePath()
 	if (!found)
 	{
 		MessageBoxW(m_hwnd,
-			L"Could not find FFXI installation path in Windows Registry.\n"
-			L"Please install FFXI or use 'Change Game Path' to select the directory manually.",
-			L"Registry Error", MB_OK | MB_ICONERROR);
+			LOCS(L"registry_ffxi_path_not_found"),
+			LOCS(L"registry_error_title"), MB_OK | MB_ICONERROR);
 		return;
 	}
 
@@ -573,7 +612,8 @@ void MainFrame::OnResetGamePath()
 	m_contentView->Clear();
 	LoadROMDefinitions();
 
-	std::wstring statusText = L"Game path reset to: " + newPath.wstring();
+	std::wstring statusText = LOC(L"Status.GamePathReset");
+	statusText += L": " + newPath.wstring();
 	SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
 }
 
@@ -609,4 +649,141 @@ void MainFrame::OnFilterLanguage(const std::string& language)
 		statusText = L"Showing only " + std::wstring(language.begin(), language.end()) + L" files";
 	}
 	SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
+}
+
+void MainFrame::BuildUILanguageMenu(HMENU parentMenu)
+{
+	// Clear existing menu items
+	while (GetMenuItemCount(parentMenu) > 0)
+	{
+		RemoveMenu(parentMenu, 0, MF_BYPOSITION);
+	}
+
+	// Add menu items for each available language
+	for (size_t i = 0; i < m_availableUILanguages.size(); ++i)
+	{
+		const LanguageInfo& langInfo = m_availableUILanguages[i];
+		
+		// Create menu text (e.g., "English" or "ÖÐÎÄ")
+		std::wstring menuText = langInfo.name;
+		
+		// Add menu item with dynamic ID
+		UINT menuId = IDM_VIEW_UILANG_BASE + static_cast<UINT>(i);
+		AppendMenuW(parentMenu, MF_STRING, menuId, menuText.c_str());
+		
+		// Check if this is the current language
+		if (langInfo.code == m_uiLanguage)
+		{
+			CheckMenuItem(parentMenu, menuId, MF_CHECKED);
+		}
+	}
+	
+	// If no languages found, add a placeholder
+	if (m_availableUILanguages.empty())
+	{
+		AppendMenuW(parentMenu, MF_STRING | MF_GRAYED, 0, L"(No languages available)");
+	}
+}
+
+void MainFrame::OnChangeUILanguage(const std::wstring& language)
+{
+	// Update UI language
+	m_uiLanguage = language;
+	
+	// Save to config
+	FFXIDatEGApp::Instance().GetConfig().SetUILanguage(language);
+	
+	// Load localization strings from local directory
+	Localization& loc = Localization::Instance();
+	if (!loc.LoadLanguage(language, m_localDir))
+	{
+		// Fallback to English if loading fails
+		loc.LoadLanguage(L"en", m_localDir);
+		m_uiLanguage = L"en";
+	}
+	
+	// Refresh all UI text
+	RefreshUIText();
+	
+	// Update status bar
+	std::wstring statusText = LOC(L"ui_language_changed");
+	SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
+}
+
+void MainFrame::RefreshUIText()
+{
+	// Rebuild menu with localized text
+	if (m_hMenu)
+	{
+		DestroyMenu(m_hMenu);
+		m_hMenu = nullptr;
+	}
+	
+	// Create menu bar
+	m_hMenu = CreateMenu();
+
+	// File menu
+	HMENU hFileMenu = CreateMenu();
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_CHANGEPATH, LOCS(L"menu_file_changepath"));
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_RESETPATH, LOCS(L"menu_file_resetpath"));
+	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_EXIT, LOCS(L"menu_file_exit"));
+
+	// Edit menu
+	HMENU hEditMenu = CreateMenu();
+	AppendMenuW(hEditMenu, MF_STRING, IDM_EDIT_FIND, LOCS(L"menu_edit_find"));
+	AppendMenuW(hEditMenu, MF_STRING, IDM_EDIT_FINDNEXT, LOCS(L"menu_edit_findnext"));
+
+	// View menu
+	HMENU hViewMenu = CreateMenu();
+	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_FONT, LOCS(L"menu_view_font"));
+	AppendMenuW(hViewMenu, MF_SEPARATOR, 0, nullptr);
+
+	// Language Filter submenu
+	m_hLanguageFilterMenu = CreateMenu();
+	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_ALL, LOCS(L"menu_view_filter_all"));
+	AppendMenuW(m_hLanguageFilterMenu, MF_SEPARATOR, 0, nullptr);
+	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_JP, LOCS(L"menu_view_filter_jp"));
+	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_EN, LOCS(L"menu_view_filter_en"));
+	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_FR, LOCS(L"menu_view_filter_fr"));
+	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_DE, LOCS(L"menu_view_filter_de"));
+
+	// Restore language filter checkmarks
+	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_ALL,
+		m_languageFilter.empty() ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_JP,
+		m_languageFilter == "jp" ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_EN,
+		m_languageFilter == "en" ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_FR,
+		m_languageFilter == "fr" ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_DE,
+		m_languageFilter == "de" ? MF_CHECKED : MF_UNCHECKED);
+
+	AppendMenuW(hViewMenu, MF_POPUP, (UINT_PTR)m_hLanguageFilterMenu, LOCS(L"menu_view_langfilter"));
+
+	// UI Language submenu - Rebuild dynamically
+	m_hUILanguageMenu = CreateMenu();
+	BuildUILanguageMenu(m_hUILanguageMenu);
+	AppendMenuW(hViewMenu, MF_POPUP, (UINT_PTR)m_hUILanguageMenu, LOCS(L"menu_view_uilang"));
+
+	// Help menu
+	HMENU hHelpMenu = CreateMenu();
+	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_ABOUT, LOCS(L"menu_help_about"));
+
+	// Add to menu bar
+	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hFileMenu, LOCS(L"menu_file"));
+	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hEditMenu, LOCS(L"menu_edit"));
+	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hViewMenu, LOCS(L"menu_view"));
+	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hHelpMenu, LOCS(L"menu_help"));
+
+	SetMenu(m_hwnd, m_hMenu);
+    
+    // Refresh search dialog text (regardless of visibility)
+    if (m_searchDialog)
+    {
+        m_searchDialog->RefreshUIText();
+    }
+    
+    DrawMenuBar(m_hwnd);
 }

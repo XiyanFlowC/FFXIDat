@@ -1,4 +1,5 @@
 #include "SearchDialog.h"
+#include "Localization.h"
 #include <CommCtrl.h>
 
 SearchDialog::SearchDialog()
@@ -49,11 +50,14 @@ bool SearchDialog::Create(HWND hParent)
     int x = rcParent.left + (rcParent.right - rcParent.left - 400) / 2;
     int y = rcParent.top + (rcParent.bottom - rcParent.top - 180) / 2;
     
+    // Get localized window title
+    std::wstring title = LOC(L"Search.Dialog.Title");
+    
     // Create modeless dialog window (initially hidden)
     m_hwnd = CreateWindowExW(
         WS_EX_DLGMODALFRAME,
         L"FFXIDatEGSearchDialog",
-        L"Find",
+        title.c_str(),
         WS_POPUP | WS_CAPTION | WS_SYSMENU,
         x, y,
         400, 180,
@@ -76,9 +80,9 @@ void SearchDialog::OnInitDialog()
     // Create controls
     HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
     
-    // Label
+    // Label - use localized text
     HWND hLabel = CreateWindowExW(
-        0, L"STATIC", L"Find what:",
+        0, L"STATIC", LOC(L"Search.Dialog.FindWhat").c_str(),
         WS_CHILD | WS_VISIBLE,
         10, 15, 80, 20,
         m_hwnd, nullptr, GetModuleHandle(nullptr), nullptr
@@ -94,27 +98,27 @@ void SearchDialog::OnInitDialog()
     );
     SendMessage(m_hEditSearch, WM_SETFONT, (WPARAM)hFont, TRUE);
     
-    // Case sensitive checkbox
+    // Case sensitive checkbox - use localized text
     m_hCheckCase = CreateWindowExW(
-        0, L"BUTTON", L"Match case",
+        0, L"BUTTON", LOC(L"Search.Dialog.MatchCase").c_str(),
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_AUTOCHECKBOX,
         10, 50, 150, 20,
         m_hwnd, (HMENU)(INT_PTR)IDC_CHECK_CASE, GetModuleHandle(nullptr), nullptr
     );
     SendMessage(m_hCheckCase, WM_SETFONT, (WPARAM)hFont, TRUE);
     
-    // Direction group
+    // Direction group - use localized text
     HWND hGroupBox = CreateWindowExW(
-        0, L"BUTTON", L"Direction",
+        0, L"BUTTON", LOC(L"Search.Dialog.Direction").c_str(),
         WS_CHILD | WS_VISIBLE | BS_GROUPBOX,
         10, 80, 150, 60,
         m_hwnd, nullptr, GetModuleHandle(nullptr), nullptr
     );
     SendMessage(hGroupBox, WM_SETFONT, (WPARAM)hFont, TRUE);
     
-    // Radio buttons
+    // Radio buttons - use localized text
     m_hRadioUp = CreateWindowExW(
-        0, L"BUTTON", L"Up",
+        0, L"BUTTON", LOC(L"Search.Dialog.DirectionUp").c_str(),
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_AUTORADIOBUTTON,
         20, 100, 60, 20,
         m_hwnd, (HMENU)(INT_PTR)IDC_RADIO_UP, GetModuleHandle(nullptr), nullptr
@@ -122,7 +126,7 @@ void SearchDialog::OnInitDialog()
     SendMessage(m_hRadioUp, WM_SETFONT, (WPARAM)hFont, TRUE);
     
     m_hRadioDown = CreateWindowExW(
-        0, L"BUTTON", L"Down",
+        0, L"BUTTON", LOC(L"Search.Dialog.DirectionDown").c_str(),
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_AUTORADIOBUTTON,
         90, 100, 60, 20,
         m_hwnd, (HMENU)(INT_PTR)IDC_RADIO_DOWN, GetModuleHandle(nullptr), nullptr
@@ -132,9 +136,9 @@ void SearchDialog::OnInitDialog()
     // Set down as default
     SendMessage(m_hRadioDown, BM_SETCHECK, BST_CHECKED, 0);
     
-    // Buttons
+    // Buttons - use localized text
     HWND hBtnFindNext = CreateWindowExW(
-        0, L"BUTTON", L"Find Next",
+        0, L"BUTTON", LOC(L"Search.Dialog.ButtonFindNext").c_str(),
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_DEFPUSHBUTTON,
         200, 80, 90, 25,
         m_hwnd, (HMENU)(INT_PTR)IDC_BTN_FINDNEXT, GetModuleHandle(nullptr), nullptr
@@ -142,7 +146,7 @@ void SearchDialog::OnInitDialog()
     SendMessage(hBtnFindNext, WM_SETFONT, (WPARAM)hFont, TRUE);
     
     HWND hBtnClose = CreateWindowExW(
-        0, L"BUTTON", L"Close",
+        0, L"BUTTON", LOC(L"Search.Dialog.ButtonClose").c_str(),
         WS_CHILD | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON,
         295, 80, 90, 25,
         m_hwnd, (HMENU)(INT_PTR)IDC_BTN_CLOSE, GetModuleHandle(nullptr), nullptr
@@ -217,6 +221,60 @@ void SearchDialog::OnFindNext()
 void SearchDialog::OnClose()
 {
     Hide();
+}
+
+void SearchDialog::RefreshUIText()
+{
+    if (!m_hwnd)
+        return;
+    
+    // Update window title
+    SetWindowTextW(m_hwnd, LOC(L"Search.Dialog.Title").c_str());
+
+    // Update group box and label by enumerating child windows
+    EnumChildWindows(m_hwnd, [](HWND hwnd, LPARAM lParam) -> BOOL {
+        wchar_t className[256];
+        GetClassNameW(hwnd, className, 256);
+
+        if (wcscmp(className, L"Button") == 0)
+        {
+            LONG style = GetWindowLong(hwnd, GWL_STYLE);
+            if (style & BS_GROUPBOX)
+            {
+                SetWindowTextW(hwnd, LOC(L"Search.Dialog.Direction").c_str());
+            }
+        }
+        else if (wcscmp(className, L"Static") == 0)
+        {
+            SetWindowTextW(hwnd, LOC(L"Search.Dialog.FindWhat").c_str());
+        }
+
+        return TRUE;
+        }, 0);
+    
+    // Update controls text
+    HWND hLabel = GetDlgItem(m_hwnd, -1);  // Labels don't have IDs, need to find by order
+    // For simplicity, recreate controls or store handles
+    
+    // Update checkbox text
+    if (m_hCheckCase)
+        SetWindowTextW(m_hCheckCase, LOC(L"Search.Dialog.MatchCase").c_str());
+    
+    // Update radio buttons
+    if (m_hRadioUp)
+        SetWindowTextW(m_hRadioUp, LOC(L"Search.Dialog.DirectionUp").c_str());
+    
+    if (m_hRadioDown)
+        SetWindowTextW(m_hRadioDown, LOC(L"Search.Dialog.DirectionDown").c_str());
+    
+    // Find and update buttons
+    HWND hBtnFindNext = GetDlgItem(m_hwnd, IDC_BTN_FINDNEXT);
+    if (hBtnFindNext)
+        SetWindowTextW(hBtnFindNext, LOC(L"Search.Dialog.ButtonFindNext").c_str());
+    
+    HWND hBtnClose = GetDlgItem(m_hwnd, IDC_BTN_CLOSE);
+    if (hBtnClose)
+        SetWindowTextW(hBtnClose, LOC(L"Search.Dialog.ButtonClose").c_str());
 }
 
 LRESULT CALLBACK SearchDialog::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)

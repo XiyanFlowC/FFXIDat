@@ -5,9 +5,12 @@
 #include <CommCtrl.h>
 #include <memory>
 #include <string>
+#include <vector>
+#include <filesystem>
 #include "DatFileManager.h"
 #include "ContentView.h"
 #include "SearchDialog.h"
+#include "Localization.h"  // Include for LanguageInfo
 
 class MainFrame
 {
@@ -30,6 +33,9 @@ private:
     void OnChangeGamePath();
     void OnResetGamePath();
     void OnFilterLanguage(const std::string& language);
+    void OnChangeUILanguage(const std::wstring& language);
+    void RefreshUIText();
+    void BuildUILanguageMenu(HMENU parentMenu);  // Build dynamic UI language menu
     void OnSelectFont();
     void OnAbout();
     void OnFind();
@@ -40,12 +46,16 @@ private:
     HWND m_hStatusBar = nullptr;
     HMENU m_hMenu = nullptr;
     HMENU m_hLanguageFilterMenu = nullptr;
+    HMENU m_hUILanguageMenu = nullptr;
     
     std::unique_ptr<ContentView> m_contentView;
     std::unique_ptr<DatFileManager> m_fileManager;
     std::unique_ptr<SearchDialog> m_searchDialog;
     
     std::string m_languageFilter = "";  // Empty string means show all languages
+    std::wstring m_uiLanguage = L"en";  // Current UI language
+    std::vector<LanguageInfo> m_availableUILanguages;  // Available UI languages
+    std::filesystem::path m_localDir;  // Path to local directory
     
     static constexpr int IDC_TREEVIEW = 1001;
     static constexpr int IDC_CONTENTVIEW = 1002;
@@ -63,5 +73,6 @@ private:
     static constexpr int IDM_VIEW_FILTER_FR = 2153;
     static constexpr int IDM_VIEW_FILTER_DE = 2154;
     static constexpr int IDM_VIEW_FILTER_ALL = 2155;
+    static constexpr int IDM_VIEW_UILANG_BASE = 2160;  // Base ID for dynamic UI language menu items
     static constexpr int IDM_HELP_ABOUT = 2201;
 };

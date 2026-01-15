@@ -133,15 +133,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="config.ini" />
     <None Include="LICENSE" />
+    <None Include="local\en.ini" />
+    <None Include="local\zh.ini" />
     <None Include="ROM.csv" />
+    <None Include="strings_en.ini" />
+    <None Include="strings_zh.ini" />
+    <None Include="实现总结.md" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FFXIDatProcessor\codepage.h" />
     <ClInclude Include="..\FFXITrans\ChsToSJis.h" />
+    <ClInclude Include="Config.h" />
     <ClInclude Include="ContentView.h" />
     <ClInclude Include="DatFileManager.h" />
     <ClInclude Include="FFXIDatEGApp.h" />
+    <ClInclude Include="Localization.h" />
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="SearchDialog.h" />
     <ClInclude Include="StringValidator.h" />
@@ -149,12 +157,17 @@
   <ItemGroup>
     <ClCompile Include="..\FFXIDatProcessor\codepage.cpp" />
     <ClCompile Include="..\FFXITrans\ChsToSJis.cpp" />
+    <ClCompile Include="Config.cpp" />
     <ClCompile Include="ContentView.cpp" />
     <ClCompile Include="DatFileManager.cpp" />
     <ClCompile Include="FFXIDatEGApp.cpp" />
+    <ClCompile Include="Localization.cpp" />
     <ClCompile Include="MainFrame.cpp" />
     <ClCompile Include="SearchDialog.cpp" />
     <ClCompile Include="StringValidator.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ExampleUsage.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

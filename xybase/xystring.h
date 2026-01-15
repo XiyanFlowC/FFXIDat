@@ -528,6 +528,9 @@ namespace xybase
 					case 'n':
 						result += static_cast<Ch>('\n');
 						break;
+					case 't':
+						result += static_cast<Ch>('\t');
+						break;
 					case 'x':
 					{
 						std::basic_string_view<Ch> hexStr(&it[1], std::min<size_t>(2, std::distance(it + 1, str.end())));

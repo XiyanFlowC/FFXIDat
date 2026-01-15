@@ -1,6 +1,8 @@
 #include "FFXIDatEGApp.h"
 #include "MainFrame.h"
 #include "StringValidator.h"
+#include "Config.h"
+#include "Localization.h"
 #include "../FFXIDatProcessor/codepage.h"
 #include <shlobj.h>
 #include <fstream>
@@ -54,6 +56,28 @@ bool FFXIDatEGApp::Initialize(HINSTANCE hInstance)
     
     LoadConfig();
     
+    // Load UI language from config and initialize localization
+    std::wstring uiLang = Config::Instance().GetUILanguage();
+    Localization& loc = Localization::Instance();
+    
+    // Set local directory path
+    std::filesystem::path localDir = exeDir / L"local";
+    
+    // Load localization file from local directory
+    if (!loc.LoadLanguage(uiLang, localDir))
+    {
+        // Fallback to English if the configured language fails to load
+        if (!loc.LoadLanguage(L"en", localDir))
+        {
+            // If even English fails, log a warning but continue
+            MessageBoxW(nullptr, 
+                L"Warning: Could not load localization files from 'local' directory.\n"
+                L"UI will display keys instead of localized text.",
+                L"Localization Warning", 
+                MB_OK | MB_ICONWARNING);
+        }
+    }
+    
     // Try to get game path
     if (!InitializeGamePath())
     {
@@ -103,46 +127,32 @@ bool FFXIDatEGApp::LoadConfig()
     if (!std::filesystem::exists(m_configPath))
         return false;
     
-    std::ifstream file(m_configPath);
-    if (!file.is_open())
-        return false;
-    
-    std::string line;
-    while (std::getline(file, line))
-    {
-        size_t pos = line.find('=');
-        if (pos != std::string::npos)
-        {
-            std::string key = line.substr(0, pos);
-            std::string value = line.substr(pos + 1);
-            
-            if (key == "GamePath")
-            {
-                m_gamePath = std::filesystem::path(
-                    std::wstring(value.begin(), value.end()));
-            }
-        }
-    }
-    
-    return true;
+    // Use Config class instead of manual parsing
+    return Config::Instance().Load(m_configPath);
 }
 
 void FFXIDatEGApp::SaveConfig()
 {
-    std::ofstream file(m_configPath);
-    if (!file.is_open())
-        return;
-    
-    std::wstring pathStr = m_gamePath.wstring();
-    std::string pathUtf8(pathStr.begin(), pathStr.end());
-    file << "GamePath=" << pathUtf8 << std::endl;
+    Config::Instance().Save(m_configPath);
+}
+
+Config& FFXIDatEGApp::GetConfig()
+{
+    return Config::Instance();
 }
 
 bool FFXIDatEGApp::InitializeGamePath()
 {
-    // Check if loaded path is valid
-    if (!m_gamePath.empty() && std::filesystem::exists(m_gamePath / "ROM"))
-        return true;
+    // Check if loaded path from config is valid
+    Config& cfg = Config::Instance();
+    std::wstring savedPath = cfg.GetString(L"General", L"GamePath");
+    
+    if (!savedPath.empty())
+    {
+        m_gamePath = std::filesystem::path(savedPath);
+        if (std::filesystem::exists(m_gamePath / "ROM"))
+            return true;
+    }
     
     // Try to read from registry
     HKEY hKey;
@@ -221,6 +231,7 @@ bool FFXIDatEGApp::PromptForGamePath(HWND hParent)
 void FFXIDatEGApp::SetGamePath(const std::filesystem::path& path)
 {
     m_gamePath = path;
+    Config::Instance().SetString(L"General", L"GamePath", path.wstring());
     SaveConfig();
 }
 

@@ -101,6 +101,19 @@ public:
 		}
 	}
 
+	Image (Image&& other) noexcept
+	{
+		this->type = other.type;
+		this->header = other.header;
+		this->dxtHeader = other.dxtHeader;
+		this->texture = std::move(other.texture);
+	}
+
+	~Image() = default;
+
+	Image& operator=(const Image& other) = default;
+	Image& operator=(Image&& other) = default;
+
 	enum class ImageType {
 		IT_BITMAP,
 		IT_DXT1,

@@ -127,6 +127,9 @@ public:
 	// Font management
 	void SetFontName(const std::wstring& fontName);
 	const std::wstring& GetFontName() const { return m_fontName; }
+	void SetFontSize(int fontSize);
+	int GetFontSize() const { return m_fontSize; }
+	void SetFont(const std::wstring& fontName, int fontSize);
 	
 	// Search functionality
 	bool SearchText(const std::wstring& searchText, bool caseSensitive, bool searchDown, bool findNext);
@@ -209,6 +212,9 @@ private:
 	HCURSOR m_hCursorResize;  // Resize cursor
 	
 	std::wstring m_fontName;  // Current font name
+	int m_fontSize;  // Current font size
+	
+	void RecreateFont();  // Helper to recreate fonts when settings change
 	
 	// Search state
 	int m_searchResultIndex;

@@ -89,6 +89,7 @@ ContentView::ContentView()
 	, m_hHoverBrush(nullptr)
 	, m_hCursorResize(nullptr)
 	, m_fontName(L"Yu Gothic UI")
+	, m_fontSize(16)
 	, m_searchResultIndex(-1)
 	, m_lastCaseSensitive(false)
 {
@@ -173,11 +174,11 @@ bool ContentView::Create(HWND hParent, int x, int y, int width, int height)
 		return false;
 	
 	// Create fonts - use Shift-JIS compatible charset for Japanese text
-	m_hFont = CreateFontW(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+	m_hFont = CreateFontW(m_fontSize, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 						 SHIFTJIS_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 						 CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, m_fontName.c_str());
 	
-	m_hHeaderFont = CreateFontW(16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+	m_hHeaderFont = CreateFontW(m_fontSize, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
 							   SHIFTJIS_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 							   CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, m_fontName.c_str());
 	
@@ -1055,18 +1056,55 @@ void ContentView::SetFontName(const std::wstring& fontName)
 		return;
 	
 	m_fontName = fontName;
+	RecreateFont();
+}
+
+void ContentView::SetFontSize(int fontSize)
+{
+	if (m_fontSize == fontSize || fontSize < 8 || fontSize > 72)
+		return;
 	
-	// Recreate fonts with new font name
+	m_fontSize = fontSize;
+	m_itemHeight = fontSize + 8;  // Adjust item height based on font size
+	m_headerHeight = fontSize + 8;
+	RecreateFont();
+}
+
+void ContentView::SetFont(const std::wstring& fontName, int fontSize)
+{
+	bool changed = false;
+	
+	if (m_fontName != fontName)
+	{
+		m_fontName = fontName;
+		changed = true;
+	}
+	
+	if (m_fontSize != fontSize && fontSize >= 8 && fontSize <= 72)
+	{
+		m_fontSize = fontSize;
+		m_itemHeight = fontSize + 8;
+		m_headerHeight = fontSize + 8;
+		changed = true;
+	}
+	
+	if (changed)
+		RecreateFont();
+}
+
+void ContentView::RecreateFont()
+{
+	// Recreate fonts with new settings
 	if (m_hFont)
 		DeleteObject(m_hFont);
 	if (m_hHeaderFont)
 		DeleteObject(m_hHeaderFont);
 	
-	m_hFont = CreateFontW(16, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+	m_hFont = CreateFontW(m_fontSize, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
 						 SHIFTJIS_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 						 CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, m_fontName.c_str());
 	
-	m_hHeaderFont = CreateFontW(16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+	m_hHeaderFont = CreateFontW(m_fontSize, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
 							   SHIFTJIS_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
 							   CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, m_fontName.c_str());
 	

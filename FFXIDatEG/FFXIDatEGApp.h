@@ -17,6 +17,7 @@ public:
     HINSTANCE GetInstance() const { return m_hInstance; }
     std::filesystem::path GetGamePath() const { return m_gamePath; }
     void SetGamePath(const std::filesystem::path& path);
+    class Config& GetConfig();
     
 private:
     FFXIDatEGApp() = default;

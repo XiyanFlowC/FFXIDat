@@ -20,6 +20,7 @@ public:
     bool IsSearchDown() const { return m_searchDown; }
     
     void SetSearchText(const std::wstring& text);
+    void RefreshUIText();  // Refresh localized text
     
 private:
     static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
