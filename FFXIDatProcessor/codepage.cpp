@@ -1,5 +1,5 @@
 ﻿#include "codepage.h"
-
+#include <iostream>
 std::string cvt_to_string(const std::wstring &str)
 {
 	return CodeCvt::GetInstance().CvtToString(str);
@@ -34,7 +34,7 @@ std::string CodeCvt::CvtToString(const std::wstring &str)
 	auto codes = xybase::string::to_utf32(str);
 
 	xybase::StringBuilder<char> sb;
-	for (char32_t code : str)
+	for (char32_t code : codes)
 	{
 		auto dbc = uc2cp[code];
 		if (dbc == 0)
@@ -44,6 +44,7 @@ std::string CodeCvt::CvtToString(const std::wstring &str)
 			{
 				dbc = uc2cp[U'?'];
 			}
+			std::wcerr << L"警告：无法转换字符 U+" << std::hex << (uint32_t)code << L"。" << std::endl;
 		}
 		if (dbc > 0xFF)
 		{
@@ -86,6 +87,10 @@ std::wstring CodeCvt::CvtToWString(const std::string &str)
 					sb.Append('0');
 				sb.Append(xybase::string::itos<char32_t>(cb, 16).c_str());
 #endif
+				std::wcerr << L"警告：无法转换代码页字符 0x"
+					<< std::hex << ((current & 0xFF00) >> 8)
+					<< std::hex << (ch & 0xFF)
+					<< L"。" << std::endl;
 			}
 			else
 				sb.Append(wc);
