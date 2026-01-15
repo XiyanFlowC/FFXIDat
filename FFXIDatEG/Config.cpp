@@ -23,6 +23,16 @@ bool Config::Load(const std::wstring& filePath)
 
 bool Config::Save(const std::wstring& filePath)
 {
+	// Update stored file path if provided
+	if (!filePath.empty())
+	{
+		m_filePath = filePath;
+	}
+	
+	// If no path specified and no stored path, fail
+	if (m_filePath.empty())
+		return false;
+	
 	IniParser parser;
 	// Copy data to parser
 	for (const auto& section : m_data)
@@ -33,7 +43,7 @@ bool Config::Save(const std::wstring& filePath)
 		}
 	}
 	
-	return parser.Save(filePath);
+	return parser.Save(m_filePath);
 }
 
 std::wstring Config::GetString(const std::wstring& section, const std::wstring& key, const std::wstring& defaultValue)
@@ -68,11 +78,21 @@ int Config::GetInt(const std::wstring& section, const std::wstring& key, int def
 void Config::SetString(const std::wstring& section, const std::wstring& key, const std::wstring& value)
 {
 	m_data[section][key] = value;
+	
+	// Auto-save configuration if path is available
+	// Note: Don't auto-save here to avoid multiple saves when setting multiple values
+	// Auto-save should be done by specific setter methods or explicitly called
 }
 
 void Config::SetInt(const std::wstring& section, const std::wstring& key, int value)
 {
 	m_data[section][key] = std::to_wstring(value);
+	
+	// Auto-save configuration using stored path
+	if (!m_filePath.empty())
+	{
+		Save(L"");  // Empty string means use stored path
+	}
 }
 
 std::wstring Config::GetUILanguage() const
@@ -92,10 +112,10 @@ void Config::SetUILanguage(const std::wstring& language)
 {
 	m_data[L"General"][L"UILanguage"] = language;
 	
-	// Auto-save configuration
+	// Auto-save configuration using stored path
 	if (!m_filePath.empty())
 	{
-		Save(m_filePath);
+		Save(L"");  // Empty string means use stored path
 	}
 }
 
@@ -103,11 +123,11 @@ std::wstring Config::GetFontName() const
 {
 	auto secIt = m_data.find(L"General");
 	if (secIt == m_data.end())
-		return L"MS Gothic";  // Default font for Japanese/Chinese text
+		return L"Yu Gothic UI";  // Default font for Japanese/Chinese text
 
 	auto keyIt = secIt->second.find(L"FontName");
 	if (keyIt == secIt->second.end())
-		return L"MS Gothic";  // Default font
+		return L"Yu Gothic UI";  // Default font
 
 	return keyIt->second;
 }
@@ -116,9 +136,9 @@ void Config::SetFontName(const std::wstring& fontName)
 {
 	m_data[L"General"][L"FontName"] = fontName;
 	
-	// Auto-save configuration
+	// Auto-save configuration using stored path
 	if (!m_filePath.empty())
 	{
-		Save(m_filePath);
+		Save(L"");  // Empty string means use stored path
 	}
 }

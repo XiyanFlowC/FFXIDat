@@ -157,6 +157,8 @@ void MainFrame::OnCreate()
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_CHANGEPATH, LOCS(L"menu_file_changepath"));
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_RESETPATH, LOCS(L"menu_file_resetpath"));
 	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_CLEANPREFS, LOCS(L"menu_help_cleanprefs"));
+	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_EXIT, LOCS(L"menu_file_exit"));
 
 	// Edit menu
@@ -192,8 +194,6 @@ void MainFrame::OnCreate()
 	HMENU hHelpMenu = CreateMenu();
 	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_QUICKSTART, LOCS(L"menu_help_quickstart"));
 	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_ABOUT, LOCS(L"menu_help_about"));
-	AppendMenuW(hHelpMenu, MF_SEPARATOR, 0, nullptr);
-	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_CLEANPREFS, LOCS(L"menu_help_cleanprefs"));
 
 	// Add to menu bar
 	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hFileMenu, LOCS(L"menu_file"));
@@ -223,7 +223,7 @@ void MainFrame::OnCreate()
 	// Load saved font from config
 	std::wstring savedFont = FFXIDatEGApp::Instance().GetConfig().GetFontName();
 	m_contentView->SetFontName(savedFont);
-	m_contentView->SetFontSize(FFXIDatEGApp::Instance().GetConfig().GetInt(L"Font", L"Size", 12));
+	m_contentView->SetFontSize(FFXIDatEGApp::Instance().GetConfig().GetInt(L"Font", L"Size", 16));
 
 	// Create Status Bar
 	m_hStatusBar = CreateWindowExW(
@@ -374,7 +374,7 @@ void MainFrame::OnCommand(WPARAM wParam)
 	case IDM_HELP_ABOUT:
 		OnAbout();
 		break;
-	case IDM_HELP_CLEANPREFS:
+	case IDM_FILE_CLEANPREFS:
 		OnCleanPreferencesAndExit();
 		break;
 	default:
@@ -805,6 +805,8 @@ void MainFrame::RefreshUIText()
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_CHANGEPATH, LOCS(L"menu_file_changepath"));
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_RESETPATH, LOCS(L"menu_file_resetpath"));
 	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_CLEANPREFS, LOCS(L"menu_help_cleanprefs"));
+	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_EXIT, LOCS(L"menu_file_exit"));
 
 	// Edit menu
@@ -849,8 +851,6 @@ void MainFrame::RefreshUIText()
 	HMENU hHelpMenu = CreateMenu();
 	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_QUICKSTART, LOCS(L"menu_help_quickstart"));
 	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_ABOUT, LOCS(L"menu_help_about"));
-	AppendMenuW(hHelpMenu, MF_SEPARATOR, 0, nullptr);
-	AppendMenuW(hHelpMenu, MF_STRING, IDM_HELP_CLEANPREFS, LOCS(L"menu_help_cleanprefs"));
 
 	// Add to menu bar
 	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hFileMenu, LOCS(L"menu_file"));

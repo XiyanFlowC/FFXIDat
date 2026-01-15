@@ -62,7 +62,8 @@ static struct EventStringControlSeqDef {
 	{"color", 1, "\x1F", 1}, // 似乎用于设置样式？颜色？ 
 	{"7F", 2, "\x7F", 1}, // end? sp proc
 	// {"gender", 0, "\x7F\x85", 2},
-	{"val", 1, "\xEF", 1}, // 一个文本变量？
+	{"val", 1, "\xEF", 1}, // 一个图标（实际上属于文本编码的一部分，但是无法妥善转为Unicode（用PUA？
+	// FIXME:暂时先用控制符处理，尽快找到合适替代方法
 	// {"FB", 0, "\xFB", 1},
 	
 

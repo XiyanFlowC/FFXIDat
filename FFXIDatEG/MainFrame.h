@@ -67,6 +67,7 @@ private:
     static constexpr int IDM_FILE_CHANGEPATH = 2001;
     static constexpr int IDM_FILE_RESETPATH = 2002;
     static constexpr int IDM_FILE_EXIT = 2003;
+    static constexpr int IDM_FILE_CLEANPREFS = 2004;
     static constexpr int IDM_EDIT_FIND = 2051;
     static constexpr int IDM_EDIT_FINDNEXT = 2052;
     static constexpr int IDM_VIEW_FONT = 2101;
@@ -78,5 +79,4 @@ private:
     static constexpr int IDM_VIEW_UILANG_BASE = 2160;  // Base ID for dynamic UI language menu items
     static constexpr int IDM_HELP_QUICKSTART = 2200;
     static constexpr int IDM_HELP_ABOUT = 2201;
-    static constexpr int IDM_HELP_CLEANPREFS = 2202;
 };

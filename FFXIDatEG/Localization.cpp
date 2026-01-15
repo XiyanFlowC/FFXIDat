@@ -19,12 +19,7 @@ bool Localization::Load(const std::wstring& filePath)
 	if (!file.is_open())
 		return false;
 
-	// Use IniParser to parse the file
-	IniParser parser;
-	
 	std::string line;
-	std::wstring continuedLine;
-	bool isContinuation = false;
 	
 	while (std::getline(file, line))
 	{
@@ -32,42 +27,9 @@ bool Localization::Load(const std::wstring& filePath)
 		std::u8string u8line(reinterpret_cast<const char8_t*>(line.c_str()), line.size());
 		std::wstring wline = xybase::string::to_wstring(u8line);
 
-		// Trim trailing whitespace
+		// Trim whitespace
+		wline.erase(0, wline.find_first_not_of(L" \t\r\n"));
 		wline.erase(wline.find_last_not_of(L" \t\r\n") + 1);
-
-		// Check for line continuation (backslash at end)
-		bool hasBackslash = false;
-		if (!wline.empty() && wline.back() == L'\\')
-		{
-			hasBackslash = true;
-			wline.pop_back();  // Remove the backslash
-			// Trim trailing whitespace after removing backslash
-			wline.erase(wline.find_last_not_of(L" \t\r\n") + 1);
-		}
-
-		// Append to continued line
-		if (isContinuation)
-		{
-			continuedLine += wline;
-		}
-		else
-		{
-			continuedLine = wline;
-		}
-
-		// If line ends with backslash, continue to next line
-		if (hasBackslash)
-		{
-			isContinuation = true;
-			continue;
-		}
-
-		// Process the complete line
-		isContinuation = false;
-		wline = continuedLine;
-
-		// Trim leading whitespace
-		wline.erase(0, wline.find_first_not_of(L" \t"));
 
 		// Skip empty lines, comments, and section headers
 		if (wline.empty() || wline[0] == L';' || wline[0] == L'#' || wline[0] == L'[')
@@ -115,9 +77,8 @@ std::vector<LanguageInfo> Localization::ScanAvailableLanguages(const std::filesy
 			std::wstring languageCode;
 			std::wstring languageName;
 
+			// Note: Line continuation support has been disabled
 			std::string line;
-			std::wstring continuedLine;
-			bool isContinuation = false;
 			
 			while (std::getline(file, line))
 			{
@@ -125,42 +86,9 @@ std::vector<LanguageInfo> Localization::ScanAvailableLanguages(const std::filesy
 				std::u8string u8line(reinterpret_cast<const char8_t*>(line.c_str()), line.size());
 				std::wstring wline = xybase::string::to_wstring(u8line);
 
-				// Trim trailing whitespace
+				// Trim whitespace
+				wline.erase(0, wline.find_first_not_of(L" \t\r\n"));
 				wline.erase(wline.find_last_not_of(L" \t\r\n") + 1);
-
-				// Check for line continuation (backslash at end)
-				bool hasBackslash = false;
-				if (!wline.empty() && wline.back() == L'\\')
-				{
-					hasBackslash = true;
-					wline.pop_back();  // Remove the backslash
-					// Trim trailing whitespace after removing backslash
-					wline.erase(wline.find_last_not_of(L" \t\r\n") + 1);
-				}
-
-				// Append to continued line
-				if (isContinuation)
-				{
-					continuedLine += wline;
-				}
-				else
-				{
-					continuedLine = wline;
-				}
-
-				// If line ends with backslash, continue to next line
-				if (hasBackslash)
-				{
-					isContinuation = true;
-					continue;
-				}
-
-				// Process the complete line
-				isContinuation = false;
-				wline = continuedLine;
-
-				// Trim leading whitespace
-				wline.erase(0, wline.find_first_not_of(L" \t"));
 
 				// Skip empty lines and comments
 				if (wline.empty() || wline[0] == L';' || wline[0] == L'#')

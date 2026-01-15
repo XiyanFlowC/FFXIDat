@@ -11,44 +11,11 @@ bool IniParser::Load(const std::wstring& filePath)
 
 	std::wstring currentSection;
 	std::wstring line;
-	std::wstring continuedLine;
-	bool isContinuation = false;
 
 	while (std::getline(file, line))
 	{
-		// Trim trailing whitespace (but keep leading for detection)
+		// Trim trailing whitespace
 		line = TrimTrailing(line);
-
-		// Check for line continuation (backslash at end)
-		bool hasBackslash = false;
-		if (!line.empty() && line.back() == L'\\')
-		{
-			hasBackslash = true;
-			line.pop_back();  // Remove the backslash
-			// Trim trailing whitespace after removing backslash
-			line = TrimTrailing(line);
-		}
-
-		// Append to continued line
-		if (isContinuation)
-		{
-			continuedLine += line;
-		}
-		else
-		{
-			continuedLine = line;
-		}
-
-		// If line ends with backslash, continue to next line
-		if (hasBackslash)
-		{
-			isContinuation = true;
-			continue;
-		}
-
-		// Process the complete line
-		isContinuation = false;
-		line = continuedLine;
 
 		// Trim leading whitespace
 		line = TrimLeading(line);

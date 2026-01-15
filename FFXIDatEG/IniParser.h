@@ -9,8 +9,10 @@
 /// - Sections [SectionName]
 /// - Key-value pairs (Key=Value)
 /// - Comments (lines starting with ; or #)
-/// - Line continuations (backslash at end of line)
 /// - Unicode (wstring) support
+/// 
+/// Note: Line continuation (backslash at end) is NOT supported to keep the format simple.
+/// For long values, use escaped newlines (\n) within a single line instead.
 /// </summary>
 class IniParser
 {
