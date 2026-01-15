@@ -353,7 +353,7 @@ bool DatFileManager::LoadDMsgFile(const std::filesystem::path& filePath, Content
 	{
 		std::wstring colName = L"Cell " + std::to_wstring(col);
 		contentView->SetColumnTitle(col, colName);
-		contentView->SetColumnWidth(col, 150);
+		contentView->SetColumnWidth(col, 250);
 	}
 	
 	// Add items
@@ -366,7 +366,14 @@ bool DatFileManager::LoadDMsgFile(const std::filesystem::path& filePath, Content
 		
 		for (const auto& cell : row.GetCellsConst())
 		{
-			std::u8string cellStr = cell.ToString();
+			if (cell.GetType() == 1)  // Integer
+			{
+				int value = cell.Get<int>();
+				item->columns.push_back(ColumnData::MakeInteger(value));
+				continue;
+			}
+
+			std::u8string cellStr = cell.Get<std::u8string>();
 			std::wstring wstr = xybase::string::to_wstring(cellStr);
 			item->columns.push_back(ColumnData::MakeMultilineText(wstr));
 			
