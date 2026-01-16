@@ -103,12 +103,12 @@ void MonBridge::Read(const std::wstring& path)
         
         // Process icon data if present (similar to ItemData image handling)
         // Note: icon_data size is fixed at 2431 bytes
-        if (entry.icon_data[0] != 0) {  // Basic check if icon data exists
+        if (entry.icon_size) {  // Basic check if icon data exists
             Image img;
             // Assuming icon_data contains image data, try to read it
             // The actual size might need to be determined from the data
             try {
-                img.ReadFromMemory(entry.icon_data, sizeof(entry.icon_data));
+                img.ReadFromMemory(entry.icon_data, entry.icon_size);
                 datum.image = std::move(img);
             } catch (const std::exception&) {
                 // If image reading fails, just leave image empty

@@ -22,6 +22,10 @@ public:
 	std::wstring CvtToWString(const std::string &str);
 
 	void Init(std::filesystem::path path);
+
+    // Mapping helpers for custom converters
+    bool TryUcToCp(uint32_t uc, uint32_t &cp) const;
+    bool TryCpToUc(uint32_t cp, uint32_t &uc) const;
 };
 
 std::string cvt_to_string(const std::wstring &str);

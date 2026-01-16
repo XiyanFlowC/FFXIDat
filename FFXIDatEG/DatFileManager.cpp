@@ -605,8 +605,11 @@ bool DatFileManager::LoadXiStringFile(const std::filesystem::path& filePath, Con
 	contentView->SetColumnTitle(1, L"String");
 	contentView->SetColumnWidth(1, 600);
 	contentView->SetColumnTitle(2, L"Flag1");
+	contentView->SetColumnWidth(2, 40);
 	contentView->SetColumnTitle(3, L"Flag2");
+	contentView->SetColumnWidth(3, 40);
 	contentView->SetColumnTitle(4, L"Flag3");
+	contentView->SetColumnWidth(4, 40);
 	
 	// Add items
 	int index = 0;
@@ -614,7 +617,7 @@ bool DatFileManager::LoadXiStringFile(const std::filesystem::path& filePath, Con
 	{
 		auto item = std::make_unique<ContentItem>();
 		
-		std::wstring wstr = xybase::string::to_wstring(entry.str);
+		std::wstring wstr = xybase::string::to_wstring(XiString::Decode(entry.str));
 		
 		item->columns.push_back(ColumnData::MakeInteger( (index)) );
 		item->columns.push_back(ColumnData::MakeMultilineText( wstr ));
@@ -860,13 +863,15 @@ bool DatFileManager::LoadMonBridgeFile(const std::filesystem::path& filePath, Co
 	m_currentMonBridge->Read(filePath);
 
 	contentView->Clear();
-	contentView->SetColumnCount(3);
+	contentView->SetColumnCount(4);
 	contentView->SetColumnTitle(0, L"ID");
 	contentView->SetColumnWidth(0, 60);
-	contentView->SetColumnTitle(1, L"Internal Name");
-	contentView->SetColumnWidth(1, 150);
-	contentView->SetColumnTitle(2, L"Display Name");
-	contentView->SetColumnWidth(2, 350);
+	contentView->SetColumnTitle(1, L"Icon");
+	contentView->SetColumnWidth(1, 40);
+	contentView->SetColumnTitle(2, L"Internal Name");
+	contentView->SetColumnWidth(2, 150);
+	contentView->SetColumnTitle(3, L"Display Name");
+	contentView->SetColumnWidth(3, 350);
 
 	for (const auto& datum : m_currentMonBridge->data)
 	{
@@ -874,15 +879,15 @@ bool DatFileManager::LoadMonBridgeFile(const std::filesystem::path& filePath, Co
 		item->type = ContentItemType::Multiline;
 
 		item->columns.push_back(ColumnData::MakeInteger(datum.id));
+
+		item->columns.push_back(ColumnData::MakeImage(std::make_shared<Image>(datum.image)));
+
 		std::wstring internalName = xybase::string::to_wstring(datum.internalName);
 		item->columns.push_back(ColumnData::MakeText(internalName));
 		std::wstring displayName = xybase::string::to_wstring(datum.displayName);
 		item->columns.push_back(ColumnData::MakeMultilineText(displayName));
 
-		if (ContainsLineBreaks(displayName))
-		{
-			item->customHeight = CountLines(displayName) * 24;
-		}
+		item->customHeight = 32;
 
 		contentView->AddItem(std::move(item));
 	}
@@ -906,21 +911,34 @@ bool DatFileManager::LoadRoeQuestFile(const std::filesystem::path& filePath, Con
 	}
 	if (maxCols == 0) maxCols = 1;
 
-	contentView->SetColumnCount(maxCols);
+	contentView->SetColumnCount(maxCols + 1 + 4 + 1);
+	contentView->SetColumnTitle(0, L"ID");
+	contentView->SetColumnWidth(0, 60);
 	for (int col = 0; col < maxCols; ++col)
 	{
 		std::wstring colName = L"Field " + std::to_wstring(col);
-		contentView->SetColumnTitle(col, colName);
-		contentView->SetColumnWidth(col, 150);
+		contentView->SetColumnTitle(col + 1, colName);
+		contentView->SetColumnWidth(col +1 , 150);
 	}
+	contentView->SetColumnTitle(maxCols + 1, L"EXP");
+	contentView->SetColumnWidth(maxCols + 1, 50);
+	contentView->SetColumnTitle(maxCols + 2, L"UNI");
+	contentView->SetColumnWidth(maxCols + 2, 50);
+	contentView->SetColumnTitle(maxCols + 3, L"CAP");
+	contentView->SetColumnWidth(maxCols + 3, 50);
+	contentView->SetColumnTitle(maxCols + 4, L"EMI");
+	contentView->SetColumnWidth(maxCols + 4, 50);
+	contentView->SetColumnTitle(maxCols + 5, L"Release Date");
+	contentView->SetColumnWidth(maxCols + 5, 150);
+
 
 	if (maxCols > 3)
 	{
-		contentView->SetColumnWidth(1, 40);
+		contentView->SetColumnWidth(2, 40);
 	}
 	else {
-		contentView->SetColumnWidth(1, 300);
 		contentView->SetColumnWidth(2, 300);
+		contentView->SetColumnWidth(3, 300);
 	}
 
 	for (const auto& datum : m_currentRoe->questData)
@@ -930,6 +948,8 @@ bool DatFileManager::LoadRoeQuestFile(const std::filesystem::path& filePath, Con
 
 		bool hasMultilineText = false;
 		int maxLines = 1;
+
+		item->columns.push_back(ColumnData::MakeInteger(datum.id));
 
 		for (const auto& cell : datum.row())
 		{
@@ -957,6 +977,12 @@ bool DatFileManager::LoadRoeQuestFile(const std::filesystem::path& filePath, Con
 			}
 		}
 
+		item->columns.push_back(ColumnData::MakeInteger(datum.originalEntry.exp_reward));
+		item->columns.push_back(ColumnData::MakeInteger(datum.originalEntry.uni_reward));
+		item->columns.push_back(ColumnData::MakeInteger(datum.originalEntry.cap_reward));
+		item->columns.push_back(ColumnData::MakeInteger(datum.originalEntry.emi_reward));
+		item->columns.push_back(ColumnData::MakeInteger(datum.originalEntry.release_date));
+
 		if (hasMultilineText) item->customHeight = maxLines * 24;
 		contentView->AddItem(std::move(item));
 	}
@@ -983,7 +1009,7 @@ bool DatFileManager::LoadRoeCategoryFile(const std::filesystem::path& filePath, 
 		auto item = std::make_unique<ContentItem>();
 		item->type = ContentItemType::Multiline;
 
-		item->columns.push_back(ColumnData::MakeInteger(index++));
+		item->columns.push_back(ColumnData::MakeInteger(datum.id));
 
 		std::wstring categoryName = L"";
 		try {
@@ -1193,7 +1219,7 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 					if (itemIndex >= contentView->GetItemCount()) break;
 					
 					const ContentItem* item = contentView->GetItem(itemIndex++);
-					if (!item || item->columns.size() < 3) continue;
+					if (!item) continue;
 					
 					// Update entry text (column 1) and pronunciation (column 2)
 					if (item->columns[1].type == ColumnDataType::Text || item->columns[1].type == ColumnDataType::MultilineText)
@@ -1215,17 +1241,17 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 			for (size_t i = 0; i < dataCount; ++i)
 			{
 				const ContentItem* item = contentView->GetItem(i);
-				if (!item || item->columns.size() < 3) continue;
+			if (!item || item->columns.size() < 4) continue; // ID, Icon, Internal, Display
 				
 				auto& datum = m_currentMonBridge->data[i];
 				
-				// Update internal name (column 1)
-				if (item->columns[1].type == ColumnDataType::Text)
-					datum.internalName = xybase::string::to_utf8(item->columns[1].textValue);
+			// Update internal name (column 2)
+			if (item->columns[2].type == ColumnDataType::Text)
+				datum.internalName = xybase::string::to_utf8(item->columns[2].textValue);
 				
-				// Update display name (column 2)
-				if (item->columns[2].type == ColumnDataType::Text || item->columns[2].type == ColumnDataType::MultilineText)
-					datum.displayName = xybase::string::to_utf8(item->columns[2].textValue);
+			// Update display name (column 3)
+			if (item->columns[3].type == ColumnDataType::Text || item->columns[3].type == ColumnDataType::MultilineText)
+				datum.displayName = xybase::string::to_utf8(item->columns[3].textValue);
 			}
 			
 			m_currentMonBridge->Write(filePath.wstring());
@@ -1248,7 +1274,7 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 					
 					// Update cells in the row
 					size_t cellIndex = 0;
-					for (size_t col = 0; col < item->columns.size() && cellIndex < datum.row().GetCells().size(); ++col, ++cellIndex)
+					for (size_t col = 1; col < item->columns.size() && cellIndex < datum.row().GetCells().size(); ++col, ++cellIndex)
 					{
 						const ColumnData& colData = item->columns[col];
 						Cell& cell = datum.row().GetCells()[cellIndex];

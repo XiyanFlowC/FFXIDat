@@ -19,7 +19,8 @@ struct MBRecord {
 		Record info_rec;
 	} rec;
 
-	char icon_data[2431];
+	uint32_t icon_size; // size of icon_data, 0 if no icon
+	char icon_data[2427];
 
 	char terminator; // must be 0xFF
 };

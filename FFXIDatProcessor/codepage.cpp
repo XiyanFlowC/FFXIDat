@@ -140,3 +140,19 @@ void CodeCvt::Init(std::filesystem::path path)
 
 	xybase::string::set_string_cvt(cvt_to_wstring, cvt_to_string);
 }
+
+bool CodeCvt::TryUcToCp(uint32_t uc, uint32_t &cp) const
+{
+    auto it = uc2cp.find(uc);
+    if (it == uc2cp.end()) return false;
+    cp = it->second;
+    return true;
+}
+
+bool CodeCvt::TryCpToUc(uint32_t cp, uint32_t &uc) const
+{
+    auto it = cp2uc.find(cp);
+    if (it == cp2uc.end()) return false;
+    uc = it->second;
+    return true;
+}

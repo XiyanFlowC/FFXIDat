@@ -709,6 +709,30 @@ void MainFrame::OnSave()
 	if (!m_contentView || !m_fileManager)
 		return;
 	
+    // First-time save disclaimer
+    try {
+        int accepted = FFXIDatEGApp::Instance().GetConfig().GetInt(L"Safety", L"SaveDisclaimerAccepted", 0);
+        if (accepted == 0)
+        {
+			std::wstring title = Localization::Instance().GetString(L"save_disclaimer_title", L"Disclaimer");
+            std::wstring message = Localization::Instance().GetString(L"save_disclaimer_message", L"You are about to modify game files. This may break game functionality and violate the game's terms of service. Proceed at your own risk. Do you understand and want to continue?");
+
+            int result = MessageBoxW(m_hwnd, message.c_str(), title.c_str(), MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
+            if (result != IDYES)
+            {
+                // User declined; discard changes
+                m_contentView->SetModified(false);
+                SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"save_disclaimer_declined").c_str()));
+                return;
+            }
+
+            // User accepted; remember in config
+            FFXIDatEGApp::Instance().GetConfig().SetInt(L"Safety", L"SaveDisclaimerAccepted", 1);
+        }
+    } catch (...) {
+        // If config operations fail, continue without blocking save
+    }
+
 	// Check if we have a current file path
 	if (m_currentFilePath.empty())
 	{
@@ -752,6 +776,33 @@ void MainFrame::OnSaveAs()
 	if (!m_contentView || !m_fileManager)
 		return;
 	
+    // First-time save disclaimer
+    try {
+        int accepted = FFXIDatEGApp::Instance().GetConfig().GetInt(L"Safety", L"SaveDisclaimerAccepted", 0);
+        if (accepted == 0)
+        {
+            std::wstring title = LOC(L"save_disclaimer_title");
+            if (title.empty()) title = L"Disclaimer";
+            std::wstring message = LOC(L"save_disclaimer_message");
+            if (message.empty())
+                message = L"You are about to modify game files. This may break game functionality and violate the game's terms of service. Proceed at your own risk. Do you understand and want to continue?";
+
+            int result = MessageBoxW(m_hwnd, message.c_str(), title.c_str(), MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
+            if (result != IDYES)
+            {
+                // User declined; discard changes
+                m_contentView->SetModified(false);
+                SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"save_disclaimer_declined").c_str()));
+                return;
+            }
+
+            // User accepted; remember in config
+            FFXIDatEGApp::Instance().GetConfig().SetInt(L"Safety", L"SaveDisclaimerAccepted", 1);
+        }
+    } catch (...) {
+        // If config operations fail, continue without blocking save
+    }
+
 	// Initialize COM for this thread if needed
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 	bool comInitialized = SUCCEEDED(hr);
@@ -1051,6 +1102,9 @@ void MainFrame::RefreshUIText()
 	AppendMenuW(hViewMenu, MF_SEPARATOR, 0, nullptr);
 	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_ENABLE_CATEGORY_HIERARCHY, LOCS(L"menu_view_enable_category_hierarchy"));
 	AppendMenuW(hViewMenu, MF_SEPARATOR, 0, nullptr);
+
+	CheckMenuItem(hViewMenu, IDM_VIEW_ENABLE_CATEGORY_HIERARCHY,
+		m_enableCategoryHierarchy ? MF_CHECKED : MF_UNCHECKED);
 
 	// Language Filter submenu
 	m_hLanguageFilterMenu = CreateMenu();

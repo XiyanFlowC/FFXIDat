@@ -417,6 +417,7 @@ void ContentView::EndEdit(bool save)
 		{
 			// Convert CRLF to LF for internal storage
 			std::wstring internalText = CRLFtoLF(text.get());
+			m_modified = m_items[m_editingIndex]->columns[m_editingColumn].textValue != internalText;
 			m_items[m_editingIndex]->columns[m_editingColumn].textValue = internalText;
 			
 			// Update item height if it's multiline text
@@ -433,9 +434,6 @@ void ContentView::EndEdit(bool save)
 				item->customHeight = lineCount * 24;
 				UpdateScrollBar();
 			}
-
-			item->columns[m_editingColumn].textValue = internalText;
-			m_modified = true;
 		}
 	}
 	
