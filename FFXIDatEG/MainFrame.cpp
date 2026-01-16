@@ -157,6 +157,9 @@ void MainFrame::OnCreate()
 
 	// File menu
 	HMENU hFileMenu = CreateMenu();
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_SAVE, LOCS(L"menu_file_save"));
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_SAVEAS, LOCS(L"menu_file_saveas"));
+	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_CHANGEPATH, LOCS(L"menu_file_changepath"));
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_RESETPATH, LOCS(L"menu_file_resetpath"));
 	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
@@ -174,6 +177,8 @@ void MainFrame::OnCreate()
 	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_FONT, LOCS(L"menu_view_font"));
 	AppendMenuW(hViewMenu, MF_SEPARATOR, 0, nullptr);
 	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_ENABLE_CATEGORY_HIERARCHY, LOCS(L"menu_view_enable_category_hierarchy"));
+	CheckMenuItem(hViewMenu, IDM_VIEW_ENABLE_CATEGORY_HIERARCHY,
+		m_enableCategoryHierarchy ? MF_CHECKED : MF_UNCHECKED);
 	AppendMenuW(hViewMenu, MF_SEPARATOR, 0, nullptr);
 
 	// Language Filter submenu
@@ -253,9 +258,6 @@ void MainFrame::OnCreate()
 	m_searchDialog = std::make_unique<SearchDialog>();
 	m_searchDialog->Create(m_hwnd);
 
-	// Initialize tree view subdivision feature
-	m_enableCategoryHierarchy = false;
-
 	LoadROMDefinitions();
 }
 
@@ -303,6 +305,15 @@ void MainFrame::OnTreeItemActivated(HTREEITEM hItem)
 	{
 		return;
 	}
+
+	if (m_contentView->IsModified())
+	{
+		if (!CheckAndPromptSave())
+		{
+			// User cancelled loading new file
+			return;
+		}
+	}
 	
 	std::wstring statusText = LOC(L"Status.Loading");
 	statusText += L" ";
@@ -319,10 +330,14 @@ void MainFrame::OnTreeItemActivated(HTREEITEM hItem)
 		statusText += name;
 		statusText += L" (" + m_fileManager->GetDatFilePath(info->fileId, info->romFolder).wstring() + L")";
 		SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
+		
+		// Store current file path for save operation
+		m_currentFilePath = m_fileManager->GetDatFilePath(info->fileId, info->romFolder);
 	}
 	else
 	{
 		SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"Status.LoadFailed").c_str()));
+		m_currentFilePath.clear();
 	}
 }
 
@@ -351,6 +366,12 @@ void MainFrame::OnCommand(WPARAM wParam)
 
 	switch (LOWORD(wParam))
 	{
+	case IDM_FILE_SAVE:
+		OnSave();
+		break;
+	case IDM_FILE_SAVEAS:
+		OnSaveAs();
+		break;
 	case IDM_FILE_CHANGEPATH:
 		OnChangeGamePath();
 		break;
@@ -651,6 +672,178 @@ void MainFrame::OnFindNext()
 					reinterpret_cast<LPARAM>(statusMsg.c_str()));
 	}
 }
+bool MainFrame::CheckAndPromptSave()
+{
+	// Check if content view has modifications
+	if (!m_contentView || !m_contentView->IsModified())
+		return true;  // No modifications, proceed
+	
+	// Ask user if they want to save changes
+	std::wstring message = LOC(L"save_changes_prompt");
+	if (message.empty())
+		message = L"Do you want to save changes to the current file?";
+	
+	std::wstring title = LOC(L"save_changes_title");
+	if (title.empty())
+		title = L"Save Changes";
+	
+	int result = MessageBoxW(m_hwnd, message.c_str(), title.c_str(), 
+							MB_YESNOCANCEL | MB_ICONQUESTION);
+	
+	if (result == IDCANCEL)
+		return false;  // User cancelled, don't proceed
+	
+	if (result == IDYES)
+	{
+		// User wants to save, trigger save
+		OnSave();
+		return true;  // Proceed after save
+	}
+	
+	// User chose "No", discard changes and proceed
+	return true;
+}
+
+void MainFrame::OnSave()
+{
+	if (!m_contentView || !m_fileManager)
+		return;
+	
+	// Check if we have a current file path
+	if (m_currentFilePath.empty())
+	{
+		// No file currently open, use Save As instead
+		OnSaveAs();
+		return;
+	}
+	
+	try
+	{
+		// Collect data from ContentView back to file manager
+		if (!m_fileManager->SaveCurrentFile(m_contentView.get(), m_currentFilePath))
+		{
+			std::wstring msg = LOC(L"save_failed_msg");
+			if (msg.empty())
+				msg = L"Failed to save file.";
+			MessageBoxW(m_hwnd, msg.c_str(), L"Error", MB_OK | MB_ICONERROR);
+			return;
+		}
+		
+		// Mark as unmodified
+		m_contentView->SetModified(false);
+		
+		// Update status bar
+		std::wstring statusMsg = LOC(L"save_success_msg");
+		if (statusMsg.empty())
+			statusMsg = L"File saved successfully.";
+		SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusMsg.c_str()));
+	}
+	catch (const std::exception& e)
+	{
+		std::string errStr = e.what();
+		std::wstring errMsg = L"Error saving file: ";
+		errMsg += std::wstring(errStr.begin(), errStr.end());
+		MessageBoxW(m_hwnd, errMsg.c_str(), L"Error", MB_OK | MB_ICONERROR);
+	}
+}
+
+void MainFrame::OnSaveAs()
+{
+	if (!m_contentView || !m_fileManager)
+		return;
+	
+	// Initialize COM for this thread if needed
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	bool comInitialized = SUCCEEDED(hr);
+	
+	IFileSaveDialog* pFileSaveDialog = nullptr;
+	hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL,
+						 IID_IFileSaveDialog, reinterpret_cast<void**>(&pFileSaveDialog));
+	
+	if (SUCCEEDED(hr))
+	{
+		// Set file type filters
+		COMDLG_FILTERSPEC rgSpec[] = {
+			{ L"DAT Files", L"*.DAT" },
+			{ L"All Files", L"*.*" }
+		};
+		pFileSaveDialog->SetFileTypes(ARRAYSIZE(rgSpec), rgSpec);
+		pFileSaveDialog->SetFileTypeIndex(1);
+		pFileSaveDialog->SetDefaultExtension(L"DAT");
+		
+		// Set title
+		std::wstring title = LOC(L"save_as_title");
+		if (title.empty())
+			title = L"Save File As";
+		pFileSaveDialog->SetTitle(title.c_str());
+		
+		// Set default filename if we have a current file
+		if (!m_currentFilePath.empty())
+		{
+			pFileSaveDialog->SetFileName(m_currentFilePath.filename().c_str());
+		}
+		
+		// Show the dialog
+		hr = pFileSaveDialog->Show(m_hwnd);
+		if (SUCCEEDED(hr))
+		{
+			IShellItem* pItem = nullptr;
+			hr = pFileSaveDialog->GetResult(&pItem);
+			if (SUCCEEDED(hr))
+			{
+				PWSTR pszPath = nullptr;
+				hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszPath);
+				if (SUCCEEDED(hr))
+				{
+					std::filesystem::path savePath(pszPath);
+					
+					try
+					{
+						// Save to the specified path
+						if (!m_fileManager->SaveCurrentFile(m_contentView.get(), savePath))
+						{
+							std::wstring msg = LOC(L"save_failed_msg");
+							if (msg.empty())
+								msg = L"Failed to save file.";
+							MessageBoxW(m_hwnd, msg.c_str(), L"Error", MB_OK | MB_ICONERROR);
+						}
+						else
+						{
+							// Update current file path
+							m_currentFilePath = savePath;
+							
+							// Mark as unmodified
+							m_contentView->SetModified(false);
+							
+							// Update status bar
+							std::wstring statusMsg = LOC(L"save_success_msg");
+							if (statusMsg.empty())
+								statusMsg = L"File saved successfully.";
+			SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusMsg.c_str()));
+						}
+					}
+					catch (const std::exception& e)
+					{
+						std::string errStr = e.what();
+						std::wstring errMsg = L"Error saving file: ";
+						errMsg += std::wstring(errStr.begin(), errStr.end());
+						MessageBoxW(m_hwnd, errMsg.c_str(), L"Error", MB_OK | MB_ICONERROR);
+					}
+					
+					CoTaskMemFree(pszPath);
+				}
+				pItem->Release();
+			}
+		}
+		pFileSaveDialog->Release();
+	}
+	
+	if (comInitialized && hr != RPC_E_CHANGED_MODE)
+	{
+		CoUninitialize();
+	}
+}
+
 void MainFrame::OnResetGamePath()
 {
 	FFXIDatEGApp& app = FFXIDatEGApp::Instance();
@@ -837,6 +1030,9 @@ void MainFrame::RefreshUIText()
 
 	// File menu
 	HMENU hFileMenu = CreateMenu();
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_SAVE, LOCS(L"menu_file_save"));
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_SAVEAS, LOCS(L"menu_file_saveas"));
+	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_CHANGEPATH, LOCS(L"menu_file_changepath"));
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_RESETPATH, LOCS(L"menu_file_resetpath"));
 	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);

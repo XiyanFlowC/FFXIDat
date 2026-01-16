@@ -62,6 +62,8 @@ public:
 		return rows[index];
 	}
 
+	size_t Count() const { return rows.size(); }
+
 	enum class Mode
 	{
 		Block,

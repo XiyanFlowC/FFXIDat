@@ -300,11 +300,13 @@ LRESULT CALLBACK ContentView::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 
 void ContentView::Clear()
 {
+	EndEdit(false);
 	m_items.clear();
 	m_selectedIndex = -1;
 	m_hoveredIndex = -1;
 	m_scrollPos = 0;
 	m_scrollPosH = 0;
+	m_modified = false;
 	UpdateScrollBar();
 	UpdateHScrollBar();
 	InvalidateRect(m_hwnd, nullptr, FALSE);

@@ -43,6 +43,9 @@ private:
 	void OnQuickStartHelp();
 	void OnCleanPreferencesAndExit();
 	void OnToggleCategoryHierarchy();
+	void OnSave();
+	void OnSaveAs();
+	bool CheckAndPromptSave();
 	
 	HWND m_hwnd = nullptr;
 	HWND m_hTreeView = nullptr;
@@ -60,6 +63,7 @@ private:
 	std::vector<LanguageInfo> m_availableUILanguages;  // Available UI languages
 	std::filesystem::path m_localDir;  // Path to local directory
 	bool m_enableCategoryHierarchy = false;  // Enable tree hierarchy by friendly names
+	std::filesystem::path m_currentFilePath;  // Current loaded file path for save operation
 
 	static constexpr int IDC_TREEVIEW = 1001;
 	static constexpr int IDC_CONTENTVIEW = 1002;
@@ -70,6 +74,8 @@ private:
 	static constexpr int IDM_FILE_RESETPATH = 2002;
 	static constexpr int IDM_FILE_EXIT = 2003;
 	static constexpr int IDM_FILE_CLEANPREFS = 2004;
+	static constexpr int IDM_FILE_SAVE = 2005;
+	static constexpr int IDM_FILE_SAVEAS = 2006;
 	static constexpr int IDM_EDIT_FIND = 2051;
 	static constexpr int IDM_EDIT_FINDNEXT = 2052;
 	static constexpr int IDM_VIEW_FONT = 2101;

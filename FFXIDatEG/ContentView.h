@@ -137,6 +137,15 @@ public:
 	void ScrollToItem(int index);
 
 	bool IsModified() { return m_modified; }
+	void SetModified(bool modified) { m_modified = modified; }
+
+	size_t GetItemCount() const { return m_items.size(); }
+	const ContentItem* GetItem(size_t index) const
+	{
+		if (index < m_items.size())
+			return m_items[index].get();
+		return nullptr;
+	}
 	
 private:
 	static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

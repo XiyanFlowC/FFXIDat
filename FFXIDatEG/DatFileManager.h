@@ -34,6 +34,8 @@ struct DatFileInfo
 class DatFileManager
 {
 public:
+	bool SaveCurrentFile(ContentView* contentView, const std::filesystem::path& filePath);
+
 	explicit DatFileManager(const std::filesystem::path& gamePath);
 	~DatFileManager();
 	

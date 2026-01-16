@@ -61,8 +61,15 @@ void DatFileManager::LoadROMDefinition(const std::filesystem::path& csvPath,
 	
 	CsvFile csv(csvPath, std::ios::in | std::ios::binary);
 	
-	// Map to track category hierarchy nodes when cateSub is enabled
-	std::map<std::string, HTREEITEM> categoryNodes;
+	// Structure to hold file entry information for batch processing
+	struct FileEntry {
+		int fileId;
+		DatFileInfo info;
+		std::string friendlyName;
+		std::string categoryPath;
+	};
+	
+	std::vector<FileEntry> fileEntries;
 	
 	while (!csv.IsEof())
 	{
@@ -107,8 +114,19 @@ void DatFileManager::LoadROMDefinition(const std::filesystem::path& csvPath,
 			info.category = xybase::string::to_string(category);
 			info.romFolder = romFolder;  // Set from filename, not from CSV
 			
-			// Create friendly name
-			std::string friendlyName = info.category;
+			// Create friendly name - use only the last part of category for leaf nodes
+			std::string displayCategory = info.category;
+			if (cateSub && !displayCategory.empty())
+			{
+				// Extract last part after final '/'
+				size_t lastSlash = displayCategory.rfind('/');
+				if (lastSlash != std::string::npos)
+				{
+					displayCategory = displayCategory.substr(lastSlash + 1);
+				}
+			}
+			
+			std::string friendlyName = displayCategory;
 			if (!friendlyName.empty() && !info.fileType.empty())
 				friendlyName += " [" + info.fileType + "]";
 			if (!friendlyName.empty() && !info.language.empty())
@@ -121,93 +139,15 @@ void DatFileManager::LoadROMDefinition(const std::filesystem::path& csvPath,
 			}
 			
 			info.friendlyName = friendlyName;
-			
 			m_fileRegistry[fileId] = info;
 			
-			// Determine parent node for this file
-			HTREEITEM hParentNode = parentNode;
-			
-			// If cateSub is enabled and category is not empty, create/use category hierarchy
-			if (cateSub && !info.category.empty())
-			{
-				// Split category by "/" to create hierarchy
-				// e.g., "sys/mis/sd" -> creates nodes: sys -> mis -> sd
-				std::string categoryPath = info.category;
-				std::string currentPath;
-				size_t lastPos = 0;
-				size_t pos = 0;
-				
-				while ((pos = categoryPath.find('/', lastPos)) != std::string::npos)
-				{
-					std::string pathPart = categoryPath.substr(lastPos, pos - lastPos);
-					if (!pathPart.empty())
-					{
-						// Build the full path for this level
-						if (!currentPath.empty())
-							currentPath += "/" + pathPart;
-						else
-							currentPath = pathPart;
-						
-						// Check if this node already exists
-						if (categoryNodes.find(currentPath) == categoryNodes.end())
-						{
-							// Create new category node
-							TVINSERTSTRUCTW tvis = { 0 };
-							tvis.hParent = (currentPath == pathPart) ? parentNode : categoryNodes[currentPath.substr(0, currentPath.rfind('/'))];
-							tvis.hInsertAfter = TVI_LAST;
-							tvis.item.mask = TVIF_TEXT;
-							
-							std::wstring wCategoryName(pathPart.begin(), pathPart.end());
-							tvis.item.pszText = const_cast<LPWSTR>(wCategoryName.c_str());
-							
-							HTREEITEM hCategoryNode = TreeView_InsertItem(hTreeView, &tvis);
-							categoryNodes[currentPath] = hCategoryNode;
-						}
-						
-						hParentNode = categoryNodes[currentPath];
-					}
-					lastPos = pos + 1;
-				}
-				
-				//// Handle the last part of the path
-				//std::string lastPart = categoryPath.substr(lastPos);
-				//if (!lastPart.empty())
-				//{
-				//	if (!currentPath.empty())
-				//		currentPath += "/" + lastPart;
-				//	else
-				//		currentPath = lastPart;
-				//	
-				//	if (categoryNodes.find(currentPath) == categoryNodes.end())
-				//	{
-				//		TVINSERTSTRUCTW tvis = { 0 };
-				//		tvis.hParent = (currentPath == lastPart) ? parentNode : categoryNodes[categoryPath.substr(0, categoryPath.rfind('/'))];
-				//		tvis.hInsertAfter = TVI_LAST;
-				//		tvis.item.mask = TVIF_TEXT;
-				//		
-				//		std::wstring wCategoryName(lastPart.begin(), lastPart.end());
-				//		tvis.item.pszText = const_cast<LPWSTR>(wCategoryName.c_str());
-				//		
-				//		HTREEITEM hCategoryNode = TreeView_InsertItem(hTreeView, &tvis);
-				//		categoryNodes[currentPath] = hCategoryNode;
-				//	}
-				//	
-				//	hParentNode = categoryNodes[currentPath];
-				//}
-			}
-			
-			// Add file item to tree under appropriate parent
-			TVINSERTSTRUCTW tvis = { 0 };
-			tvis.hParent = hParentNode;
-			tvis.hInsertAfter = TVI_LAST;
-			tvis.item.mask = TVIF_TEXT | TVIF_PARAM;
-			
-			std::wstring wName(friendlyName.begin(), friendlyName.end());
-			tvis.item.pszText = const_cast<LPWSTR>(wName.c_str());
-			tvis.item.lParam = fileId;
-			
-			HTREEITEM hItem = TreeView_InsertItem(hTreeView, &tvis);
-			m_treeItemToFileId[hItem] = fileId;
+			// Store entry for batch processing
+			FileEntry entry;
+			entry.fileId = fileId;
+			entry.info = info;
+			entry.friendlyName = friendlyName;
+			entry.categoryPath = info.category;
+			fileEntries.push_back(entry);
 		}
 		catch (const std::exception&)
 		{
@@ -216,6 +156,167 @@ void DatFileManager::LoadROMDefinition(const std::filesystem::path& csvPath,
 	}
 	
 	csv.Close();
+	
+	// Sort entries: by category path (lexicographically)
+	std::sort(fileEntries.begin(), fileEntries.end(),
+		[](const FileEntry& a, const FileEntry& b) {
+			return a.categoryPath < b.categoryPath;
+		});
+	
+	// Map to track category hierarchy nodes when cateSub is enabled
+	std::map<std::string, HTREEITEM> categoryNodes;
+	
+	// Process sorted entries
+	for (const auto& entry : fileEntries)
+	{
+		HTREEITEM hParentNode = parentNode;
+		
+		// If cateSub is enabled and category is not empty, create/use category hierarchy
+		if (cateSub && !entry.categoryPath.empty())
+		{
+			// Split category by "/" to create hierarchy
+			// e.g., "sys/mis/sd" -> creates nodes: sys -> mis -> sd
+			std::string currentPath;
+			size_t lastPos = 0;
+			size_t pos = 0;
+			
+			while ((pos = entry.categoryPath.find('/', lastPos)) != std::string::npos)
+			{
+				std::string pathPart = entry.categoryPath.substr(lastPos, pos - lastPos);
+				if (!pathPart.empty())
+				{
+					// Build the full path for this level
+					if (!currentPath.empty())
+						currentPath += "/" + pathPart;
+					else
+						currentPath = pathPart;
+					
+					// Check if this node already exists
+					if (categoryNodes.find(currentPath) == categoryNodes.end())
+					{
+						// Determine insertion position to maintain sorted order
+						HTREEITEM hInsertAfter = TVI_FIRST;
+						HTREEITEM hParentForThisNode = (currentPath == pathPart) ? parentNode : categoryNodes[currentPath.substr(0, currentPath.rfind('/'))];
+						
+						// Find correct insertion position by comparing with existing children
+						HTREEITEM hChild = TreeView_GetChild(hTreeView, hParentForThisNode);
+						HTREEITEM hLastChild = TVI_FIRST;
+						
+						while (hChild != nullptr)
+						{
+							wchar_t buffer[256];
+							TVITEMW item = { 0 };
+							item.hItem = hChild;
+							item.mask = TVIF_TEXT | TVIF_PARAM;
+							item.pszText = buffer;
+							item.cchTextMax = 256;
+							
+							if (TreeView_GetItem(hTreeView, &item))
+							{
+								std::wstring existingText(buffer);
+								std::wstring newText(pathPart.begin(), pathPart.end());
+								
+								// Categories (nodes without lParam) should come before leaf items (with lParam)
+								bool isExistingCategory = (item.lParam == 0);
+								
+								if (isExistingCategory)
+								{
+									// Compare alphabetically with other categories
+									if (newText < existingText)
+									{
+										hInsertAfter = hLastChild;
+										break;
+									}
+									hLastChild = hChild;
+								}
+								else
+								{
+									// Insert before first leaf item (categories come first)
+									hInsertAfter = hLastChild;
+									break;
+								}
+							}
+							
+							hChild = TreeView_GetNextSibling(hTreeView, hChild);
+							if (hChild != nullptr)
+								hLastChild = TreeView_GetPrevSibling(hTreeView, hChild);
+						}
+						
+						if (hChild == nullptr)
+							hInsertAfter = TVI_LAST;
+						
+						// Create new category node
+						TVINSERTSTRUCTW tvis = { 0 };
+						tvis.hParent = hParentForThisNode;
+						tvis.hInsertAfter = hInsertAfter;
+						tvis.item.mask = TVIF_TEXT;
+						
+						std::wstring wCategoryName(pathPart.begin(), pathPart.end());
+						tvis.item.pszText = const_cast<LPWSTR>(wCategoryName.c_str());
+						
+						HTREEITEM hCategoryNode = TreeView_InsertItem(hTreeView, &tvis);
+						categoryNodes[currentPath] = hCategoryNode;
+					}
+					
+					hParentNode = categoryNodes[currentPath];
+				}
+				lastPos = pos + 1;
+			}
+		}
+		
+		// Find correct insertion position for leaf item (alphabetically after all categories)
+		HTREEITEM hInsertAfter = TVI_FIRST;
+		HTREEITEM hChild = TreeView_GetChild(hTreeView, hParentNode);
+		HTREEITEM hLastChild = TVI_FIRST;
+		
+		while (hChild != nullptr)
+		{
+			wchar_t buffer[512];
+			TVITEMW item = { 0 };
+			item.hItem = hChild;
+			item.mask = TVIF_TEXT | TVIF_PARAM;
+			item.pszText = buffer;
+			item.cchTextMax = 512;
+			
+			if (TreeView_GetItem(hTreeView, &item))
+			{
+				std::wstring existingText(buffer);
+				std::wstring newText(entry.friendlyName.begin(), entry.friendlyName.end());
+				
+				bool isExistingCategory = (item.lParam == 0);
+				
+				if (!isExistingCategory)
+				{
+					// Compare with other leaf items alphabetically
+					if (newText < existingText)
+					{
+						hInsertAfter = hLastChild;
+						break;
+					}
+				}
+				
+				hLastChild = hChild;
+			}
+			
+			hChild = TreeView_GetNextSibling(hTreeView, hChild);
+		}
+		
+		if (hChild == nullptr)
+			hInsertAfter = TVI_LAST;
+		
+		// Add file item to tree under appropriate parent
+		TVINSERTSTRUCTW tvis = { 0 };
+		tvis.hParent = hParentNode;
+		tvis.hInsertAfter = hInsertAfter;
+		tvis.item.mask = TVIF_TEXT | TVIF_PARAM;
+		
+		std::wstring wName(entry.friendlyName.begin(), entry.friendlyName.end());
+		tvis.item.pszText = const_cast<LPWSTR>(wName.c_str());
+		tvis.item.lParam = entry.fileId;
+		
+		HTREEITEM hItem = TreeView_InsertItem(hTreeView, &tvis);
+		m_treeItemToFileId[hItem] = entry.fileId;
+	}
 }
 
 void DatFileManager::LoadAllROMDefinitions(const std::filesystem::path& csvDir,
@@ -698,7 +799,7 @@ bool DatFileManager::LoadItemDataFile(const std::filesystem::path& filePath, con
 
 	contentView->SetColumnCount(maxCols + 2);
 	contentView->SetColumnTitle(0, L"ID");
-	contentView->SetColumnWidth(0, 60);
+contentView->SetColumnWidth(0, 60);
 	contentView->SetColumnTitle(1, L"Icon");
 	contentView->SetColumnWidth(1, 40);
 	for (int col = 0; col < maxCols; ++col)
@@ -903,3 +1004,308 @@ bool DatFileManager::LoadRoeCategoryFile(const std::filesystem::path& filePath, 
 
 	return true;
 }
+
+bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesystem::path& filePath)
+{
+	if (!contentView)
+		return false;
+
+	try
+	{
+		// Determine which file type is currently loaded based on m_current* members
+		if (m_currentDMsg)
+		{
+			// Update existing rows with data from ContentView
+			size_t rowCount = min(contentView->GetItemCount(), m_currentDMsg->Count());
+			
+			for (size_t i = 0; i < rowCount; ++i)
+			{
+				const ContentItem* item = contentView->GetItem(i);
+				if (!item) continue;
+				
+				Row& row = m_currentDMsg->operator[](i);
+				
+				// Skip first column (index), update remaining columns
+				size_t cellCount = min(item->columns.size() - 1, row.GetCells().size());
+				for (size_t col = 0; col < cellCount; ++col)
+				{
+					const ColumnData& colData = item->columns[col + 1]; // +1 to skip index column
+					Cell& cell = row.GetCells()[col];
+					
+					if (cell.GetType() == 1) // Integer
+					{
+						if (colData.type == ColumnDataType::Integer)
+						{
+							cell.Set(static_cast<int>(colData.intValue));
+						}
+					}
+					else if (cell.GetType() == 0) // String
+					{
+						if (colData.type == ColumnDataType::Text || colData.type == ColumnDataType::MultilineText)
+						{
+							std::u8string u8str = xybase::string::to_utf8(colData.textValue);
+							cell.Set(u8str);
+						}
+					}
+				}
+			}
+			
+			m_currentDMsg->path = filePath;
+			m_currentDMsg->Write();
+			return true;
+		}
+		else if (m_currentXiString)
+		{
+			// Update existing entries with data from ContentView
+			size_t entryCount = min(contentView->GetItemCount(), (size_t)std::distance(m_currentXiString->begin(), m_currentXiString->end()));
+			
+			auto it = m_currentXiString->begin();
+			for (size_t i = 0; i < entryCount; ++i, ++it)
+			{
+				const ContentItem* item = contentView->GetItem(i);
+				if (!item || item->columns.size() < 5) continue;
+				
+				// Column 1 is the string
+				std::u8string u8str = xybase::string::to_utf8(item->columns[1].textValue);
+				it->str = m_currentXiString->Encode(xybase::string::to_string(u8str));
+				
+				// Columns 2, 3, 4 are flags
+				try {
+					if (item->columns[2].type == ColumnDataType::Text)
+						it->flag1 = static_cast<uint16_t>(std::stoi(xybase::string::to_string(xybase::string::to_utf8(item->columns[2].textValue))));
+					if (item->columns[3].type == ColumnDataType::Text)
+						it->flag2 = static_cast<uint16_t>(std::stoi(xybase::string::to_string(xybase::string::to_utf8(item->columns[3].textValue))));
+					if (item->columns[4].type == ColumnDataType::Text)
+						it->flag3 = static_cast<uint16_t>(std::stoi(xybase::string::to_string(xybase::string::to_utf8(item->columns[4].textValue))));
+				} catch (...) {
+					// Ignore parse errors for flags
+				}
+			}
+			
+			m_currentXiString->path = filePath;
+			m_currentXiString->Write();
+			return true;
+		}
+		else if (m_currentEventString)
+		{
+			// Update existing strings with data from ContentView
+			size_t stringCount = min(contentView->GetItemCount(), m_currentEventString->Size());
+			
+			for (size_t i = 0; i < stringCount; ++i)
+			{
+				const ContentItem* item = contentView->GetItem(i);
+				if (!item || item->columns.size() < 2) continue;
+				
+				std::u8string u8str = xybase::string::to_utf8(item->columns[1].textValue);
+				(*m_currentEventString)[i] = u8str;
+			}
+			
+			m_currentEventString->path = filePath;
+			m_currentEventString->Write();
+			return true;
+		}
+		else if (m_currentStatusData)
+		{
+			// Update existing data with data from ContentView
+			size_t dataCount = min(contentView->GetItemCount(), m_currentStatusData->data.size());
+			
+			for (size_t i = 0; i < dataCount; ++i)
+			{
+				const ContentItem* item = contentView->GetItem(i);
+				if (!item || item->columns.size() < 3) continue;
+				
+				StatusData::StatusDatum& datum = m_currentStatusData->data[i];
+				
+				// ID is in column 0
+				if (item->columns[0].type == ColumnDataType::Integer)
+					datum.id = static_cast<uint32_t>(item->columns[0].intValue);
+				
+				// Parse flag from hex string in column 1
+				if (item->columns[1].type == ColumnDataType::Text)
+				{
+					try {
+						std::wstring flagStr = item->columns[1].textValue;
+						datum.flg = static_cast<uint16_t>(std::stoi(flagStr, nullptr, 16));
+					} catch (...) {
+						// Keep original flag on parse error
+					}
+				}
+				
+				// Description in column 2
+				if (item->columns[2].type == ColumnDataType::Text || item->columns[2].type == ColumnDataType::MultilineText)
+					datum.description = xybase::string::to_utf8(item->columns[2].textValue);
+				
+				// Image in column 3 (if exists) - but we preserve original image since it can't be edited
+				// No action needed - image is preserved from original data
+			}
+			
+			m_currentStatusData->Write(filePath.wstring());
+			return true;
+		}
+		else if (m_currentItemData)
+		{
+			// Update existing item data with data from ContentView
+			size_t itemCount = min(contentView->GetItemCount(), m_currentItemData->data.size());
+			
+			for (size_t i = 0; i < itemCount; ++i)
+			{
+				const ContentItem* item = contentView->GetItem(i);
+				if (!item) continue;
+				
+				auto& datum = m_currentItemData->data[i];
+				
+				// Skip columns 0 (ID) and 1 (Icon), start from column 2
+				size_t cellIndex = 0;
+				for (size_t col = 2; col < item->columns.size() && cellIndex < datum.row().GetCells().size(); ++col, ++cellIndex)
+				{
+					const ColumnData& colData = item->columns[col];
+					Cell& cell = datum.row().GetCells()[cellIndex];
+					
+					if (cell.GetType() == 0) // String type
+					{
+						if (colData.type == ColumnDataType::Text || colData.type == ColumnDataType::MultilineText)
+						{
+							std::u8string u8str = xybase::string::to_utf8(colData.textValue);
+							cell.Set(u8str);
+						}
+					}
+					else if (cell.GetType() == 1) // Integer type
+					{
+						if (colData.type == ColumnDataType::Integer)
+						{
+							cell.Set(static_cast<int>(colData.intValue));
+						}
+					}
+				}
+			}
+			
+			m_currentItemData->Write(filePath);
+			return true;
+		}
+		else if (m_currentFixedPhrase)
+		{
+			// Update existing entries with data from ContentView
+			size_t itemIndex = 0;
+			for (auto& category : m_currentFixedPhrase->categories)
+			{
+				for (auto& entry : category.entries)
+				{
+					if (itemIndex >= contentView->GetItemCount()) break;
+					
+					const ContentItem* item = contentView->GetItem(itemIndex++);
+					if (!item || item->columns.size() < 3) continue;
+					
+					// Update entry text (column 1) and pronunciation (column 2)
+					if (item->columns[1].type == ColumnDataType::Text || item->columns[1].type == ColumnDataType::MultilineText)
+						entry.text = xybase::string::to_utf8(item->columns[1].textValue);
+					
+					if (item->columns[2].type == ColumnDataType::Text || item->columns[2].type == ColumnDataType::MultilineText)
+						entry.pron = xybase::string::to_utf8(item->columns[2].textValue);
+				}
+			}
+			
+			m_currentFixedPhrase->Write(filePath.wstring());
+			return true;
+		}
+		else if (m_currentMonBridge)
+		{
+			// Update existing data with data from ContentView
+			size_t dataCount = min(contentView->GetItemCount(), m_currentMonBridge->data.size());
+			
+			for (size_t i = 0; i < dataCount; ++i)
+			{
+				const ContentItem* item = contentView->GetItem(i);
+				if (!item || item->columns.size() < 3) continue;
+				
+				auto& datum = m_currentMonBridge->data[i];
+				
+				// Update internal name (column 1)
+				if (item->columns[1].type == ColumnDataType::Text)
+					datum.internalName = xybase::string::to_utf8(item->columns[1].textValue);
+				
+				// Update display name (column 2)
+				if (item->columns[2].type == ColumnDataType::Text || item->columns[2].type == ColumnDataType::MultilineText)
+					datum.displayName = xybase::string::to_utf8(item->columns[2].textValue);
+			}
+			
+			m_currentMonBridge->Write(filePath.wstring());
+			return true;
+		}
+		else if (m_currentRoe)
+		{
+			// Collect data from ContentView back to RecordsOfEminence
+			if (!m_currentRoe->questData.empty())
+			{
+				// It's a quest file - update existing quest data
+				size_t questCount = min(contentView->GetItemCount(), m_currentRoe->questData.size());
+				
+				for (size_t i = 0; i < questCount; ++i)
+				{
+					const ContentItem* item = contentView->GetItem(i);
+					if (!item) continue;
+					
+					auto& datum = m_currentRoe->questData[i];
+					
+					// Update cells in the row
+					size_t cellIndex = 0;
+					for (size_t col = 0; col < item->columns.size() && cellIndex < datum.row().GetCells().size(); ++col, ++cellIndex)
+					{
+						const ColumnData& colData = item->columns[col];
+						Cell& cell = datum.row().GetCells()[cellIndex];
+						
+						if (cell.GetType() == 0) // String type
+						{
+							if (colData.type == ColumnDataType::Text || colData.type == ColumnDataType::MultilineText)
+							{
+								std::u8string u8str = xybase::string::to_utf8(colData.textValue);
+								cell.Set(u8str);
+							}
+						}
+						else if (cell.GetType() == 1) // Integer type
+						{
+							if (colData.type == ColumnDataType::Integer)
+							{
+								cell.Set(static_cast<int>(colData.intValue));
+							}
+						}
+					}
+				}
+				
+				m_currentRoe->WriteQuest(filePath.wstring());
+				return true;
+			}
+			else if (!m_currentRoe->categoryData.empty())
+			{
+				// It's a category file - update existing category data
+				size_t catCount = min(contentView->GetItemCount(), m_currentRoe->categoryData.size());
+				
+				for (size_t i = 0; i < catCount; ++i)
+				{
+					const ContentItem* item = contentView->GetItem(i);
+					if (!item || item->columns.size() < 2) continue;
+					
+					auto& datum = m_currentRoe->categoryData[i];
+					
+					// Update category name (column 1)
+					if (item->columns[1].type == ColumnDataType::Text || item->columns[1].type == ColumnDataType::MultilineText)
+					{
+						std::u8string categoryName = xybase::string::to_utf8(item->columns[1].textValue);
+						datum.setCategoryName(categoryName);
+					}
+				}
+				
+				m_currentRoe->WriteCategory(filePath.wstring());
+				return true;
+			}
+		}
+		
+		// Unknown or unsupported file type
+		return false;
+	}
+	catch (const std::exception&)
+	{
+		return false;
+	}
+}
+
+
