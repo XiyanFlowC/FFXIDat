@@ -106,7 +106,7 @@ void DMsg::FromCsv(std::filesystem::path csvPath)
 	{
 		mode = Mode::Block;
 		if (!csv.IsEol())
-			m_blockSize = xybase::string::stoi(csv.NextCell());
+			m_blockSize = static_cast<int>(xybase::string::stoi(csv.NextCell()));
 		else
 			m_blockSize = 0;
 		csv.NextLine();
@@ -165,7 +165,7 @@ void DMsg::Write()
 		};
 		header.blockSize = maxSize;
 		header.indexSize = 0;
-		header.entriesCount = rows.size();
+		header.entriesCount = static_cast<int32_t>(rows.size());
 		header.dataSize = header.blockSize * header.entriesCount;
 		header.fileSize = header.headerSize + header.dataSize;
 

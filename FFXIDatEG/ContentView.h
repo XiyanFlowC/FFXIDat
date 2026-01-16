@@ -135,6 +135,8 @@ public:
 	bool SearchText(const std::wstring& searchText, bool caseSensitive, bool searchDown, bool findNext);
 	void ClearSearch();
 	void ScrollToItem(int index);
+
+	bool IsModified() { return m_modified; }
 	
 private:
 	static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -220,4 +222,6 @@ private:
 	int m_searchResultIndex;
 	std::wstring m_lastSearchText;
 	bool m_lastCaseSensitive;
+
+	bool m_modified;
 };

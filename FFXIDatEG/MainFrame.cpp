@@ -139,6 +139,9 @@ void MainFrame::OnCreate()
 	// Initialize UI language from config
 	m_uiLanguage = FFXIDatEGApp::Instance().GetConfig().GetUILanguage();
 	
+	// Initialize category hierarchy setting from config
+	m_enableCategoryHierarchy = FFXIDatEGApp::Instance().GetConfig().GetEnableCategoryHierarchy();
+	
 	// Get exe path and set local directory
 	wchar_t exePath[MAX_PATH];
 	GetModuleFileNameW(nullptr, exePath, MAX_PATH);
@@ -169,6 +172,8 @@ void MainFrame::OnCreate()
 	// View menu - with Language Filter submenu
 	HMENU hViewMenu = CreateMenu();
 	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_FONT, LOCS(L"menu_view_font"));
+	AppendMenuW(hViewMenu, MF_SEPARATOR, 0, nullptr);
+	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_ENABLE_CATEGORY_HIERARCHY, LOCS(L"menu_view_enable_category_hierarchy"));
 	AppendMenuW(hViewMenu, MF_SEPARATOR, 0, nullptr);
 
 	// Language Filter submenu
@@ -248,6 +253,9 @@ void MainFrame::OnCreate()
 	m_searchDialog = std::make_unique<SearchDialog>();
 	m_searchDialog->Create(m_hwnd);
 
+	// Initialize tree view subdivision feature
+	m_enableCategoryHierarchy = false;
+
 	LoadROMDefinitions();
 }
 
@@ -288,6 +296,14 @@ void MainFrame::OnTreeItemActivated(HTREEITEM hItem)
 	if (!info)
 		return;
 	
+	// Check if this item is a folder (has children) by checking if it has child items
+	// Leaf items (actual files) should not have children in the tree
+	HTREEITEM hFirstChild = TreeView_GetChild(m_hTreeView, hItem);
+	if (hFirstChild != nullptr)
+	{
+		return;
+	}
+	
 	std::wstring statusText = LOC(L"Status.Loading");
 	statusText += L" ";
 	std::string nameUtf8 = info->friendlyName;
@@ -321,7 +337,7 @@ void MainFrame::LoadROMDefinitions()
 	std::filesystem::path exeDir = std::filesystem::path(exePath).parent_path();
 	
 	// Load all ROM definition files (ROM.csv, ROM2.csv, ROM3.csv, etc.)
-	m_fileManager->LoadAllROMDefinitions(exeDir, m_hTreeView);
+	m_fileManager->LoadAllROMDefinitions(exeDir, m_hTreeView, m_enableCategoryHierarchy);
 }
 
 void MainFrame::OnCommand(WPARAM wParam)
@@ -353,6 +369,9 @@ void MainFrame::OnCommand(WPARAM wParam)
 	case IDM_VIEW_FONT:
 		OnSelectFont();
 		break;
+	case IDM_VIEW_ENABLE_CATEGORY_HIERARCHY:
+		OnToggleCategoryHierarchy();
+		break;
 	case IDM_VIEW_FILTER_ALL:
 		OnFilterLanguage("");
 		break;
@@ -380,7 +399,7 @@ void MainFrame::OnCommand(WPARAM wParam)
 	default:
 		// Handle dynamic UI language menu items
 		if (LOWORD(wParam) >= IDM_VIEW_UILANG_BASE && 
-			LOWORD(wParam) < IDM_VIEW_UILANG_BASE + 100)
+			LOWORD(wParam) < IDM_VIEW_UILANG_BASE + 10)
 		{
 			size_t langIndex = LOWORD(wParam) - IDM_VIEW_UILANG_BASE;
 			if (langIndex < m_availableUILanguages.size())
@@ -524,6 +543,22 @@ void MainFrame::OnQuickStartHelp()
 	std::wstring message = LOC(L"quickstart_message");
 	
 	MessageBoxW(m_hwnd, message.c_str(), title.c_str(), MB_OK | MB_ICONINFORMATION);
+}
+
+void MainFrame::OnToggleCategoryHierarchy()
+{
+	m_enableCategoryHierarchy = !m_enableCategoryHierarchy;
+	
+	// Update menu check state
+	UINT checkState = m_enableCategoryHierarchy ? MF_CHECKED : MF_UNCHECKED;
+	CheckMenuItem(m_hMenu, IDM_VIEW_ENABLE_CATEGORY_HIERARCHY, checkState);
+	
+	// Save to config
+	FFXIDatEGApp::Instance().GetConfig().SetEnableCategoryHierarchy(m_enableCategoryHierarchy);
+	
+	// Reload tree view
+	TreeView_DeleteAllItems(m_hTreeView);
+	LoadROMDefinitions();
 }
 
 void MainFrame::OnCleanPreferencesAndExit()
@@ -818,6 +853,8 @@ void MainFrame::RefreshUIText()
 	HMENU hViewMenu = CreateMenu();
 	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_FONT, LOCS(L"menu_view_font"));
 	AppendMenuW(hViewMenu, MF_SEPARATOR, 0, nullptr);
+	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_ENABLE_CATEGORY_HIERARCHY, LOCS(L"menu_view_enable_category_hierarchy"));
+	AppendMenuW(hViewMenu, MF_SEPARATOR, 0, nullptr);
 
 	// Language Filter submenu
 	m_hLanguageFilterMenu = CreateMenu();
@@ -859,12 +896,12 @@ void MainFrame::RefreshUIText()
 	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hHelpMenu, LOCS(L"menu_help"));
 
 	SetMenu(m_hwnd, m_hMenu);
-    
-    // Refresh search dialog text (regardless of visibility)
-    if (m_searchDialog)
-    {
-        m_searchDialog->RefreshUIText();
-    }
-    
-    DrawMenuBar(m_hwnd);
+	
+	// Refresh search dialog text (regardless of visibility)
+	if (m_searchDialog)
+	{
+		m_searchDialog->RefreshUIText();
+	}
+	
+	DrawMenuBar(m_hwnd);
 }

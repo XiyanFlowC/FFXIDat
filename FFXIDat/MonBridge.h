@@ -46,6 +46,8 @@ public:
 		
 		MonBridgeDatum() : originalEntry{}
 		{
+			id = 0;
+			idx = 0;
 			// Initialize originalEntry with default values
 			originalEntry.id = 0;
 			originalEntry.idx = 0;
@@ -54,7 +56,7 @@ public:
 			memset(originalEntry.para2, 0, sizeof(originalEntry.para2));
 			memset(&originalEntry.rec, 0, sizeof(originalEntry.rec));
 			memset(originalEntry.icon_data, 0, sizeof(originalEntry.icon_data));
-			originalEntry.terminator = 0xFF;
+			originalEntry.terminator = '\xFF';
 		}
 	};
 
@@ -62,7 +64,6 @@ public:
 	void Read(const std::wstring& path);
 	void Write(const char* path);
 	void Write(const std::wstring& path);
-	void ToCsv(const std::wstring& path) const;
 	void ToICsv(const std::wstring& path) const;
 
 	std::vector<MonBridgeDatum> data;

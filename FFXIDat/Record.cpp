@@ -29,11 +29,11 @@ void Row::WriteRow(Record *buffer, int limit)
 {
 	ptrdiff_t offsetBase = 4 + cells.size() * 8;
 	intptr_t base = (intptr_t)buffer;
-	buffer->cellCount = cells.size();
+	buffer->cellCount = static_cast<int32_t>(cells.size());
 	int ci = 0;
 	for (const Cell &cell : cells)
 	{
-		buffer->spec[ci].offset = offsetBase;
+		buffer->spec[ci].offset = static_cast<int32_t>(offsetBase);
 		int type = buffer->spec[ci++].type = cell.GetType();
 
 		if (type)

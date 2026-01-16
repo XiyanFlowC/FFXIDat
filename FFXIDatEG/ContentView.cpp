@@ -92,6 +92,7 @@ ContentView::ContentView()
 	, m_fontSize(16)
 	, m_searchResultIndex(-1)
 	, m_lastCaseSensitive(false)
+	, m_modified(false)
 {
 }
 
@@ -418,7 +419,7 @@ void ContentView::EndEdit(bool save)
 			
 			// Update item height if it's multiline text
 			ContentItem* item = m_items[m_editingIndex].get();
-			if (item->type == ContentItemType::Multiline)
+			if (false && item->type == ContentItemType::Multiline)
 			{
 				// Recalculate line count
 				int lineCount = 1;
@@ -432,6 +433,7 @@ void ContentView::EndEdit(bool save)
 			}
 
 			item->columns[m_editingColumn].textValue = internalText;
+			m_modified = true;
 		}
 	}
 	
@@ -741,7 +743,7 @@ void ContentView::OnLButtonDown(int x, int y)
 	
 	if (oldSelected != m_selectedIndex)
 	{
-		EndEdit(false);
+		EndEdit(true);
 		InvalidateRect(m_hwnd, nullptr, FALSE);
 	}
 }

@@ -34,6 +34,10 @@ public:
 	
 	std::wstring GetFontName() const;
 	void SetFontName(const std::wstring& fontName);
+	
+	// Tree hierarchy feature
+	bool GetEnableCategoryHierarchy() const;
+	void SetEnableCategoryHierarchy(bool enable);
 
 private:
 	Config() = default;

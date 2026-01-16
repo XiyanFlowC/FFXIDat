@@ -173,7 +173,7 @@ public:
 			originalEntry.cap_reward = 0;
 			originalEntry.uni_reward = 0;
 			memset(&originalEntry.info, 0, sizeof(originalEntry.info));
-			originalEntry.terminator = 0xFF;
+			originalEntry.terminator = '\xFF';
 		}
 	};
 	
@@ -239,7 +239,7 @@ public:
 			originalEntry.count_of_children = 0;
 			memset(originalEntry.children, 0, sizeof(originalEntry.children));
 			memset(&originalEntry.info, 0, sizeof(originalEntry.info));
-			originalEntry.terminator = 0xFF;
+			originalEntry.terminator = '\xFF';
 		}
 	};
 

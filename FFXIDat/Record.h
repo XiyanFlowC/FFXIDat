@@ -83,7 +83,7 @@ public:
 	template<>
 	const char *Get() const
 	{
-		if (type) return (const char *)value;
+		if (type) throw std::runtime_error("Not a string!");
 		return (const char *)str.c_str();
 	}
 

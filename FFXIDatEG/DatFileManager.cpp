@@ -50,7 +50,7 @@ DatFileManager::~DatFileManager()
 }
 
 void DatFileManager::LoadROMDefinition(const std::filesystem::path& csvPath,
-									   HWND hTreeView, HTREEITEM parentNode)
+									   HWND hTreeView, HTREEITEM parentNode, bool cateSub)
 {
 	// Extract ROM folder name from CSV filename
 	// ROM.csv -> "ROM"
@@ -60,6 +60,9 @@ void DatFileManager::LoadROMDefinition(const std::filesystem::path& csvPath,
 	std::string romFolder = csvName;  // Assume filename without extension is the ROM folder
 	
 	CsvFile csv(csvPath, std::ios::in | std::ios::binary);
+	
+	// Map to track category hierarchy nodes when cateSub is enabled
+	std::map<std::string, HTREEITEM> categoryNodes;
 	
 	while (!csv.IsEof())
 	{
@@ -121,9 +124,81 @@ void DatFileManager::LoadROMDefinition(const std::filesystem::path& csvPath,
 			
 			m_fileRegistry[fileId] = info;
 			
-			// Add to tree
+			// Determine parent node for this file
+			HTREEITEM hParentNode = parentNode;
+			
+			// If cateSub is enabled and category is not empty, create/use category hierarchy
+			if (cateSub && !info.category.empty())
+			{
+				// Split category by "/" to create hierarchy
+				// e.g., "sys/mis/sd" -> creates nodes: sys -> mis -> sd
+				std::string categoryPath = info.category;
+				std::string currentPath;
+				size_t lastPos = 0;
+				size_t pos = 0;
+				
+				while ((pos = categoryPath.find('/', lastPos)) != std::string::npos)
+				{
+					std::string pathPart = categoryPath.substr(lastPos, pos - lastPos);
+					if (!pathPart.empty())
+					{
+						// Build the full path for this level
+						if (!currentPath.empty())
+							currentPath += "/" + pathPart;
+						else
+							currentPath = pathPart;
+						
+						// Check if this node already exists
+						if (categoryNodes.find(currentPath) == categoryNodes.end())
+						{
+							// Create new category node
+							TVINSERTSTRUCTW tvis = { 0 };
+							tvis.hParent = (currentPath == pathPart) ? parentNode : categoryNodes[currentPath.substr(0, currentPath.rfind('/'))];
+							tvis.hInsertAfter = TVI_LAST;
+							tvis.item.mask = TVIF_TEXT;
+							
+							std::wstring wCategoryName(pathPart.begin(), pathPart.end());
+							tvis.item.pszText = const_cast<LPWSTR>(wCategoryName.c_str());
+							
+							HTREEITEM hCategoryNode = TreeView_InsertItem(hTreeView, &tvis);
+							categoryNodes[currentPath] = hCategoryNode;
+						}
+						
+						hParentNode = categoryNodes[currentPath];
+					}
+					lastPos = pos + 1;
+				}
+				
+				//// Handle the last part of the path
+				//std::string lastPart = categoryPath.substr(lastPos);
+				//if (!lastPart.empty())
+				//{
+				//	if (!currentPath.empty())
+				//		currentPath += "/" + lastPart;
+				//	else
+				//		currentPath = lastPart;
+				//	
+				//	if (categoryNodes.find(currentPath) == categoryNodes.end())
+				//	{
+				//		TVINSERTSTRUCTW tvis = { 0 };
+				//		tvis.hParent = (currentPath == lastPart) ? parentNode : categoryNodes[categoryPath.substr(0, categoryPath.rfind('/'))];
+				//		tvis.hInsertAfter = TVI_LAST;
+				//		tvis.item.mask = TVIF_TEXT;
+				//		
+				//		std::wstring wCategoryName(lastPart.begin(), lastPart.end());
+				//		tvis.item.pszText = const_cast<LPWSTR>(wCategoryName.c_str());
+				//		
+				//		HTREEITEM hCategoryNode = TreeView_InsertItem(hTreeView, &tvis);
+				//		categoryNodes[currentPath] = hCategoryNode;
+				//	}
+				//	
+				//	hParentNode = categoryNodes[currentPath];
+				//}
+			}
+			
+			// Add file item to tree under appropriate parent
 			TVINSERTSTRUCTW tvis = { 0 };
-			tvis.hParent = parentNode;
+			tvis.hParent = hParentNode;
 			tvis.hInsertAfter = TVI_LAST;
 			tvis.item.mask = TVIF_TEXT | TVIF_PARAM;
 			
@@ -144,7 +219,7 @@ void DatFileManager::LoadROMDefinition(const std::filesystem::path& csvPath,
 }
 
 void DatFileManager::LoadAllROMDefinitions(const std::filesystem::path& csvDir,
-										  HWND hTreeView)
+										  HWND hTreeView, bool cateSub)
 {
 	// Add root item
 	TVINSERTSTRUCTW tvis = { 0 };
@@ -191,7 +266,7 @@ void DatFileManager::LoadAllROMDefinitions(const std::filesystem::path& csvDir,
 			HTREEITEM hRomNode = TreeView_InsertItem(hTreeView, &tvis);
 
 			// ╪сть CSV нд╪Ч
-			LoadROMDefinition(csvPath, hTreeView, hRomNode);
+			LoadROMDefinition(csvPath, hTreeView, hRomNode, cateSub);
 		}
 	}
 	
@@ -254,15 +329,15 @@ bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentVi
 		return false;
 	}
 	
-    // Clear previous data
-    m_currentDMsg.reset();
-    m_currentXiString.reset();
-    m_currentEventString.reset();
-    m_currentStatusData.reset();
-    m_currentItemData.reset();
-    m_currentFixedPhrase.reset();
-    m_currentMonBridge.reset();
-    m_currentRoe.reset();
+	// Clear previous data
+	m_currentDMsg.reset();
+	m_currentXiString.reset();
+	m_currentEventString.reset();
+	m_currentStatusData.reset();
+	m_currentItemData.reset();
+	m_currentFixedPhrase.reset();
+	m_currentMonBridge.reset();
+	m_currentRoe.reset();
 	
 	// Load appropriate file type
 	try
@@ -275,14 +350,14 @@ bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentVi
 		{
 			return LoadXiStringFile(filePath, contentView);
 		}
-        else if (info.fileType == "evsb")
-        {
-            return LoadEventStringFile(filePath, contentView);
-        }
-        else if (info.fileType == "sd")
-        {
-            return LoadStatusDataFile(filePath, contentView);
-        }
+		else if (info.fileType == "evsb")
+		{
+			return LoadEventStringFile(filePath, contentView);
+		}
+		else if (info.fileType == "sd")
+		{
+			return LoadStatusDataFile(filePath, contentView);
+		}
 		else if (info.fileType == "sd")
 		{
 			return LoadStatusDataFile(filePath, contentView);
@@ -309,15 +384,15 @@ bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentVi
 		{
 			return LoadRoeCategoryFile(filePath, contentView);
 		}
-        else
-        {
-            std::wstring msg = L"Unsupported file type: ";
-            std::string typeStr = info.fileType;
-            msg += std::wstring(typeStr.begin(), typeStr.end());
-            MessageBoxW(nullptr, msg.c_str(), L"Error", MB_OK | MB_ICONERROR);
-            return false;
-        }
-    }
+		else
+		{
+			std::wstring msg = L"Unsupported file type: ";
+			std::string typeStr = info.fileType;
+			msg += std::wstring(typeStr.begin(), typeStr.end());
+			MessageBoxW(nullptr, msg.c_str(), L"Error", MB_OK | MB_ICONERROR);
+			return false;
+		}
+	}
 	catch (const std::exception& e)
 	{
 		std::string errMsg = "Error loading file: ";
@@ -348,13 +423,22 @@ bool DatFileManager::LoadDMsgFile(const std::filesystem::path& filePath, Content
 		maxCols = 1;
 	
 	// Set columns
-	contentView->SetColumnCount(maxCols);
+	contentView->SetColumnCount(maxCols + 1);
+	contentView->SetColumnTitle(0, L"Index");
+	contentView->SetColumnWidth(0, 60);
 	for (int col = 0; col < maxCols; ++col)
 	{
 		std::wstring colName = L"Cell " + std::to_wstring(col);
-		contentView->SetColumnTitle(col, colName);
-		contentView->SetColumnWidth(col, 250);
+		contentView->SetColumnTitle(col + 1, colName);
+
+		if (m_currentDMsg->begin()->GetCellsConst()[col].GetType() == 1)  // Integer
+			contentView->SetColumnWidth(col + 1, 40);
+		else
+			contentView->SetColumnWidth(col + 1, 300);
+
 	}
+
+	int index = 0;
 	
 	// Add items
 	for (const auto& row : *m_currentDMsg)
@@ -363,6 +447,8 @@ bool DatFileManager::LoadDMsgFile(const std::filesystem::path& filePath, Content
 		
 		bool hasMultilineText = false;
 		int maxLines = 1;
+
+		item->columns.push_back(ColumnData::MakeInteger(index++));
 		
 		for (const auto& cell : row.GetCellsConst())
 		{
@@ -502,8 +588,8 @@ bool DatFileManager::LoadStatusDataFile(const std::filesystem::path& filePath, C
 	contentView->SetColumnWidth(2, 400);
 	contentView->SetColumnTitle(3, L"Image");
 	
-    // Add items
-    for (auto& datum : m_currentStatusData->data)
+	// Add items
+	for (auto& datum : m_currentStatusData->data)
 	{
 		auto item = std::make_unique<ContentItem>();
 		
@@ -531,7 +617,7 @@ bool DatFileManager::LoadStatusDataFile(const std::filesystem::path& filePath, C
 			item->type = ContentItemType::Multiline;
 		}
 
-        item->columns.push_back(ColumnData::MakeImage(std::make_shared<Image>(datum.image)));
+		item->columns.push_back(ColumnData::MakeImage(std::make_shared<Image>(datum.image)));
 
 		contentView->AddItem(std::move(item));
 	}
@@ -725,6 +811,15 @@ bool DatFileManager::LoadRoeQuestFile(const std::filesystem::path& filePath, Con
 		std::wstring colName = L"Field " + std::to_wstring(col);
 		contentView->SetColumnTitle(col, colName);
 		contentView->SetColumnWidth(col, 150);
+	}
+
+	if (maxCols > 3)
+	{
+		contentView->SetColumnWidth(1, 40);
+	}
+	else {
+		contentView->SetColumnWidth(1, 300);
+		contentView->SetColumnWidth(2, 300);
 	}
 
 	for (const auto& datum : m_currentRoe->questData)

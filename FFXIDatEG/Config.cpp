@@ -142,3 +142,29 @@ void Config::SetFontName(const std::wstring& fontName)
 		Save(L"");  // Empty string means use stored path
 	}
 }
+
+bool Config::GetEnableCategoryHierarchy() const
+{
+	auto secIt = m_data.find(L"General");
+	if (secIt == m_data.end())
+		return false;  // Default to disabled
+
+	auto keyIt = secIt->second.find(L"EnableCategoryHierarchy");
+	if (keyIt == secIt->second.end())
+		return false;  // Default to disabled
+
+	// Convert to boolean
+	std::wstring value = keyIt->second;
+	return value == L"1" || value == L"true";
+}
+
+void Config::SetEnableCategoryHierarchy(bool enable)
+{
+	m_data[L"General"][L"EnableCategoryHierarchy"] = enable ? L"1" : L"0";
+	
+	// Auto-save configuration using stored path
+	if (!m_filePath.empty())
+	{
+		Save(L"");  // Empty string means use stored path
+	}
+}
