@@ -35,8 +35,9 @@ struct ColumnData
 	std::shared_ptr<Image> imageValue;  // Shared pointer to Image from FFXIDat
 	double numberValue;
 	int64_t intValue;
+	bool editable;
 	
-	ColumnData() : type(ColumnDataType::Text), numberValue(0.0), intValue(0) {}
+	ColumnData() : type(ColumnDataType::Text), numberValue(0.0), intValue(0), editable(true) {}
 	
 	// Helper constructors
 	static ColumnData MakeText(const std::wstring& text)
@@ -88,8 +89,9 @@ struct ContentItem
 	int customHeight;  // Custom height for multi-line items (0 = use default)
 	std::shared_ptr<Image> image;  // For storing Image object (StatusData icon, etc.)
 	ContentItemType type;
+	bool editable;
 	
-	ContentItem() : index(0), type(ContentItemType::SingleLine), customHeight(0) {}
+	ContentItem() : index(0), type(ContentItemType::SingleLine), customHeight(0), editable(true) {}
 	
 	~ContentItem()
 	{

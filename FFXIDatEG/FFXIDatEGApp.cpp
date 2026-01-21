@@ -109,6 +109,36 @@ int FFXIDatEGApp::Run()
     MSG msg;
     while (GetMessage(&msg, nullptr, 0, 0))
     {
+        // Pre-process keyboard shortcuts for ContentView and TreeView
+        if (msg.message == WM_KEYDOWN)
+        {
+            HWND focusedWnd = GetFocus();
+            // Check if focused window is ContentView or TreeView
+            if (focusedWnd != nullptr)
+            {
+                wchar_t className[256];
+                GetClassNameW(focusedWnd, className, 256);
+                
+                // ContentView (custom class) or TreeView (SysTreeView32)
+                if (wcscmp(className, L"FFXIDatEGContentView") == 0 || 
+                    wcscmp(className, L"SysTreeView32") == 0)
+                {
+                    if (msg.wParam == VK_F3)
+                    {
+                        // Find Next
+                        PostMessage(mainFrame->GetHandle(), WM_COMMAND, MAKEWPARAM(2052, 0), 0);
+                        continue; // Skip normal message processing
+                    }
+                    else if (msg.wParam == 'F' && (GetKeyState(VK_CONTROL) & 0x8000))
+                    {
+                        // Ctrl+F - Find
+                        PostMessage(mainFrame->GetHandle(), WM_COMMAND, MAKEWPARAM(2051, 0), 0);
+                        continue; // Skip normal message processing
+                    }
+                }
+            }
+        }
+        
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }

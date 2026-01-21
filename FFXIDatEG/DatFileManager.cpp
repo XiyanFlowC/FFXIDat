@@ -800,9 +800,11 @@ bool DatFileManager::LoadItemDataFile(const std::filesystem::path& filePath, con
 	if (maxCols == 0) maxCols = 1;
 
 
-	contentView->SetColumnCount(maxCols + 2);
+	// extra columns for non-editable metadata (Flags/Stack/Type)
+	const int extraCols = 3;
+	contentView->SetColumnCount(maxCols + 2 + extraCols);
 	contentView->SetColumnTitle(0, L"ID");
-contentView->SetColumnWidth(0, 60);
+	contentView->SetColumnWidth(0, 60);
 	contentView->SetColumnTitle(1, L"Icon");
 	contentView->SetColumnWidth(1, 40);
 	for (int col = 0; col < maxCols; ++col)
@@ -811,6 +813,15 @@ contentView->SetColumnWidth(0, 60);
 		contentView->SetColumnTitle(col + 2, colName);
 		contentView->SetColumnWidth(col + 2, 300);
 	}
+
+	// Append non-editable columns at the end
+	int appendedBase = 2 + maxCols;
+	contentView->SetColumnTitle(appendedBase + 0, L"Flags");
+	contentView->SetColumnWidth(appendedBase + 0, 150);
+	contentView->SetColumnTitle(appendedBase + 1, L"Stack");
+	contentView->SetColumnWidth(appendedBase + 1, 60);
+	/*contentView->SetColumnTitle(appendedBase + 2, L"Type");
+	contentView->SetColumnWidth(appendedBase + 2, 80);*/
 
 	for (const auto& datum : m_currentItemData->data)
 	{
@@ -847,6 +858,50 @@ contentView->SetColumnWidth(0, 60);
 			{
 				item->columns.push_back(ColumnData::MakeText(L"[Binary]"));
 			}
+		}
+
+		// Append non-editable metadata columns
+		{
+			// Combined flags: Alt / Ex / Rare (others can be added later)
+			std::wstring flagsStr;
+			const auto& flg = datum.flags();
+			if (flg.is_alt) {
+				if (!flagsStr.empty()) flagsStr += L" ";
+				flagsStr += L"Alt";
+			}
+			if (flg.is_ex) {
+				if (!flagsStr.empty()) flagsStr += L" ";
+				flagsStr += L"Ex";
+			}
+			if (flg.is_rare) {
+				if (!flagsStr.empty()) flagsStr += L" ";
+				flagsStr += L"Rare";
+			}
+			if (flagsStr.empty()) flagsStr = L"-";
+
+			ColumnData flagsCol = ColumnData::MakeText(flagsStr);
+			flagsCol.editable = false;
+			item->columns.push_back(flagsCol);
+
+			// Stack size
+			ColumnData stackCol = ColumnData::MakeInteger(datum.stack_size());
+			stackCol.editable = false;
+			item->columns.push_back(stackCol);
+
+			// Spec type as text
+			/*std::wstring typeStr;
+			switch (datum.spec_type) {
+			case ItemSpecType::WEAPON: typeStr = L"WEAPON"; break;
+			case ItemSpecType::ARMOUR: typeStr = L"ARMOUR"; break;
+			case ItemSpecType::USABLE: typeStr = L"USABLE"; break;
+			case ItemSpecType::PUPPET: typeStr = L"PUPPET"; break;
+			case ItemSpecType::SLIP:   typeStr = L"SLIP"; break;
+			case ItemSpecType::CURRENCY: typeStr = L"CURRENCY"; break;
+			case ItemSpecType::NORMAL: default: typeStr = L"NORMAL"; break;
+			}
+			ColumnData typeCol = ColumnData::MakeText(typeStr);
+			typeCol.editable = false;
+			item->columns.push_back(typeCol);*/
 		}
 
 		item->customHeight = 3 * 24;

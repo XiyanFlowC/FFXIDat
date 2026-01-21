@@ -21,6 +21,9 @@ public:
 	bool Create(HINSTANCE hInstance);
 	void Show();
 	
+	// Get window handle for message forwarding
+	HWND GetHandle() const { return m_hwnd; }
+	
 private:
 	static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	

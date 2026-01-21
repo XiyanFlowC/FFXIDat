@@ -335,6 +335,18 @@ void ContentView::BeginEdit(int index, int column)
 	
 	EndEdit(false);  // End any existing edit
 
+	if (m_items[index]->editable == false)
+	{
+		// Item is not editable
+		return;
+	}
+
+	if (m_items[index]->columns[column].editable == false)
+	{
+		// Column is not editable
+		return;
+	}
+
 	if (m_items[index]->columns[column].type != ColumnDataType::Text &&
 		m_items[index]->columns[column].type != ColumnDataType::MultilineText)
 	{
