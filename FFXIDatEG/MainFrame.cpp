@@ -328,11 +328,11 @@ void MainFrame::OnTreeItemActivated(HTREEITEM hItem)
 		statusText = LOC(L"Status.Loaded");
 		statusText += L": ";
 		statusText += name;
-		statusText += L" (" + m_fileManager->GetDatFilePath(info->fileId, info->romFolder).wstring() + L")";
+		statusText += L" (" + m_fileManager->GetDatFilePath(info->localFileId, info->romFolder).wstring() + L")";
 		SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
 		
 		// Store current file path for save operation
-		m_currentFilePath = m_fileManager->GetDatFilePath(info->fileId, info->romFolder);
+		m_currentFilePath = m_fileManager->GetDatFilePath(info->localFileId, info->romFolder);
 	}
 	else
 	{

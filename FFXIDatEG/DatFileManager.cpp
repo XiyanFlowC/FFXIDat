@@ -1,6 +1,7 @@
 #include "DatFileManager.h"
 #include "ContentView.h"
 #include <sstream>
+#include <fstream>
 #include <ItemData.h>
 #include <DMsg.h>
 #include <XiString.h>
@@ -49,28 +50,15 @@ DatFileManager::~DatFileManager()
 {
 }
 
-void DatFileManager::LoadROMDefinition(const std::filesystem::path& csvPath,
-									   HWND hTreeView, HTREEITEM parentNode, bool cateSub)
+std::vector<DatFileInfo> DatFileManager::LoadROMFileInfos(const std::filesystem::path& csvPath)
 {
 	// Extract ROM folder name from CSV filename
-	// ROM.csv -> "ROM"
-	// ROM2.csv -> "ROM2"
-	// ROM3.csv -> "ROM3"
 	std::string csvName = csvPath.stem().string();
-	std::string romFolder = csvName;  // Assume filename without extension is the ROM folder
-	
+	std::string romFolder = csvName;
+
+	std::vector<DatFileInfo> fileInfos;
 	CsvFile csv(csvPath, std::ios::in | std::ios::binary);
-	
-	// Structure to hold file entry information for batch processing
-	struct FileEntry {
-		int fileId;
-		DatFileInfo info;
-		std::string friendlyName;
-		std::string categoryPath;
-	};
-	
-	std::vector<FileEntry> fileEntries;
-	
+
 	while (!csv.IsEof())
 	{
 		// Read file ID
@@ -80,18 +68,18 @@ void DatFileManager::LoadROMDefinition(const std::filesystem::path& csvPath,
 			csv.NextLine();
 			continue;
 		}
-		
+
 		// Read file type
 		std::u8string fileType = csv.IsEol() ? u8"" : csv.NextCell();
-		
+
 		// Read language
 		std::u8string language = csv.IsEol() ? u8"" : csv.NextCell();
-		
+
 		// Read category (friendly name)
 		std::u8string category = csv.IsEol() ? u8"" : csv.NextCell();
-		
+
 		csv.NextLine();
-		
+
 		if (fileType.empty())
 			continue;
 
@@ -100,33 +88,22 @@ void DatFileManager::LoadROMDefinition(const std::filesystem::path& csvPath,
 		{
 			continue;
 		}
-		
+
 		try
 		{
 			// Parse file ID
 			int fileId = std::stoi(xybase::string::to_string(fileIdStr));
-			
+
 			// Create file info
 			DatFileInfo info;
-			info.fileId = fileId;
+			info.localFileId = fileId;
 			info.fileType = xybase::string::to_string(fileType);
 			info.language = xybase::string::to_string(language);
 			info.category = xybase::string::to_string(category);
-			info.romFolder = romFolder;  // Set from filename, not from CSV
-			
-			// Create friendly name - use only the last part of category for leaf nodes
-			std::string displayCategory = info.category;
-			if (cateSub && !displayCategory.empty())
-			{
-				// Extract last part after final '/'
-				size_t lastSlash = displayCategory.rfind('/');
-				if (lastSlash != std::string::npos)
-				{
-					displayCategory = displayCategory.substr(lastSlash + 1);
-				}
-			}
-			
-			std::string friendlyName = displayCategory;
+			info.romFolder = romFolder;
+
+			// Create friendly name
+			std::string friendlyName = info.category;
 			if (!friendlyName.empty() && !info.fileType.empty())
 				friendlyName += " [" + info.fileType + "]";
 			if (!friendlyName.empty() && !info.language.empty())
@@ -137,52 +114,60 @@ void DatFileManager::LoadROMDefinition(const std::filesystem::path& csvPath,
 			{
 				friendlyName = romFolder + "/" + std::to_string(fileId);
 			}
-			
+
 			info.friendlyName = friendlyName;
-			m_fileRegistry[fileId] = info;
-			
-			// Store entry for batch processing
-			FileEntry entry;
-			entry.fileId = fileId;
-			entry.info = info;
-			entry.friendlyName = friendlyName;
-			entry.categoryPath = info.category;
-			fileEntries.push_back(entry);
+			fileInfos.push_back(info);
 		}
 		catch (const std::exception&)
 		{
 			continue;
 		}
 	}
-	
+
 	csv.Close();
-	
-	// Sort entries: by category path (lexicographically)
-	std::sort(fileEntries.begin(), fileEntries.end(),
-		[](const FileEntry& a, const FileEntry& b) {
-			return a.categoryPath < b.categoryPath;
+	return fileInfos;
+}
+
+void DatFileManager::BuildFileTree(const std::vector<DatFileInfo>& fileInfos,
+	HWND hTreeView, HTREEITEM parentNode, bool cateSub)
+{
+	// Sort entries: when cateSub is enabled, prioritize entries with subcategories (containing '/') first
+	std::vector<DatFileInfo> sortedInfos = fileInfos;
+	std::sort(sortedInfos.begin(), sortedInfos.end(),
+		[cateSub](const DatFileInfo& a, const DatFileInfo& b) {
+			if (cateSub) {
+				// Check if categories have subcategories (contain '/')
+				bool aHasSubcat = a.category.find('/') != std::string::npos;
+				bool bHasSubcat = b.category.find('/') != std::string::npos;
+				
+				// If one has subcategories and the other doesn't, subcategories come first
+				if (aHasSubcat != bHasSubcat) {
+					return aHasSubcat;
+				}
+			}
+			// Otherwise sort lexicographically by category
+			return (a.category == b.category) ? a.localFileId < b.localFileId : a.category < b.category;
 		});
-	
+
 	// Map to track category hierarchy nodes when cateSub is enabled
 	std::map<std::string, HTREEITEM> categoryNodes;
-	
+
 	// Process sorted entries
-	for (const auto& entry : fileEntries)
+	for (const auto& info : sortedInfos)
 	{
 		HTREEITEM hParentNode = parentNode;
-		
+
 		// If cateSub is enabled and category is not empty, create/use category hierarchy
-		if (cateSub && !entry.categoryPath.empty())
+		if (cateSub && !info.category.empty())
 		{
 			// Split category by "/" to create hierarchy
-			// e.g., "sys/mis/sd" -> creates nodes: sys -> mis -> sd
 			std::string currentPath;
 			size_t lastPos = 0;
 			size_t pos = 0;
-			
-			while ((pos = entry.categoryPath.find('/', lastPos)) != std::string::npos)
+
+			while ((pos = info.category.find('/', lastPos)) != std::string::npos)
 			{
-				std::string pathPart = entry.categoryPath.substr(lastPos, pos - lastPos);
+				std::string pathPart = info.category.substr(lastPos, pos - lastPos);
 				if (!pathPart.empty())
 				{
 					// Build the full path for this level
@@ -190,137 +175,47 @@ void DatFileManager::LoadROMDefinition(const std::filesystem::path& csvPath,
 						currentPath += "/" + pathPart;
 					else
 						currentPath = pathPart;
-					
+
 					// Check if this node already exists
 					if (categoryNodes.find(currentPath) == categoryNodes.end())
 					{
-						// Determine insertion position to maintain sorted order
-						HTREEITEM hInsertAfter = TVI_FIRST;
-						HTREEITEM hParentForThisNode = (currentPath == pathPart) ? parentNode : categoryNodes[currentPath.substr(0, currentPath.rfind('/'))];
-						
-						// Find correct insertion position by comparing with existing children
-						HTREEITEM hChild = TreeView_GetChild(hTreeView, hParentForThisNode);
-						HTREEITEM hLastChild = TVI_FIRST;
-						
-						while (hChild != nullptr)
-						{
-							wchar_t buffer[256];
-							TVITEMW item = { 0 };
-							item.hItem = hChild;
-							item.mask = TVIF_TEXT | TVIF_PARAM;
-							item.pszText = buffer;
-							item.cchTextMax = 256;
-							
-							if (TreeView_GetItem(hTreeView, &item))
-							{
-								std::wstring existingText(buffer);
-								std::wstring newText(pathPart.begin(), pathPart.end());
-								
-								// Categories (nodes without lParam) should come before leaf items (with lParam)
-								bool isExistingCategory = (item.lParam == 0);
-								
-								if (isExistingCategory)
-								{
-									// Compare alphabetically with other categories
-									if (newText < existingText)
-									{
-										hInsertAfter = hLastChild;
-										break;
-									}
-									hLastChild = hChild;
-								}
-								else
-								{
-									// Insert before first leaf item (categories come first)
-									hInsertAfter = hLastChild;
-									break;
-								}
-							}
-							
-							hChild = TreeView_GetNextSibling(hTreeView, hChild);
-							if (hChild != nullptr)
-								hLastChild = TreeView_GetPrevSibling(hTreeView, hChild);
-						}
-						
-						if (hChild == nullptr)
-							hInsertAfter = TVI_LAST;
-						
-						// Create new category node
+						// Create category node - display only the leaf name, not the full path
 						TVINSERTSTRUCTW tvis = { 0 };
-						tvis.hParent = hParentForThisNode;
-						tvis.hInsertAfter = hInsertAfter;
+						tvis.hParent = (currentPath == pathPart) ? parentNode : categoryNodes[currentPath.substr(0, currentPath.rfind('/'))];
+						tvis.hInsertAfter = TVI_LAST;
 						tvis.item.mask = TVIF_TEXT;
-						
+
+						// Use only the pathPart (leaf name) for display, not the full path
 						std::wstring wCategoryName(pathPart.begin(), pathPart.end());
 						tvis.item.pszText = const_cast<LPWSTR>(wCategoryName.c_str());
-						
+
 						HTREEITEM hCategoryNode = TreeView_InsertItem(hTreeView, &tvis);
 						categoryNodes[currentPath] = hCategoryNode;
 					}
-					
+
 					hParentNode = categoryNodes[currentPath];
 				}
 				lastPos = pos + 1;
 			}
 		}
-		
-		// Find correct insertion position for leaf item (alphabetically after all categories)
-		HTREEITEM hInsertAfter = TVI_FIRST;
-		HTREEITEM hChild = TreeView_GetChild(hTreeView, hParentNode);
-		HTREEITEM hLastChild = TVI_FIRST;
-		
-		while (hChild != nullptr)
-		{
-			wchar_t buffer[512];
-			TVITEMW item = { 0 };
-			item.hItem = hChild;
-			item.mask = TVIF_TEXT | TVIF_PARAM;
-			item.pszText = buffer;
-			item.cchTextMax = 512;
-			
-			if (TreeView_GetItem(hTreeView, &item))
-			{
-				std::wstring existingText(buffer);
-				std::wstring newText(entry.friendlyName.begin(), entry.friendlyName.end());
-				
-				bool isExistingCategory = (item.lParam == 0);
-				
-				if (!isExistingCategory)
-				{
-					// Compare with other leaf items alphabetically
-					if (newText < existingText)
-					{
-						hInsertAfter = hLastChild;
-						break;
-					}
-				}
-				
-				hLastChild = hChild;
-			}
-			
-			hChild = TreeView_GetNextSibling(hTreeView, hChild);
-		}
-		
-		if (hChild == nullptr)
-			hInsertAfter = TVI_LAST;
-		
+
 		// Add file item to tree under appropriate parent
 		TVINSERTSTRUCTW tvis = { 0 };
 		tvis.hParent = hParentNode;
-		tvis.hInsertAfter = hInsertAfter;
+		tvis.hInsertAfter = TVI_LAST;
 		tvis.item.mask = TVIF_TEXT | TVIF_PARAM;
-		
-		std::wstring wName(entry.friendlyName.begin(), entry.friendlyName.end());
+
+		std::wstring wName(info.friendlyName.begin(), info.friendlyName.end());
 		tvis.item.pszText = const_cast<LPWSTR>(wName.c_str());
-		tvis.item.lParam = entry.fileId;
-		
+		tvis.item.lParam = GetGlobalFileId(info.romFolder, info.localFileId);
+
 		HTREEITEM hItem = TreeView_InsertItem(hTreeView, &tvis);
-		m_treeItemToFileId[hItem] = entry.fileId;
+		m_treeItemToFileId[hItem] = GetGlobalFileId(info.romFolder, info.localFileId);
 	}
 }
 
 void DatFileManager::LoadAllROMDefinitions(const std::filesystem::path& csvDir,
-										  HWND hTreeView, bool cateSub)
+	HWND hTreeView, bool cateSub)
 {
 	// Add root item
 	TVINSERTSTRUCTW tvis = { 0 };
@@ -329,49 +224,325 @@ void DatFileManager::LoadAllROMDefinitions(const std::filesystem::path& csvDir,
 	tvis.item.mask = TVIF_TEXT;
 	tvis.item.pszText = const_cast<LPWSTR>(L"FFXI Data Files");
 	HTREEITEM hRoot = TreeView_InsertItem(hTreeView, &tvis);
-	
-	// Load ROM.csv, ROM2.csv, ROM3.csv, etc.
+
+	// Collect all file infos from different sources
+	std::vector<DatFileInfo> allFileInfos;
+
+	// Priority 1: Load from FLIST.csv first
+	std::filesystem::path flistPath = csvDir / "FLIST.csv";
+	if (std::filesystem::exists(flistPath))
+	{
+		auto flistInfos = LoadFLISTFileInfos(flistPath);
+		allFileInfos.insert(allFileInfos.end(), flistInfos.begin(), flistInfos.end());
+	}
+
+	// Priority 2: Load ROM.csv, ROM2.csv, ROM3.csv, etc. as fallback
 	std::vector<std::pair<std::string, std::filesystem::path>> romFiles;
-	
+
 	for (const auto& entry : std::filesystem::directory_iterator(csvDir))
 	{
 		if (entry.is_regular_file() && entry.path().extension() == L".csv")
 		{
 			std::string filename = entry.path().stem().string();
 			// Check if filename matches ROM pattern (ROM, ROM2, ROM3, etc.)
-			if (filename == "ROM" || (filename.length() > 3 && 
-				filename.substr(0, 3) == "ROM" && 
+			if (filename == "ROM" || (filename.length() > 3 &&
+				filename.substr(0, 3) == "ROM" &&
 				std::all_of(filename.begin() + 3, filename.end(), ::isdigit)))
 			{
 				romFiles.push_back({ filename, entry.path() });
 			}
 		}
 	}
-	
+
 	// Sort so ROM comes first, then ROM2, ROM3, etc.
-	std::sort(romFiles.begin(), romFiles.end(), 
+	std::sort(romFiles.begin(), romFiles.end(),
 		[](const auto& a, const auto& b) {
 			if (a.first == "ROM") return true;
 			if (b.first == "ROM") return false;
 			return a.first < b.first;
 		});
-	
-	// Load each ROM file
+
+	// Load legacy ROM files and add entries that don't exist in FLIST
 	for (const auto& [romName, csvPath] : romFiles)
 	{
 		if (std::filesystem::exists(csvPath))
 		{
-			std::wstring wRomName = xybase::string::to_wstring(romName);
-			tvis.hParent = hRoot;
-			tvis.item.pszText = const_cast<LPWSTR>(wRomName.c_str());
-			HTREEITEM hRomNode = TreeView_InsertItem(hTreeView, &tvis);
+			auto legacyInfos = LoadROMFileInfos(csvPath);
 
-			// ╪сть CSV нд╪Ч
-			LoadROMDefinition(csvPath, hTreeView, hRomNode, cateSub);
+			// Only add legacy entries that don't conflict with FLIST entries
+			for (const auto& legacyInfo : legacyInfos)
+			{
+				// Check if this entry already exists (by comparing category+language+type)
+				bool exists = std::any_of(allFileInfos.begin(), allFileInfos.end(),
+					[&legacyInfo](const DatFileInfo& existing) {
+						return existing.category == legacyInfo.category &&
+							existing.language == legacyInfo.language &&
+							existing.fileType == legacyInfo.fileType;
+					});
+
+				if (!exists)
+				{
+					allFileInfos.push_back(legacyInfo);
+					m_fileRegistry[GetGlobalFileId(legacyInfo.romFolder, legacyInfo.localFileId)] = legacyInfo;
+				}
+			}
+		}
+	}
+
+	// Now build tree from combined file infos using the same structure as LoadROMDefinition
+	BuildFileTree(allFileInfos, hTreeView, hRoot, cateSub);
+
+	TreeView_Expand(hTreeView, hRoot, TVE_EXPAND);
+}
+
+std::vector<DatFileInfo> DatFileManager::LoadFLISTFileInfos(const std::filesystem::path& flistPath)
+{
+	std::vector<DatFileInfo> fileInfos;
+	std::map<std::string, int> nameToGlobalId; // Track duplicate names by language+name
+
+	CsvFile csv(flistPath, std::ios::in | std::ios::binary);
+
+	while (!csv.IsEof())
+	{
+		// Read global ID
+		std::u8string globalIdStr = csv.NextCell();
+		if (globalIdStr.empty())
+		{
+			csv.NextLine();
+			continue;
+		}
+
+		// Read file type
+		std::u8string fileType = csv.IsEol() ? u8"" : csv.NextCell();
+
+		// Read language
+		std::u8string language = csv.IsEol() ? u8"" : csv.NextCell();
+
+		// Read category (friendly name)
+		std::u8string category = csv.IsEol() ? u8"" : csv.NextCell();
+
+		csv.NextLine();
+
+		if (fileType.empty())
+			continue;
+
+		// Apply language filter
+		if (!m_languageFilter.empty() && language != xybase::string::to_utf8(m_languageFilter))
+		{
+			continue;
+		}
+
+		try
+		{
+			// Parse global ID
+			int globalId = std::stoi(xybase::string::to_string(globalIdStr));
+
+			// Create unique key for duplicate detection (language + category)
+			std::string uniqueKey = xybase::string::to_string(language) + "|" + xybase::string::to_string(category);
+
+			// Handle duplicates - use the last occurrence
+			if (nameToGlobalId.find(uniqueKey) != nameToGlobalId.end())
+			{
+				// Remove previous entry with same name+language
+				int prevGlobalId = nameToGlobalId[uniqueKey];
+				auto it = std::find_if(fileInfos.begin(), fileInfos.end(),
+					[prevGlobalId](const DatFileInfo& info) {
+						return info.localFileId == prevGlobalId;
+					});
+				if (it != fileInfos.end())
+				{
+					fileInfos.erase(it);
+				}
+			}
+			nameToGlobalId[uniqueKey] = globalId;
+
+			// Validate global ID and get ROM info
+			std::string romFolder;
+			int localFileId;
+			if (!ResolveGlobalId(globalId, romFolder, localFileId))
+			{
+				// Skip this entry if global ID cannot be resolved
+				continue;
+			}
+
+			// Create file info
+			DatFileInfo info;
+			info.localFileId = localFileId;  // Keep global ID as the identifier
+			info.fileType = xybase::string::to_string(fileType);
+			info.language = xybase::string::to_string(language);
+			info.category = xybase::string::to_string(category);
+			info.romFolder = romFolder;
+
+			// Create friendly name
+			std::string friendlyName = info.category;
+			if (!friendlyName.empty() && !info.fileType.empty())
+				friendlyName += " [" + info.fileType + "]";
+			if (!friendlyName.empty() && !info.language.empty())
+				friendlyName += " (" + info.language + ")";
+			if (!friendlyName.empty())
+				friendlyName += " - " + std::to_string(globalId);
+			if (friendlyName.empty())
+			{
+				friendlyName = romFolder + "/" + std::to_string(localFileId);
+			}
+
+			info.friendlyName = friendlyName;
+			fileInfos.push_back(info);
+			m_fileRegistry[globalId] = info;
+		}
+		catch (const std::exception&)
+		{
+			continue;
+		}
+	}
+
+	csv.Close();
+	return fileInfos;
+}
+
+std::vector<uint8_t> DatFileManager::ReadVTable(int romNumber) const
+{
+	// Check cache first
+	auto it = m_vtableCache.find(romNumber);
+	if (it != m_vtableCache.end())
+	{
+		return it->second;
+	}
+
+	std::vector<uint8_t> vtable;
+
+	// Construct VTABLE filename based on ROM number
+	std::filesystem::path vtablePath;
+	if (romNumber == 1)
+	{
+		// For ROM 1, VTABLE is in game root directory
+		vtablePath = m_gamePath / "VTABLE.DAT";
+	}
+	else
+	{
+		// For ROM 2+, VTABLE is in ROM{i} directory
+		std::string romDir = "ROM" + std::to_string(romNumber);
+		std::string vtableFile = "VTABLE" + std::to_string(romNumber) + ".DAT";
+		vtablePath = m_gamePath / romDir / vtableFile;
+	}
+
+	// Read VTABLE file
+	if (std::filesystem::exists(vtablePath))
+	{
+		std::ifstream file(vtablePath, std::ios::binary);
+		if (file.is_open())
+		{
+			// Get file size
+			file.seekg(0, std::ios::end);
+			size_t fileSize = file.tellg();
+			file.seekg(0, std::ios::beg);
+
+			// Read entire file
+			vtable.resize(fileSize);
+			file.read(reinterpret_cast<char*>(vtable.data()), fileSize);
+		}
+	}
+
+	// Cache the result
+	m_vtableCache[romNumber] = vtable;
+	return vtable;
+}
+
+std::vector<uint16_t> DatFileManager::ReadFTable(int romNumber) const
+{
+	// Check cache first
+	auto it = m_ftableCache.find(romNumber);
+	if (it != m_ftableCache.end())
+	{
+		return it->second;
+	}
+
+	std::vector<uint16_t> ftable;
+
+	// Construct FTABLE filename based on ROM number
+	std::filesystem::path ftablePath;
+	if (romNumber == 1)
+	{
+		// For ROM 1, FTABLE is in game root directory
+		ftablePath = m_gamePath / "FTABLE.DAT";
+	}
+	else
+	{
+		// For ROM 2+, FTABLE is in ROM{i} directory
+		std::string romDir = "ROM" + std::to_string(romNumber);
+		std::string ftableFile = "FTABLE" + std::to_string(romNumber) + ".DAT";
+		ftablePath = m_gamePath / romDir / ftableFile;
+	}
+
+	// Read FTABLE file
+	if (std::filesystem::exists(ftablePath))
+	{
+		std::ifstream file(ftablePath, std::ios::binary);
+		if (file.is_open())
+		{
+			// Get file size
+			file.seekg(0, std::ios::end);
+			size_t fileSize = file.tellg();
+			file.seekg(0, std::ios::beg);
+
+			// Read entire file as 16-bit integers
+			size_t elementCount = fileSize / sizeof(uint16_t);
+			ftable.resize(elementCount);
+			file.read(reinterpret_cast<char*>(ftable.data()), fileSize);
+		}
+	}
+
+	// Cache the result
+	m_ftableCache[romNumber] = ftable;
+	return ftable;
+}
+
+bool DatFileManager::ResolveGlobalId(int globalId, std::string& romFolder, int& localFileId) const
+{
+	// Try all ROM numbers from 1 to 19
+	for (int romNumber = 1; romNumber <= 19; ++romNumber)
+	{
+		// Read VTABLE and FTABLE for this ROM
+		std::vector<uint8_t> vtable = ReadVTable(romNumber);
+		std::vector<uint16_t> ftable = ReadFTable(romNumber);
+		
+		// Check if files exist and are valid
+		if (vtable.empty() || ftable.empty())
+			continue;
+		
+		// Check bounds
+		if (globalId >= static_cast<int>(vtable.size()) || 
+			(globalId) >= static_cast<int>(ftable.size()))
+			continue;
+		
+		// Get ROM volume from VTABLE
+		uint8_t romVolume = vtable[globalId];
+		
+		// Check if this ROM matches
+		if (romVolume != romNumber)
+			continue;
+		
+		// Get encoded value from FTABLE
+		localFileId = ftable[globalId];
+		
+		// Set ROM folder name
+		if (romNumber == 1)
+		{
+			romFolder = "ROM";
+		}
+		else
+		{
+			romFolder = "ROM" + std::to_string(romNumber);
+		}
+		
+		std::filesystem::path datPath = GetDatFilePath(localFileId, romFolder);
+		if (std::filesystem::exists(datPath))
+		{
+			return true;
 		}
 	}
 	
-	TreeView_Expand(hTreeView, hRoot, TVE_EXPAND);
+	return false;
 }
 
 const DatFileInfo* DatFileManager::GetFileInfo(HTREEITEM itemId) const
@@ -398,6 +569,57 @@ std::filesystem::path DatFileManager::GetDatFilePath(int fileId,
 	return m_gamePath / romFolder / oss.str();
 }
 
+std::filesystem::path DatFileManager::GetDatFilePath(int fileId) const
+{
+	auto registryIt = m_fileRegistry.find(fileId);
+	if (registryIt != m_fileRegistry.end())
+	{
+		return GetDatFilePath(registryIt->second.localFileId,
+			registryIt->second.romFolder);
+	}
+
+	std::string romFolder = "ROM";
+	int localFileId;
+	ResolveGlobalId(fileId, romFolder, localFileId);
+	return GetDatFilePath(localFileId, romFolder);
+}
+
+int DatFileManager::GetGlobalFileId(const std::string& romFolder, int localFileId) const
+{
+	// search in corresponding ROM
+	if (romFolder.substr(0, 3) != "ROM")
+		return -1;
+	int romNumber = 1;
+	if (romFolder.length() > 3)
+	{
+		try
+		{
+			romNumber = std::stoi(romFolder.substr(3));
+		}
+		catch (const std::exception&)
+		{
+			return -1;
+		}
+	}
+
+	// Read VTABLE and FTABLE for this ROM
+	std::vector<uint8_t> vtable = ReadVTable(romNumber);
+	std::vector<uint16_t> ftable = ReadFTable(romNumber);
+	// Search for matching localFileId in FTABLE
+	for (size_t globalId = 0; globalId < ftable.size(); ++globalId)
+	{
+		if (ftable[globalId] == static_cast<uint16_t>(localFileId))
+		{
+			// Check if VTABLE matches ROM number
+			if (globalId < vtable.size() && vtable[globalId] == romNumber)
+			{
+				return static_cast<int>(globalId);
+			}
+		}
+	}
+	return -1;
+}
+
 std::pair<int, int> DatFileManager::CalculateDatPath(int fileId)
 {
 	int dir = fileId / 128;
@@ -421,7 +643,7 @@ bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentVi
 {
 	m_currentFile = info;
 	
-	std::filesystem::path filePath = GetDatFilePath(info.fileId, info.romFolder);
+	std::filesystem::path filePath = GetDatFilePath(info.localFileId, info.romFolder);
 	
 	if (!std::filesystem::exists(filePath))
 	{
@@ -454,10 +676,6 @@ bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentVi
 		else if (info.fileType == "evsb")
 		{
 			return LoadEventStringFile(filePath, contentView);
-		}
-		else if (info.fileType == "sd")
-		{
-			return LoadStatusDataFile(filePath, contentView);
 		}
 		else if (info.fileType == "sd")
 		{
@@ -801,7 +1019,7 @@ bool DatFileManager::LoadItemDataFile(const std::filesystem::path& filePath, con
 
 
 	// extra columns for non-editable metadata (Flags/Stack/Type)
-	const int extraCols = 3;
+	const int extraCols = 2;
 	contentView->SetColumnCount(maxCols + 2 + extraCols);
 	contentView->SetColumnTitle(0, L"ID");
 	contentView->SetColumnWidth(0, 60);
@@ -1235,9 +1453,11 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 				
 				auto& datum = m_currentItemData->data[i];
 				
-				// Skip columns 0 (ID) and 1 (Icon), start from column 2
-				size_t cellIndex = 0;
-				for (size_t col = 2; col < item->columns.size() && cellIndex < datum.row().GetCells().size(); ++col, ++cellIndex)
+			// Skip columns 0 (ID) and 1 (Icon), and stop before non-editable columns
+			// Non-editable columns are the last 2 columns (Flags, Stack)
+			size_t editableColCount = item->columns.size() >= 2 ? item->columns.size() - 2 : 0;
+			size_t cellIndex = 0;
+			for (size_t col = 2; col < editableColCount && cellIndex < datum.row().GetCells().size(); ++col, ++cellIndex)
 				{
 					const ColumnData& colData = item->columns[col];
 					Cell& cell = datum.row().GetCells()[cellIndex];
@@ -1388,5 +1608,3 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 		return false;
 	}
 }
-
-

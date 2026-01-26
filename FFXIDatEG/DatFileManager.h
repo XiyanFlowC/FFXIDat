@@ -23,7 +23,7 @@ class Image;
 
 struct DatFileInfo
 {
-	int fileId;
+	int localFileId;
 	std::string friendlyName;
 	std::string fileType;
 	std::string language;
@@ -39,11 +39,7 @@ public:
 	explicit DatFileManager(const std::filesystem::path& gamePath);
 	~DatFileManager();
 	
-	// Load ROM definition from CSV
-	void LoadROMDefinition(const std::filesystem::path& csvPath,
-						  HWND hTreeView, HTREEITEM parentNode, bool cateSub);
-	
-	// Load all ROM definition files (ROM.csv, ROM2.csv, ROM3.csv, etc.)
+	// Load all ROM definition files (FLIST.csv first, then ROM.csv, ROM2.csv, ROM3.csv, etc. as fallback)
 	void LoadAllROMDefinitions(const std::filesystem::path& csvDir,
 							  HWND hTreeView, bool cateSub);
 	
@@ -52,6 +48,8 @@ public:
 	
 	// Convert file ID to actual file path
 	std::filesystem::path GetDatFilePath(int fileId, const std::string& romFolder) const;
+
+	std::filesystem::path GetDatFilePath(int fileId) const;
 	
 	// Check if a cell contains image data
 	bool IsImageCell(int row, int col) const;
@@ -62,7 +60,6 @@ public:
 	// Load DAT file and populate content view
 	bool LoadDatFile(const DatFileInfo& info, ContentView* contentView);
 
-
 	void SetLanguageFilter(const std::string& language) { m_languageFilter = language; }
 	std::string GetLanguageFilter() const { return m_languageFilter; }
 private:
@@ -70,6 +67,8 @@ private:
 	std::map<int, DatFileInfo> m_fileRegistry;
 	std::map<HTREEITEM, int> m_treeItemToFileId;
 	DatFileInfo m_currentFile;
+	mutable std::map<int, std::vector<uint8_t>> m_vtableCache;
+	mutable std::map<int, std::vector<uint16_t>> m_ftableCache;
 
 	std::string m_languageFilter = "";  // Empty string means show all
 	
@@ -82,9 +81,23 @@ private:
 	std::unique_ptr<FixedPhrase> m_currentFixedPhrase;
 	std::unique_ptr<MonBridge> m_currentMonBridge;
 	std::unique_ptr<RecordsOfEminence> m_currentRoe;
+
+	int GetGlobalFileId(const std::string& romFolder, int localFileId) const;
 	
 	// Calculate DAT file path from ID
 	static std::pair<int, int> CalculateDatPath(int fileId);
+	
+	// Helper methods for VTABLE/FTABLE handling
+	std::vector<uint8_t> ReadVTable(int romNumber) const;
+	std::vector<uint16_t> ReadFTable(int romNumber) const;
+	bool ResolveGlobalId(int globalId, std::string& romFolder, int& localFileId) const;
+	
+	// Load FLIST.csv definition
+	std::vector<DatFileInfo> LoadFLISTFileInfos(const std::filesystem::path& flistPath);
+
+	void BuildFileTree(const std::vector<DatFileInfo>& fileInfos,
+		HWND hTreeView, HTREEITEM parentNode, bool cateSub);
+	std::vector<DatFileInfo> LoadROMFileInfos(const std::filesystem::path& csvPath);
 	
 	// Load specific file types
 	bool LoadDMsgFile(const std::filesystem::path& filePath, ContentView* contentView);

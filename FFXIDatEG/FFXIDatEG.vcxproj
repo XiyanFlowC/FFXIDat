@@ -165,9 +165,6 @@
     <ClCompile Include="SearchDialog.cpp" />
     <ClCompile Include="StringValidator.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="ExampleUsage.txt" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>
