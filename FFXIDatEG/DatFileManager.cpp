@@ -131,87 +131,146 @@ std::vector<DatFileInfo> DatFileManager::LoadROMFileInfos(const std::filesystem:
 void DatFileManager::BuildFileTree(const std::vector<DatFileInfo>& fileInfos,
 	HWND hTreeView, HTREEITEM parentNode, bool cateSub)
 {
-	// Sort entries: when cateSub is enabled, prioritize entries with subcategories (containing '/') first
-	std::vector<DatFileInfo> sortedInfos = fileInfos;
-	std::sort(sortedInfos.begin(), sortedInfos.end(),
-		[cateSub](const DatFileInfo& a, const DatFileInfo& b) {
-			if (cateSub) {
-				// Check if categories have subcategories (contain '/')
-				bool aHasSubcat = a.category.find('/') != std::string::npos;
-				bool bHasSubcat = b.category.find('/') != std::string::npos;
-				
-				// If one has subcategories and the other doesn't, subcategories come first
-				if (aHasSubcat != bHasSubcat) {
-					return aHasSubcat;
-				}
-			}
-			// Otherwise sort lexicographically by category
-			return (a.category == b.category) ? a.localFileId < b.localFileId : a.category < b.category;
-		});
-
-	// Map to track category hierarchy nodes when cateSub is enabled
-	std::map<std::string, HTREEITEM> categoryNodes;
-
-	// Process sorted entries
-	for (const auto& info : sortedInfos)
+	if (!cateSub)
 	{
-		HTREEITEM hParentNode = parentNode;
+		// Original logic for flat list (or when categories disabled)
+		std::vector<DatFileInfo> sortedInfos = fileInfos;
+		std::sort(sortedInfos.begin(), sortedInfos.end(),
+			[](const DatFileInfo& a, const DatFileInfo& b) {
+				return a.localFileId < b.localFileId;
+			});
 
-		// If cateSub is enabled and category is not empty, create/use category hierarchy
-		if (cateSub && !info.category.empty())
+		for (const auto& info : sortedInfos)
 		{
-			// Split category by "/" to create hierarchy
-			std::string currentPath;
-			size_t lastPos = 0;
-			size_t pos = 0;
+			TVINSERTSTRUCTW tvis = { 0 };
+			tvis.hParent = parentNode;
+			tvis.hInsertAfter = TVI_LAST;
+			tvis.item.mask = TVIF_TEXT | TVIF_PARAM;
 
-			while ((pos = info.category.find('/', lastPos)) != std::string::npos)
+			std::wstring wName(info.friendlyName.begin(), info.friendlyName.end());
+			tvis.item.pszText = const_cast<LPWSTR>(wName.c_str());
+			tvis.item.lParam = GetGlobalFileId(info.romFolder, info.localFileId);
+
+			HTREEITEM hItem = TreeView_InsertItem(hTreeView, &tvis);
+			m_treeItemToFileId[hItem] = GetGlobalFileId(info.romFolder, info.localFileId);
+		}
+		return;
+	}
+
+	// 1. Build temporary tree structure
+	struct Node {
+		std::map<std::string, std::unique_ptr<Node>> children;
+		std::vector<const DatFileInfo*> files;
+		std::string name;
+	};
+	
+	Node root;
+
+	for (const auto& info : fileInfos)
+	{
+		Node* current = &root;
+		if (!info.category.empty())
+		{
+			size_t start = 0, pos;
+			while ((pos = info.category.find('/', start)) != std::string::npos)
 			{
-				std::string pathPart = info.category.substr(lastPos, pos - lastPos);
-				if (!pathPart.empty())
+				std::string part = info.category.substr(start, pos - start);
+				if (!part.empty())
 				{
-					// Build the full path for this level
-					if (!currentPath.empty())
-						currentPath += "/" + pathPart;
-					else
-						currentPath = pathPart;
-
-					// Check if this node already exists
-					if (categoryNodes.find(currentPath) == categoryNodes.end())
-					{
-						// Create category node - display only the leaf name, not the full path
-						TVINSERTSTRUCTW tvis = { 0 };
-						tvis.hParent = (currentPath == pathPart) ? parentNode : categoryNodes[currentPath.substr(0, currentPath.rfind('/'))];
-						tvis.hInsertAfter = TVI_LAST;
-						tvis.item.mask = TVIF_TEXT;
-
-						// Use only the pathPart (leaf name) for display, not the full path
-						std::wstring wCategoryName(pathPart.begin(), pathPart.end());
-						tvis.item.pszText = const_cast<LPWSTR>(wCategoryName.c_str());
-
-						HTREEITEM hCategoryNode = TreeView_InsertItem(hTreeView, &tvis);
-						categoryNodes[currentPath] = hCategoryNode;
+					if (current->children.find(part) == current->children.end()) {
+						auto newNode = std::make_unique<Node>();
+						newNode->name = part;
+						current->children[part] = std::move(newNode);
 					}
-
-					hParentNode = categoryNodes[currentPath];
+					current = current->children[part].get();
 				}
-				lastPos = pos + 1;
+				start = pos + 1;
+			}
+			// The part after last '/' is treated as the file name, not a subdirectory
+		}
+		current->files.push_back(&info);
+	}
+
+	// 2. Recursive function to populate UI
+	struct TreeBuilder {
+		DatFileManager* mgr;
+		HWND hTree;
+		
+		void Populate(Node* node, HTREEITEM hParent) {
+			
+			// Part A: Process Folders (Subcategories)
+			// Sort Order: Nodes with sub-sub-folders come first (Non-Leaf Categories), then others
+			std::vector<Node*> sortedInternalNodes;
+			for (auto& pair : node->children) sortedInternalNodes.push_back(pair.second.get());
+
+			std::sort(sortedInternalNodes.begin(), sortedInternalNodes.end(), 
+				[](const Node* a, const Node* b) {
+					bool aHasChildren = !a->children.empty();
+					bool bHasChildren = !b->children.empty();
+					if (aHasChildren != bHasChildren) return aHasChildren; // True before False
+					return a->name < b->name;
+				});
+
+			for (Node* child : sortedInternalNodes)
+			{
+				TVINSERTSTRUCTW tvis = { 0 };
+				tvis.hParent = hParent;
+				tvis.hInsertAfter = TVI_LAST;
+				tvis.item.mask = TVIF_TEXT;
+				
+				std::wstring wName(child->name.begin(), child->name.end());
+				tvis.item.pszText = const_cast<LPWSTR>(wName.c_str());
+
+				HTREEITEM hChild = TreeView_InsertItem(hTree, &tvis);
+				Populate(child, hChild);
+			}
+
+			// Part B: Process Files (Leafs)
+			std::vector<const DatFileInfo*> sortedFiles = node->files;
+			std::sort(sortedFiles.begin(), sortedFiles.end(), 
+				[](const DatFileInfo* a, const DatFileInfo* b) {
+					return a->friendlyName == b->friendlyName ? a->localFileId < b->localFileId : a->friendlyName < b->friendlyName;
+				});
+
+			for (const DatFileInfo* info : sortedFiles)
+			{
+				TVINSERTSTRUCTW tvis = { 0 };
+				tvis.hParent = hParent;
+				tvis.hInsertAfter = TVI_LAST;
+				tvis.item.mask = TVIF_TEXT | TVIF_PARAM;
+
+				// Generate optimized display name
+				std::string leafName;
+				size_t lastSlash = info->category.find_last_of('/');
+				if (lastSlash != std::string::npos)
+					leafName = info->category.substr(lastSlash + 1);
+				else
+					leafName = info->category;
+
+				std::string dispName = leafName;
+				if (!dispName.empty()) dispName += " - ";
+				dispName += std::to_string(info->localFileId);
+				
+				if (!info->fileType.empty()) dispName += " [" + info->fileType + "]";
+				if (!info->language.empty()) dispName += " (" + info->language + ")";
+				
+				// Fallback if empty
+				if (dispName.empty()) dispName = std::to_string(info->localFileId);
+
+				std::wstring wName(dispName.begin(), dispName.end());
+				tvis.item.pszText = const_cast<LPWSTR>(wName.c_str());
+				
+				int globalId = mgr->GetGlobalFileId(info->romFolder, info->localFileId);
+				tvis.item.lParam = globalId;
+
+				HTREEITEM hItem = TreeView_InsertItem(hTree, &tvis);
+				mgr->m_treeItemToFileId[hItem] = globalId;
 			}
 		}
+	};
 
-		// Add file item to tree under appropriate parent
-		TVINSERTSTRUCTW tvis = { 0 };
-		tvis.hParent = hParentNode;
-		tvis.hInsertAfter = TVI_LAST;
-		tvis.item.mask = TVIF_TEXT | TVIF_PARAM;
-
-		std::wstring wName(info.friendlyName.begin(), info.friendlyName.end());
-		tvis.item.pszText = const_cast<LPWSTR>(wName.c_str());
-		tvis.item.lParam = GetGlobalFileId(info.romFolder, info.localFileId);
-
-		HTREEITEM hItem = TreeView_InsertItem(hTreeView, &tvis);
-		m_treeItemToFileId[hItem] = GetGlobalFileId(info.romFolder, info.localFileId);
-	}
+	TreeBuilder builder = { this, hTreeView };
+	builder.Populate(&root, parentNode);
 }
 
 void DatFileManager::LoadAllROMDefinitions(const std::filesystem::path& csvDir,
@@ -617,7 +676,9 @@ int DatFileManager::GetGlobalFileId(const std::string& romFolder, int localFileI
 			}
 		}
 	}
-	return -1;
+
+	// if vtable/ftable not up, return a make up global id
+	return (romNumber << 24) | (localFileId & 0xFFFFFF);
 }
 
 std::pair<int, int> DatFileManager::CalculateDatPath(int fileId)
