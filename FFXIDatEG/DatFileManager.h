@@ -60,6 +60,15 @@ public:
 	// Load DAT file and populate content view
 	bool LoadDatFile(const DatFileInfo& info, ContentView* contentView);
 
+	// Load arbitrary file with specified type
+	bool LoadArbitraryFile(const std::filesystem::path& path, const std::string& fileType, ContentView* contentView);
+
+	// Load file by global ID
+	bool LoadGlobalId(int globalId, const std::string& fileType, ContentView* contentView);
+
+	// Load file by local ID
+	bool LoadLocalId(const std::string& romFolder, int localId, const std::string& fileType, ContentView* contentView);
+
 	void SetLanguageFilter(const std::string& language) { m_languageFilter = language; }
 	std::string GetLanguageFilter() const { return m_languageFilter; }
 private:

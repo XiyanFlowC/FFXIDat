@@ -783,6 +783,101 @@ bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentVi
 	}
 }
 
+bool DatFileManager::LoadArbitraryFile(const std::filesystem::path& filePath, const std::string& fileType, ContentView* contentView)
+{
+	// Construct a temporary DatFileInfo
+	DatFileInfo info;
+	info.localFileId = -1; // Unknown
+	info.fileType = fileType;
+	info.friendlyName = filePath.filename().string();
+	info.romFolder = ""; // External
+
+	// Use internal loader but bypass path resolution by setting m_currentFile manually and calling format-specific loader directly
+	// Actually LoadDatFile uses GetDatFilePath which we don't want.
+	// We should refactor LoadDatFile or copy the switch statement. 
+	// Copying the switch statement is safer to avoid breaking existing logic.
+
+	m_currentFile = info;
+
+	if (!std::filesystem::exists(filePath))
+	{
+		std::wstring msg = L"File not found: " + filePath.wstring();
+		MessageBoxW(nullptr, msg.c_str(), L"Error", MB_OK | MB_ICONERROR);
+		return false;
+	}
+
+	// Clear previous data
+	m_currentDMsg.reset();
+	m_currentXiString.reset();
+	m_currentEventString.reset();
+	m_currentStatusData.reset();
+	m_currentItemData.reset();
+	m_currentFixedPhrase.reset();
+	m_currentMonBridge.reset();
+	m_currentRoe.reset();
+
+	try
+	{
+		if (fileType == "dmsg") return LoadDMsgFile(filePath, contentView);
+		else if (fileType == "xis") return LoadXiStringFile(filePath, contentView);
+		else if (fileType == "evsb") return LoadEventStringFile(filePath, contentView);
+		else if (fileType == "sd") return LoadStatusDataFile(filePath, contentView);
+		else if (fileType == "fp") return LoadFixedPhraseFile(filePath, contentView);
+		else if (fileType == "iab" || fileType == "iwb" || fileType == "iub" ||
+			fileType == "inb" || fileType == "ipb" || fileType == "isb" ||
+			fileType == "icb") return LoadItemDataFile(filePath, fileType, contentView);
+		else if (fileType == "mbd") return LoadMonBridgeFile(filePath, contentView);
+		else if (fileType == "erq") return LoadRoeQuestFile(filePath, contentView);
+		else if (fileType == "erc") return LoadRoeCategoryFile(filePath, contentView);
+		else
+		{
+			std::wstring msg = L"Unsupported file type: ";
+			std::string typeStr = fileType;
+			msg += std::wstring(typeStr.begin(), typeStr.end());
+			MessageBoxW(nullptr, msg.c_str(), L"Error", MB_OK | MB_ICONERROR);
+			return false;
+		}
+	}
+	catch (const std::exception& e)
+	{
+		std::string errMsg = "Error loading file: ";
+		errMsg += e.what();
+		std::wstring wErrMsg(errMsg.begin(), errMsg.end());
+		MessageBoxW(nullptr, wErrMsg.c_str(), L"Error", MB_OK | MB_ICONERROR);
+		return false;
+	}
+}
+
+bool DatFileManager::LoadGlobalId(int globalId, const std::string& fileType, ContentView* contentView)
+{
+	std::string romFolder;
+	int localFileId;
+	if (!ResolveGlobalId(globalId, romFolder, localFileId))
+	{
+		MessageBoxW(nullptr, L"Could not resolve Global ID to a file path.", L"Error", MB_OK | MB_ICONERROR);
+		return false;
+	}
+	
+	DatFileInfo info;
+	info.localFileId = localFileId;
+	info.fileType = fileType;
+	info.romFolder = romFolder;
+	info.friendlyName = "GlobalID: " + std::to_string(globalId); // Temporary friendly name
+
+	return LoadDatFile(info, contentView);
+}
+
+bool DatFileManager::LoadLocalId(const std::string& romFolder, int localId, const std::string& fileType, ContentView* contentView)
+{
+	DatFileInfo info;
+	info.localFileId = localId;
+	info.fileType = fileType;
+	info.romFolder = romFolder;
+	info.friendlyName = romFolder + "/" + std::to_string(localId); // Temporary friendly name
+
+	return LoadDatFile(info, contentView);
+}
+
 bool DatFileManager::LoadDMsgFile(const std::filesystem::path& filePath, ContentView* contentView)
 {
 	m_currentDMsg = std::make_unique<DMsg>(filePath);

@@ -48,8 +48,14 @@ private:
 	void OnToggleCategoryHierarchy();
 	void OnSave();
 	void OnSaveAs();
+	void OnOpenFile();
+	void OnOpenFileById();
 	bool CheckAndPromptSave();
 	
+	// Helper for custom dialogs
+	bool PromptForFileType(std::string& outType);
+	bool PromptForFileId(int& outGlobalId, std::string& outRomFolder, int& outLocalId, std::string& outType, bool& isGlobal);
+
 	HWND m_hwnd = nullptr;
 	HWND m_hTreeView = nullptr;
 	HWND m_hStatusBar = nullptr;
@@ -79,6 +85,8 @@ private:
 	static constexpr int IDM_FILE_CLEANPREFS = 2004;
 	static constexpr int IDM_FILE_SAVE = 2005;
 	static constexpr int IDM_FILE_SAVEAS = 2006;
+	static constexpr int IDM_FILE_OPEN = 2007;
+	static constexpr int IDM_FILE_OPEN_BY_ID = 2008;
 	static constexpr int IDM_EDIT_FIND = 2051;
 	static constexpr int IDM_EDIT_FINDNEXT = 2052;
 	static constexpr int IDM_VIEW_FONT = 2101;

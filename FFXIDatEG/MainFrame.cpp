@@ -6,6 +6,7 @@
 #include <shobjidl.h>
 #include <commdlg.h>
 #include <string>
+#include <vector>
 #include <xystring.h>
 
 #pragma comment(lib, "comctl32.lib")
@@ -14,6 +15,500 @@
 // Helper macro to convert localized string to LPCWSTR
 #define LOCS(key) LOC(key).c_str()
 
+namespace {
+	constexpr int IDC_PROMPT_TYPE = 3001;
+	constexpr int IDC_PROMPT_OK = 3002;
+	constexpr int IDC_PROMPT_CANCEL = 3003;
+	constexpr int IDC_PROMPT_GLOBAL_RADIO = 3004;
+	constexpr int IDC_PROMPT_LOCAL_RADIO = 3005;
+	constexpr int IDC_PROMPT_GLOBAL_EDIT = 3006;
+	constexpr int IDC_PROMPT_ROM_EDIT = 3007;
+	constexpr int IDC_PROMPT_LOCAL_EDIT = 3008;
+
+	const wchar_t* kPromptClass = L"FFXIDatEGPrompt";
+
+	std::wstring LocalizedOrDefault(const wchar_t* key, const wchar_t* fallback)
+	{
+		return Localization::Instance().GetString(key, fallback);
+	}
+
+	struct PromptState
+	{
+		bool done = false;
+		bool accepted = false;
+		bool isGlobal = true;
+		std::wstring fileType;
+		std::wstring romFolder;
+		std::wstring globalIdText;
+		std::wstring localIdText;
+		HWND comboType = nullptr;
+		HWND editGlobal = nullptr;
+		HWND editRom = nullptr;
+		HWND editLocal = nullptr;
+		HWND radioGlobal = nullptr;
+		HWND radioLocal = nullptr;
+		bool showIdFields = false;
+	};
+
+	void SetPromptFieldsEnabled(PromptState* state)
+	{
+		if (!state)
+			return;
+		BOOL globalMode = state->isGlobal ? TRUE : FALSE;
+		if (state->editGlobal)
+			EnableWindow(state->editGlobal, globalMode);
+		if (state->editRom)
+			EnableWindow(state->editRom, !globalMode);
+		if (state->editLocal)
+			EnableWindow(state->editLocal, !globalMode);
+	}
+
+	void CapturePromptData(HWND hwnd, PromptState* state)
+	{
+		if (!state)
+			return;
+
+		wchar_t buffer[256] = {};
+		if (state->comboType)
+		{
+			GetWindowTextW(state->comboType, buffer, 256);
+			state->fileType = buffer;
+		}
+		if (state->editGlobal)
+		{
+			GetWindowTextW(state->editGlobal, buffer, 256);
+			state->globalIdText = buffer;
+		}
+		if (state->editRom)
+		{
+			GetWindowTextW(state->editRom, buffer, 256);
+			state->romFolder = buffer;
+		}
+		if (state->editLocal)
+		{
+			GetWindowTextW(state->editLocal, buffer, 256);
+			state->localIdText = buffer;
+		}
+	}
+
+	LRESULT CALLBACK PromptWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+	{
+		PromptState* state = reinterpret_cast<PromptState*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+
+		switch (msg)
+		{
+		case WM_NCCREATE:
+		{
+			CREATESTRUCT* cs = reinterpret_cast<CREATESTRUCT*>(lParam);
+			SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(cs->lpCreateParams));
+			return TRUE;
+		}
+		case WM_COMMAND:
+		{
+			int id = LOWORD(wParam);
+			int code = HIWORD(wParam);
+			if (id == IDC_PROMPT_OK && code == BN_CLICKED)
+			{
+				CapturePromptData(hwnd, state);
+				state->accepted = true;
+				state->done = true;
+				DestroyWindow(hwnd);
+				return 0;
+			}
+			if (id == IDC_PROMPT_CANCEL && code == BN_CLICKED)
+			{
+				state->accepted = false;
+				state->done = true;
+				DestroyWindow(hwnd);
+				return 0;
+			}
+			if ((id == IDC_PROMPT_GLOBAL_RADIO || id == IDC_PROMPT_LOCAL_RADIO) && code == BN_CLICKED)
+			{
+				state->isGlobal = (id == IDC_PROMPT_GLOBAL_RADIO);
+				SetPromptFieldsEnabled(state);
+				return 0;
+			}
+			break;
+		}
+		case WM_CLOSE:
+			if (state)
+			{
+				state->accepted = false;
+				state->done = true;
+			}
+			DestroyWindow(hwnd);
+			return 0;
+		}
+		return DefWindowProc(hwnd, msg, wParam, lParam);
+	}
+
+	bool EnsurePromptClassRegistered(HINSTANCE instance)
+	{
+		static bool registered = false;
+		if (registered)
+			return true;
+		WNDCLASSEXW wc = {};
+		wc.cbSize = sizeof(wc);
+		wc.lpfnWndProc = PromptWndProc;
+		wc.hInstance = instance;
+		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+		wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1);
+		wc.lpszClassName = kPromptClass;
+		if (!RegisterClassExW(&wc))
+			return false;
+		registered = true;
+		return true;
+	}
+
+	bool RunPromptDialog(HWND owner, HWND hwnd, PromptState& state)
+	{
+		if (!hwnd)
+			return false;
+
+		ShowWindow(hwnd, SW_SHOW);
+		UpdateWindow(hwnd);
+		EnableWindow(owner, FALSE);
+
+		MSG msg;
+		while (!state.done && GetMessage(&msg, nullptr, 0, 0))
+		{
+			if (!IsDialogMessage(hwnd, &msg))
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+		}
+
+		EnableWindow(owner, TRUE);
+		SetActiveWindow(owner);
+		return state.accepted;
+	}
+}
+bool MainFrame::PromptForFileType(std::string& outType)
+{
+	PromptState state;
+	HINSTANCE instance = FFXIDatEGApp::Instance().GetInstance();
+	if (!EnsurePromptClassRegistered(instance))
+		return false;
+	HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+
+	RECT rcParent;
+	GetWindowRect(m_hwnd, &rcParent);
+	int x = rcParent.left + (rcParent.right - rcParent.left - 400) / 2;
+	int y = rcParent.top + (rcParent.bottom - rcParent.top - 180) / 2;
+
+	std::wstring title = LocalizedOrDefault(L"dialog_filetype_title", L"Select File Type");
+	HWND hwnd = CreateWindowExW(
+		WS_EX_DLGMODALFRAME,
+		kPromptClass,
+		title.c_str(),
+		WS_POPUP | WS_CAPTION | WS_SYSMENU,
+		x, y,
+		340, 170,
+		m_hwnd,
+		nullptr,
+		instance,
+		&state);
+	if (!hwnd)
+		return false;
+	SetWindowTextW(hwnd, title.c_str()); // why?
+
+	std::wstring label = LocalizedOrDefault(L"dialog_filetype_label", L"File Type:");
+	HWND hFileType = CreateWindowExW(0, L"STATIC", label.c_str(), WS_CHILD | WS_VISIBLE,
+		12, 18, 110, 20, hwnd, nullptr, instance, nullptr);
+	SendMessage(hFileType, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+	state.comboType = CreateWindowExW(0, WC_COMBOBOXW, nullptr,
+		WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,
+		120, 14, 185, 200, hwnd, reinterpret_cast<HMENU>(IDC_PROMPT_TYPE), instance, nullptr);
+	SendMessage(state.comboType, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+	const std::vector<std::wstring> types = {
+		L"dmsg", L"xis", L"evsb", L"sd", L"fp",
+		L"iab", L"iwb", L"iub", L"inb", L"ipb", L"isb", L"icb",
+		L"mbd", L"erq", L"erc"
+	};
+	for (const auto& type : types)
+	{
+		SendMessageW(state.comboType, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(type.c_str()));
+	}
+	SendMessageW(state.comboType, CB_SETCURSEL, 0, 0);
+
+	std::wstring okText = LocalizedOrDefault(L"dialog_ok", L"OK");
+	std::wstring cancelText = LocalizedOrDefault(L"dialog_cancel", L"Cancel");
+	HWND hOkBtn = CreateWindowExW(0, L"BUTTON", okText.c_str(), WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
+		80, 110, 80, 26, hwnd, reinterpret_cast<HMENU>(IDC_PROMPT_OK), instance, nullptr);
+	HWND hCancelBtn = CreateWindowExW(0, L"BUTTON", cancelText.c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		170, 110, 80, 26, hwnd, reinterpret_cast<HMENU>(IDC_PROMPT_CANCEL), instance, nullptr);
+	SendMessage(hOkBtn, WM_SETFONT, (WPARAM)hFont, TRUE);
+	SendMessage(hCancelBtn, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+	if (!RunPromptDialog(m_hwnd, hwnd, state))
+		return false;
+
+	if (state.fileType.empty())
+		return false;
+
+	std::u8string u8str = xybase::string::to_utf8(state.fileType);
+	outType = xybase::string::to_string(u8str);
+	return true;
+}
+
+bool MainFrame::PromptForFileId(int& outGlobalId, std::string& outRomFolder, int& outLocalId, std::string& outType, bool& isGlobal)
+{
+	PromptState state;
+	state.isGlobal = true;
+	HINSTANCE instance = FFXIDatEGApp::Instance().GetInstance();
+	if (!EnsurePromptClassRegistered(instance))
+		return false;
+	HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+
+	RECT rcParent;
+	GetWindowRect(m_hwnd, &rcParent);
+	int x = rcParent.left + (rcParent.right - rcParent.left - 400) / 2;
+	int y = rcParent.top + (rcParent.bottom - rcParent.top - 180) / 2;
+
+	std::wstring title = LocalizedOrDefault(L"dialog_open_by_id_title", L"Open File by ID");
+	HWND hwnd = CreateWindowExW(
+		WS_EX_DLGMODALFRAME,
+		kPromptClass,
+		title.c_str(),
+		WS_POPUP | WS_CAPTION | WS_SYSMENU,
+		x, y,
+		420, 260,
+		m_hwnd,
+		nullptr,
+		instance,
+		&state);
+	if (!hwnd)
+		return false;
+	SetWindowTextW(hwnd, title.c_str());
+
+	std::wstring typeLabel = LocalizedOrDefault(L"dialog_filetype_label", L"File Type:");
+	HWND hTypeLabel = CreateWindowExW(0, L"STATIC", typeLabel.c_str(), WS_CHILD | WS_VISIBLE,
+		12, 18, 110, 20, hwnd, nullptr, instance, nullptr);
+	SendMessage(hTypeLabel, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+	state.comboType = CreateWindowExW(0, WC_COMBOBOXW, nullptr,
+		WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,
+		120, 14, 185, 200, hwnd, reinterpret_cast<HMENU>(IDC_PROMPT_TYPE), instance, nullptr);
+	SendMessage(state.comboType, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+	const std::vector<std::wstring> types = {
+		L"dmsg", L"xis", L"evsb", L"sd", L"fp",
+		L"iab", L"iwb", L"iub", L"inb", L"ipb", L"isb", L"icb",
+		L"mbd", L"erq", L"erc"
+	};
+	for (const auto& type : types)
+	{
+		SendMessageW(state.comboType, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(type.c_str()));
+	}
+	SendMessageW(state.comboType, CB_SETCURSEL, 0, 0);
+
+	std::wstring globalLabel = LocalizedOrDefault(L"dialog_global_id", L"Global ID");
+	std::wstring romLabel = LocalizedOrDefault(L"dialog_rom_folder", L"ROM Folder");
+	std::wstring localLabel = LocalizedOrDefault(L"dialog_local_id", L"Local ID");
+
+	state.radioGlobal = CreateWindowExW(0, L"BUTTON", globalLabel.c_str(),
+		WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
+		12, 60, 100, 20, hwnd, reinterpret_cast<HMENU>(IDC_PROMPT_GLOBAL_RADIO), instance, nullptr);
+	state.editGlobal = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", nullptr,
+		WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
+		120, 58, 260, 22, hwnd, reinterpret_cast<HMENU>(IDC_PROMPT_GLOBAL_EDIT), instance, nullptr);
+	SendMessageW(state.editGlobal, WM_SETFONT, (WPARAM)hFont, TRUE);
+	SendMessageW(state.radioGlobal, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+	state.radioLocal = CreateWindowExW(0, L"BUTTON", LocalizedOrDefault(L"dialog_local_mode", L"ROM + Local ID").c_str(),
+		WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON,
+		12, 95, 140, 20, hwnd, reinterpret_cast<HMENU>(IDC_PROMPT_LOCAL_RADIO), instance, nullptr);
+	SendMessageW(state.radioLocal, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+	HWND hRomLabel = CreateWindowExW(0, L"STATIC", romLabel.c_str(), WS_CHILD | WS_VISIBLE,
+		40, 125, 80, 18, hwnd, nullptr, instance, nullptr);
+	state.editRom = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", nullptr,
+		WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
+		120, 122, 120, 22, hwnd, reinterpret_cast<HMENU>(IDC_PROMPT_ROM_EDIT), instance, nullptr);
+	SendMessageW(state.editRom, WM_SETFONT, (WPARAM)hFont, TRUE);
+	SendMessageW(hRomLabel, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+	HWND hLocalLabel = CreateWindowExW(0, L"STATIC", localLabel.c_str(), WS_CHILD | WS_VISIBLE,
+		40, 155, 80, 18, hwnd, nullptr, instance, nullptr);
+	state.editLocal = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", nullptr,
+		WS_CHILD | WS_VISIBLE | WS_TABSTOP | ES_AUTOHSCROLL,
+		120, 152, 120, 22, hwnd, reinterpret_cast<HMENU>(IDC_PROMPT_LOCAL_EDIT), instance, nullptr);
+	SendMessageW(state.editLocal, WM_SETFONT, (WPARAM)hFont, TRUE);
+	SendMessageW(hLocalLabel, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+	SendMessageW(state.radioGlobal, BM_SETCHECK, BST_CHECKED, 0);
+	SetPromptFieldsEnabled(&state);
+
+	std::wstring okText = LocalizedOrDefault(L"dialog_ok", L"OK");
+	std::wstring cancelText = LocalizedOrDefault(L"dialog_cancel", L"Cancel");
+	HWND hOkBtn = CreateWindowExW(0, L"BUTTON", okText.c_str(), WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
+		120, 195, 80, 26, hwnd, reinterpret_cast<HMENU>(IDC_PROMPT_OK), instance, nullptr);
+	HWND hCancelBtn = CreateWindowExW(0, L"BUTTON", cancelText.c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		220, 195, 80, 26, hwnd, reinterpret_cast<HMENU>(IDC_PROMPT_CANCEL), instance, nullptr);
+	SendMessageW(hOkBtn, WM_SETFONT, (WPARAM)hFont, TRUE);
+	SendMessageW(hCancelBtn, WM_SETFONT, (WPARAM)hFont, TRUE);
+
+	if (!RunPromptDialog(m_hwnd, hwnd, state))
+		return false;
+
+	if (state.fileType.empty())
+		return false;
+
+	std::u8string u8str = xybase::string::to_utf8(state.fileType);
+	outType = xybase::string::to_string(u8str);
+	isGlobal = state.isGlobal;
+
+	try
+	{
+		if (isGlobal)
+		{
+			if (state.globalIdText.empty())
+				return false;
+			outGlobalId = std::stoi(state.globalIdText);
+		}
+		else
+		{
+			if (state.romFolder.empty() || state.localIdText.empty())
+				return false;
+			outRomFolder = xybase::string::to_string(xybase::string::to_utf8(state.romFolder));
+			outLocalId = std::stoi(state.localIdText);
+		}
+	}
+	catch (...)
+	{
+		std::wstring message = LocalizedOrDefault(L"dialog_invalid_input", L"Invalid input.");
+		MessageBoxW(m_hwnd, message.c_str(), LocalizedOrDefault(L"error_msg_title", L"Error").c_str(), MB_OK | MB_ICONERROR);
+		return false;
+	}
+
+	return true;
+}
+
+void MainFrame::OnOpenFile()
+{
+	if (!m_fileManager || !m_contentView)
+		return;
+
+	if (m_contentView->IsModified() && !CheckAndPromptSave())
+		return;
+
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	bool comInitialized = SUCCEEDED(hr);
+
+	IFileOpenDialog* pFileDialog = nullptr;
+	hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL,
+		IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileDialog));
+
+	if (SUCCEEDED(hr))
+	{
+		COMDLG_FILTERSPEC rgSpec[] = {
+			{ L"DAT Files", L"*.DAT" },
+			{ L"All Files", L"*.*" }
+		};
+		pFileDialog->SetFileTypes(ARRAYSIZE(rgSpec), rgSpec);
+		pFileDialog->SetFileTypeIndex(1);
+		std::wstring title = LocalizedOrDefault(L"open_file_title", L"Open File");
+		pFileDialog->SetTitle(title.c_str());
+
+		hr = pFileDialog->Show(m_hwnd);
+		if (SUCCEEDED(hr))
+		{
+			IShellItem* pItem = nullptr;
+			hr = pFileDialog->GetResult(&pItem);
+			if (SUCCEEDED(hr))
+			{
+				PWSTR pszPath = nullptr;
+				hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszPath);
+				if (SUCCEEDED(hr))
+				{
+					std::filesystem::path filePath(pszPath);
+					std::string fileType;
+					if (PromptForFileType(fileType))
+					{
+						std::wstring statusText = LOC(L"Status.Loading");
+						statusText += L" " + filePath.filename().wstring() + L"...";
+						SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
+
+						if (m_fileManager->LoadArbitraryFile(filePath, fileType, m_contentView.get()))
+						{
+							statusText = LOC(L"Status.Loaded");
+							statusText += L": " + filePath.wstring();
+							SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
+							m_currentFilePath = filePath;
+						}
+						else
+						{
+							SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"Status.LoadFailed").c_str()));
+							m_currentFilePath.clear();
+						}
+					}
+					CoTaskMemFree(pszPath);
+				}
+				pItem->Release();
+			}
+		}
+		pFileDialog->Release();
+	}
+
+	if (comInitialized && hr != RPC_E_CHANGED_MODE)
+	{
+		CoUninitialize();
+	}
+}
+
+void MainFrame::OnOpenFileById()
+{
+	if (!m_fileManager || !m_contentView)
+		return;
+
+	if (m_contentView->IsModified() && !CheckAndPromptSave())
+		return;
+
+	int globalId = 0;
+	int localId = 0;
+	std::string romFolder;
+	std::string fileType;
+	bool isGlobal = true;
+
+	if (!PromptForFileId(globalId, romFolder, localId, fileType, isGlobal))
+		return;
+
+	std::wstring statusText = LOC(L"Status.Loading");
+	if (isGlobal)
+		statusText += L" GlobalID " + std::to_wstring(globalId) + L"...";
+	else
+		statusText += L" " + xybase::string::to_wstring(romFolder) + L"/" + std::to_wstring(localId) + L"...";
+	SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
+
+	bool loaded = false;
+	if (isGlobal)
+		loaded = m_fileManager->LoadGlobalId(globalId, fileType, m_contentView.get());
+	else
+		loaded = m_fileManager->LoadLocalId(romFolder, localId, fileType, m_contentView.get());
+
+	if (loaded)
+	{
+		statusText = LOC(L"Status.Loaded");
+		if (isGlobal)
+		{
+			m_currentFilePath = m_fileManager->GetDatFilePath(globalId);
+		}
+		else
+		{
+			m_currentFilePath = m_fileManager->GetDatFilePath(localId, romFolder);
+		}
+		statusText += L": " + m_currentFilePath.wstring();
+		SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
+	}
+	else
+	{
+		SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"Status.LoadFailed").c_str()));
+		m_currentFilePath.clear();
+	}
+}
 MainFrame::MainFrame()
 {
 }
@@ -157,6 +652,11 @@ void MainFrame::OnCreate()
 
 	// File menu
 	HMENU hFileMenu = CreateMenu();
+	std::wstring openFileText = LocalizedOrDefault(L"menu_file_open", L"Open File...");
+	std::wstring openFileIdText = LocalizedOrDefault(L"menu_file_open_by_id", L"Open File by ID...");
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_OPEN, openFileText.c_str());
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_OPEN_BY_ID, openFileIdText.c_str());
+	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_SAVE, LOCS(L"menu_file_save"));
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_SAVEAS, LOCS(L"menu_file_saveas"));
 	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
@@ -366,6 +866,12 @@ void MainFrame::OnCommand(WPARAM wParam)
 
 	switch (LOWORD(wParam))
 	{
+	case IDM_FILE_OPEN:
+		OnOpenFile();
+		break;
+	case IDM_FILE_OPEN_BY_ID:
+		OnOpenFileById();
+		break;
 	case IDM_FILE_SAVE:
 		OnSave();
 		break;
@@ -1081,6 +1587,11 @@ void MainFrame::RefreshUIText()
 
 	// File menu
 	HMENU hFileMenu = CreateMenu();
+	std::wstring openFileText = LocalizedOrDefault(L"menu_file_open", L"Open File...");
+	std::wstring openFileIdText = LocalizedOrDefault(L"menu_file_open_by_id", L"Open File by ID...");
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_OPEN, openFileText.c_str());
+	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_OPEN_BY_ID, openFileIdText.c_str());
+	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_SAVE, LOCS(L"menu_file_save"));
 	AppendMenuW(hFileMenu, MF_STRING, IDM_FILE_SAVEAS, LOCS(L"menu_file_saveas"));
 	AppendMenuW(hFileMenu, MF_SEPARATOR, 0, nullptr);
