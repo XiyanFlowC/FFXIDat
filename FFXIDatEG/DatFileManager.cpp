@@ -169,12 +169,12 @@ void DatFileManager::BuildFileTree(const std::vector<DatFileInfo>& fileInfos,
 	for (const auto& info : fileInfos)
 	{
 		Node* current = &root;
-		if (!info.category.empty())
+		if (!info.friendlyName.empty())
 		{
 			size_t start = 0, pos;
-			while ((pos = info.category.find('/', start)) != std::string::npos)
+			while ((pos = info.friendlyName.find('/', start)) != std::string::npos)
 			{
-				std::string part = info.category.substr(start, pos - start);
+				std::string part = info.friendlyName.substr(start, pos - start);
 				if (!part.empty())
 				{
 					if (current->children.find(part) == current->children.end()) {
@@ -229,7 +229,7 @@ void DatFileManager::BuildFileTree(const std::vector<DatFileInfo>& fileInfos,
 			std::vector<const DatFileInfo*> sortedFiles = node->files;
 			std::sort(sortedFiles.begin(), sortedFiles.end(), 
 				[](const DatFileInfo* a, const DatFileInfo* b) {
-					return a->friendlyName == b->friendlyName ? a->localFileId < b->localFileId : a->friendlyName < b->friendlyName;
+					return a->friendlyName < b->friendlyName;
 				});
 
 			for (const DatFileInfo* info : sortedFiles)
@@ -249,18 +249,18 @@ void DatFileManager::BuildFileTree(const std::vector<DatFileInfo>& fileInfos,
 
 				std::string dispName = leafName;
 				if (!dispName.empty()) dispName += " - ";
-				dispName += std::to_string(info->localFileId);
+				int globalId = mgr->GetGlobalFileId(info->romFolder, info->localFileId);
+				dispName += std::to_string(globalId);
 				
 				if (!info->fileType.empty()) dispName += " [" + info->fileType + "]";
 				if (!info->language.empty()) dispName += " (" + info->language + ")";
 				
 				// Fallback if empty
-				if (dispName.empty()) dispName = std::to_string(info->localFileId);
+				if (dispName.empty()) dispName = std::to_string(globalId);
 
 				std::wstring wName(dispName.begin(), dispName.end());
 				tvis.item.pszText = const_cast<LPWSTR>(wName.c_str());
 				
-				int globalId = mgr->GetGlobalFileId(info->romFolder, info->localFileId);
 				tvis.item.lParam = globalId;
 
 				HTREEITEM hItem = TreeView_InsertItem(hTree, &tvis);
