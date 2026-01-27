@@ -128,6 +128,21 @@ void ContentView::SetColumnWidth(int index, int width)
 	m_columnWidths[index] = width;
 }
 
+const std::wstring& ContentView::GetColumnTitle(int index) const
+{
+	static const std::wstring kEmpty;
+	if (index < 0 || index >= static_cast<int>(m_columnTitles.size()))
+		return kEmpty;
+	return m_columnTitles[index];
+}
+
+ColumnDataType ContentView::GetColumnType(int index) const
+{
+	if (index < 0 || index >= static_cast<int>(m_columnTypes.size()))
+		return ColumnDataType::Text;
+	return m_columnTypes[index];
+}
+
 ContentView::~ContentView()
 {
 	if (m_hFont) DeleteObject(m_hFont);
@@ -326,6 +341,70 @@ const ContentItem* ContentView::GetSelectedItem() const
 	if (m_selectedIndex >= 0 && m_selectedIndex < static_cast<int>(m_items.size()))
 		return m_items[m_selectedIndex].get();
 	return nullptr;
+}
+
+bool ContentView::SetCellValue(size_t row, size_t column, const std::wstring& value)
+{
+	if (row >= m_items.size())
+		return false;
+	auto& item = m_items[row];
+	if (!item->editable)
+		return false;
+	if (column >= item->columns.size())
+		return false;
+	auto& cell = item->columns[column];
+	if (!cell.editable || cell.type == ColumnDataType::Image)
+		return false;
+
+	bool changed = false;
+	try
+	{
+		switch (cell.type)
+		{
+		case ColumnDataType::Text:
+		case ColumnDataType::MultilineText:
+			if (cell.textValue != value)
+			{
+				cell.textValue = value;
+				changed = true;
+			}
+			break;
+		case ColumnDataType::Integer:
+		{
+			int64_t newValue = value.empty() ? 0 : std::stoll(value);
+			if (cell.intValue != newValue)
+			{
+				cell.intValue = newValue;
+				changed = true;
+			}
+			break;
+		}
+		case ColumnDataType::Number:
+		{
+			double newValue = value.empty() ? 0.0 : std::stod(value);
+			if (cell.numberValue != newValue)
+			{
+				cell.numberValue = newValue;
+				changed = true;
+			}
+			break;
+		}
+		case ColumnDataType::Image:
+			return false;
+		}
+	}
+	catch (...)
+	{
+		return false;
+	}
+
+	if (changed)
+	{
+		m_modified = true;
+		InvalidateRect(m_hwnd, nullptr, FALSE);
+	}
+
+	return changed;
 }
 
 void ContentView::BeginEdit(int index, int column)

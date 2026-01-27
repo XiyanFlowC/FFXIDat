@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 #include <xystring.h>
+#include <CsvFile.h>
+#include <sstream>
 
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "comdlg32.lib")
@@ -459,6 +461,279 @@ void MainFrame::OnOpenFile()
 	}
 }
 
+void MainFrame::OnExportCsv()
+{
+	if (!m_contentView)
+		return;
+
+	m_contentView->EndEdit(true);
+
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	bool comInitialized = SUCCEEDED(hr);
+
+	IFileSaveDialog* pFileSaveDialog = nullptr;
+	hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL,
+		IID_IFileSaveDialog, reinterpret_cast<void**>(&pFileSaveDialog));
+
+	if (SUCCEEDED(hr))
+	{
+		COMDLG_FILTERSPEC rgSpec[] = {
+			{ L"CSV Files", L"*.csv" },
+			{ L"All Files", L"*.*" }
+		};
+		pFileSaveDialog->SetFileTypes(ARRAYSIZE(rgSpec), rgSpec);
+		pFileSaveDialog->SetFileTypeIndex(1);
+		pFileSaveDialog->SetDefaultExtension(L"csv");
+		std::wstring title = LocalizedOrDefault(L"data_export_title", L"Export CSV");
+		pFileSaveDialog->SetTitle(title.c_str());
+
+		if (!m_currentFilePath.empty())
+		{
+			std::filesystem::path defaultPath = m_currentFilePath;
+			defaultPath.replace_extension(L".csv");
+			pFileSaveDialog->SetFileName(defaultPath.filename().c_str());
+		}
+
+		hr = pFileSaveDialog->Show(m_hwnd);
+		if (SUCCEEDED(hr))
+		{
+			IShellItem* pItem = nullptr;
+			hr = pFileSaveDialog->GetResult(&pItem);
+			if (SUCCEEDED(hr))
+			{
+				PWSTR pszPath = nullptr;
+				hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszPath);
+				if (SUCCEEDED(hr))
+				{
+					std::filesystem::path savePath(pszPath);
+					try
+					{
+						CsvFile csv(savePath, std::ios::out | std::ios::binary);
+						int columnCount = m_contentView->GetColumnCount();
+						for (int col = 0; col < columnCount; ++col)
+						{
+							csv.NewCell(xybase::string::to_utf8(m_contentView->GetColumnTitle(col)));
+						}
+						csv.NewLine();
+
+						for (size_t row = 0; row < m_contentView->GetItemCount(); ++row)
+						{
+							const ContentItem* item = m_contentView->GetItem(row);
+							for (int col = 0; col < columnCount; ++col)
+							{
+								std::u8string cellValue;
+								if (!item || col >= static_cast<int>(item->columns.size()) || !item->editable)
+								{
+									cellValue = u8"";
+								}
+								else
+								{
+									const ColumnData& colData = item->columns[col];
+									if (!colData.editable || colData.type == ColumnDataType::Image)
+									{
+										cellValue = u8"";
+									}
+									else
+									{
+										switch (colData.type)
+										{
+										case ColumnDataType::Text:
+										case ColumnDataType::MultilineText:
+											cellValue = xybase::string::to_utf8(colData.textValue);
+											break;
+										case ColumnDataType::Integer:
+											cellValue = xybase::string::to_utf8(std::to_wstring(colData.intValue));
+											break;
+										case ColumnDataType::Number:
+										{
+											std::wostringstream oss;
+											oss << colData.numberValue;
+											cellValue = xybase::string::to_utf8(oss.str());
+											break;
+										}
+										case ColumnDataType::Image:
+											cellValue = u8"";
+											break;
+										}
+									}
+								}
+								csv.NewCell(cellValue);
+							}
+							csv.NewLine();
+						}
+
+						csv.Close();
+						std::wstring statusMsg = LocalizedOrDefault(L"data_export_success", L"CSV exported.");
+						SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusMsg.c_str()));
+					}
+					catch (const std::exception& e)
+					{
+						std::wstring errMsg = LocalizedOrDefault(L"data_export_failed", L"Failed to export CSV: ");
+						std::string errStr = e.what();
+						errMsg += std::wstring(errStr.begin(), errStr.end());
+						MessageBoxW(m_hwnd, errMsg.c_str(), LocalizedOrDefault(L"error_msg_title", L"Error").c_str(), MB_OK | MB_ICONERROR);
+					}
+					CoTaskMemFree(pszPath);
+				}
+				pItem->Release();
+			}
+		}
+		pFileSaveDialog->Release();
+	}
+
+	if (comInitialized && hr != RPC_E_CHANGED_MODE)
+	{
+		CoUninitialize();
+	}
+}
+
+void MainFrame::OnImportCsv()
+{
+	if (!m_contentView)
+		return;
+
+	m_contentView->EndEdit(true);
+
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	bool comInitialized = SUCCEEDED(hr);
+
+	IFileOpenDialog* pFileOpenDialog = nullptr;
+	hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL,
+		IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpenDialog));
+
+	if (SUCCEEDED(hr))
+	{
+		COMDLG_FILTERSPEC rgSpec[] = {
+			{ L"CSV Files", L"*.csv" },
+			{ L"All Files", L"*.*" }
+		};
+		pFileOpenDialog->SetFileTypes(ARRAYSIZE(rgSpec), rgSpec);
+		pFileOpenDialog->SetFileTypeIndex(1);
+		std::wstring title = LocalizedOrDefault(L"data_import_title", L"Import CSV");
+		pFileOpenDialog->SetTitle(title.c_str());
+
+		hr = pFileOpenDialog->Show(m_hwnd);
+		if (SUCCEEDED(hr))
+		{
+			IShellItem* pItem = nullptr;
+			hr = pFileOpenDialog->GetResult(&pItem);
+			if (SUCCEEDED(hr))
+			{
+				PWSTR pszPath = nullptr;
+				hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszPath);
+				if (SUCCEEDED(hr))
+				{
+					std::filesystem::path openPath(pszPath);
+					try
+					{
+						CsvFile csv(openPath, std::ios::in | std::ios::binary);
+						int columnCount = m_contentView->GetColumnCount();
+						if (columnCount <= 0)
+						{
+							csv.Close();
+							CoTaskMemFree(pszPath);
+							pItem->Release();
+							pFileOpenDialog->Release();
+							if (comInitialized && hr != RPC_E_CHANGED_MODE) CoUninitialize();
+							return;
+						}
+
+						std::vector<std::u8string> rowValues;
+						auto readRow = [&](std::vector<std::u8string>& values) -> bool
+						{
+							if (csv.IsEof())
+								return false;
+							values.clear();
+							while (!csv.IsEol() && !csv.IsEof() && static_cast<int>(values.size()) < columnCount)
+							{
+								values.push_back(csv.NextCell());
+							}
+							while (static_cast<int>(values.size()) < columnCount)
+							{
+								values.push_back(u8"");
+							}
+							csv.NextLine();
+							return true;
+						};
+
+						if (!readRow(rowValues))
+						{
+							csv.Close();
+							CoTaskMemFree(pszPath);
+							pItem->Release();
+							pFileOpenDialog->Release();
+							if (comInitialized && hr != RPC_E_CHANGED_MODE) CoUninitialize();
+							return;
+						}
+
+						bool hasHeader = true;
+						for (int col = 0; col < columnCount; ++col)
+						{
+							std::wstring headerCell = xybase::string::to_wstring(rowValues[col]);
+							if (headerCell != m_contentView->GetColumnTitle(col))
+							{
+								hasHeader = false;
+								break;
+							}
+						}
+
+						size_t rowIndex = 0;
+						bool updated = false;
+						if (!hasHeader)
+						{
+							if (rowIndex < m_contentView->GetItemCount())
+							{
+								for (int col = 0; col < columnCount; ++col)
+								{
+									updated |= m_contentView->SetCellValue(
+										rowIndex,
+										col,
+										xybase::string::to_wstring(rowValues[col]));
+								}
+							}
+							++rowIndex;
+						}
+
+						while (rowIndex < m_contentView->GetItemCount() && readRow(rowValues))
+						{
+							for (int col = 0; col < columnCount; ++col)
+							{
+								updated |= m_contentView->SetCellValue(
+									rowIndex,
+									col,
+									xybase::string::to_wstring(rowValues[col]));
+							}
+							++rowIndex;
+						}
+
+						csv.Close();
+						if (updated)
+						{
+							std::wstring statusMsg = LocalizedOrDefault(L"data_import_success", L"CSV imported.");
+							SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusMsg.c_str()));
+						}
+					}
+					catch (const std::exception& e)
+					{
+						std::wstring errMsg = LocalizedOrDefault(L"data_import_failed", L"Failed to import CSV: ");
+						std::string errStr = e.what();
+						errMsg += std::wstring(errStr.begin(), errStr.end());
+						MessageBoxW(m_hwnd, errMsg.c_str(), LocalizedOrDefault(L"error_msg_title", L"Error").c_str(), MB_OK | MB_ICONERROR);
+					}
+					CoTaskMemFree(pszPath);
+				}
+				pItem->Release();
+			}
+		}
+		pFileOpenDialog->Release();
+	}
+
+	if (comInitialized && hr != RPC_E_CHANGED_MODE)
+	{
+		CoUninitialize();
+	}
+}
+
 void MainFrame::OnOpenFileById()
 {
 	if (!m_fileManager || !m_contentView)
@@ -672,6 +947,13 @@ void MainFrame::OnCreate()
 	AppendMenuW(hEditMenu, MF_STRING, IDM_EDIT_FIND, LOCS(L"menu_edit_find"));
 	AppendMenuW(hEditMenu, MF_STRING, IDM_EDIT_FINDNEXT, LOCS(L"menu_edit_findnext"));
 
+	// Data menu
+	HMENU hDataMenu = CreateMenu();
+	AppendMenuW(hDataMenu, MF_STRING, IDM_DATA_EXPORT,
+		LocalizedOrDefault(L"menu_data_export", L"Export CSV...").c_str());
+	AppendMenuW(hDataMenu, MF_STRING, IDM_DATA_IMPORT,
+		LocalizedOrDefault(L"menu_data_import", L"Import CSV...").c_str());
+
 	// View menu - with Language Filter submenu
 	HMENU hViewMenu = CreateMenu();
 	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_FONT, LOCS(L"menu_view_font"));
@@ -708,6 +990,8 @@ void MainFrame::OnCreate()
 	// Add to menu bar
 	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hFileMenu, LOCS(L"menu_file"));
 	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hEditMenu, LOCS(L"menu_edit"));
+	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hDataMenu,
+		LocalizedOrDefault(L"menu_data", L"Data").c_str());
 	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hViewMenu, LOCS(L"menu_view"));
 	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hHelpMenu, LOCS(L"menu_help"));
 
@@ -892,6 +1176,12 @@ void MainFrame::OnCommand(WPARAM wParam)
 		break;
 	case IDM_EDIT_FINDNEXT:
 		OnFindNext();
+		break;
+	case IDM_DATA_EXPORT:
+		OnExportCsv();
+		break;
+	case IDM_DATA_IMPORT:
+		OnImportCsv();
 		break;
 	case IDM_VIEW_FONT:
 		OnSelectFont();
@@ -1607,6 +1897,13 @@ void MainFrame::RefreshUIText()
 	AppendMenuW(hEditMenu, MF_STRING, IDM_EDIT_FIND, LOCS(L"menu_edit_find"));
 	AppendMenuW(hEditMenu, MF_STRING, IDM_EDIT_FINDNEXT, LOCS(L"menu_edit_findnext"));
 
+	// Data menu
+	HMENU hDataMenu = CreateMenu();
+	AppendMenuW(hDataMenu, MF_STRING, IDM_DATA_EXPORT,
+		LocalizedOrDefault(L"menu_data_export", L"Export CSV...").c_str());
+	AppendMenuW(hDataMenu, MF_STRING, IDM_DATA_IMPORT,
+		LocalizedOrDefault(L"menu_data_import", L"Import CSV...").c_str());
+
 	// View menu
 	HMENU hViewMenu = CreateMenu();
 	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_FONT, LOCS(L"menu_view_font"));
@@ -1653,6 +1950,8 @@ void MainFrame::RefreshUIText()
 	// Add to menu bar
 	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hFileMenu, LOCS(L"menu_file"));
 	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hEditMenu, LOCS(L"menu_edit"));
+	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hDataMenu,
+		LocalizedOrDefault(L"menu_data", L"Data").c_str());
 	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hViewMenu, LOCS(L"menu_view"));
 	AppendMenuW(m_hMenu, MF_POPUP, (UINT_PTR)hHelpMenu, LOCS(L"menu_help"));
 

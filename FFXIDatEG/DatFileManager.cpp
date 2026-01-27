@@ -109,7 +109,7 @@ std::vector<DatFileInfo> DatFileManager::LoadROMFileInfos(const std::filesystem:
 			if (!friendlyName.empty() && !info.language.empty())
 				friendlyName += " (" + info.language + ")";
 			if (!friendlyName.empty())
-				friendlyName += " - " + xybase::string::to_string(fileIdStr);
+				friendlyName += " - " + std::to_string(GetGlobalFileId(romFolder, fileId));
 			if (friendlyName.empty())
 			{
 				friendlyName = romFolder + "/" + std::to_string(fileId);
@@ -402,11 +402,13 @@ std::vector<DatFileInfo> DatFileManager::LoadFLISTFileInfos(const std::filesyste
 			// Handle duplicates - use the last occurrence
 			if (nameToGlobalId.find(uniqueKey) != nameToGlobalId.end())
 			{
+				std::string cate = xybase::string::to_string(category);
+				std::string lang = xybase::string::to_string(language);
 				// Remove previous entry with same name+language
 				int prevGlobalId = nameToGlobalId[uniqueKey];
 				auto it = std::find_if(fileInfos.begin(), fileInfos.end(),
-					[prevGlobalId](const DatFileInfo& info) {
-						return info.localFileId == prevGlobalId;
+					[&cate, &lang](const DatFileInfo& info) {
+						return info.category == cate && info.language == lang;
 					});
 				if (it != fileInfos.end())
 				{

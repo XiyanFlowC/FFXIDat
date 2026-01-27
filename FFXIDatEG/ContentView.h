@@ -117,6 +117,10 @@ public:
 	void SetColumnType(int index, ColumnDataType type);
 	void SetColumnWidth(int index, int width);
 	void AddItem(std::unique_ptr<ContentItem> item);
+	int GetColumnCount() const { return static_cast<int>(m_columnTitles.size()); }
+	const std::wstring& GetColumnTitle(int index) const;
+	ColumnDataType GetColumnType(int index) const;
+	bool SetCellValue(size_t row, size_t column, const std::wstring& value);
 	
 	// Selection
 	int GetSelectedIndex() const { return m_selectedIndex; }

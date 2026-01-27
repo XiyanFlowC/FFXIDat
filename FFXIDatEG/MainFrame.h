@@ -51,6 +51,8 @@ private:
 	void OnOpenFile();
 	void OnOpenFileById();
 	bool CheckAndPromptSave();
+	void OnExportCsv();
+	void OnImportCsv();
 	
 	// Helper for custom dialogs
 	bool PromptForFileType(std::string& outType);
@@ -99,4 +101,6 @@ private:
 	static constexpr int IDM_VIEW_ENABLE_CATEGORY_HIERARCHY = 2170;  // Enable category hierarchy
 	static constexpr int IDM_HELP_QUICKSTART = 2200;
 	static constexpr int IDM_HELP_ABOUT = 2201;
+	static constexpr int IDM_DATA_EXPORT = 2301;
+	static constexpr int IDM_DATA_IMPORT = 2302;
 };
