@@ -1252,7 +1252,7 @@ bool ContentView::SearchText(const std::wstring& searchText, bool caseSensitive,
 		// Search in all columns
 		for (const auto& col : item->columns)
 		{
-			if (col.type != ColumnDataType::Text)
+			if (col.type != ColumnDataType::Text && col.type != ColumnDataType::MultilineText)
 				continue;
 
 			std::wstring searchIn = col.textValue;
