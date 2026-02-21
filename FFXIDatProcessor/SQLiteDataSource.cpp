@@ -667,7 +667,7 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
         }
         
         // Also clean up ROE quest data for this file (ROM/307/15)
-        if (type == "erc") {
+        if (type == "erq") {
             if (sqlite3_prepare_v2(db, "DELETE FROM roe_quest WHERE file_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
             {
                 sqlite3_bind_int(stmt, 1, file_id);
@@ -677,7 +677,7 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
         }
         
         // Also clean up ROE category data for this file (ROM/307/23)
-        if (type == "erq") {
+        if (type == "erc") {
             if (sqlite3_prepare_v2(db, "DELETE FROM roe_category WHERE file_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
             {
                 sqlite3_bind_int(stmt, 1, file_id);
@@ -760,11 +760,11 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
         {
             ImportMonBridgeDat(file_id, datPath);
         }
-        else if (type == "erc") // ROM/307/15 - Quest entries
+        else if (type == "erq") // ROM/307/15 - Quest entries
         {
             ImportRoeQuestDat(file_id, datPath);
         }
-        else if (type == "erq") // ROM/307/23 - Category entries
+        else if (type == "erc") // ROM/307/23 - Category entries
         {
             ImportRoeCategoryDat(file_id, datPath);
         }
@@ -983,11 +983,11 @@ void SQLiteDataSource::TranslateDat(int file_id, const char *file_path, const ch
     {
         TranslateMonBridgeDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str());
     }
-    else if (t == "erc") // ROM/307/15 - Quest entries
+    else if (t == "erq") // ROM/307/15 - Quest entries
     {
         TranslateRoeQuestDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str());
     }
-    else if (t == "erq") // ROM/307/23 - Category entries
+    else if (t == "erc") // ROM/307/23 - Category entries
     {
         TranslateRoeCategoryDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str());
     }

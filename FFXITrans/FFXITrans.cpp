@@ -212,6 +212,42 @@ int LoadText(int seq)
 	std::string text;
 	std::string trans;
 
+	// 读取开头3字节，检查是否有BOM
+	char bom[3] = { 0 };
+	oEye.read(bom, 3);
+	if (bom[0] == char(0xEF) && bom[1] == char(0xBB) && bom[2] == char(0xBF)) {
+		// 有BOM，继续正常读取
+	}
+	else if (bom[0] == char(0xFF) && bom[1] == char(0xFE)) {
+		std::wcerr << L"不支持的编码格式（UTF-16 LE），请转换为UTF-8编码。\n";
+		return -1;
+	}
+	else if (bom[0] == char(0xFE) && bom[1] == char(0xFF)) {
+		std::wcerr << L"不支持的编码格式（UTF-16 BE），请转换为UTF-8编码。\n";
+		return -1;
+	}
+	else {
+		// 没有BOM，重置文件指针到开头
+		oEye.seekg(0);
+	}
+
+	tEye.read(bom, 3);
+	if (bom[0] == char(0xEF) && bom[1] == char(0xBB) && bom[2] == char(0xBF)) {
+		// 有BOM，继续正常读取
+	}
+	else if (bom[0] == char(0xFF) && bom[1] == char(0xFE)) {
+		std::wcerr << L"不支持的编码格式（UTF-16 LE），请转换为UTF-8编码。\n";
+		return -1;
+	}
+	else if (bom[0] == char(0xFE) && bom[1] == char(0xFF)) {
+		std::wcerr << L"不支持的编码格式（UTF-16 BE），请转换为UTF-8编码。\n";
+		return -1;
+	}
+	else {
+		// 没有BOM，重置文件指针到开头
+		tEye.seekg(0);
+	}
+
 	int i = 0;
 	while (std::getline(oEye, text)) {
 		if (!std::getline(tEye, trans))
