@@ -470,7 +470,7 @@ void SQLiteDataSource::ImportTranslation()
             sqlite3_bind_text(qryStmt, 1, text.c_str(), -1, SQLITE_TRANSIENT);
 
             if (sqlite3_step(qryStmt) != SQLITE_ROW) {
-
+				std::wcerr << L"文本未找到，跳过: " << xybase::string::to_wstring((char8_t*)text.c_str()) << std::endl;
                 sqlite3_reset(qryStmt);
                 continue;
                 // throw SQLException(std::string("failed to query index for ") + xybase::string::to_string((char8_t *)text.c_str()));
