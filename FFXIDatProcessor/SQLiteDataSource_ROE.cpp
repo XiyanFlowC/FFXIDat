@@ -14,6 +14,7 @@ void SQLiteDataSource::ImportRoeQuestDat(const int file_id, const std::wstring &
     RecordsOfEminence roe;
     roe.ReadQuest(path);
     
+    int rowCounter = 1;
     for (const auto &datum : roe.questData) {
         int roe_record_id = -1;
         try
@@ -23,6 +24,7 @@ void SQLiteDataSource::ImportRoeQuestDat(const int file_id, const std::wstring &
         catch (SQLException &ex)
         {
             Ring(xybase::string::to_utf8(std::string("Failed to insert or get ROE Quest record for ID ") + std::to_string(datum.id) + ": " + ex.what()).c_str());
+            rowCounter++;
             continue;
         }
         
@@ -57,6 +59,17 @@ void SQLiteDataSource::ImportRoeQuestDat(const int file_id, const std::wstring &
         try {
             std::u8string qName = datum.questName();
             if (!qName.empty()) {
+                std::string qNameStr = reinterpret_cast<const char*>(xybase::string::escape(qName).c_str());
+                int col = 1; 
+                int row = rowCounter;
+
+                for (auto &cell : datum.row()) {
+                    if (cell.GetType() == 0) {
+						InsertText(reinterpret_cast<const char*>(xybase::string::escape(cell.Get<std::u8string>()).c_str()), file_id, row, col);
+                    }
+					col++;
+				}
+
                 int quest_name_text_id = InsertOrGetText(xybase::string::escape(qName));
                 if (sqlite3_prepare_v2(db, "UPDATE roe_quest SET quest_name_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
                 {
@@ -72,6 +85,13 @@ void SQLiteDataSource::ImportRoeQuestDat(const int file_id, const std::wstring &
         try {
             std::u8string desc = datum.description();
             if (!desc.empty()) {
+                std::string descStr = reinterpret_cast<const char*>(xybase::string::escape(desc).c_str());
+                int col = 2; 
+                int row = rowCounter;
+                
+                // Use InsertText to register in rela
+                InsertText(descStr.c_str(), file_id, row, col);
+
                 int description_text_id = InsertOrGetText(xybase::string::escape(desc));
                 if (sqlite3_prepare_v2(db, "UPDATE roe_quest SET description_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
                 {
@@ -82,6 +102,8 @@ void SQLiteDataSource::ImportRoeQuestDat(const int file_id, const std::wstring &
                 sqlite3_finalize(stmt);
             }
         } catch (...) { /* Ignore missing fields */ }
+        
+        rowCounter++;
     }
 }
 
@@ -209,6 +231,7 @@ void SQLiteDataSource::ImportRoeCategoryDat(const int file_id, const std::wstrin
     RecordsOfEminence roe;
     roe.ReadCategory(path);
     
+    int rowCounter = 1;
     for (const auto &datum : roe.categoryData) {
         int roe_record_id = -1;
         try
@@ -218,6 +241,7 @@ void SQLiteDataSource::ImportRoeCategoryDat(const int file_id, const std::wstrin
         catch (SQLException &ex)
         {
             Ring(xybase::string::to_utf8(std::string("Failed to insert or get ROE Category record for ID ") + std::to_string(datum.id) + ": " + ex.what()).c_str());
+            rowCounter++;
             continue;
         }
         
@@ -264,6 +288,19 @@ void SQLiteDataSource::ImportRoeCategoryDat(const int file_id, const std::wstrin
         try {
             std::u8string catName = datum.categoryName();
             if (!catName.empty()) {
+                std::string catNameStr = reinterpret_cast<const char*>(xybase::string::escape(catName).c_str());
+                int col = 1; 
+                int row = rowCounter;
+
+                for (auto& cell : datum.row())
+                {
+                    if (cell.GetType() == 0) // str
+                    {
+						InsertText(reinterpret_cast<const char*>(xybase::string::escape(cell.Get<std::u8string>()).c_str()), file_id, row, col);
+					}
+                    col++;
+                }
+
                 int category_name_text_id = InsertOrGetText(xybase::string::escape(catName));
                 if (sqlite3_prepare_v2(db, "UPDATE roe_category SET category_name_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
                 {
@@ -274,6 +311,8 @@ void SQLiteDataSource::ImportRoeCategoryDat(const int file_id, const std::wstrin
                 sqlite3_finalize(stmt);
             }
         } catch (...) { /* Ignore missing fields */ }
+        
+        rowCounter++;
     }
 }
 

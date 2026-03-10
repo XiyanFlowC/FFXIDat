@@ -1026,6 +1026,7 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
     
     itemData.Read(path, specType);
     
+    int rowCounter = 1;
     for (const auto &datum : itemData.data) {
 		int item_record_id = -1;
         try
@@ -1035,6 +1036,7 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
         catch (SQLException &ex)
         {
             Ring(xybase::string::to_utf8(std::string("Failed to insert or get item record for item ID ") + std::to_string(datum.id) + ": " + ex.what()).c_str());
+            rowCounter++;
             continue;
 		}
         
@@ -1128,6 +1130,20 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
         try {
             std::u8string itemName = datum.name();
             if (!itemName.empty()) {
+                int col = 1; 
+                int row = rowCounter;
+                
+                for (auto& cell : datum.row())
+                {
+                    if (cell.GetType() == 0) // str
+                    {
+                        std::u8string cellText = xybase::string::escape(cell.Get<std::u8string>());
+                        InsertText(reinterpret_cast<const char*>(cellText.c_str()), file_id, row, col);
+                    }
+					col++;
+                }
+                
+                // Still need the ID for the items table
                 int name_text_id = InsertOrGetText(xybase::string::escape(itemName));
                 if (sqlite3_prepare_v2(db, "UPDATE items SET name_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
                 {
@@ -1143,6 +1159,13 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
         try {
             std::u8string itemDesc = datum.description();
             if (!itemDesc.empty()) {
+                std::string descStr = reinterpret_cast<const char*>(xybase::string::escape(itemDesc).c_str());
+                int col = 2;
+                int row = rowCounter;
+
+                // Use InsertText to register in rela
+                InsertText(descStr.c_str(), file_id, row, col);
+
                 int desc_text_id = InsertOrGetText(xybase::string::escape(itemDesc));
                 if (sqlite3_prepare_v2(db, "UPDATE items SET description_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
                 {
@@ -1153,6 +1176,8 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
                 sqlite3_finalize(stmt);
             }
         } catch (...) { /* Ignore missing fields */ }
+        
+        rowCounter++;
     }
 }
 
@@ -1539,6 +1564,7 @@ void SQLiteDataSource::ImportMonBridgeDat(const int file_id, const std::wstring 
     MonBridge monBridge;
     monBridge.Read(path);
     
+    int rowCounter = 1;
     for (const auto &datum : monBridge.data) {
 		int mb_record_id = -1;
         try
@@ -1548,6 +1574,7 @@ void SQLiteDataSource::ImportMonBridgeDat(const int file_id, const std::wstring 
         catch (SQLException &ex)
         {
             Ring(xybase::string::to_utf8(std::string("Failed to insert or get MonBridge record for ID ") + std::to_string(datum.id) + ": " + ex.what()).c_str());
+            rowCounter++;
             continue;
 		}
         
@@ -1576,6 +1603,13 @@ void SQLiteDataSource::ImportMonBridgeDat(const int file_id, const std::wstring 
         
         // Insert display name text if not empty (internal name is NOT translated)
         if (!datum.displayName.empty()) {
+            std::string dispStr = reinterpret_cast<const char*>(xybase::string::escape(datum.displayName).c_str());
+            int col = 1;
+            int row = rowCounter;
+            
+            // Use InsertText to register in rela
+			InsertText(dispStr.c_str(), file_id, row, col);
+
             int display_name_text_id = InsertOrGetText(xybase::string::escape(datum.displayName));
             if (sqlite3_prepare_v2(db, "UPDATE monbridge SET display_name_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
             {
@@ -1585,6 +1619,8 @@ void SQLiteDataSource::ImportMonBridgeDat(const int file_id, const std::wstring 
             }
             sqlite3_finalize(stmt);
         }
+        
+        rowCounter++;
     }
 }
 
