@@ -204,6 +204,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ViewTree.h" />
+    <ClInclude Include="MergeDialog.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BlockAdapter.cpp" />
@@ -221,6 +222,7 @@
     </ClCompile>
     <ClCompile Include="PropertiesWnd.cpp" />
     <ClCompile Include="ViewTree.cpp" />
+    <ClCompile Include="MergeDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="FFXIMenu.reg" />

@@ -3,6 +3,7 @@
 // 供 FFXIMenu.rc 使用
 //
 #define IDD_ABOUTBOX                    100
+#define IDD_MERGE_DIALOG                101
 #define IDR_POPUP_EDIT                  119
 #define ID_STATUSBAR_PANE1              120
 #define ID_STATUSBAR_PANE2              121
@@ -98,14 +99,17 @@
 #define ID_32782                        32782
 #define ID_32783                        32783
 #define ID_32784                        32784
+#define ID_FILE_MERGE                   32785
+#define IDC_MERGE_LIST                  1000
+#define IDC_MERGE_DETAIL                1001
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        313
-#define _APS_NEXT_COMMAND_VALUE         32795
-#define _APS_NEXT_CONTROL_VALUE         1000
+#define _APS_NEXT_COMMAND_VALUE         32786
+#define _APS_NEXT_CONTROL_VALUE         1002
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

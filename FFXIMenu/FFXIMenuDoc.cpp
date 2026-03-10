@@ -18,9 +18,9 @@
 
 #include <propkey.h>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
+//#ifdef _DEBUG
+//#define new DEBUG_NEW
+//#endif
 
 // CFFXIMenuDoc
 
@@ -41,6 +41,21 @@ CFFXIMenuDoc::CFFXIMenuDoc() noexcept
 
 CFFXIMenuDoc::~CFFXIMenuDoc()
 {
+	if (m_noImageCache)
+	{
+		delete m_noImageCache;
+		m_noImageCache = nullptr;
+	}
+
+	POSITION pos = m_extraTextures.GetStartPosition();
+	while (pos != nullptr)
+	{
+		CString key;
+		Gdiplus::Bitmap *bmp = nullptr;
+		m_extraTextures.GetNextAssoc(pos, key, bmp);
+		delete bmp;
+	}
+	m_extraTextures.RemoveAll();
 }
 
 // TODO: 以下绘图相关迁移到View
@@ -342,7 +357,7 @@ void CFFXIMenuDoc::LoadExtraTexture(LPCTSTR path)
 				break;
 			}
 
-			Gdiplus::Bitmap *bitmap = ::new Gdiplus::Bitmap(w, h, PixelFormat32bppARGB);
+			Gdiplus::Bitmap *bitmap = new Gdiplus::Bitmap(w, h, PixelFormat32bppARGB);
 			Gdiplus::BitmapData bitmapData;
 			Gdiplus::Rect rect(0, 0, w, h);
 			bitmap->LockBits(&rect, Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &bitmapData);
@@ -601,7 +616,7 @@ Gdiplus::Bitmap *CFFXIMenuDoc::GetOrCreateNoImageBitmap()
 	}
 
 	// 创建一个新的 64x64 图像（RGBA格式）
-	Gdiplus::Bitmap *pBitmap = ::new Gdiplus::Bitmap(256, 256, PixelFormat32bppARGB);
+	Gdiplus::Bitmap *pBitmap = new Gdiplus::Bitmap(256, 256, PixelFormat32bppARGB);
 
 	// 创建图形对象来绘制图像
 	Gdiplus::Graphics graphics(pBitmap);

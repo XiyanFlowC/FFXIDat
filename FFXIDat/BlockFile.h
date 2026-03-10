@@ -155,10 +155,14 @@ public:
 		Block() : rawData(nullptr) {}
 
 		char *GetRawData() { return rawData; }
+		const char *GetRawData() const { return rawData; }
 
 		virtual void Read(std::ifstream &eye) = 0;
 
 		virtual void Write(std::ofstream &pen) = 0;
+
+		// 通用克隆接口，便于在外部安全复制块
+		virtual Block *Clone() const = 0;
 
 		virtual ~Block() { if (rawData) delete[] rawData; }
 
@@ -174,6 +178,7 @@ public:
 		EmptyBlock() {}
 		virtual void Read(std::ifstream &eye) {}
 		virtual void Write(std::ofstream &pen) {}
+		virtual Block *Clone() const override { return new EmptyBlock(*this); }
 	};
 
 	class UnknownBlock : public Block
@@ -191,6 +196,18 @@ public:
 			size_t size = blockHeader.size * 16 - 16;
 			pen.write(rawData, size);
 		}
+
+		virtual Block *Clone() const override
+		{
+			UnknownBlock *blk = new UnknownBlock(*this);
+			if (rawData)
+			{
+				size_t size = blockHeader.size * 16 - 16;
+				blk->rawData = new char[size];
+				memcpy(blk->rawData, rawData, size);
+			}
+			return blk;
+		}
 	};
 
 	// 保存了一个图像的块
@@ -201,6 +218,7 @@ public:
 
 		virtual void Read(std::ifstream &eye) override;
 		virtual void Write(std::ofstream &pen) override;
+		virtual Block *Clone() const override { return new ImageBlock(*this); }
 	};
 
 	// 图像集（拼图）的块
@@ -222,6 +240,7 @@ public:
 		std::vector<ImageGroup> groups;
 		virtual void Read(std::ifstream &eye) override;
 		virtual void Write(std::ofstream &pen) override;
+		virtual Block *Clone() const override { return new ImageSetBlock(*this); }
 	};
 
 	// 似乎定义了菜单列表的块
@@ -232,6 +251,21 @@ public:
 		std::vector<std::unique_ptr<char[]>> data;
 		virtual void Read(std::ifstream &eye) override;
 		virtual void Write(std::ofstream &pen) override;
+		virtual Block *Clone() const override
+		{
+			MenuBlock *blk = new MenuBlock();
+			blk->Block::blockHeader = this->Block::blockHeader;
+			blk->blockHeader = this->blockHeader;
+			for (const auto &ptr : data)
+			{
+				if (!ptr) continue;
+				uint16_t size = *(uint16_t *)ptr.get();
+				std::unique_ptr<char[]> buf(new char[size]);
+				memcpy(buf.get(), ptr.get(), size);
+				blk->data.push_back(std::move(buf));
+			}
+			return blk;
+		}
 	private:
 		MenuLayoutBlock blockHeader;
 	};

@@ -1,5 +1,4 @@
-﻿
-// FFXIMenu.h: FFXIMenu 应用程序的主头文件
+﻿// FFXIMenu.h: FFXIMenu 应用程序的主头文件
 //
 #pragma once
 
@@ -26,6 +25,8 @@ public:
 	virtual int ExitInstance();
 
 // 实现
+	ULONG_PTR m_gdiplusToken;
+
 	UINT  m_nAppLook;
 	BOOL  m_bHiColorIcons;
 
@@ -34,9 +35,8 @@ public:
 	virtual void SaveCustomState();
 
 	afx_msg void OnAppAbout();
+	afx_msg void OnFileMerge();
 	DECLARE_MESSAGE_MAP()
-private:
-	ULONG_PTR m_gdiplusToken;
 };
 
 extern CFFXIMenuApp theApp;
