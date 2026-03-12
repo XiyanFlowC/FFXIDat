@@ -143,6 +143,7 @@
   <ItemGroup>
     <ClInclude Include="..\FFXIDatProcessor\codepage.h" />
     <ClInclude Include="ChsToSJis.h" />
+    <ClInclude Include="liteopt.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="defs_sample.csv" />

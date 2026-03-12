@@ -32,6 +32,9 @@
     <ClInclude Include="ChsToSJis.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="liteopt.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="defs_sample.csv" />

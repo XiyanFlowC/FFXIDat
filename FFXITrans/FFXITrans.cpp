@@ -1,6 +1,6 @@
 ﻿// FFXITrans.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
-
+#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -29,6 +29,8 @@
 #include <MonBridge.h>
 #include <RecordsOfEminence.h>
 
+#include "liteopt.h"
+
 namespace fs = std::filesystem;
 
 fs::path gameRoot, progRoot;
@@ -37,6 +39,7 @@ bool englishMode = false; // if true, only process English files (PlayOnlineEU)
 bool in_situ_noprompt = false;
 bool backup_enabled = true;
 bool backup_noprompt = false;
+bool no_mismatch_log = false;
 
 #include "../FFXIDatProcessor/codepage.h"
 #include "ChsToSJis.h"
@@ -288,6 +291,225 @@ void BackupGameFile(fs::path path)
 	fs::copy(gamePath, backPath, fs::copy_options::skip_existing);
 }
 
+
+struct FileDef {
+	std::u8string comment;
+	std::u8string lang;
+	std::u8string path;
+	std::u8string type;
+};
+
+void ExtractEventStringBase(const FileDef &def, std::set<std::u8string> &processedStrings, const fs::path &outputDir)
+{
+	fs::path inputPath = gameRoot / def.path;
+	fs::path outputPath = outputDir / def.lang / xybase::string::to_wstring(def.comment + u8".txt");
+	std::wcout << L"正在处理 " << inputPath << L" -> " << outputPath << std::endl;
+	EventStringBase esb(inputPath);
+	esb.Read();
+	std::vector<std::u8string> extractedStrings;
+	for (const auto &str : esb)
+	{
+		if (processedStrings.find(str) == processedStrings.end())
+		{
+			extractedStrings.push_back(str);
+			processedStrings.insert(str);
+		}
+	}
+	if (!extractedStrings.empty())
+	{
+		std::ofstream out(outputPath, std::ios::out | std::ios::binary);
+		out.write("\xEF\xBB\xBF", 3); // UTF-8 BOM
+		for (const auto &str : extractedStrings)
+		{
+			out.write(reinterpret_cast<const char*>(str.c_str()), str.length());
+			out << "\n";
+		}
+		std::wcout << L"提取了 " << extractedStrings.size() << L" 条文本。\n";
+	}
+	else
+	{
+		std::wcout << L"没有新的文本需要提取。\n";
+	}
+}
+
+void PrepareSourceData()
+{
+	fs::path outputDir{ L"data/src" };
+	fs::path en = outputDir / L"en", ja = outputDir / L"ja";
+	//fs::path zh = outputDir / L"zh";
+
+	CsvFile defs(progRoot / L"defs.csv", std::ios::in | std::ios::binary);
+
+	std::list<FileDef> fileDefs;
+
+	while (!defs.IsEof())
+	{
+		std::u8string path = defs.NextCell();
+		std::u8string type = defs.NextCell();
+		std::u8string lang = defs.NextCell();
+		std::u8string comment = defs.NextCell();
+		if (comment.empty() || lang.empty() || path.empty() || type.empty())
+			break;
+		fileDefs.push_back({ comment, lang, path, type });
+		commentToJpPath[comment] = path;
+	}
+
+	// 处理 ev/* 和 evx/* 文件
+	// 首先处理 ev/dbg_scene，
+	std::set<std::u8string> processedStrings; // 避免重复处理同一文本
+	auto itr = std::find_if(fileDefs.begin(), fileDefs.end(), [](const FileDef &def) {
+		return def.comment == u8"ev/dbg_scene" && def.lang == u8"jp";
+		});
+	auto dbg_scene_jp = *itr;
+	itr = fileDefs.erase(itr);
+	// 再找英语
+	itr = std::find_if(fileDefs.begin(), fileDefs.end(), [](const FileDef &def) {
+		return def.comment == u8"ev/dbg_scene" && def.lang == u8"en";
+		});
+	auto dbg_scene_en = *itr;
+	itr = fileDefs.erase(itr);
+
+	// 这两个文件中含有许多在其他文件中也会出现的文本，先处理它们，提取出文本后再处理其他文件时就能避免重复提取同一文本了。
+	ExtractEventStringBase(dbg_scene_jp, processedStrings, outputDir);
+	ExtractEventStringBase(dbg_scene_en, processedStrings, outputDir);
+
+	// 现在处理剩下的 ev/* 和 evx/* 文件
+	itr = fileDefs.begin();
+	while (itr != fileDefs.end())
+	{
+		if ((itr->comment.starts_with(u8"ev/") || itr->comment.starts_with(u8"evx/")) && itr->lang == u8"jp")
+		{
+			ExtractEventStringBase(*itr, processedStrings, outputDir);
+			itr = fileDefs.erase(itr);
+		}
+		else
+			++itr;
+	}
+
+	// 处理 itm/ 类型的文件
+	// Item 类型的数据特殊处理，制作为 ID，名字，描述 的匹配
+	itr = fileDefs.begin();
+	while (itr != fileDefs.end())
+	{
+		if (itr->path.starts_with(u8"itm/"))
+		{
+			ItemData id;
+			id.Read(gameRoot / itr->path);
+
+			CsvFile output(progRoot / xybase::string::to_wstring(itr->comment + u8".csv"), std::ios::out | std::ios::binary);
+
+			output.NewCell(u8"ID");
+			output.NewCell(u8"Name");
+			output.NewCell(u8"Description");
+			output.NewLine();
+
+			for (auto datum : id.data)
+			{
+				if (datum.name() == u8".")
+					continue; // 跳过无效条目
+
+				output.NewCell(xybase::string::itos<char8_t>(datum.id));
+				output.NewCell(datum.name());
+				output.NewCell(datum.description());
+				output.NewLine();
+			}
+			itr = fileDefs.erase(itr);
+		}
+		else
+			++itr;
+	}
+
+	// 处理剩下的文件
+	for (const auto &def : fileDefs)
+	{
+		fs::path inputPath = gameRoot / def.path;
+		fs::path outputPath = outputDir / def.lang / xybase::string::to_wstring(def.comment + u8".txt");
+		std::wcout << L"正在处理 " << inputPath << L" -> " << outputPath << std::endl;
+		std::vector<std::u8string> extractedStrings;
+		if (def.type == u8"sd")
+		{
+			StatusData data;
+			data.Read(inputPath);
+			for (const auto &entry : data.data)
+			{
+				extractedStrings.push_back(entry.description);
+			}
+		}
+		else if (def.type == u8"fp")
+		{
+			FixedPhrase data;
+			data.Read(inputPath);
+			data.ToCsv(progRoot / xybase::string::to_wstring(def.comment + u8".csv"));
+		}
+		else if (def.type == u8"mb")
+		{
+			MonBridge data;
+			data.Read(inputPath);
+			for (const auto &entry : data.data)
+			{
+				extractedStrings.push_back(entry.displayName);
+			}
+		}
+		else if (def.type == u8"erq")
+		{
+			RecordsOfEminence data;
+			data.ReadQuest(inputPath);
+			for (const auto &entry : data.questData)
+			{
+				extractedStrings.push_back(entry.questName());
+				extractedStrings.push_back(entry.description());
+				extractedStrings.push_back(entry.note());
+			}
+		}
+		else if (def.type == u8"erc")
+		{
+			RecordsOfEminence data;
+			data.ReadCategory(inputPath);
+			for (const auto &entry : data.categoryData)
+			{
+				extractedStrings.push_back(entry.categoryName());
+			}
+		}
+		else if (def.type == u8"dmsg")
+		{
+			DMsg data(inputPath);
+			for (const auto& datum : data)
+			{
+				for (const auto& datulus : datum)
+				{
+					if (datulus.GetType() == 0) // string type
+					{
+						extractedStrings.push_back(datulus.Get<std::u8string>());
+					}
+				}
+			}
+		}
+		else if (def.type == u8"xis")
+		{
+			XiString data(inputPath);
+			data.Read();
+			for (const auto& str : data)
+			{
+				extractedStrings.push_back(xybase::string::to_utf8(XiString::Decode(str.str)));
+			}
+		}
+		
+		if (!extractedStrings.empty())
+		{
+			std::ofstream out(outputPath, std::ios::out | std::ios::binary);
+			out.write("\xEF\xBB\xBF", 3); // UTF-8 BOM
+			for (const auto &str : extractedStrings)
+			{
+				auto escapedStr = xybase::string::escape(str);
+				out.write(reinterpret_cast<const char*>(escapedStr.c_str()), escapedStr.length());
+				out << "\n";
+			}
+			std::wcout << L"提取了 " << extractedStrings.size() << L" 条文本。\n";
+		}
+		
+	}
+}
+
 int main(int argc, char **argv)
 {
 	setlocale(LC_ALL, "");
@@ -302,20 +524,30 @@ int main(int argc, char **argv)
 		}
 
 		std::string cmd{ argv[1] };
+		if (cmd == "prepare")
+		{
+			if (PathInit())
+			{
+				system("pause");
+				exit(-1);
+			}
+			PrepareSourceData();
+		}
 		if (cmd == "insitu")
 			in_situ = true;
 		else
 		{
-			std::wcout << L"FFXI汉化插入工具 Ver.0.9-alpha by Hyururu\n"
+			std::wcout << L"FFXI汉化插入工具 Ver.0.10-alpha by Hyururu\n"
 				L"用法：FFXITrans [insitu]\n"
 				L"  insitu：直接在游戏目录修改文件，否则输出到output目录\n"
+				L"  prepare：输出要准备的游戏数据文件（翻译用）\n"
 				L"  无参数则进入交互模式\n";
 			return 0;
 		}
 	}
 	try
 	{
-		std::wcout << L"FFXI汉化插入工具 Ver.0.9-alpha by Hyururu" << std::endl;
+		std::wcout << L"FFXI汉化插入工具 Ver.0.10-alpha by Hyururu" << std::endl;
 		if (PathInit())
 		{
 			system("pause");
@@ -368,15 +600,24 @@ int main(int argc, char **argv)
 						std::wcout << L"使用配置文件中的输出路径：" << gameRoot << std::endl;
 					}
 				}
+				else if (key == L"no_mismatch_log")
+				{
+					no_mismatch_log = (value == L"1" || value == L"true" || value == L"yes");
+				}
 			}
 			configFile.close();
 		}
 		
 		// 初始化失配文件（UTF-8无BOM）
 		fs::path mismatchPath = progRoot / "text_mismatch.txt";
-		mismatchFile.open(mismatchPath, std::ios::out | std::ios::binary);
-		if (!mismatchFile.is_open()) {
-			std::wcerr << L"无法创建失配文本文件：" << mismatchPath << std::endl;
+		if (no_mismatch_log) {
+			std::wcout << L"配置为不输出失配文本。\n";
+		}
+		else {
+			mismatchFile.open(mismatchPath, std::ios::out | std::ios::binary);
+			if (!mismatchFile.is_open()) {
+				std::wcerr << L"无法创建失配文本文件：" << mismatchPath << std::endl;
+			}
 		}
 		
 		try

@@ -185,6 +185,143 @@ namespace {
 		SetActiveWindow(owner);
 		return state.accepted;
 	}
+
+	std::wstring SanitizePathSegment(const std::wstring& input)
+	{
+		std::wstring out;
+		out.reserve(input.size());
+		for (wchar_t ch : input)
+		{
+			if (ch < 32 || ch == L'<' || ch == L'>' || ch == L':' || ch == L'"' ||
+				ch == L'|' || ch == L'?' || ch == L'*')
+			{
+				out.push_back(L'_');
+			}
+			else
+			{
+				out.push_back(ch);
+			}
+		}
+		while (!out.empty() && (out.back() == L' ' || out.back() == L'.'))
+		{
+			out.back() = L'_';
+		}
+		if (out.empty())
+		{
+			out = L"_";
+		}
+		return out;
+	}
+
+	std::filesystem::path BuildCsvRelativePath(const DatFileInfo& info)
+	{
+		std::wstring category = xybase::string::to_wstring(xybase::string::to_utf8(info.category));
+		std::filesystem::path rel;
+
+		size_t start = 0;
+		while (start <= category.size())
+		{
+			size_t pos = category.find_first_of(L"/\\", start);
+			std::wstring seg = category.substr(start, pos == std::wstring::npos ? std::wstring::npos : (pos - start));
+			if (!seg.empty())
+			{
+				rel /= SanitizePathSegment(seg);
+			}
+			if (pos == std::wstring::npos)
+			{
+				break;
+			}
+			start = pos + 1;
+		}
+
+		if (rel.empty())
+		{
+			rel = SanitizePathSegment(xybase::string::to_wstring(xybase::string::to_utf8(info.romFolder))) + L"_" + std::to_wstring(info.localFileId);
+		}
+
+		auto fileName = rel.filename().wstring() + L"." + xybase::string::to_wstring(xybase::string::to_utf8(info.fileType)) + L".csv";
+		rel.replace_filename(SanitizePathSegment(fileName));
+		return rel;
+	}
+
+	class ProgressDialog
+	{
+	public:
+		bool Create(HWND owner, HINSTANCE instance, const std::wstring& title)
+		{
+			m_hwnd = CreateWindowExW(
+				WS_EX_DLGMODALFRAME,
+				L"#32770",
+				title.c_str(),
+				WS_POPUP | WS_CAPTION | WS_SYSMENU,
+				CW_USEDEFAULT, CW_USEDEFAULT,
+				520, 130,
+				owner,
+				nullptr,
+				instance,
+				nullptr);
+			if (!m_hwnd)
+			{
+				return false;
+			}
+
+			HFONT font = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+			m_hText = CreateWindowExW(0, L"STATIC", L"", WS_CHILD | WS_VISIBLE,
+				12, 12, 490, 38, m_hwnd, nullptr, instance, nullptr);
+			SendMessageW(m_hText, WM_SETFONT, (WPARAM)font, TRUE);
+
+			m_hProgress = CreateWindowExW(0, PROGRESS_CLASSW, nullptr,
+				WS_CHILD | WS_VISIBLE,
+				12, 58, 490, 22, m_hwnd, nullptr, instance, nullptr);
+			SendMessageW(m_hProgress, PBM_SETRANGE32, 0, 100);
+			SendMessageW(m_hProgress, PBM_SETPOS, 0, 0);
+
+			ShowWindow(m_hwnd, SW_SHOW);
+			UpdateWindow(m_hwnd);
+			return true;
+		}
+
+		void Update(int current, int total, const std::wstring& currentFile)
+		{
+			if (!m_hwnd) return;
+			std::wstring text = L"(" + std::to_wstring(current) + L"/" + std::to_wstring(total) + L") " + currentFile;
+			SetWindowTextW(m_hText, text.c_str());
+			SendMessageW(m_hProgress, PBM_SETRANGE32, 0, max(total, 1));
+			SendMessageW(m_hProgress, PBM_SETPOS, current, 0);
+			Pump();
+		}
+
+		void Close()
+		{
+			if (m_hwnd)
+			{
+				DestroyWindow(m_hwnd);
+				m_hwnd = nullptr;
+				m_hText = nullptr;
+				m_hProgress = nullptr;
+			}
+		}
+
+		~ProgressDialog()
+		{
+			Close();
+		}
+
+	private:
+		void Pump()
+		{
+			MSG msg;
+			while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+		}
+
+		HWND m_hwnd = nullptr;
+		HWND m_hText = nullptr;
+		HWND m_hProgress = nullptr;
+	};
 }
 bool MainFrame::PromptForFileType(std::string& outType)
 {
@@ -254,6 +391,286 @@ bool MainFrame::PromptForFileType(std::string& outType)
 	std::u8string u8str = xybase::string::to_utf8(state.fileType);
 	outType = xybase::string::to_string(u8str);
 	return true;
+}
+
+
+void MainFrame::CollectLeafTreeItems(HTREEITEM hItem, std::vector<HTREEITEM>& outLeaves) const
+{
+	if (!hItem || !m_hTreeView)
+		return;
+
+	HTREEITEM hChild = TreeView_GetChild(m_hTreeView, hItem);
+	if (!hChild)
+	{
+		outLeaves.push_back(hItem);
+		return;
+	}
+
+	while (hChild)
+	{
+		CollectLeafTreeItems(hChild, outLeaves);
+		hChild = TreeView_GetNextSibling(m_hTreeView, hChild);
+	}
+}
+
+void MainFrame::OnTreeContextMenu()
+{
+	if (!m_hTreeView || !m_fileManager)
+		return;
+
+	POINT pt;
+	GetCursorPos(&pt);
+	POINT clientPt = pt;
+	ScreenToClient(m_hTreeView, &clientPt);
+
+	TVHITTESTINFO ht = {};
+	ht.pt = clientPt;
+	TreeView_HitTest(m_hTreeView, &ht);
+	if (!ht.hItem)
+		return;
+
+	TreeView_SelectItem(m_hTreeView, ht.hItem);
+
+	const bool isLeaf = (TreeView_GetChild(m_hTreeView, ht.hItem) == nullptr);
+	HMENU hMenu = CreatePopupMenu();
+	if (!hMenu)
+		return;
+
+	AppendMenuW(hMenu, MF_STRING, 1,
+		LocalizedOrDefault(isLeaf ? L"tree_ctx_export_csv" : L"tree_ctx_export_subtree",
+			isLeaf ? L"Export CSV..." : L"Export All CSV Under This Node...").c_str());
+	AppendMenuW(hMenu, MF_STRING, 2,
+		LocalizedOrDefault(isLeaf ? L"tree_ctx_import_csv" : L"tree_ctx_import_subtree",
+			isLeaf ? L"Import CSV..." : L"Import All CSV Under This Node...").c_str());
+
+	int cmd = TrackPopupMenu(hMenu, TPM_RETURNCMD | TPM_RIGHTBUTTON, pt.x, pt.y, 0, m_hwnd, nullptr);
+	DestroyMenu(hMenu);
+
+	if (cmd == 1)
+	{
+		OnTreeExportCsv(ht.hItem);
+	}
+	else if (cmd == 2)
+	{
+		OnTreeImportCsv(ht.hItem);
+	}
+}
+
+void MainFrame::OnTreeExportCsv(HTREEITEM hItem)
+{
+	if (!m_fileManager)
+		return;
+
+	std::vector<HTREEITEM> leaves;
+	CollectLeafTreeItems(hItem, leaves);
+
+	std::vector<const DatFileInfo*> infos;
+	for (auto leaf : leaves)
+	{
+		const DatFileInfo* info = m_fileManager->GetFileInfo(leaf);
+		if (info)
+			infos.push_back(info);
+	}
+
+	if (infos.empty())
+		return;
+
+	if (infos.size() == 1)
+	{
+		HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+		bool comInitialized = SUCCEEDED(hr);
+
+		IFileSaveDialog* pFileSaveDialog = nullptr;
+		hr = CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_ALL,
+			IID_IFileSaveDialog, reinterpret_cast<void**>(&pFileSaveDialog));
+
+		if (SUCCEEDED(hr))
+		{
+			COMDLG_FILTERSPEC rgSpec[] = {
+				{ L"CSV Files", L"*.csv" },
+				{ L"All Files", L"*.*" }
+			};
+			pFileSaveDialog->SetFileTypes(ARRAYSIZE(rgSpec), rgSpec);
+			pFileSaveDialog->SetDefaultExtension(L"csv");
+			pFileSaveDialog->SetTitle(LocalizedOrDefault(L"data_export_title", L"Export CSV").c_str());
+			pFileSaveDialog->SetFileName(BuildCsvRelativePath(*infos[0]).filename().c_str());
+
+			if (SUCCEEDED(pFileSaveDialog->Show(m_hwnd)))
+			{
+				IShellItem* pItem = nullptr;
+				if (SUCCEEDED(pFileSaveDialog->GetResult(&pItem)))
+				{
+					PWSTR pszPath = nullptr;
+					if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszPath)))
+					{
+						std::wstring err;
+						std::filesystem::path path = pszPath;
+						if (!m_fileManager->ExportDatToCsv(*infos[0], path, &err))
+						{
+							MessageBoxW(m_hwnd, err.c_str(), LocalizedOrDefault(L"error_msg_title", L"Error").c_str(), MB_OK | MB_ICONERROR);
+						}
+						CoTaskMemFree(pszPath);
+					}
+					pItem->Release();
+				}
+			}
+			pFileSaveDialog->Release();
+		}
+		if (comInitialized && hr != RPC_E_CHANGED_MODE) CoUninitialize();
+		return;
+	}
+
+	std::filesystem::path outputDir;
+	if (!SelectDirectory(outputDir, LocalizedOrDefault(L"data_export_all_title", L"Export All CSV To Folder")))
+		return;
+
+	ProgressDialog progress;
+	progress.Create(m_hwnd, FFXIDatEGApp::Instance().GetInstance(),
+		LocalizedOrDefault(L"data_export_all_progress", L"Exporting CSV..."));
+
+	int successCount = 0;
+	int failCount = 0;
+	for (size_t i = 0; i < infos.size(); ++i)
+	{
+		const DatFileInfo& info = *infos[i];
+		std::filesystem::path relativePath = BuildCsvRelativePath(info);
+		std::filesystem::path csvPath = outputDir / info.language / relativePath;
+		std::filesystem::create_directories(csvPath.parent_path());
+		progress.Update(static_cast<int>(i + 1), static_cast<int>(infos.size()), relativePath.wstring());
+
+		std::wstring error;
+		if (m_fileManager->ExportDatToCsv(info, csvPath, &error)) ++successCount;
+		else ++failCount;
+	}
+	progress.Close();
+}
+
+void MainFrame::OnTreeImportCsv(HTREEITEM hItem)
+{
+	if (!m_fileManager)
+		return;
+
+	// First-time import disclaimer (same behavior as save)
+	try {
+		int accepted = FFXIDatEGApp::Instance().GetConfig().GetInt(L"Safety", L"SaveDisclaimerAccepted", 0);
+		if (accepted == 0)
+		{
+			std::wstring title = LOC(L"save_disclaimer_title");
+			if (title.empty()) title = L"Disclaimer";
+			std::wstring message = LOC(L"save_disclaimer_message");
+			if (message.empty())
+				message = L"You are about to modify game files. This may break game functionality and violate the game's terms of service. Proceed at your own risk. Do you understand and want to continue?";
+
+			int result = MessageBoxW(m_hwnd, message.c_str(), title.c_str(), MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
+			if (result != IDYES)
+			{
+				SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"save_disclaimer_declined").c_str()));
+				return;
+			}
+
+			FFXIDatEGApp::Instance().GetConfig().SetInt(L"Safety", L"SaveDisclaimerAccepted", 1);
+		}
+	}
+	catch (...) {
+		return;
+	}
+
+	std::vector<HTREEITEM> leaves;
+	CollectLeafTreeItems(hItem, leaves);
+
+	std::vector<const DatFileInfo*> infos;
+	for (auto leaf : leaves)
+	{
+		const DatFileInfo* info = m_fileManager->GetFileInfo(leaf);
+		if (info)
+			infos.push_back(info);
+	}
+
+	if (infos.empty())
+		return;
+
+	if (infos.size() == 1)
+	{
+		HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+		bool comInitialized = SUCCEEDED(hr);
+
+		IFileOpenDialog* pFileOpenDialog = nullptr;
+		hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL,
+			IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpenDialog));
+		if (SUCCEEDED(hr))
+		{
+			COMDLG_FILTERSPEC rgSpec[] = {
+				{ L"CSV Files", L"*.csv" },
+				{ L"All Files", L"*.*" }
+			};
+			pFileOpenDialog->SetFileTypes(ARRAYSIZE(rgSpec), rgSpec);
+			pFileOpenDialog->SetTitle(LocalizedOrDefault(L"data_import_title", L"Import CSV").c_str());
+
+			if (SUCCEEDED(pFileOpenDialog->Show(m_hwnd)))
+			{
+				IShellItem* pItem = nullptr;
+				if (SUCCEEDED(pFileOpenDialog->GetResult(&pItem)))
+				{
+					PWSTR pszPath = nullptr;
+					if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszPath)))
+					{
+						std::wstring err;
+						std::filesystem::path path = pszPath;
+						if (!m_fileManager->ImportCsvToDat(*infos[0], path, &err))
+						{
+							MessageBoxW(m_hwnd, err.c_str(), LocalizedOrDefault(L"error_msg_title", L"Error").c_str(), MB_OK | MB_ICONERROR);
+						}
+						CoTaskMemFree(pszPath);
+					}
+					pItem->Release();
+				}
+			}
+			pFileOpenDialog->Release();
+		}
+		if (comInitialized && hr != RPC_E_CHANGED_MODE) CoUninitialize();
+		return;
+	}
+
+	std::filesystem::path inputDir;
+	if (!SelectDirectory(inputDir, LocalizedOrDefault(L"data_import_all_title", L"Import All CSV From Folder")))
+		return;
+
+	ProgressDialog progress;
+	progress.Create(m_hwnd, FFXIDatEGApp::Instance().GetInstance(),
+		LocalizedOrDefault(L"data_import_all_progress", L"Importing CSV..."));
+
+	int successCount = 0;
+	int failCount = 0;
+	int missingCount = 0;
+	int unsupportedCount = 0;
+
+	for (size_t i = 0; i < infos.size(); ++i)
+	{
+		const DatFileInfo& info = *infos[i];
+		std::filesystem::path relativePath = BuildCsvRelativePath(info);
+		std::filesystem::path csvPath = inputDir / info.language / relativePath;
+
+		progress.Update(static_cast<int>(i + 1), static_cast<int>(infos.size()), relativePath.wstring());
+
+		if (!std::filesystem::exists(csvPath))
+		{
+			++missingCount;
+			continue;
+		}
+
+		std::wstring error;
+		if (m_fileManager->ImportCsvToDat(info, csvPath, &error))
+		{
+			++successCount;
+		}
+		else
+		{
+			if (error.find(L"Unsupported file type") != std::wstring::npos) ++unsupportedCount;
+			else ++failCount;
+		}
+	}
+
+	progress.Close();
 }
 
 bool MainFrame::PromptForFileId(int& outGlobalId, std::string& outRomFolder, int& outLocalId, std::string& outType, bool& isGlobal)
@@ -734,6 +1151,190 @@ void MainFrame::OnImportCsv()
 	}
 }
 
+bool MainFrame::SelectDirectory(std::filesystem::path& outPath, const std::wstring& title)
+{
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	bool comInitialized = SUCCEEDED(hr);
+
+	IFileOpenDialog* pFileDialog = nullptr;
+	hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL,
+		IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileDialog));
+
+	if (FAILED(hr))
+	{
+		if (comInitialized && hr != RPC_E_CHANGED_MODE) CoUninitialize();
+		return false;
+	}
+
+	DWORD options = 0;
+	if (SUCCEEDED(pFileDialog->GetOptions(&options)))
+	{
+		pFileDialog->SetOptions(options | FOS_PICKFOLDERS | FOS_PATHMUSTEXIST | FOS_FORCEFILESYSTEM);
+	}
+	pFileDialog->SetTitle(title.c_str());
+
+	bool ok = false;
+	if (SUCCEEDED(pFileDialog->Show(m_hwnd)))
+	{
+		IShellItem* pItem = nullptr;
+		if (SUCCEEDED(pFileDialog->GetResult(&pItem)))
+		{
+			PWSTR pszPath = nullptr;
+			if (SUCCEEDED(pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszPath)))
+			{
+				outPath = pszPath;
+				CoTaskMemFree(pszPath);
+				ok = true;
+			}
+			pItem->Release();
+		}
+	}
+
+	pFileDialog->Release();
+	if (comInitialized && hr != RPC_E_CHANGED_MODE) CoUninitialize();
+	return ok;
+}
+
+void MainFrame::OnExportAllCsv()
+{
+	if (!m_fileManager)
+		return;
+
+	std::filesystem::path outputDir;
+	if (!SelectDirectory(outputDir, LocalizedOrDefault(L"data_export_all_title", L"Export All CSV To Folder")))
+		return;
+
+	const auto& infos = m_fileManager->GetAllFileInfos();
+	if (infos.empty())
+		return;
+
+	ProgressDialog progress;
+	progress.Create(m_hwnd, FFXIDatEGApp::Instance().GetInstance(),
+		LocalizedOrDefault(L"data_export_all_progress", L"Exporting CSV..."));
+
+	int successCount = 0;
+	int failCount = 0;
+
+	for (size_t i = 0; i < infos.size(); ++i)
+	{
+		const auto& info = infos[i];
+		std::filesystem::path relativePath = BuildCsvRelativePath(info);
+		std::filesystem::path csvPath = outputDir / info.language / relativePath;
+		std::filesystem::create_directories(csvPath.parent_path());
+
+		progress.Update(static_cast<int>(i + 1), static_cast<int>(infos.size()), relativePath.wstring());
+
+		std::wstring error;
+		if (m_fileManager->ExportDatToCsv(info, csvPath, &error))
+		{
+			++successCount;
+		}
+		else
+		{
+			++failCount;
+		}
+	}
+
+	progress.Close();
+
+	std::wstring summary = LocalizedOrDefault(L"data_export_all_summary_prefix", L"Export done. Success: ")
+		+ std::to_wstring(successCount)
+		+ LocalizedOrDefault(L"data_export_all_summary_failed", L", Failed: ")
+		+ std::to_wstring(failCount);
+	SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(summary.c_str()));
+}
+
+void MainFrame::OnImportAllCsv()
+{
+	if (!m_fileManager)
+		return;
+
+	// First-time import disclaimer (same behavior as save)
+	try {
+		int accepted = FFXIDatEGApp::Instance().GetConfig().GetInt(L"Safety", L"SaveDisclaimerAccepted", 0);
+		if (accepted == 0)
+		{
+			std::wstring title = LOC(L"save_disclaimer_title");
+			if (title.empty()) title = L"Disclaimer";
+			std::wstring message = LOC(L"save_disclaimer_message");
+			if (message.empty())
+				message = L"You are about to modify game files. This may break game functionality and violate the game's terms of service. Proceed at your own risk. Do you understand and want to continue?";
+
+			int result = MessageBoxW(m_hwnd, message.c_str(), title.c_str(), MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
+			if (result != IDYES)
+			{
+				SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"save_disclaimer_declined").c_str()));
+				return;
+			}
+
+			FFXIDatEGApp::Instance().GetConfig().SetInt(L"Safety", L"SaveDisclaimerAccepted", 1);
+		}
+	} catch (...) {
+		return;
+	}
+
+	std::filesystem::path inputDir;
+	if (!SelectDirectory(inputDir, LocalizedOrDefault(L"data_import_all_title", L"Import All CSV From Folder")))
+		return;
+
+	const auto& infos = m_fileManager->GetAllFileInfos();
+	if (infos.empty())
+		return;
+
+	ProgressDialog progress;
+	progress.Create(m_hwnd, FFXIDatEGApp::Instance().GetInstance(),
+		LocalizedOrDefault(L"data_import_all_progress", L"Importing CSV..."));
+
+	int successCount = 0;
+	int failCount = 0;
+	int missingCount = 0;
+	int unsupportedCount = 0;
+
+	for (size_t i = 0; i < infos.size(); ++i)
+	{
+		const auto& info = infos[i];
+		std::filesystem::path relativePath = BuildCsvRelativePath(info);
+		std::filesystem::path csvPath = inputDir / relativePath;
+
+		progress.Update(static_cast<int>(i + 1), static_cast<int>(infos.size()), relativePath.wstring());
+
+		if (!std::filesystem::exists(csvPath))
+		{
+			++missingCount;
+			continue;
+		}
+
+		std::wstring error;
+		if (m_fileManager->ImportCsvToDat(info, csvPath, &error))
+		{
+			++successCount;
+		}
+		else
+		{
+			if (error.find(L"Unsupported file type") != std::wstring::npos)
+			{
+				++unsupportedCount;
+			}
+			else
+			{
+				++failCount;
+			}
+		}
+	}
+
+	progress.Close();
+
+	std::wstring summary = LocalizedOrDefault(L"data_import_all_summary_prefix", L"Import done. Success: ")
+		+ std::to_wstring(successCount)
+		+ LocalizedOrDefault(L"data_import_all_summary_missing", L", Missing: ")
+		+ std::to_wstring(missingCount)
+		+ LocalizedOrDefault(L"data_import_all_summary_unsupported", L", Unsupported: ")
+		+ std::to_wstring(unsupportedCount)
+		+ LocalizedOrDefault(L"data_import_all_summary_failed", L", Failed: ")
+		+ std::to_wstring(failCount);
+	SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(summary.c_str()));
+}
+
 void MainFrame::OnOpenFileById()
 {
 	if (!m_fileManager || !m_contentView)
@@ -870,11 +1471,28 @@ LRESULT CALLBACK MainFrame::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 		case WM_NOTIFY:
 		{
 			LPNMHDR pnmh = reinterpret_cast<LPNMHDR>(lParam);
-			if (pnmh->idFrom == IDC_TREEVIEW && pnmh->code == NM_DBLCLK)
+			if (pnmh->idFrom == IDC_TREEVIEW)
 			{
-				HTREEITEM hItem = TreeView_GetSelection(pThis->m_hTreeView);
-				if (hItem)
-					pThis->OnTreeItemActivated(hItem);
+				if (pnmh->code == NM_DBLCLK)
+				{
+					DWORD pos = GetMessagePos();
+					POINT pt = { GET_X_LPARAM(pos), GET_Y_LPARAM(pos) };
+					POINT clientPt = pt;
+					ScreenToClient(pThis->m_hTreeView, &clientPt);
+
+					TVHITTESTINFO ht = {};
+					ht.pt = clientPt;
+					TreeView_HitTest(pThis->m_hTreeView, &ht);
+
+					if (ht.hItem && (ht.flags & (TVHT_ONITEMLABEL | TVHT_ONITEMICON | TVHT_ONITEMRIGHT)))
+					{
+						pThis->OnTreeItemActivated(ht.hItem);
+					}
+				}
+				else if (pnmh->code == NM_RCLICK)
+				{
+					pThis->OnTreeContextMenu();
+				}
 			}
 			return 0;
 		}
@@ -953,6 +1571,11 @@ void MainFrame::OnCreate()
 		LocalizedOrDefault(L"menu_data_export", L"Export CSV...").c_str());
 	AppendMenuW(hDataMenu, MF_STRING, IDM_DATA_IMPORT,
 		LocalizedOrDefault(L"menu_data_import", L"Import CSV...").c_str());
+	AppendMenuW(hDataMenu, MF_SEPARATOR, 0, nullptr);
+	AppendMenuW(hDataMenu, MF_STRING, IDM_DATA_EXPORT_ALL,
+		LocalizedOrDefault(L"menu_data_export_all", L"Export All...").c_str());
+	AppendMenuW(hDataMenu, MF_STRING, IDM_DATA_IMPORT_ALL,
+		LocalizedOrDefault(L"menu_data_import_all", L"Import All...").c_str());
 
 	// View menu - with Language Filter submenu
 	HMENU hViewMenu = CreateMenu();
@@ -1182,6 +1805,12 @@ void MainFrame::OnCommand(WPARAM wParam)
 		break;
 	case IDM_DATA_IMPORT:
 		OnImportCsv();
+		break;
+	case IDM_DATA_EXPORT_ALL:
+		OnExportAllCsv();
+		break;
+	case IDM_DATA_IMPORT_ALL:
+		OnImportAllCsv();
 		break;
 	case IDM_VIEW_FONT:
 		OnSelectFont();
@@ -1505,29 +2134,29 @@ void MainFrame::OnSave()
 	if (!m_contentView || !m_fileManager)
 		return;
 	
-    // First-time save disclaimer
-    try {
-        int accepted = FFXIDatEGApp::Instance().GetConfig().GetInt(L"Safety", L"SaveDisclaimerAccepted", 0);
-        if (accepted == 0)
-        {
+	// First-time save disclaimer
+	try {
+		int accepted = FFXIDatEGApp::Instance().GetConfig().GetInt(L"Safety", L"SaveDisclaimerAccepted", 0);
+		if (accepted == 0)
+		{
 			std::wstring title = Localization::Instance().GetString(L"save_disclaimer_title", L"Disclaimer");
-            std::wstring message = Localization::Instance().GetString(L"save_disclaimer_message", L"You are about to modify game files. This may break game functionality and violate the game's terms of service. Proceed at your own risk. Do you understand and want to continue?");
+			std::wstring message = Localization::Instance().GetString(L"save_disclaimer_message", L"You are about to modify game files. This may break game functionality and violate the game's terms of service. Proceed at your own risk. Do you understand and want to continue?");
 
-            int result = MessageBoxW(m_hwnd, message.c_str(), title.c_str(), MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
-            if (result != IDYES)
-            {
-                // User declined; discard changes
-                m_contentView->SetModified(false);
-                SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"save_disclaimer_declined").c_str()));
-                return;
-            }
+			int result = MessageBoxW(m_hwnd, message.c_str(), title.c_str(), MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
+			if (result != IDYES)
+			{
+				// User declined; discard changes
+				m_contentView->SetModified(false);
+				SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"save_disclaimer_declined").c_str()));
+				return;
+			}
 
-            // User accepted; remember in config
-            FFXIDatEGApp::Instance().GetConfig().SetInt(L"Safety", L"SaveDisclaimerAccepted", 1);
-        }
-    } catch (...) {
-        // If config operations fail, continue without blocking save
-    }
+			// User accepted; remember in config
+			FFXIDatEGApp::Instance().GetConfig().SetInt(L"Safety", L"SaveDisclaimerAccepted", 1);
+		}
+	} catch (...) {
+		return;
+	}
 
 	// Check if we have a current file path
 	if (m_currentFilePath.empty())
@@ -1572,32 +2201,32 @@ void MainFrame::OnSaveAs()
 	if (!m_contentView || !m_fileManager)
 		return;
 	
-    // First-time save disclaimer
-    try {
-        int accepted = FFXIDatEGApp::Instance().GetConfig().GetInt(L"Safety", L"SaveDisclaimerAccepted", 0);
-        if (accepted == 0)
-        {
-            std::wstring title = LOC(L"save_disclaimer_title");
-            if (title.empty()) title = L"Disclaimer";
-            std::wstring message = LOC(L"save_disclaimer_message");
-            if (message.empty())
-                message = L"You are about to modify game files. This may break game functionality and violate the game's terms of service. Proceed at your own risk. Do you understand and want to continue?";
+	// First-time save disclaimer
+	try {
+		int accepted = FFXIDatEGApp::Instance().GetConfig().GetInt(L"Safety", L"SaveDisclaimerAccepted", 0);
+		if (accepted == 0)
+		{
+			std::wstring title = LOC(L"save_disclaimer_title");
+			if (title.empty()) title = L"Disclaimer";
+			std::wstring message = LOC(L"save_disclaimer_message");
+			if (message.empty())
+				message = L"You are about to modify game files. This may break game functionality and violate the game's terms of service. Proceed at your own risk. Do you understand and want to continue?";
 
-            int result = MessageBoxW(m_hwnd, message.c_str(), title.c_str(), MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
-            if (result != IDYES)
-            {
-                // User declined; discard changes
-                m_contentView->SetModified(false);
-                SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"save_disclaimer_declined").c_str()));
-                return;
-            }
+			int result = MessageBoxW(m_hwnd, message.c_str(), title.c_str(), MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
+			if (result != IDYES)
+			{
+				// User declined; discard changes
+				m_contentView->SetModified(false);
+				SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"save_disclaimer_declined").c_str()));
+				return;
+			}
 
-            // User accepted; remember in config
-            FFXIDatEGApp::Instance().GetConfig().SetInt(L"Safety", L"SaveDisclaimerAccepted", 1);
-        }
-    } catch (...) {
-        // If config operations fail, continue without blocking save
-    }
+			// User accepted; remember in config
+			FFXIDatEGApp::Instance().GetConfig().SetInt(L"Safety", L"SaveDisclaimerAccepted", 1);
+		}
+	} catch (...) {
+		return;
+	}
 
 	// Initialize COM for this thread if needed
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
@@ -1903,6 +2532,11 @@ void MainFrame::RefreshUIText()
 		LocalizedOrDefault(L"menu_data_export", L"Export CSV...").c_str());
 	AppendMenuW(hDataMenu, MF_STRING, IDM_DATA_IMPORT,
 		LocalizedOrDefault(L"menu_data_import", L"Import CSV...").c_str());
+	AppendMenuW(hDataMenu, MF_SEPARATOR, 0, nullptr);
+	AppendMenuW(hDataMenu, MF_STRING, IDM_DATA_EXPORT_ALL,
+		LocalizedOrDefault(L"menu_data_export_all", L"Export All...").c_str());
+	AppendMenuW(hDataMenu, MF_STRING, IDM_DATA_IMPORT_ALL,
+		LocalizedOrDefault(L"menu_data_import_all", L"Import All...").c_str());
 
 	// View menu
 	HMENU hViewMenu = CreateMenu();

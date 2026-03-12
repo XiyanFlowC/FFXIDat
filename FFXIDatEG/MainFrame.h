@@ -30,6 +30,10 @@ private:
 	void OnCreate();
 	void OnSize(int width, int height);
 	void OnTreeItemActivated(HTREEITEM hItem);
+	void OnTreeContextMenu();
+	void OnTreeExportCsv(HTREEITEM hItem);
+	void OnTreeImportCsv(HTREEITEM hItem);
+	void CollectLeafTreeItems(HTREEITEM hItem, std::vector<HTREEITEM>& outLeaves) const;
 	void OnCommand(WPARAM wParam);
 	
 	void LoadROMDefinitions();
@@ -53,6 +57,9 @@ private:
 	bool CheckAndPromptSave();
 	void OnExportCsv();
 	void OnImportCsv();
+	void OnExportAllCsv();
+	void OnImportAllCsv();
+	bool SelectDirectory(std::filesystem::path& outPath, const std::wstring& title);
 	
 	// Helper for custom dialogs
 	bool PromptForFileType(std::string& outType);
@@ -103,4 +110,6 @@ private:
 	static constexpr int IDM_HELP_ABOUT = 2201;
 	static constexpr int IDM_DATA_EXPORT = 2301;
 	static constexpr int IDM_DATA_IMPORT = 2302;
+	static constexpr int IDM_DATA_EXPORT_ALL = 2303;
+	static constexpr int IDM_DATA_IMPORT_ALL = 2304;
 };

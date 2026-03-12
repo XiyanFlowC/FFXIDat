@@ -129,6 +129,25 @@ public:
 			
 			throw std::out_of_range("Description cell not found");
 		}
+
+		std::u8string note() const {
+			if (!hasOriginalRow) {
+				throw std::runtime_error("No original row data");
+			}
+			
+			const auto& cells = originalRow.GetCellsConst();
+			
+			// Try English format (cell 4)
+			if (cells.size() >= 5 && cells[4].GetType() == 0) {
+				return cells[4].Get<std::u8string>();
+			}
+			// Try Japanese format (cell 2)
+			if (cells.size() >= 3 && cells[2].GetType() == 0) {
+				return cells[2].Get<std::u8string>();
+			}
+			
+			return u8"";
+		}
 		
 		// Set description (auto-detect format)
 		// Returns: true if successful, false if appropriate cell doesn't exist

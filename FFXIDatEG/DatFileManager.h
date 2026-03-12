@@ -71,6 +71,9 @@ public:
 
 	void SetLanguageFilter(const std::string& language) { m_languageFilter = language; }
 	std::string GetLanguageFilter() const { return m_languageFilter; }
+	const std::vector<DatFileInfo>& GetAllFileInfos() const { return m_allFileInfos; }
+	bool ExportDatToCsv(const DatFileInfo& info, const std::filesystem::path& csvPath, std::wstring* errorMessage = nullptr) const;
+	bool ImportCsvToDat(const DatFileInfo& info, const std::filesystem::path& csvPath, std::wstring* errorMessage = nullptr) const;
 private:
 	std::filesystem::path m_gamePath;
 	std::map<int, DatFileInfo> m_fileRegistry;
@@ -80,6 +83,7 @@ private:
 	mutable std::map<int, std::vector<uint16_t>> m_ftableCache;
 
 	std::string m_languageFilter = "";  // Empty string means show all
+	std::vector<DatFileInfo> m_allFileInfos;
 	
 	// Current loaded file data
 	std::unique_ptr<DMsg> m_currentDMsg;

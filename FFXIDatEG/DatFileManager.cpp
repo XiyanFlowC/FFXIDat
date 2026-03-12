@@ -349,9 +349,180 @@ void DatFileManager::LoadAllROMDefinitions(const std::filesystem::path& csvDir,
 	}
 
 	// Now build tree from combined file infos using the same structure as LoadROMDefinition
+	m_allFileInfos = allFileInfos;
 	BuildFileTree(allFileInfos, hTreeView, hRoot, cateSub);
 
 	TreeView_Expand(hTreeView, hRoot, TVE_EXPAND);
+}
+
+bool DatFileManager::ExportDatToCsv(const DatFileInfo& info, const std::filesystem::path& csvPath, std::wstring* errorMessage) const
+{
+	try
+	{
+		const std::filesystem::path datPath = GetDatFilePath(info.localFileId, info.romFolder);
+		if (!std::filesystem::exists(datPath))
+		{
+			if (errorMessage)
+			{
+				*errorMessage = L"DAT file not found: " + datPath.wstring();
+			}
+			return false;
+		}
+
+		if (info.fileType == "dmsg")
+		{
+			DMsg f(datPath);
+			f.Read();
+			f.ToCsv(csvPath);
+			return true;
+		}
+		if (info.fileType == "xis")
+		{
+			XiString f(datPath);
+			f.Read();
+			f.ToCsv(csvPath);
+			return true;
+		}
+		if (info.fileType == "evsb")
+		{
+			EventStringBase f(datPath);
+			f.Read();
+			f.ToCsv(csvPath);
+			return true;
+		}
+		if (info.fileType == "sd")
+		{
+			StatusData f;
+			f.Read(datPath.wstring());
+			f.ToICsv(csvPath.wstring());
+			return true;
+		}
+		if (info.fileType == "fp")
+		{
+			FixedPhrase f;
+			f.Read(datPath.wstring());
+			f.ToCsv(csvPath.wstring());
+			return true;
+		}
+		if (info.fileType == "iab" || info.fileType == "iwb" || info.fileType == "iub" ||
+			info.fileType == "inb" || info.fileType == "ipb" || info.fileType == "isb" || info.fileType == "icb")
+		{
+			ItemSpecType specType = ItemSpecType::NORMAL;
+			if (info.fileType == "iab") specType = ItemSpecType::ARMOUR;
+			else if (info.fileType == "iwb") specType = ItemSpecType::WEAPON;
+			else if (info.fileType == "iub") specType = ItemSpecType::USABLE;
+			else if (info.fileType == "ipb") specType = ItemSpecType::PUPPET;
+			else if (info.fileType == "isb") specType = ItemSpecType::SLIP;
+			else if (info.fileType == "icb") specType = ItemSpecType::CURRENCY;
+
+			ItemData f;
+			f.Read(datPath.wstring(), specType);
+			f.ToICsv(csvPath.wstring());
+			return true;
+		}
+		if (info.fileType == "mbd")
+		{
+			MonBridge f;
+			f.Read(datPath.wstring());
+			f.ToICsv(csvPath.wstring());
+			return true;
+		}
+		if (info.fileType == "erq")
+		{
+			RecordsOfEminence f;
+			f.ReadQuest(datPath.wstring());
+			auto out = csvPath.string();
+			f.QuestToICsv(out.c_str());
+			return true;
+		}
+		if (info.fileType == "erc")
+		{
+			RecordsOfEminence f;
+			f.ReadCategory(datPath.wstring());
+			auto out = csvPath.string();
+			f.CategoryToICsv(out.c_str());
+			return true;
+		}
+
+		if (errorMessage)
+		{
+			*errorMessage = L"Unsupported file type for bulk export: " + std::wstring(info.fileType.begin(), info.fileType.end());
+		}
+		return false;
+	}
+	catch (const std::exception& ex)
+	{
+		if (errorMessage)
+		{
+			std::string err = ex.what();
+			*errorMessage = std::wstring(err.begin(), err.end());
+		}
+		return false;
+	}
+}
+
+bool DatFileManager::ImportCsvToDat(const DatFileInfo& info, const std::filesystem::path& csvPath, std::wstring* errorMessage) const
+{
+	try
+	{
+		const std::filesystem::path datPath = GetDatFilePath(info.localFileId, info.romFolder);
+		if (!std::filesystem::exists(datPath))
+		{
+			if (errorMessage)
+			{
+				*errorMessage = L"DAT file not found: " + datPath.wstring();
+			}
+			return false;
+		}
+
+		if (info.fileType == "dmsg")
+		{
+			DMsg f(datPath);
+			f.Read();
+			f.FromCsv(csvPath);
+			f.Write();
+			return true;
+		}
+		if (info.fileType == "xis")
+		{
+			XiString f(datPath);
+			f.Read();
+			f.FromCsv(csvPath);
+			f.Write();
+			return true;
+		}
+		if (info.fileType == "evsb")
+		{
+			EventStringBase f(datPath);
+			f.Read();
+			f.FromCsv(csvPath);
+			f.Write();
+			return true;
+		}
+		if (info.fileType == "fp")
+		{
+			FixedPhrase f;
+			f.Read(datPath.wstring());
+			f.FromCsv(csvPath.wstring());
+			f.Write(datPath.wstring());
+			return true;
+		}
+
+		if (errorMessage)
+		{
+			*errorMessage = L"Unsupported file type for bulk import: " + std::wstring(info.fileType.begin(), info.fileType.end());
+		}
+		return false;
+	}
+	catch (const std::exception& ex)
+	{
+		if (errorMessage)
+		{
+			std::string err = ex.what();
+			*errorMessage = std::wstring(err.begin(), err.end());
+		}
+		return false;
+	}
 }
 
 std::vector<DatFileInfo> DatFileManager::LoadFLISTFileInfos(const std::filesystem::path& flistPath)
@@ -779,6 +950,7 @@ bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentVi
 	{
 		std::string errMsg = "Error loading file: ";
 		errMsg += e.what();
+		errMsg += "\r\nFile: " + filePath.string();
 		std::wstring wErrMsg(errMsg.begin(), errMsg.end());
 		MessageBoxW(nullptr, wErrMsg.c_str(), L"Error", MB_OK | MB_ICONERROR);
 		return false;
