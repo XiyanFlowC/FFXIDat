@@ -100,16 +100,16 @@ public:
 			// Set cell 0 (primary name)
 			cells[0].Set(newName);
 			
-			// For English format, also set cell 1 (duplicate name)
-			if (cells.size() >= 2 && cells[1].GetType() == 0) {
-				cells[1].Set(newName);
+			// For English format, also set cell 2 (duplicate name)
+			if (cells.size() >= 5 && cells[2].GetType() == 0) {
+				cells[2].Set(newName);
 			}
 			
 			return true;
 		}
 		
 		// Get description (auto-detect Japanese/English format)
-		// Japanese: Cell 1, English: Cell 3
+		// Japanese: Cell 1, English: Cell 4
 		std::u8string description() const {
 			if (!hasOriginalRow) {
 				throw std::runtime_error("No original row data");
@@ -117,8 +117,8 @@ public:
 			
 			const auto& cells = originalRow.GetCellsConst();
 			
-			// Try English format (cell 3)
-			if (cells.size() >= 4 && cells[3].GetType() == 0) {
+			// Try English format (cell 4)
+			if (cells.size() >= 5 && cells[4].GetType() == 0) {
 				return cells[3].Get<std::u8string>();
 			}
 			
@@ -137,9 +137,9 @@ public:
 			
 			const auto& cells = originalRow.GetCellsConst();
 			
-			// Try English format (cell 4)
-			if (cells.size() >= 5 && cells[4].GetType() == 0) {
-				return cells[4].Get<std::u8string>();
+			// Try English format (cell 5)
+			if (cells.size() >= 6 && cells[5].GetType() == 0) {
+				return cells[5].Get<std::u8string>();
 			}
 			// Try Japanese format (cell 2)
 			if (cells.size() >= 3 && cells[2].GetType() == 0) {
@@ -147,6 +147,26 @@ public:
 			}
 			
 			return u8"";
+		}
+
+		bool setNote(const std::u8string& newNote) {
+			if (!hasOriginalRow) return false;
+			
+			auto& cells = originalRow.GetCells();
+			
+			// Try English format (cell 5)
+			if (cells.size() >= 6) {
+				cells[5].Set(newNote);
+				return true;
+			}
+			
+			// Try Japanese format (cell 2)
+			if (cells.size() >= 3) {
+				cells[2].Set(newNote);
+				return true;
+			}
+			
+			return false;
 		}
 		
 		// Set description (auto-detect format)
@@ -156,9 +176,9 @@ public:
 			
 			auto& cells = originalRow.GetCells();
 			
-			// Try English format (cell 3)
-			if (cells.size() >= 4) {
-				cells[3].Set(newDesc);
+			// Try English format (cell 4)
+			if (cells.size() >= 5) {
+				cells[4].Set(newDesc);
 				return true;
 			}
 			

@@ -149,6 +149,18 @@ void CsvFile::Close()
 
 void CsvFile::Rewind()
 {
-	if (m_size) m_stream.seekg(0);
-	else m_stream.seekp(0);
+	if (m_size)
+	{
+		m_stream.seekg(0);
+		// BOM 再次跳过
+		char buf[3];
+		m_stream.read(buf, 3);
+		// 不为 BOM，Rewind
+		if (memcmp(buf, "\xEF\xBB\xBF", 3)) m_stream.seekg(0);
+	}
+	else
+	{
+		m_stream.seekp(0);
+		m_stream.write("\xEF\xBB\xBF", 3);
+	}
 }
