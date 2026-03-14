@@ -1045,7 +1045,8 @@ bool TryApplyEjrefToleranceSpecialTranslation(
 				ref.name = xybase::string::escape(cells[1].Get<std::u8string>());
 			if (cells[2].GetType() == 0)
 				ref.description = xybase::string::escape(cells[2].Get<std::u8string>());
-			jpById[id] = std::move(ref);
+			if (id != 0)
+				jpById[id] = std::move(ref);
 		}
 
 		for (auto& row : dmsg)
@@ -1055,28 +1056,49 @@ bool TryApplyEjrefToleranceSpecialTranslation(
 				continue;
 
 			int id = cells[0].Get<int>();
-			auto refItr = jpById.find(id);
-			if (refItr == jpById.end())
-				continue;
-
-			if (!refItr->second.name.empty())
+			if (id == 0)
 			{
 				if (cells[4].GetType() == 0)
 				{
 					std::u8string text = xybase::string::escape(cells[4].Get<std::u8string>());
-					cells[4].Set(xybase::string::unescape(GetTranslationFromReference(text, refItr->second.name)));
+					cells[4].Set(xybase::string::unescape(GetTranslation(text)));
 				}
 				if (cells[5].GetType() == 0)
 				{
 					std::u8string text = xybase::string::escape(cells[5].Get<std::u8string>());
-					cells[5].Set(xybase::string::unescape(GetTranslationFromReference(text, refItr->second.name)));
+					cells[5].Set(xybase::string::unescape(GetTranslation(text)));
+				}
+				if (cells[6].GetType() == 0)
+				{
+					std::u8string text = xybase::string::escape(cells[6].Get<std::u8string>());
+					cells[6].Set(xybase::string::unescape(GetTranslation(text)));
+				}
+				continue;
+			}
+
+			auto refItr = jpById.find(id);
+			if (refItr == jpById.end())
+				continue;
+			const KeyItemReference* ref = &refItr->second;
+
+			if (!ref->name.empty())
+			{
+				if (cells[4].GetType() == 0)
+				{
+					std::u8string text = xybase::string::escape(cells[4].Get<std::u8string>());
+					cells[4].Set(xybase::string::unescape(GetTranslationFromReference(text, ref->name)));
+				}
+				if (cells[5].GetType() == 0)
+				{
+					std::u8string text = xybase::string::escape(cells[5].Get<std::u8string>());
+					cells[5].Set(xybase::string::unescape(GetTranslationFromReference(text, ref->name)));
 				}
 			}
 
-			if (!refItr->second.description.empty() && cells[6].GetType() == 0)
+			if (!ref->description.empty() && cells[6].GetType() == 0)
 			{
 				std::u8string text = xybase::string::escape(cells[6].Get<std::u8string>());
-				cells[6].Set(xybase::string::unescape(GetTranslationFromReference(text, refItr->second.description)));
+				cells[6].Set(xybase::string::unescape(GetTranslationFromReference(text, ref->description)));
 			}
 		}
 
@@ -1532,7 +1554,7 @@ int main(int argc, char **argv)
 			in_situ = true;
 		else
 		{
-			std::wcout << L"FFXI汉化插入工具 Ver.0.10-alpha by Hyururu\n"
+			std::wcout << L"FFXI汉化插入工具 Ver.0.15-alpha by Hyururu\n"
 				L"用法：FFXITrans [insitu]\n"
 				L"  insitu：直接在游戏目录修改文件，否则输出到output目录\n"
 				L"  prepare：输出要准备的游戏数据文件（翻译用）\n"
@@ -1542,7 +1564,7 @@ int main(int argc, char **argv)
 	}
 	try
 	{
-		std::wcout << L"FFXI汉化插入工具 Ver.0.10-alpha by Hyururu" << std::endl;
+		std::wcout << L"FFXI汉化插入工具 Ver.0.15-alpha by Hyururu" << std::endl;
 		if (PathInit())
 		{
 			system("pause");
