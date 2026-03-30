@@ -62,6 +62,7 @@ protected:
 	void InsertText(const char * text, int file_id, int rowNum, int colNum);
 
 	void TranslateDat(int file_id, const char *file_path, const char *type);
+	std::u8string GetFileLang(int file_id);
 
 	// ItemData support methods
 	void ImportItemDat(const int file_id, const std::wstring &path, const std::wstring &type);
@@ -86,10 +87,14 @@ protected:
 	// RecordsOfEminence support methods
 	void ImportRoeCategoryDat(const int file_id, const std::wstring &path);
 	void TranslateRoeCategoryDat(int file_id, const wchar_t *file_path);
-	int InsertOrGetRoeCategoryRecord(int file_id, uint32_t roe_id);
+	int InsertOrGetRoeCategoryRecord(uint32_t roe_id);
+
+	// Quest/Mission DMsg support methods
+	int InsertOrGetQuestDMsgRecord(const std::u8string &category, int quest_id);
+	void UpdateQuestDMsgRecord(const std::u8string &lang, int record_id, const std::u8string &name, const std::u8string &description);
 	
 	void ImportRoeQuestDat(const int file_id, const std::wstring &path);
 	void TranslateRoeQuestDat(int file_id, const wchar_t *file_path);
-	int InsertOrGetRoeQuestRecord(int file_id, uint32_t roe_id);
+	int InsertOrGetRoeQuestRecord(uint32_t roe_id);
 };
 

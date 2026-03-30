@@ -3,6 +3,29 @@
 #include "xystring.h"
 #include "DataManager.h"
 
+namespace
+{
+    bool IsRoeLang(const std::u8string &lang)
+    {
+        return lang == u8"jp" || lang == u8"en";
+    }
+
+    const char *GetRoeQuestNameColumn(const std::u8string &lang)
+    {
+        return lang == u8"jp" ? "quest_name_jp_text_id" : "quest_name_en_text_id";
+    }
+
+    const char *GetRoeQuestDescriptionColumn(const std::u8string &lang)
+    {
+        return lang == u8"jp" ? "description_jp_text_id" : "description_en_text_id";
+    }
+
+    const char *GetRoeCategoryNameColumn(const std::u8string &lang)
+    {
+        return lang == u8"jp" ? "category_name_jp_text_id" : "category_name_en_text_id";
+    }
+}
+
 // ============================================
 // ROM/307/15 - Quest Entry Support (type: erc)
 // ============================================
@@ -10,6 +33,7 @@
 void SQLiteDataSource::ImportRoeQuestDat(const int file_id, const std::wstring &path)
 {
     sqlite3_stmt *stmt = nullptr;
+    std::u8string fileLang = GetFileLang(file_id);
     
     RecordsOfEminence roe;
     roe.ReadQuest(path);
@@ -19,7 +43,7 @@ void SQLiteDataSource::ImportRoeQuestDat(const int file_id, const std::wstring &
         int roe_record_id = -1;
         try
         {
-            roe_record_id = InsertOrGetRoeQuestRecord(file_id, datum.id);
+            roe_record_id = InsertOrGetRoeQuestRecord(datum.id);
         }
         catch (SQLException &ex)
         {
@@ -59,7 +83,6 @@ void SQLiteDataSource::ImportRoeQuestDat(const int file_id, const std::wstring &
         try {
             std::u8string qName = datum.questName();
             if (!qName.empty()) {
-                std::string qNameStr = reinterpret_cast<const char*>(xybase::string::escape(qName).c_str());
                 int col = 1; 
                 int row = rowCounter;
 
@@ -70,11 +93,25 @@ void SQLiteDataSource::ImportRoeQuestDat(const int file_id, const std::wstring &
 					col++;
 				}
 
-                int quest_name_text_id = InsertOrGetText(xybase::string::escape(qName));
-                if (sqlite3_prepare_v2(db, "UPDATE roe_quest SET quest_name_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+                if (IsRoeLang(fileLang))
                 {
-                    sqlite3_bind_int(stmt, 1, quest_name_text_id);
-                    sqlite3_bind_int(stmt, 2, roe_record_id);
+                    int quest_name_text_id = InsertOrGetText(xybase::string::escape(qName));
+                    std::string sql = std::string("UPDATE roe_quest SET ") + GetRoeQuestNameColumn(fileLang) + " = ? WHERE id = ?";
+                    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
+                    {
+                        sqlite3_bind_int(stmt, 1, quest_name_text_id);
+                        sqlite3_bind_int(stmt, 2, roe_record_id);
+                        sqlite3_step(stmt);
+                    }
+                    sqlite3_finalize(stmt);
+                }
+            }
+            else if (IsRoeLang(fileLang))
+            {
+                std::string sql = std::string("UPDATE roe_quest SET ") + GetRoeQuestNameColumn(fileLang) + " = NULL WHERE id = ?";
+                if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
+                {
+                    sqlite3_bind_int(stmt, 1, roe_record_id);
                     sqlite3_step(stmt);
                 }
                 sqlite3_finalize(stmt);
@@ -86,17 +123,25 @@ void SQLiteDataSource::ImportRoeQuestDat(const int file_id, const std::wstring &
             std::u8string desc = datum.description();
             if (!desc.empty()) {
                 std::string descStr = reinterpret_cast<const char*>(xybase::string::escape(desc).c_str());
-                int col = 2; 
-                int row = rowCounter;
-                
-                // Use InsertText to register in rela
-                InsertText(descStr.c_str(), file_id, row, col);
-
-                int description_text_id = InsertOrGetText(xybase::string::escape(desc));
-                if (sqlite3_prepare_v2(db, "UPDATE roe_quest SET description_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+                if (IsRoeLang(fileLang))
                 {
-                    sqlite3_bind_int(stmt, 1, description_text_id);
-                    sqlite3_bind_int(stmt, 2, roe_record_id);
+                    int description_text_id = InsertOrGetText(xybase::string::escape(desc));
+                    std::string sql = std::string("UPDATE roe_quest SET ") + GetRoeQuestDescriptionColumn(fileLang) + " = ? WHERE id = ?";
+                    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
+                    {
+                        sqlite3_bind_int(stmt, 1, description_text_id);
+                        sqlite3_bind_int(stmt, 2, roe_record_id);
+                        sqlite3_step(stmt);
+                    }
+                    sqlite3_finalize(stmt);
+                }
+            }
+            else if (IsRoeLang(fileLang))
+            {
+                std::string sql = std::string("UPDATE roe_quest SET ") + GetRoeQuestDescriptionColumn(fileLang) + " = NULL WHERE id = ?";
+                if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
+                {
+                    sqlite3_bind_int(stmt, 1, roe_record_id);
                     sqlite3_step(stmt);
                 }
                 sqlite3_finalize(stmt);
@@ -115,26 +160,29 @@ void SQLiteDataSource::TranslateRoeQuestDat(int file_id, const wchar_t *file_pat
     }
     auto datPath = PathUtil::GetPath(inputPath);
     auto outPath = PathUtil::GetOutPathConf(inputPath);
+    std::u8string fileLang = GetFileLang(file_id);
     
     RecordsOfEminence roe;
     
     // Read original data first (preserves all game configuration fields)
     roe.ReadQuest(datPath);
+    if (!IsRoeLang(fileLang))
+    {
+        roe.WriteQuest(outPath);
+        return;
+    }
     
     sqlite3_stmt *stmt = nullptr;
     
     // Get translations for each entry (only translate text fields)
     for (auto &datum : roe.questData) {
-        // Get quest name translation
-        if (sqlite3_prepare_v2(db, 
-            "SELECT tr.text FROM roe_quest rq "
-            "JOIN text t ON rq.quest_name_text_id = t.id "
-            "JOIN trans tr ON t.id = tr.text_id "
-            "WHERE rq.file_id = ? AND rq.roe_id = ?", 
-            -1, &stmt, nullptr) == SQLITE_OK)
+        std::string nameSql = std::string("SELECT tr.text FROM roe_quest rq ")
+            + "JOIN text t ON rq." + GetRoeQuestNameColumn(fileLang) + " = t.id "
+            + "JOIN trans tr ON t.id = tr.text_id "
+            + "WHERE rq.roe_id = ?";
+        if (sqlite3_prepare_v2(db, nameSql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
         {
-            sqlite3_bind_int(stmt, 1, file_id);
-            sqlite3_bind_int(stmt, 2, datum.id);
+            sqlite3_bind_int(stmt, 1, datum.id);
             if (sqlite3_step(stmt) == SQLITE_ROW) {
                 const char* translatedName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
                 if (translatedName) {
@@ -145,16 +193,13 @@ void SQLiteDataSource::TranslateRoeQuestDat(int file_id, const wchar_t *file_pat
         }
         sqlite3_finalize(stmt);
         
-        // Get description translation
-        if (sqlite3_prepare_v2(db, 
-            "SELECT tr.text FROM roe_quest rq "
-            "JOIN text t ON rq.description_text_id = t.id "
-            "JOIN trans tr ON t.id = tr.text_id "
-            "WHERE rq.file_id = ? AND rq.roe_id = ?", 
-            -1, &stmt, nullptr) == SQLITE_OK)
+        std::string descSql = std::string("SELECT tr.text FROM roe_quest rq ")
+            + "JOIN text t ON rq." + GetRoeQuestDescriptionColumn(fileLang) + " = t.id "
+            + "JOIN trans tr ON t.id = tr.text_id "
+            + "WHERE rq.roe_id = ?";
+        if (sqlite3_prepare_v2(db, descSql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
         {
-            sqlite3_bind_int(stmt, 1, file_id);
-            sqlite3_bind_int(stmt, 2, datum.id);
+            sqlite3_bind_int(stmt, 1, datum.id);
             if (sqlite3_step(stmt) == SQLITE_ROW) {
                 const char* translatedDesc = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
                 if (translatedDesc) {
@@ -170,16 +215,15 @@ void SQLiteDataSource::TranslateRoeQuestDat(int file_id, const wchar_t *file_pat
     roe.WriteQuest(outPath);
 }
 
-int SQLiteDataSource::InsertOrGetRoeQuestRecord(int file_id, uint32_t roe_id)
+int SQLiteDataSource::InsertOrGetRoeQuestRecord(uint32_t roe_id)
 {
     sqlite3_stmt *stmt = nullptr;
     int record_id = -1;
     
     // Try to get existing record
-    if (sqlite3_prepare_v2(db, "SELECT id FROM roe_quest WHERE file_id = ? AND roe_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+    if (sqlite3_prepare_v2(db, "SELECT id FROM roe_quest WHERE roe_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
     {
-        sqlite3_bind_int(stmt, 1, file_id);
-        sqlite3_bind_int(stmt, 2, roe_id);
+        sqlite3_bind_int(stmt, 1, roe_id);
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
             record_id = sqlite3_column_int(stmt, 0);
@@ -192,14 +236,13 @@ int SQLiteDataSource::InsertOrGetRoeQuestRecord(int file_id, uint32_t roe_id)
         // Insert new record with default values for quest configuration fields
         const char *insertSQL = R"(
             INSERT INTO roe_quest 
-            (file_id, roe_id, roe_release_date, repeatable, target_count, emi_reward, exp_reward, cap_reward, uni_reward) 
-            VALUES (?, ?, 0, 0, 0, 0, 0, 0, 0)
+            (roe_id, roe_release_date, repeatable, target_count, emi_reward, exp_reward, cap_reward, uni_reward) 
+            VALUES (?, 0, 0, 0, 0, 0, 0, 0)
         )";
         
         if (sqlite3_prepare_v2(db, insertSQL, -1, &stmt, nullptr) == SQLITE_OK)
         {
-            sqlite3_bind_int(stmt, 1, file_id);
-            sqlite3_bind_int(stmt, 2, roe_id);
+            sqlite3_bind_int(stmt, 1, roe_id);
             if (sqlite3_step(stmt) == SQLITE_DONE)
             {
                 record_id = static_cast<int>(sqlite3_last_insert_rowid(db));
@@ -227,6 +270,7 @@ int SQLiteDataSource::InsertOrGetRoeQuestRecord(int file_id, uint32_t roe_id)
 void SQLiteDataSource::ImportRoeCategoryDat(const int file_id, const std::wstring &path)
 {
     sqlite3_stmt *stmt = nullptr;
+    std::u8string fileLang = GetFileLang(file_id);
     
     RecordsOfEminence roe;
     roe.ReadCategory(path);
@@ -236,7 +280,7 @@ void SQLiteDataSource::ImportRoeCategoryDat(const int file_id, const std::wstrin
         int roe_record_id = -1;
         try
         {
-            roe_record_id = InsertOrGetRoeCategoryRecord(file_id, datum.id);
+            roe_record_id = InsertOrGetRoeCategoryRecord(datum.id);
         }
         catch (SQLException &ex)
         {
@@ -288,7 +332,6 @@ void SQLiteDataSource::ImportRoeCategoryDat(const int file_id, const std::wstrin
         try {
             std::u8string catName = datum.categoryName();
             if (!catName.empty()) {
-                std::string catNameStr = reinterpret_cast<const char*>(xybase::string::escape(catName).c_str());
                 int col = 1; 
                 int row = rowCounter;
 
@@ -301,11 +344,25 @@ void SQLiteDataSource::ImportRoeCategoryDat(const int file_id, const std::wstrin
                     col++;
                 }
 
-                int category_name_text_id = InsertOrGetText(xybase::string::escape(catName));
-                if (sqlite3_prepare_v2(db, "UPDATE roe_category SET category_name_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+                if (IsRoeLang(fileLang))
                 {
-                    sqlite3_bind_int(stmt, 1, category_name_text_id);
-                    sqlite3_bind_int(stmt, 2, roe_record_id);
+                    int category_name_text_id = InsertOrGetText(xybase::string::escape(catName));
+                    std::string sql = std::string("UPDATE roe_category SET ") + GetRoeCategoryNameColumn(fileLang) + " = ? WHERE id = ?";
+                    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
+                    {
+                        sqlite3_bind_int(stmt, 1, category_name_text_id);
+                        sqlite3_bind_int(stmt, 2, roe_record_id);
+                        sqlite3_step(stmt);
+                    }
+                    sqlite3_finalize(stmt);
+                }
+            }
+            else if (IsRoeLang(fileLang))
+            {
+                std::string sql = std::string("UPDATE roe_category SET ") + GetRoeCategoryNameColumn(fileLang) + " = NULL WHERE id = ?";
+                if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
+                {
+                    sqlite3_bind_int(stmt, 1, roe_record_id);
                     sqlite3_step(stmt);
                 }
                 sqlite3_finalize(stmt);
@@ -324,26 +381,29 @@ void SQLiteDataSource::TranslateRoeCategoryDat(int file_id, const wchar_t *file_
     }
     auto datPath = PathUtil::GetPath(inputPath);
     auto outPath = PathUtil::GetOutPathConf(inputPath);
+    std::u8string fileLang = GetFileLang(file_id);
     
     RecordsOfEminence roe;
     
     // Read original data first (preserves all children relationships and other fields)
     roe.ReadCategory(datPath);
+    if (!IsRoeLang(fileLang))
+    {
+        roe.WriteCategory(outPath);
+        return;
+    }
     
     sqlite3_stmt *stmt = nullptr;
     
     // Get translations for each entry (only translate text fields)
     for (auto &datum : roe.categoryData) {
-        // Get category name translation
-        if (sqlite3_prepare_v2(db, 
-            "SELECT tr.text FROM roe_category rc "
-            "JOIN text t ON rc.category_name_text_id = t.id "
-            "JOIN trans tr ON t.id = tr.text_id "
-            "WHERE rc.file_id = ? AND rc.roe_id = ?", 
-            -1, &stmt, nullptr) == SQLITE_OK)
+        std::string sql = std::string("SELECT tr.text FROM roe_category rc ")
+            + "JOIN text t ON rc." + GetRoeCategoryNameColumn(fileLang) + " = t.id "
+            + "JOIN trans tr ON t.id = tr.text_id "
+            + "WHERE rc.roe_id = ?";
+        if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
         {
-            sqlite3_bind_int(stmt, 1, file_id);
-            sqlite3_bind_int(stmt, 2, datum.id);
+            sqlite3_bind_int(stmt, 1, datum.id);
             if (sqlite3_step(stmt) == SQLITE_ROW) {
                 const char* translatedName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
                 if (translatedName) {
@@ -359,16 +419,15 @@ void SQLiteDataSource::TranslateRoeCategoryDat(int file_id, const wchar_t *file_
     roe.WriteCategory(outPath);
 }
 
-int SQLiteDataSource::InsertOrGetRoeCategoryRecord(int file_id, uint32_t roe_id)
+int SQLiteDataSource::InsertOrGetRoeCategoryRecord(uint32_t roe_id)
 {
     sqlite3_stmt *stmt = nullptr;
     int record_id = -1;
     
     // Try to get existing record
-    if (sqlite3_prepare_v2(db, "SELECT id FROM roe_category WHERE file_id = ? AND roe_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+    if (sqlite3_prepare_v2(db, "SELECT id FROM roe_category WHERE roe_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
     {
-        sqlite3_bind_int(stmt, 1, file_id);
-        sqlite3_bind_int(stmt, 2, roe_id);
+        sqlite3_bind_int(stmt, 1, roe_id);
         if (sqlite3_step(stmt) == SQLITE_ROW)
         {
             record_id = sqlite3_column_int(stmt, 0);
@@ -379,10 +438,9 @@ int SQLiteDataSource::InsertOrGetRoeCategoryRecord(int file_id, uint32_t roe_id)
     if (record_id == -1)
     {
         // Insert new record
-        if (sqlite3_prepare_v2(db, "INSERT INTO roe_category (file_id, roe_id) VALUES (?, ?)", -1, &stmt, nullptr) == SQLITE_OK)
+        if (sqlite3_prepare_v2(db, "INSERT INTO roe_category (roe_id) VALUES (?)", -1, &stmt, nullptr) == SQLITE_OK)
         {
-            sqlite3_bind_int(stmt, 1, file_id);
-            sqlite3_bind_int(stmt, 2, roe_id);
+            sqlite3_bind_int(stmt, 1, roe_id);
             if (sqlite3_step(stmt) == SQLITE_DONE)
             {
                 record_id = static_cast<int>(sqlite3_last_insert_rowid(db));

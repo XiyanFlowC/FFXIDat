@@ -14,6 +14,7 @@ void EventStringBase::Read()
 	// assert(header.flag == 0x10);
 	flag = header.flag;
 
+	strs.clear();
 	if (!header.size) return; // Read not, no contents
 
 	std::unique_ptr<char[]> buf(new char[header.size]);
@@ -23,10 +24,16 @@ void EventStringBase::Read()
 	uint32_t *cur = (uint32_t *)buf.get();
 	uint32_t limit = header.size;
 	ptrdiff_t firstTermOffset = *cur;
-	intptr_t endOfIndices = (intptr_t)buf.get() + firstTermOffset;
-	while ((intptr_t)cur < endOfIndices && *cur <= limit)
+	if (firstTermOffset <= 0 || firstTermOffset > limit)
 	{
-		strs.push_back(xybase::string::to_utf8(EventStringCodecUtil::Instance().Decode(buf.get() + *cur, header.size)));
+		return;
+	}
+	intptr_t endOfIndices = (intptr_t)buf.get() + firstTermOffset;
+	while ((intptr_t)cur < endOfIndices && *cur < limit)
+	{
+		uint32_t strOffset = *cur;
+		size_t remain = static_cast<size_t>(limit - strOffset);
+		strs.push_back(xybase::string::to_utf8(EventStringCodecUtil::Instance().Decode(buf.get() + strOffset, remain)));
 		++cur;
 	}
 }

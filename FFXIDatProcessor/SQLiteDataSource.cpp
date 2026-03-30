@@ -9,6 +9,37 @@
 #include "MonBridge.h"
 #include "RecordsOfEminence.h"
 
+namespace
+{
+    bool IsQuestDMsgComment(const std::u8string &comment)
+    {
+        return comment.starts_with(u8"sys/qst/") || comment.starts_with(u8"sys/mis/");
+    }
+
+    bool IsQuestDMsgLang(const std::u8string &lang)
+    {
+        return lang == u8"jp" || lang == u8"en" || lang == u8"de" || lang == u8"fr";
+    }
+
+    const char *GetQuestDMsgNameColumn(const std::u8string &lang)
+    {
+        if (lang == u8"jp") return "name_jp_text_id";
+        if (lang == u8"en") return "name_en_text_id";
+        if (lang == u8"de") return "name_de_text_id";
+        if (lang == u8"fr") return "name_fr_text_id";
+        return nullptr;
+    }
+
+    const char *GetQuestDMsgDescriptionColumn(const std::u8string &lang)
+    {
+        if (lang == u8"jp") return "description_jp_text_id";
+        if (lang == u8"en") return "description_en_text_id";
+        if (lang == u8"de") return "description_de_text_id";
+        if (lang == u8"fr") return "description_fr_text_id";
+        return nullptr;
+    }
+}
+
 void SQLiteDataSource::Ring(const char8_t *msg)
 {
     if (ring) ring(msg);
@@ -65,6 +96,31 @@ void SQLiteDataSource::Initialise()
             text_id INTEGER NOT NULL UNIQUE,
             text TEXT NOT NULL,
             FOREIGN KEY (text_id) REFERENCES text(id) ON DELETE CASCADE
+        );
+    )");
+    Execute(R"(
+        CREATE TABLE IF NOT EXISTS quest_dmsg (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category TEXT NOT NULL,
+            quest_id INTEGER NOT NULL,
+            name_jp_text_id INTEGER,
+            description_jp_text_id INTEGER,
+            name_en_text_id INTEGER,
+            description_en_text_id INTEGER,
+            name_de_text_id INTEGER,
+            description_de_text_id INTEGER,
+            name_fr_text_id INTEGER,
+            description_fr_text_id INTEGER,
+
+            FOREIGN KEY (name_jp_text_id) REFERENCES text(id),
+            FOREIGN KEY (description_jp_text_id) REFERENCES text(id),
+            FOREIGN KEY (name_en_text_id) REFERENCES text(id),
+            FOREIGN KEY (description_en_text_id) REFERENCES text(id),
+            FOREIGN KEY (name_de_text_id) REFERENCES text(id),
+            FOREIGN KEY (description_de_text_id) REFERENCES text(id),
+            FOREIGN KEY (name_fr_text_id) REFERENCES text(id),
+            FOREIGN KEY (description_fr_text_id) REFERENCES text(id),
+            UNIQUE(category, quest_id)
         );
     )");
     
@@ -285,11 +341,12 @@ void SQLiteDataSource::Initialise()
     Execute(R"(
         CREATE TABLE IF NOT EXISTS roe_quest (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            file_id INTEGER NOT NULL,
-            roe_id INTEGER NOT NULL,
+            roe_id INTEGER NOT NULL UNIQUE,
             roe_release_date INTEGER NOT NULL,
-            quest_name_text_id INTEGER,
-            description_text_id INTEGER,
+            quest_name_jp_text_id INTEGER,
+            description_jp_text_id INTEGER,
+            quest_name_en_text_id INTEGER,
+            description_en_text_id INTEGER,
             
             -- Quest configuration fields
             repeatable INTEGER NOT NULL DEFAULT 0,
@@ -299,10 +356,10 @@ void SQLiteDataSource::Initialise()
             cap_reward INTEGER NOT NULL DEFAULT 0,
             uni_reward INTEGER NOT NULL DEFAULT 0,
             
-            FOREIGN KEY (file_id) REFERENCES file(id) ON DELETE CASCADE,
-            FOREIGN KEY (quest_name_text_id) REFERENCES text(id),
-            FOREIGN KEY (description_text_id) REFERENCES text(id),
-            UNIQUE(file_id, roe_id)
+            FOREIGN KEY (quest_name_jp_text_id) REFERENCES text(id),
+            FOREIGN KEY (description_jp_text_id) REFERENCES text(id),
+            FOREIGN KEY (quest_name_en_text_id) REFERENCES text(id),
+            FOREIGN KEY (description_en_text_id) REFERENCES text(id)
         );
     )");
     
@@ -310,13 +367,12 @@ void SQLiteDataSource::Initialise()
     Execute(R"(
         CREATE TABLE IF NOT EXISTS roe_category (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            file_id INTEGER NOT NULL,
-            roe_id INTEGER NOT NULL,
-            category_name_text_id INTEGER,
+            roe_id INTEGER NOT NULL UNIQUE,
+            category_name_jp_text_id INTEGER,
+            category_name_en_text_id INTEGER,
             
-            FOREIGN KEY (file_id) REFERENCES file(id) ON DELETE CASCADE,
-            FOREIGN KEY (category_name_text_id) REFERENCES text(id),
-            UNIQUE(file_id, roe_id)
+            FOREIGN KEY (category_name_jp_text_id) REFERENCES text(id),
+            FOREIGN KEY (category_name_en_text_id) REFERENCES text(id)
         );
     )");
     
@@ -624,14 +680,26 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 {
     sqlite3_stmt *stmt = nullptr;
     int file_id = -1;
+    std::u8string fileLang;
+    std::u8string fileComment;
     try
     {
-        if (sqlite3_prepare_v2(db, "SELECT id FROM file WHERE path = ?", -1, &stmt, nullptr) == SQLITE_OK)
+        if (sqlite3_prepare_v2(db, "SELECT id, lang, comment FROM file WHERE path = ?", -1, &stmt, nullptr) == SQLITE_OK)
         {
             sqlite3_bind_text(stmt, 1, reinterpret_cast<const char *>(path.c_str()), -1, SQLITE_TRANSIENT);
             if (sqlite3_step(stmt) == SQLITE_ROW)
             {
                 file_id = sqlite3_column_int(stmt, 0);
+                const auto *lang = reinterpret_cast<const char8_t *>(sqlite3_column_text(stmt, 1));
+                const auto *comment = reinterpret_cast<const char8_t *>(sqlite3_column_text(stmt, 2));
+                if (lang != nullptr)
+                {
+                    fileLang = lang;
+                }
+                if (comment != nullptr)
+                {
+                    fileComment = comment;
+                }
             }
         }
         sqlite3_finalize(stmt);
@@ -666,21 +734,26 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
             sqlite3_finalize(stmt);
         }
         
-        // Also clean up ROE quest data for this file (ROM/307/15)
-        if (type == "erq") {
-            if (sqlite3_prepare_v2(db, "DELETE FROM roe_quest WHERE file_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
-            {
-                sqlite3_bind_int(stmt, 1, file_id);
-                sqlite3_step(stmt);
-            }
-            sqlite3_finalize(stmt);
+        if (type == "erq" && (fileLang == u8"jp" || fileLang == u8"en")) {
+            std::string questNameColumn = fileLang == u8"jp" ? "quest_name_jp_text_id" : "quest_name_en_text_id";
+            std::string descriptionColumn = fileLang == u8"jp" ? "description_jp_text_id" : "description_en_text_id";
+            std::string sql = "UPDATE roe_quest SET " + questNameColumn + " = NULL, " + descriptionColumn + " = NULL";
+            Execute(sql);
         }
         
-        // Also clean up ROE category data for this file (ROM/307/23)
-        if (type == "erc") {
-            if (sqlite3_prepare_v2(db, "DELETE FROM roe_category WHERE file_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+        if (type == "erc" && (fileLang == u8"jp" || fileLang == u8"en")) {
+            std::string categoryNameColumn = fileLang == u8"jp" ? "category_name_jp_text_id" : "category_name_en_text_id";
+            std::string sql = "UPDATE roe_category SET " + categoryNameColumn + " = NULL";
+            Execute(sql);
+        }
+
+        if (type == "dmsg" && IsQuestDMsgComment(fileComment) && IsQuestDMsgLang(fileLang)) {
+            const char *nameColumn = GetQuestDMsgNameColumn(fileLang);
+            const char *descriptionColumn = GetQuestDMsgDescriptionColumn(fileLang);
+            std::string sql = std::string("UPDATE quest_dmsg SET ") + nameColumn + " = NULL, " + descriptionColumn + " = NULL WHERE category = ?";
+            if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
             {
-                sqlite3_bind_int(stmt, 1, file_id);
+                sqlite3_bind_text(stmt, 1, reinterpret_cast<const char *>(fileComment.c_str()), -1, SQLITE_TRANSIENT);
                 sqlite3_step(stmt);
             }
             sqlite3_finalize(stmt);
@@ -705,6 +778,26 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
             int rowNum = 1;
             for (auto &row : dmsg)
             {
+                const auto &cells = row.GetCellsConst();
+                if (IsQuestDMsgComment(fileComment) && IsQuestDMsgLang(fileLang) && cells.size() >= 3 && cells[0].GetType() == 1)
+                {
+                    int questId = cells[0].Get<int>();
+                    std::u8string name;
+                    std::u8string description;
+
+                    if (cells[1].GetType() == 0)
+                    {
+                        name = xybase::string::escape(cells[1].Get<std::u8string>());
+                    }
+                    if (cells[2].GetType() == 0)
+                    {
+                        description = xybase::string::escape(cells[2].Get<std::u8string>());
+                    }
+
+                    int questRecordId = InsertOrGetQuestDMsgRecord(fileComment, questId);
+                    UpdateQuestDMsgRecord(fileLang, questRecordId, name, description);
+                }
+
                 int colNum = 1;
                 for (auto &cell : row)
                 {
@@ -767,6 +860,30 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
         else if (type == "erc") // ROM/307/23 - Category entries
         {
             ImportRoeCategoryDat(file_id, datPath);
+        }
+
+        if (type == "dmsg" && IsQuestDMsgComment(fileComment) && IsQuestDMsgLang(fileLang))
+        {
+            if (sqlite3_prepare_v2(db,
+                "DELETE FROM quest_dmsg WHERE category = ? AND "
+                "name_jp_text_id IS NULL AND description_jp_text_id IS NULL AND "
+                "name_en_text_id IS NULL AND description_en_text_id IS NULL AND "
+                "name_de_text_id IS NULL AND description_de_text_id IS NULL AND "
+                "name_fr_text_id IS NULL AND description_fr_text_id IS NULL",
+                -1, &stmt, nullptr) == SQLITE_OK)
+            {
+                sqlite3_bind_text(stmt, 1, reinterpret_cast<const char *>(fileComment.c_str()), -1, SQLITE_TRANSIENT);
+                sqlite3_step(stmt);
+            }
+            sqlite3_finalize(stmt);
+        }
+        else if (type == "erq")
+        {
+            Execute("DELETE FROM roe_quest WHERE quest_name_jp_text_id IS NULL AND description_jp_text_id IS NULL AND quest_name_en_text_id IS NULL AND description_en_text_id IS NULL");
+        }
+        else if (type == "erc")
+        {
+            Execute("DELETE FROM roe_category WHERE category_name_jp_text_id IS NULL AND category_name_en_text_id IS NULL");
         }
     }
     catch (std::exception &ex)
@@ -1155,28 +1272,6 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
             }
         } catch (...) { /* Ignore missing fields */ }
         
-        // Insert description text if not empty
-        try {
-            std::u8string itemDesc = datum.description();
-            if (!itemDesc.empty()) {
-                std::string descStr = reinterpret_cast<const char*>(xybase::string::escape(itemDesc).c_str());
-                int col = 2;
-                int row = rowCounter;
-
-                // Use InsertText to register in rela
-                InsertText(descStr.c_str(), file_id, row, col);
-
-                int desc_text_id = InsertOrGetText(xybase::string::escape(itemDesc));
-                if (sqlite3_prepare_v2(db, "UPDATE items SET description_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
-                {
-                    sqlite3_bind_int(stmt, 1, desc_text_id);
-                    sqlite3_bind_int(stmt, 2, item_record_id);
-                    sqlite3_step(stmt);
-                }
-                sqlite3_finalize(stmt);
-            }
-        } catch (...) { /* Ignore missing fields */ }
-        
         rowCounter++;
     }
 }
@@ -1478,6 +1573,70 @@ void SQLiteDataSource::TranslateItemDat(int file_id, const wchar_t *file_path, c
     itemData.Write(outPath);
 }
 
+std::u8string SQLiteDataSource::GetFileLang(int file_id)
+{
+    sqlite3_stmt *stmt = nullptr;
+    std::u8string lang;
+
+    if (sqlite3_prepare_v2(db, "SELECT lang FROM file WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_int(stmt, 1, file_id);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            const auto *value = reinterpret_cast<const char8_t *>(sqlite3_column_text(stmt, 0));
+            if (value != nullptr)
+            {
+                lang = value;
+            }
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    return lang;
+}
+
+int SQLiteDataSource::InsertOrGetQuestDMsgRecord(const std::u8string &category, int quest_id)
+{
+    sqlite3_stmt *stmt = nullptr;
+    int record_id = -1;
+
+    if (sqlite3_prepare_v2(db, "SELECT id FROM quest_dmsg WHERE category = ? AND quest_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, reinterpret_cast<const char *>(category.c_str()), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 2, quest_id);
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            record_id = sqlite3_column_int(stmt, 0);
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    if (record_id == -1)
+    {
+        if (sqlite3_prepare_v2(db, "INSERT INTO quest_dmsg (category, quest_id) VALUES (?, ?)", -1, &stmt, nullptr) == SQLITE_OK)
+        {
+            sqlite3_bind_text(stmt, 1, reinterpret_cast<const char *>(category.c_str()), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_int(stmt, 2, quest_id);
+            if (sqlite3_step(stmt) == SQLITE_DONE)
+            {
+                record_id = static_cast<int>(sqlite3_last_insert_rowid(db));
+            }
+            else
+            {
+                sqlite3_finalize(stmt);
+                throw SQLException(sqlite3_errmsg(db));
+            }
+        }
+        else
+        {
+            throw SQLException(sqlite3_errmsg(db));
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    return record_id;
+}
+
 int SQLiteDataSource::InsertOrGetItemRecord(int file_id, uint32_t item_id, const std::wstring &type)
 {
     sqlite3_stmt *stmt = nullptr;
@@ -1555,6 +1714,49 @@ int SQLiteDataSource::InsertOrGetText(const std::u8string &text)
     }
     
     return text_id;
+}
+
+void SQLiteDataSource::UpdateQuestDMsgRecord(const std::u8string &lang, int record_id, const std::u8string &name, const std::u8string &description)
+{
+    const char *nameColumn = GetQuestDMsgNameColumn(lang);
+    const char *descriptionColumn = GetQuestDMsgDescriptionColumn(lang);
+    if (nameColumn == nullptr || descriptionColumn == nullptr)
+    {
+        return;
+    }
+
+    sqlite3_stmt *stmt = nullptr;
+    int name_text_id = name.empty() ? -1 : InsertOrGetText(name);
+    int description_text_id = description.empty() ? -1 : InsertOrGetText(description);
+
+    std::string sql = std::string("UPDATE quest_dmsg SET ")
+        + nameColumn + " = ?, "
+        + descriptionColumn + " = ? WHERE id = ?";
+
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        throw SQLException(sqlite3_errmsg(db));
+    }
+
+    if (name.empty())
+        sqlite3_bind_null(stmt, 1);
+    else
+        sqlite3_bind_int(stmt, 1, name_text_id);
+
+    if (description.empty())
+        sqlite3_bind_null(stmt, 2);
+    else
+        sqlite3_bind_int(stmt, 2, description_text_id);
+
+    sqlite3_bind_int(stmt, 3, record_id);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        sqlite3_finalize(stmt);
+        throw SQLException(sqlite3_errmsg(db));
+    }
+
+    sqlite3_finalize(stmt);
 }
 
 void SQLiteDataSource::ImportMonBridgeDat(const int file_id, const std::wstring &path)
