@@ -1271,6 +1271,25 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
                 sqlite3_finalize(stmt);
             }
         } catch (...) { /* Ignore missing fields */ }
+
+        // Insert description text if not empty
+        try {
+            std::u8string itemDesc = datum.description();
+            if (!itemDesc.empty()) {
+                std::string descStr = reinterpret_cast<const char*>(xybase::string::escape(itemDesc).c_str());
+
+                int desc_text_id = InsertOrGetText(xybase::string::escape(itemDesc));
+                if (sqlite3_prepare_v2(db, "UPDATE items SET description_text_id = ? WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+                {
+                    sqlite3_bind_int(stmt, 1, desc_text_id);
+                    sqlite3_bind_int(stmt, 2, item_record_id);
+                    sqlite3_step(stmt);
+                }
+                sqlite3_finalize(stmt);
+            }
+        }
+        catch (...) { /* Ignore missing fields */ }
+
         
         rowCounter++;
     }
