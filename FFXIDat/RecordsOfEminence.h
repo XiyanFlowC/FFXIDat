@@ -119,7 +119,7 @@ public:
 			
 			// Try English format (cell 4)
 			if (cells.size() >= 5 && cells[4].GetType() == 0) {
-				return cells[3].Get<std::u8string>();
+				return cells[4].Get<std::u8string>();
 			}
 			
 			// Try Japanese format (cell 1)
