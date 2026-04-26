@@ -70,6 +70,8 @@ public:
 
 	static std::string Decode(const std::string &in);
 
+	static std::string DecodeInternal(const char *p, const char *end, size_t &consumed, bool *hasElse);
+
 	static int GetStep(const char *p);
 
 	int id;

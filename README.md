@@ -16,7 +16,7 @@ This project provides tools to work with FFXI's game data files, including text 
 
 ### Text and String Data
 - **XISTRING** (magic: `XISTRING`) - System messages
-	- Basic string handling is done but the format of entity insertion is not documented yet
+	- All observed control sequence is handled, but not fully documented yet.
 - **DMsg** (magic: `d_msg`) - System messages and menu text
 - **Event Strings** - Per-area dialogue and event text (e.g., ROM/22/17.DAT)
 	- Basic string handling is done, the control sequences are not fully documented yet
