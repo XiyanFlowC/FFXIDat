@@ -859,7 +859,13 @@ std::map<int, QuestDMsgCsvTranslation> LoadQuestDMsgCsvTranslations(const fs::pa
 			continue;
 
 		try {
-			int id = xybase::string::stoi(idStr);
+			int factor = 1;
+			if (idStr.starts_with(u8"-"))
+			{
+				idStr = idStr.substr(1);
+				factor = -1;
+			}
+			int id = xybase::string::stoi(idStr) * factor;
 			result[id] = { name, description };
 		}
 		catch (const std::exception&) {
@@ -1218,7 +1224,7 @@ int PrepareSourceData()
 		return -2;
 	}
 	std::wcout << L"开始准备源数据..." << std::endl;
-	fs::path outputDir{ progRoot / L"text" / L"src"};
+	fs::path outputDir{ progRoot / L"text" / L"src_"};
 	//fs::path zh = outputDir / L"zh";
 	try
 	{
@@ -1441,8 +1447,17 @@ int PrepareSourceData()
 						if (datum[0].GetType() != 1)
 							continue;
 						int id = datum[0].Get<int>();
-						std::u8string title = datum[1].Get<std::u8string>();
+					std::u8string title = datum[1].Get<std::u8string>();
 						std::u8string description = datum[2].Get<std::u8string>();
+
+						// Special-case: section headers in sys/mis/sd share the same ID as the
+						// first quest. When exporting, mark section rows by negating the ID so
+						// they can be stored separately without changing DB schema.
+						if (def.comment == u8"sys/mis/ad") {
+							if (!title.empty() && !title.starts_with(u8"__")) {
+								id = -id;
+							}
+						}
 
 						output.NewCell(xybase::string::itos<char8_t>(id));
 						output.NewCell(title);
@@ -1554,7 +1569,7 @@ int main(int argc, char **argv)
 			in_situ = true;
 		else
 		{
-			std::wcout << L"FFXI汉化插入工具 Ver.0.15-alpha by Hyururu\n"
+			std::wcout << L"FFXI汉化插入工具 Ver.0.16-alpha by Hyururu\n"
 				L"用法：FFXITrans [insitu]\n"
 				L"  insitu：直接在游戏目录修改文件，否则输出到output目录\n"
 				L"  prepare：输出要准备的游戏数据文件（翻译用）\n"
@@ -1564,7 +1579,7 @@ int main(int argc, char **argv)
 	}
 	try
 	{
-		std::wcout << L"FFXI汉化插入工具 Ver.0.15-alpha by Hyururu" << std::endl;
+		std::wcout << L"FFXI汉化插入工具 Ver.0.16-alpha by Hyururu" << std::endl;
 		if (PathInit())
 		{
 			system("pause");
@@ -1777,8 +1792,11 @@ int main(int argc, char **argv)
 			}
 		}
 
+		int fileCounter = 0;
+
 		for (const auto& fileDef : fileDefs)
 		{
+			fileCounter++;
 			std::u8string path = fileDef.path;
 			std::u8string type = fileDef.type;
 			std::u8string lang = fileDef.lang;
@@ -1797,8 +1815,11 @@ int main(int argc, char **argv)
 					continue;
 			}
 			
+			static wchar_t progress[128];
+			progress[0] = L'\0';
+			swprintf_s(progress, L"[%d/%d] %d%%", fileCounter, (int)fileDefs.size(), fileCounter * 100 / (int)fileDefs.size());
 			// 输出处理信息（语言 + 文件路径 + 类型 + 注释）
-			std::wcout << L"处理中：" << L" 文件 "
+			std::wcout << L"处理中：" << progress << L" 文件 "
 				<< xybase::string::to_wstring(path)
 				<< L"(" << xybase::string::to_wstring(type)
 				<< L") [" << xybase::string::to_wstring(comm) << L"]\r";
@@ -1898,7 +1919,41 @@ int main(int argc, char **argv)
 				if (IsQuestDMsg(comm) && HasTranslatedCsv(comm))
 				{
 					auto csvTranslations = LoadQuestDMsgCsvTranslations(GetTranslatedCsvPath(comm));
-					for (auto& row : dmsg)
+					if ( comm == u8"sys/mis/ad") [[unlikely]]
+					{
+						// 特例：sys/mis/sd 中的章节标题行对应文本需要从其取反的 ID 来匹配 CSV 中的翻译，因为它们和第一个任务共享 ID，但文本不同
+						for (auto& row : dmsg)
+						{
+							const auto& cells = row.GetCellsConst();
+							if (cells.empty() || cells[0].GetType() != 1)
+								continue;
+
+							int rowId = cells[0].Get<int>();
+							if (cells[1].GetType() == 0 && !cells[1].Get<std::u8string>().starts_with(u8"__")) [[unlikely]]
+							{
+								rowId = -rowId; // 章节标题行，使用取反的 ID 来匹配
+							}
+							auto itrCsv = csvTranslations.find(rowId);
+							if (itrCsv == csvTranslations.end())
+							{
+								auto& c = row.GetCells();
+								c[1].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(c[1].Get<std::u8string>())))));
+								c[2].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(c[2].Get<std::u8string>())))));
+								continue;
+							}
+
+							auto& mutableCells = row.GetCells();
+							if (!itrCsv->second.name.empty() && mutableCells.size() >= 2 && mutableCells[1].GetType() == 0)
+							{
+								mutableCells[1].Set(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.name));
+							}
+							if (!itrCsv->second.description.empty() && mutableCells.size() >= 3 && mutableCells[2].GetType() == 0)
+							{
+								mutableCells[2].Set(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.description));
+							}
+						}
+					}
+					else [[likely]] for (auto& row : dmsg)
 					{
 						const auto& cells = row.GetCellsConst();
 						if (cells.empty() || cells[0].GetType() != 1)
@@ -1907,7 +1962,12 @@ int main(int argc, char **argv)
 						int rowId = cells[0].Get<int>();
 						auto itrCsv = csvTranslations.find(rowId);
 						if (itrCsv == csvTranslations.end())
+						{
+							auto& c = row.GetCells();
+							c[1].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(c[1].Get<std::u8string>())))));
+							c[2].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(c[2].Get<std::u8string>())))));
 							continue;
+						}
 
 						auto& mutableCells = row.GetCells();
 						if (!itrCsv->second.name.empty() && mutableCells.size() >= 2 && mutableCells[1].GetType() == 0)
@@ -2071,8 +2131,14 @@ int main(int argc, char **argv)
 						datum.setName_sg(convertedName);
 						datum.setName_pl(convertedName);
 						}
+						else {
+							datum.setName(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.name())))));
+						}
 						if (!itrCsv->second.second.empty()) {
 						datum.setDescription(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.second));
+						}
+						else {
+							datum.setDescription(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.description())))));
 						}
 					}
 					itemData.Write(outPath);
@@ -2198,11 +2264,17 @@ int main(int argc, char **argv)
 							continue;
 
 						if (!itrCsv->second.questName.empty())
-						datum.setQuestName(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.questName));
+							datum.setQuestName(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.questName));
+						else
+							datum.setQuestName(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.questName())))));
 						if (!itrCsv->second.description.empty())
-						datum.setDescription(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.description));
+							datum.setDescription(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.description));
+						else
+							datum.setDescription(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.description())))));
 						if (!itrCsv->second.note.empty())
-						datum.setNote(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.note));
+							datum.setNote(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.note));
+						else
+							datum.setNote(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.note())))));
 					}
 					roe.WriteQuest(outPath);
 					continue;
@@ -2243,8 +2315,10 @@ int main(int argc, char **argv)
 						auto itrCsv = csvTranslations.find(datum.id);
 						if (itrCsv == csvTranslations.end())
 							continue;
-					if (!itrCsv->second.empty())
-						datum.setCategoryName(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second));
+						if (!itrCsv->second.empty())
+							datum.setCategoryName(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second));
+						else
+							datum.setCategoryName(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.categoryName())))));
 					}
 					roe.WriteCategory(outPath);
 					continue;
