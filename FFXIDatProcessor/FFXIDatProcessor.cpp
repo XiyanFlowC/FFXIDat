@@ -5,6 +5,8 @@
 #include <clocale>
 #include <format>
 #include <exception>
+#include <set>
+#include <unordered_map>
 
 #include "DMsg.h"
 
@@ -16,6 +18,8 @@
 #include "../FFXIDat/FixedPhrase.h"
 #include "../FFXIDat/RecordsOfEminence.h"
 #include "../FFXIDat/MonBridge.h"
+#include "../FFXIDat/ItemData.h"
+#include "../FFXIDat/BlockFile.h"
 
 #include "liteopt.h"
 
@@ -504,6 +508,161 @@ void CsvToFixedPhrase(const char *src, const char *out)
 
 void ExtractSysText()
 {
+	std::filesystem::path bfLogPath = std::filesystem::path(PathUtil::progRootPath) / L"bflogs.csv";
+	std::filesystem::path typeLogPath = std::filesystem::path(PathUtil::progRootPath) / L"types.csv";
+	std::ofstream bflog(bfLogPath, std::ios::out | std::ios::binary);
+	std::ofstream typelog(typeLogPath, std::ios::out | std::ios::binary);
+
+	auto csvEscape = [](const std::string &s) -> std::string
+	{
+		std::string out;
+		out.reserve(s.size() + 2);
+		out.push_back('"');
+		for (char ch : s)
+		{
+			if (ch == '"') out += "\"\"";
+			else out.push_back(ch);
+		}
+		out.push_back('"');
+		return out;
+	};
+
+	auto checkByteAt = [](const std::filesystem::path &p, size_t offset, uint8_t expected) -> bool
+	{
+		std::ifstream eye(p, std::ios::in | std::ios::binary);
+		if (!eye.is_open()) return false;
+		eye.seekg((std::streamoff)offset, std::ios::beg);
+		char b = 0;
+		eye.read(&b, 1);
+		return eye.gcount() == 1 && (uint8_t)b == expected;
+	};
+
+	auto hasPeriodicFFMarker = [](const std::filesystem::path &p, size_t fileSize, size_t recordSize, size_t minCount = 1) -> bool
+	{
+		if (recordSize == 0 || fileSize < recordSize) return false;
+		size_t count = fileSize / recordSize;
+		if (count < minCount) return false;
+
+		std::ifstream eye(p, std::ios::in | std::ios::binary);
+		if (!eye.is_open()) return false;
+
+		for (size_t i = 1; i <= count; ++i)
+		{
+			size_t markerPos = i * recordSize - 1;
+			eye.seekg((std::streamoff)markerPos, std::ios::beg);
+			char marker = 0;
+			eye.read(&marker, 1);
+			if (eye.gcount() != 1 || (uint8_t)marker != 0xFF)
+			{
+				return false;
+			}
+		}
+		return true;
+	};
+
+	auto joinTypes = [](const std::set<std::string> &types) -> std::string
+	{
+		if (types.empty()) return "unknown";
+		std::string joined;
+		for (const auto &t : types)
+		{
+			if (!joined.empty()) joined += "|";
+			joined += t;
+		}
+		return joined;
+	};
+
+	std::unordered_map<int, std::vector<uint8_t>> vtableCache;
+	std::unordered_map<int, std::vector<uint16_t>> ftableCache;
+
+	auto readVTable = [&](int romNumber) -> const std::vector<uint8_t>&
+	{
+		auto it = vtableCache.find(romNumber);
+		if (it != vtableCache.end()) return it->second;
+
+		std::filesystem::path vtablePath;
+		if (romNumber == 1)
+			vtablePath = std::filesystem::path(PathUtil::gameRootPath) / L"VTABLE.DAT";
+		else
+			vtablePath = std::filesystem::path(PathUtil::gameRootPath) / (L"ROM" + std::to_wstring(romNumber)) / (L"VTABLE" + std::to_wstring(romNumber) + L".DAT");
+
+		auto &tbl = vtableCache[romNumber];
+		if (std::filesystem::exists(vtablePath))
+		{
+			std::ifstream eye(vtablePath, std::ios::in | std::ios::binary);
+			if (eye.is_open())
+			{
+				eye.seekg(0, std::ios::end);
+				size_t sz = (size_t)eye.tellg();
+				eye.seekg(0, std::ios::beg);
+				tbl.resize(sz);
+				eye.read((char *)tbl.data(), sz);
+			}
+		}
+		return tbl;
+	};
+
+	auto readFTable = [&](int romNumber) -> const std::vector<uint16_t>&
+	{
+		auto it = ftableCache.find(romNumber);
+		if (it != ftableCache.end()) return it->second;
+
+		std::filesystem::path ftablePath;
+		if (romNumber == 1)
+			ftablePath = std::filesystem::path(PathUtil::gameRootPath) / L"FTABLE.DAT";
+		else
+			ftablePath = std::filesystem::path(PathUtil::gameRootPath) / (L"ROM" + std::to_wstring(romNumber)) / (L"FTABLE" + std::to_wstring(romNumber) + L".DAT");
+
+		auto &tbl = ftableCache[romNumber];
+		if (std::filesystem::exists(ftablePath))
+		{
+			std::ifstream eye(ftablePath, std::ios::in | std::ios::binary);
+			if (eye.is_open())
+			{
+				eye.seekg(0, std::ios::end);
+				size_t sz = (size_t)eye.tellg();
+				eye.seekg(0, std::ios::beg);
+				tbl.resize(sz / sizeof(uint16_t));
+				eye.read((char *)tbl.data(), tbl.size() * sizeof(uint16_t));
+			}
+		}
+		return tbl;
+	};
+
+	auto getGlobalFileId = [&](int romNumber, int localFileId) -> int
+	{
+		const auto &vtable = readVTable(romNumber);
+		const auto &ftable = readFTable(romNumber);
+		for (size_t globalId = 0; globalId < ftable.size(); ++globalId)
+		{
+			if (ftable[globalId] == (uint16_t)localFileId)
+			{
+				if (globalId < vtable.size() && vtable[globalId] == romNumber)
+					return (int)globalId;
+			}
+		}
+		return (romNumber << 24) | (localFileId & 0xFFFFFF);
+	};
+
+	auto logBlockFile = [&](const std::filesystem::path &p, const BlockFile &bf)
+	{
+		bflog << csvEscape(p.string());
+		int blockCount = 0;
+		bflog << "," << csvEscape(bf.type);
+		for (const auto *block : bf.blocks)
+		{
+			if (blockCount >= 32) break;
+			char rawName[5] = { 0 };
+			memcpy(rawName, block->blockHeader.name, 4);
+			std::string cleanName = (rawName);
+			bflog << "," << csvEscape(cleanName + "-" + std::to_string((uint32_t)block->blockHeader.type));
+			++blockCount;
+		}
+		bflog << "\n";
+	};
+
+	typelog << "path,global_id,types\n";
+
 	for (int rom = 1; rom < 12; ++rom)
 	{
 		int cmax = rom == 1 ? 365 : 30;
@@ -512,101 +671,202 @@ void ExtractSysText()
 			for (int n = 0; n < 128; ++n)
 			{
 				std::filesystem::path p = PathUtil::GetPath(rom, c, n);
-				if (std::filesystem::exists(p))
+				if (!std::filesystem::exists(p)) continue;
+
+				auto size = std::filesystem::file_size(p);
+				if (size < 4) continue;
+
+				int localFileId = c * 128 + n;
+				int globalId = getGlobalFileId(rom, localFileId);
+				std::set<std::string> detectedTypes;
+
+				const bool isROM = (rom == 1);
+				const bool isFolder96Plus = (c >= 96);
+				const bool isROERange = isROM && c == 307 && n >= 15 && n <= 26;
+				const bool isMonBridgeRange = isROM && c == 288 && n >= 66 && n <= 69;
+				const bool allowDMsgXiFp = isROM && isFolder96Plus;
+				const bool allowItemData = isROM;
+				const bool allowROE = isROERange;
+				const bool allowMonBridge = isMonBridgeRange;
+
+				char m[8] = { 0 };
+				int flag = 0;
 				{
-					auto size = std::filesystem::file_size(p);
 					std::ifstream eye(p, std::ios::in | std::ios::binary);
-					int flag;
 					eye.read((char *)&flag, 4);
-					/*if ((flag & 0xFF000000) == 0x10000000)
-					{*/
-						if ((flag & 0xFFFFFF) == size - 4)
-						{
-							std::wcout << "evsb p=" << p << std::endl;
-							try
-							{
-								EventStringBase esb(p);
-								esb.Read();
-								esb.ToCsv(PathUtil::GetOutPathConf(rom, c, n) + L".evsb.csv");
-							}
-							catch (std::exception &ex)
-							{
-								std::wcout << "Failed: " << ex.what() << std::endl;
-							}
-						}
-					/*}*/
-				}
-			}
-		}
-
-		if (rom == 1)
-		for (int c = 97; c < 365; ++c)
-		{
-			for (int n = 0; n < 128; ++n)
-			{
-				std::filesystem::path p = PathUtil::GetPath(rom, c, n);
-				if (std::filesystem::exists(p))
-				{
-					static char m[8];
-					std::ifstream eye(p, std::ios::binary);
+					eye.seekg(0, std::ios::beg);
 					eye.read(m, 8);
+				}
 
-					if (strcmp(m, "d_msg") == 0)
+				// 1) BlockFile
+				if (/*m[4] == 1 && m[5] == 1 && */!m[6] && !m[7] && m[0] && m[1] && m[2] && m[3])
+				{
+					try
 					{
-						std::wcout << "dmsg p=" << p << std::endl;
-						try
-						{
-							DMsg f(p);
-							f.Read();
-							f.ToCsv(PathUtil::GetOutPathConf(rom, c, n) + L".dmsg.csv");
-						}
-						catch (std::exception &ex)
-						{
-							std::wcout << "Failed: " << ex.what() << std::endl;
-						}
+						BlockFile bf(p);
+						bf.Read();
+						std::wcout << L"blockfile p=" << p << std::endl;
+						logBlockFile(p, bf);
+						detectedTypes.insert("block");
 					}
-					else if (strcmp(m, "XISTRING") == 0)
+					catch (...) {}
+				}
+
+				// 2) EventStringBase
+				if ((flag & 0xFFFFFF) == size - 4)
+				{
+					std::wcout << L"evsb p=" << p << std::endl;
+					try
 					{
-						std::wcout << "xistr p=" << p << std::endl;
-						try
-						{
-							XiString s(p);
-							s.Read();
-							s.ToCsv(PathUtil::GetOutPathConf(rom, c, n) + L".xis.csv");
-						}
-						catch (std::exception &ex)
-						{
-							std::wcout << "Failed: " << ex.what() << std::endl;
-						}
+						EventStringBase esb(p);
+						esb.Read();
+						esb.ToCsv(PathUtil::GetOutPathConf(rom, c, n) + L".evsb.csv");
+						detectedTypes.insert("evsb");
 					}
-					else if (memcmp(m, "\x02\x01\x01", 4) == 0)
+					catch (std::exception &ex)
 					{
-						std::wcout << "fp p=" << p.c_str() << std::endl;
-						try
-						{
-							FixedPhrase fp;
-							std::wstring wpath = xybase::string::to_wstring(p);
-							fp.Read(wpath);
-							fp.ToCsv(PathUtil::GetOutPathConf(rom, c, n) + L".fp.csv");
-						}
-						catch (std::exception& ex)
-						{
-							std::wcout << "Failed: " << ex.what() << std::endl;
-						}
+						std::wcout << L"Failed: " << ex.what() << std::endl;
 					}
 				}
+
+				// 3) DMsg
+				if (allowDMsgXiFp && strcmp(m, "d_msg") == 0)
+				{
+					std::wcout << L"dmsg p=" << p << std::endl;
+					try
+					{
+						DMsg f(p);
+						f.Read();
+						f.ToCsv(PathUtil::GetOutPathConf(rom, c, n) + L".dmsg.csv");
+						detectedTypes.insert("dmsg");
+					}
+					catch (std::exception &ex)
+					{
+						std::wcout << L"Failed: " << ex.what() << std::endl;
+					}
+				}
+
+				// 4) XiString
+				if (allowDMsgXiFp && strcmp(m, "XISTRING") == 0)
+				{
+					std::wcout << L"xistr p=" << p << std::endl;
+					try
+					{
+						XiString s(p);
+						s.Read();
+						s.ToCsv(PathUtil::GetOutPathConf(rom, c, n) + L".xis.csv");
+						detectedTypes.insert("xis");
+					}
+					catch (std::exception &ex)
+					{
+						std::wcout << L"Failed: " << ex.what() << std::endl;
+					}
+				}
+
+				// 5) FixedPhrase
+				if (allowDMsgXiFp && (memcmp(m, "\x02\x01\x01", 4) == 0 || memcmp(m, "\x02\x02\x01", 4) == 0 || memcmp(m, "\x02\x03\x01", 4) == 0 || memcmp(m, "\x02\x04\x01", 4) == 0))
+				{
+					std::wcout << L"fp p=" << p << std::endl;
+					try
+					{
+						FixedPhrase fp;
+						fp.Read(xybase::string::to_wstring(p));
+						fp.ToCsv(PathUtil::GetOutPathConf(rom, c, n) + L".fp.csv");
+						detectedTypes.insert("fp");
+					}
+					catch (std::exception &ex)
+					{
+						std::wcout << L"Failed: " << ex.what() << std::endl;
+					}
+				}
+
+				// 6) ROR5 + periodic 0xFF heuristic group: ItemData / ROE / MonBridge
+				bool itemPeriodic = hasPeriodicFFMarker(p, (size_t)size, sizeof(ItemEntry));
+				bool itemCurrencyLike = ((size_t)size == 0xC000) && checkByteAt(p, sizeof(ItemEntry) - 1, 0xFF);
+				if (allowItemData && (itemPeriodic || itemCurrencyLike))
+				{
+					const std::pair<ItemSpecType, const wchar_t *> itemSpecs[] = {
+						{ ItemSpecType::NORMAL, L"normal" },
+						{ ItemSpecType::USABLE, L"usable" },
+						{ ItemSpecType::WEAPON, L"weapon" },
+						{ ItemSpecType::ARMOUR, L"armour" },
+						{ ItemSpecType::PUPPET, L"puppet" },
+						{ ItemSpecType::SLIP, L"slip" },
+						{ ItemSpecType::CURRENCY, L"currency" },
+					};
+					for (const auto &[spec, name] : itemSpecs)
+					{
+						try
+						{
+							ItemData item;
+							item.Read(xybase::string::to_wstring(p), spec);
+							if (!item.data.size() || !item.data.begin()->cellCount())
+								continue;
+							if (!item.data.empty())
+							{
+								std::wcout << L"item(" << name << L") p=" << p << std::endl;
+								item.ToICsv(PathUtil::GetOutPathConf(rom, c, n) + L".item." + std::wstring(name) + L".csv");
+								detectedTypes.insert("item." + xybase::string::to_string(std::wstring(name)));
+							}
+						}
+						catch (...) {}
+					}
+				}
+
+				bool roeQuestPeriodic = hasPeriodicFFMarker(p, (size_t)size, sizeof(RoeQuestEntry));
+				if (allowROE && roeQuestPeriodic)
+				{
+					try
+					{
+						RecordsOfEminence roe;
+						roe.ReadQuest(p.wstring());
+						if (!roe.questData.empty())
+						{
+							std::wcout << L"roe.quest p=" << p << std::endl;
+							roe.QuestToICsv(xybase::string::sys_wcs_to_mbs(PathUtil::GetOutPathConf(rom, c, n) + L".roe.quest.csv").c_str());
+							detectedTypes.insert("roe.quest");
+						}
+					}
+					catch (...) {}
+				}
+
+				bool roeCategoryPeriodic = hasPeriodicFFMarker(p, (size_t)size, sizeof(RoeCategoryEntry));
+				if (allowROE && roeCategoryPeriodic)
+				{
+					try
+					{
+						RecordsOfEminence roe;
+						roe.ReadCategory(p.wstring());
+						if (!roe.categoryData.empty())
+						{
+							std::wcout << L"roe.category p=" << p << std::endl;
+							roe.CategoryToICsv(xybase::string::sys_wcs_to_mbs(PathUtil::GetOutPathConf(rom, c, n) + L".roe.category.csv").c_str());
+							detectedTypes.insert("roe.category");
+						}
+					}
+					catch (...) {}
+				}
+
+				bool mbPeriodic = hasPeriodicFFMarker(p, (size_t)size, sizeof(MBRecord));
+				if (allowMonBridge && mbPeriodic)
+				{
+					try
+					{
+						MonBridge mb;
+						mb.Read(p.wstring());
+						if (!mb.data.empty())
+						{
+							std::wcout << L"mb p=" << p << std::endl;
+							mb.ToICsv(PathUtil::GetOutPathConf(rom, c, n) + L".mb.csv");
+							detectedTypes.insert("mb");
+						}
+					}
+					catch (...) {}
+				}
+
+				if (!detectedTypes.empty())
+					typelog << csvEscape(p.string()) << "," << globalId << "," << csvEscape(joinTypes(detectedTypes)) << "\n";
 			}
 		}
 	}
 }
-
-// 运行程序: Ctrl + F5 或调试 >“开始执行(不调试)”菜单
-// 调试程序: F5 或调试 >“开始调试”菜单
-
-// 入门使用技巧: 
-//   1. 使用解决方案资源管理器窗口添加/管理文件
-//   2. 使用团队资源管理器窗口连接到源代码管理
-//   3. 使用输出窗口查看生成输出和其他消息
-//   4. 使用错误列表窗口查看错误
-//   5. 转到“项目”>“添加新项”以创建新的代码文件，或转到“项目”>“添加现有项”以将现有代码文件添加到项目
-//   6. 将来，若要再次打开此项目，请转到“文件”>“打开”>“项目”并选择 .sln 文件
