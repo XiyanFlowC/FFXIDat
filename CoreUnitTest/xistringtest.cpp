@@ -191,7 +191,7 @@ TEST_F(XiStringCodecTest, EncodeDecodeHexEscape) {
 
 // $if control sequence
 TEST_F(XiStringCodecTest, EncodeDecodeIf) {
-    TestRoundTrip("$if:01:02:03:04;$endif;");
+    TestRoundTrip("$if:01:02:03:04;");
 }
 
 TEST_F(XiStringCodecTest, EncodeDecodeIfWithContent) {
@@ -362,10 +362,15 @@ TEST_F(XiStringCodecTest, ComprehensiveRoundTrip) {
     std::string decoded = XiString::Decode(encoded);
     EXPECT_EQ(decoded, original);
 }
+TEST_F(XiStringCodecTest, IfDecodeTest) {
+    std::string original = "If \xFA\x40\x83\x01\x81\x03\x81\x80\xFA\x40\x89\x0AQWERTY\xFA\x40\x84\x04XLTE<out of if>";
+	std::string decoded = XiString::Decode(original);
+	EXPECT_EQ(decoded, "If $if:81:03:81:80;$lt;QWERTY$else;XLTE$endif;<out of if>");
+}
 
 // Test with real game-like data
 TEST_F(XiStringCodecTest, RealWorldExample1) {
-    TestRoundTrip("Welcome to Vana'diel!");
+    TestRoundTrip("Search result: $if:81:03:81:80;$ne;$num:81; people $else;Only one person $endif;found in this area.");
 }
 
 TEST_F(XiStringCodecTest, RealWorldExample2) {

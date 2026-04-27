@@ -319,7 +319,7 @@ std::string XiString::Encode(const std::string &in)
 
 				sb += "\xFA\x40";
 				sb += op;
-				sb += (char)encoded_content.size();
+				sb += (char)encoded_content.size() + 4; // the length including FA 40 and op and length byte itself
 				sb += encoded_content;
 			}
 			else if (strncmp(p, "else;", 5) == 0)
@@ -334,7 +334,7 @@ std::string XiString::Encode(const std::string &in)
 				std::string encoded_content = Encode(content);
 
 				sb += "\xFA\x40\x84";
-				sb += (char)(2 + encoded_content.size());
+				sb += (char)encoded_content.size();
 				sb += encoded_content;
 			}
 			else if (strncmp(p, "endif;", 6) == 0)
@@ -445,7 +445,7 @@ std::string XiString::DecodeInternal(const char *p, const char *end, size_t &con
 						sb += xybase::string::itos<char>(cb, 16).c_str();
 						if (i < 3) sb += ':';
 					}
-					sb += ';';
+					sb += ';';/*
 
 					bool ifHasElse = false;
 					size_t ifConsumed = 0;
@@ -454,7 +454,7 @@ std::string XiString::DecodeInternal(const char *p, const char *end, size_t &con
 
 					p += ifConsumed;
 
-					sb += "$endif;";
+					sb += "$endif;";*/
 				}
 				break;
 			case 0x84: // $else;
@@ -465,10 +465,10 @@ std::string XiString::DecodeInternal(const char *p, const char *end, size_t &con
 					sb += "$else;";
 
 					size_t elseConsumed = 0;
-					std::string content = DecodeInternal(p, p + length - 2, elseConsumed, nullptr);
+					std::string content = DecodeInternal(p, p + length, elseConsumed, nullptr);
 					sb += content;
 
-					p += length - 2;
+					p += length;
 
 					if (hasElse) *hasElse = true;
 					consumed = p - start;
@@ -495,11 +495,31 @@ std::string XiString::DecodeInternal(const char *p, const char *end, size_t &con
 					case 0x8A: sb += "$gt;"; break;
 					}
 
+					bool opHasElse = false;
 					size_t opConsumed = 0;
-					std::string content = DecodeInternal(p, p + length, opConsumed, nullptr);
+					std::string content = DecodeInternal(p, p + length - 4, opConsumed, &opHasElse);
 					sb += content;
+					p += length - 4;
 
-					p += length;
+					opHasElse = false;
+					opConsumed = 0;
+					content = DecodeInternal(p, end, opConsumed, &opHasElse);
+					if (opHasElse)
+					{
+						// now we have the body that ONLY contains the else part, we need to mark an end for it
+						sb += content;
+						sb += "$endif;";
+						// now, just proceed
+						p += opConsumed;
+					}
+					else
+					{
+						// no else part, means DecodeInternal returns a whole content outside if block
+						sb += "$endif;";
+						sb += content;
+						return sb.ToString(); // now, return, all content is processed, we are done
+					}
+
 				}
 				break;
 			case 0x8B: // $num:param;
