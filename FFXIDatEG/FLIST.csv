@@ -3,553 +3,553 @@
 6,iwb,jp,itm/weapon,1|2
 7,iab,jp,itm/armor,1|2
 8,ipb,jp,itm/puppet,1|2
-9,icb,jp,itm/currency
-12,sd,jp,sys/status_data
-30,xis,jp,lobby/message
-32,xis,jp,etc/misc_message_01
-45,xis,jp,etc/time_formatter
-48,xis,en,lobby/message
-50,xis,en,etc/misc_message_01
-63,xis,en,etc/time_formatter
-67,xis,en,etc/job_abbr
-69,xis,en,etc/race_gender_enum
-73,inb,en,itm/normal
-74,iub,en,itm/usable
-75,iwb,en,itm/weapon
-76,iab,en,itm/armor
-77,ipb,en,itm/puppet
-87,sd,en,sys/status_data
-91,icb,en,itm/currency
-6120,evsb,jp,ev/unknown
-6121,evsb,jp,ev/Phanauet Channel
-6122,evsb,jp,ev/Carpenters' Landing
-6123,evsb,jp,ev/Manaclipper
-6124,evsb,jp,ev/Bibiki Bay
-6125,evsb,jp,ev/Uleguerand Range
-6126,evsb,jp,ev/Bearclaw Pinnacle
-6127,evsb,jp,ev/Attohwa Chasm
-6128,evsb,jp,ev/Boneyard Gully
-6129,evsb,jp,ev/Pso'Xja
-6130,evsb,jp,ev/The Shrouded Maw
-6131,evsb,jp,ev/Oldton Movalpolos
-6132,evsb,jp,ev/Newton Movalpolos
-6133,evsb,jp,ev/Mine Shaft 2716
-6134,evsb,jp,ev/Hall of Transference
-6135,evsb,jp,ev/Abyssea - Konschtat
-6136,evsb,jp,ev/Promyvion - Holla
-6137,evsb,jp,ev/Spire of Holla
-6138,evsb,jp,ev/Promyvion - Dem
-6139,evsb,jp,ev/Spire of Dem
-6140,evsb,jp,ev/Promyvion - Mea
-6141,evsb,jp,ev/Spire of Mea
-6142,evsb,jp,ev/Promyvion - Vahzl
-6143,evsb,jp,ev/Spire of Vahzl
-6144,evsb,jp,ev/Lufaise Meadows
-6145,evsb,jp,ev/Misareaux Coast
-6146,evsb,jp,ev/Tavnazian Safehold
-6147,evsb,jp,ev/Phomiuna Aqueducts
-6148,evsb,jp,ev/Sacrarium
-6149,evsb,jp,ev/Riverne - Site B01
-6150,evsb,jp,ev/Riverne - Site A01
-6151,evsb,jp,ev/Monarch Linn
-6152,evsb,jp,ev/Sealion's Den
-6153,evsb,jp,ev/Al'Taieu
-6154,evsb,jp,ev/Grand Palace of Hu'Xzoi
-6155,evsb,jp,ev/The Garden of Ru'Hmet
-6156,evsb,jp,ev/Empyreal Paradox
-6157,evsb,jp,ev/Temenos
-6158,evsb,jp,ev/Apollyon
-6159,evsb,jp,ev/Dynamis - Valkurm
-6160,evsb,jp,ev/Dynamis - Buburimu
-6161,evsb,jp,ev/Dynamis - Qufim
-6162,evsb,jp,ev/Dynamis - Tavnazia
-6163,evsb,jp,ev/Diorama Abdhaljs-Ghelsba
-6164,evsb,jp,ev/Abdhaljs Isle-Purgonorgo
-6165,evsb,jp,ev/Abyssea - Tahrongi
-6166,evsb,jp,ev/Open sea route to Al Zahbi
-6167,evsb,jp,ev/Open sea route to Mhaura
-6168,evsb,jp,ev/Al Zahbi
-6170,evsb,jp,ev/Aht Urhgan Whitegate
-6171,evsb,jp,ev/Wajaom Woodlands
-6172,evsb,jp,ev/Bhaflau Thickets
-6173,evsb,jp,ev/Nashmau
-6174,evsb,jp,ev/Arrapago Reef
-6175,evsb,jp,ev/Ilrusi Atoll
-6176,evsb,jp,ev/Periqia
-6177,evsb,jp,ev/Talacca Cove
-6178,evsb,jp,ev/Silver Sea route to Nashmau
-6179,evsb,jp,ev/Silver Sea route to Al Zahbi
-6180,evsb,jp,ev/The Ashu Talif
-6181,evsb,jp,ev/Mount Zhayolm
-6182,evsb,jp,ev/Halvung
-6183,evsb,jp,ev/Lebros Cavern
-6184,evsb,jp,ev/Navukgo Execution Chamber
-6185,evsb,jp,ev/Mamook
-6186,evsb,jp,ev/Mamool Ja Training Grounds
-6187,evsb,jp,ev/Jade Sepulcher
-6188,evsb,jp,ev/Aydeewa Subterrane
-6189,evsb,jp,ev/Leujaoam Sanctum
-6190,evsb,jp,ev/Chocobo Circuit
-6191,evsb,jp,ev/The Colosseum
-6192,evsb,jp,ev/Alzadaal Undersea Ruins
-6193,evsb,jp,ev/Zhayolm Remnants
-6194,evsb,jp,ev/Arrapago Remnants
-6195,evsb,jp,ev/Bhaflau Remnants
-6196,evsb,jp,ev/Silver Sea Remnants
-6197,evsb,jp,ev/Nyzul Isle
-6198,evsb,jp,ev/Hazhalm Testing Grounds
-6199,evsb,jp,ev/Caedarva Mire
-6200,evsb,jp,ev/Southern San d'Oria [S]
-6201,evsb,jp,ev/East Ronfaure [S]
-6202,evsb,jp,ev/Jugner Forest [S]
-6203,evsb,jp,ev/Vunkerl Inlet [S]
-6204,evsb,jp,ev/Batallia Downs [S]
-6205,evsb,jp,ev/La Vaule [S]
-6206,evsb,jp,ev/Everbloom Hollow
-6207,evsb,jp,ev/Bastok Markets [S]
-6208,evsb,jp,ev/North Gustaberg [S]
-6209,evsb,jp,ev/Grauberg [S]
-6210,evsb,jp,ev/Pashhow Marshlands [S]
-6211,evsb,jp,ev/Rolanberry Fields [S]
-6212,evsb,jp,ev/Beadeaux [S]
-6213,evsb,jp,ev/Ruhotz Silvermines
-6214,evsb,jp,ev/Windurst Waters [S]
-6215,evsb,jp,ev/West Sarutabaruta [S]
-6216,evsb,jp,ev/Fort Karugo-Narugo [S]
-6217,evsb,jp,ev/Meriphataud Mountains [S]
-6218,evsb,jp,ev/Sauromugue Champaign [S]
-6219,evsb,jp,ev/Castle Oztroja [S]
-6220,evsb,jp,ev/West Ronfaure
-6221,evsb,jp,ev/East Ronfaure
-6222,evsb,jp,ev/La Theine Plateau
-6223,evsb,jp,ev/Valkurm Dunes
-6224,evsb,jp,ev/Jugner Forest
-6225,evsb,jp,ev/Batallia Downs
-6226,evsb,jp,ev/North Gustaberg
-6227,evsb,jp,ev/South Gustaberg
-6228,evsb,jp,ev/Konschtat Highlands
-6229,evsb,jp,ev/Pashhow Marshlands
-6230,evsb,jp,ev/Rolanberry Fields
-6231,evsb,jp,ev/Beaucedine Glacier
-6232,evsb,jp,ev/Xarcabard
-6233,evsb,jp,ev/Cape Teriggan
-6234,evsb,jp,ev/Eastern Altepa Desert
-6235,evsb,jp,ev/West Sarutabaruta
-6236,evsb,jp,ev/East Sarutabaruta
-6237,evsb,jp,ev/Tahrongi Canyon
-6238,evsb,jp,ev/Buburimu Peninsula
-6239,evsb,jp,ev/Meriphataud Mountains
-6240,evsb,jp,ev/Sauromugue Champaign
-6241,evsb,jp,ev/The Sanctuary of Zi'Tah
-6242,evsb,jp,ev/Ro'Maeve
-6243,evsb,jp,ev/Yuhtunga Jungle
-6244,evsb,jp,ev/Yhoator Jungle
-6245,evsb,jp,ev/Western Altepa Desert
-6246,evsb,jp,ev/Qufim Island
-6247,evsb,jp,ev/Behemoth's Dominion
-6248,evsb,jp,ev/Valley of Sorrows
-6249,evsb,jp,ev/Ghoyu's Reverie
-6250,evsb,jp,ev/Ru'Aun Gardens
-6251,evsb,jp,ev/Mordion Gaol
-6252,evsb,jp,ev/Abyssea - La Theine
-6253,evsb,jp,ev/Outer Ra'Kaznar [U2]
-6254,evsb,jp,ev/Dynamis - Beaucedine
-6255,evsb,jp,ev/Dynamis - Xarcabard
-6256,evsb,jp,ev/Beaucedine Glacier [S]
-6257,evsb,jp,ev/Xarcabard [S]
-6258,evsb,jp,ev/Castle Zvahl Baileys [S]
-6259,evsb,jp,ev/Horlais Peak
-6260,evsb,jp,ev/Ghelsba Outpost
-6261,evsb,jp,ev/Fort Ghelsba
-6262,evsb,jp,ev/Yughott Grotto
-6263,evsb,jp,ev/Palborough Mines
-6264,evsb,jp,ev/Waughroon Shrine
-6265,evsb,jp,ev/Giddeus
-6266,evsb,jp,ev/Balga's Dais
-6267,evsb,jp,ev/Beadeaux
-6268,evsb,jp,ev/Qulun Dome
-6269,evsb,jp,ev/Davoi
-6270,evsb,jp,ev/Monastic Cavern
-6271,evsb,jp,ev/Castle Oztroja
-6272,evsb,jp,ev/Altar Room
-6273,evsb,jp,ev/The Boyahda Tree
-6274,evsb,jp,ev/Dragon's Aery
-6275,evsb,jp,ev/Castle Zvahl Keep [S]
-6276,evsb,jp,ev/Throne Room [S]
-6277,evsb,jp,ev/Middle Delkfutt's Tower
-6278,evsb,jp,ev/Upper Delkfutt's Tower
-6279,evsb,jp,ev/Temple of Uggalepih
-6280,evsb,jp,ev/Den of Rancor
-6281,evsb,jp,ev/Castle Zvahl Baileys
-6282,evsb,jp,ev/Castle Zvahl Keep
-6283,evsb,jp,ev/Sacrificial Chamber
-6284,evsb,jp,ev/Garlaige Citadel [S]
-6285,evsb,jp,ev/Throne Room
-6286,evsb,jp,ev/Ranguemont Pass
-6287,evsb,jp,ev/Bostaunieux Oubliette
-6288,evsb,jp,ev/Chamber of Oracles
-6289,evsb,jp,ev/Toraimarai Canal
-6290,evsb,jp,ev/Full Moon Fountain
-6291,evsb,jp,ev/Crawlers' Nest [S]
-6292,evsb,jp,ev/Zeruhn Mines
-6293,evsb,jp,ev/Korroloka Tunnel
-6294,evsb,jp,ev/Kuftal Tunnel
-6295,evsb,jp,ev/The Eldieme Necropolis [S]
-6296,evsb,jp,ev/Sea Serpent Grotto
-6297,evsb,jp,ev/Ve'Lugannon Palace
-6298,evsb,jp,ev/The Shrine of Ru'Avitau
-6299,evsb,jp,ev/Stellar Fulcrum
-6300,evsb,jp,ev/La'Loff Amphitheater
-6301,evsb,jp,ev/The Celestial Nexus
-6302,evsb,jp,ev/Walk of Echoes
-6303,evsb,jp,ev/Maquette Abdhaljs-LegionA
-6304,evsb,jp,ev/Lower Delkfutt's Tower
-6305,evsb,jp,ev/Dynamis - San d'Oria
-6306,evsb,jp,ev/Dynamis - Bastok
-6307,evsb,jp,ev/Dynamis - Windurst
-6308,evsb,jp,ev/Dynamis - Jeuno
-6309,evsb,jp,ev/Outer Ra'Kaznar [U3]
-6310,evsb,jp,ev/King Ranperre's Tomb
-6311,evsb,jp,ev/Dangruf Wadi
-6312,evsb,jp,ev/Inner Horutoto Ruins
-6313,evsb,jp,ev/Ordelle's Caves
-6314,evsb,jp,ev/Outer Horutoto Ruins
-6315,evsb,jp,ev/The Eldieme Necropolis
-6316,evsb,jp,ev/Gusgen Mines
-6317,evsb,jp,ev/Crawlers' Nest
-6318,evsb,jp,ev/Maze of Shakhrami
-6319,evsb,jp,ev/198
-6320,evsb,jp,ev/Garlaige Citadel
-6321,evsb,jp,ev/Cloister of Gales
-6322,evsb,jp,ev/Cloister of Storms
-6323,evsb,jp,ev/Cloister of Frost
-6324,evsb,jp,ev/Fei'Yin
-6325,evsb,jp,ev/Ifrit's Cauldron
-6326,evsb,jp,ev/Qu'Bia Arena
-6327,evsb,jp,ev/Cloister of Flames
-6328,evsb,jp,ev/Quicksand Caves
-6329,evsb,jp,ev/Cloister of Tremors
-6330,evsb,jp,ev/209
-6331,evsb,jp,ev/Cloister of Tides
-6332,evsb,jp,ev/Gustav Tunnel
-6333,evsb,jp,ev/Labyrinth of Onzozo
-6334,evsb,jp,ev/213
-6335,evsb,jp,ev/Abyssea - Attohwa
-6336,evsb,jp,ev/Abyssea - Misareaux
-6337,evsb,jp,ev/Abyssea - Vunkerl
-6338,evsb,jp,ev/Abyssea - Altepa
-6339,evsb,jp,ev/218
-6340,evsb,jp,ev/Ship bound for Selbina
-6341,evsb,jp,ev/Ship bound for Mhaura
-6342,evsb,jp,ev/Provenance
-6343,evsb,jp,ev/San d'Oria-Jeuno Airship
-6344,evsb,jp,ev/Bastok-Jeuno Airship
-6345,evsb,jp,ev/Windurst-Jeuno Airship
-6346,evsb,jp,ev/Kazham-Jeuno Airship
-6347,evsb,jp,ev/Ship bound for Selbina
-6348,evsb,jp,ev/Ship bound for Mhaura
-6349,evsb,jp,ev/Throne Room [V]
-6350,evsb,jp,ev/Southern San d'Oria
-6351,evsb,jp,ev/Northern San d'Oria
-6352,evsb,jp,ev/Port San d'Oria
-6353,evsb,jp,ev/Chateau d'Oraguille
-6354,evsb,jp,ev/Bastok Mines
-6355,evsb,jp,ev/Bastok Markets
-6356,evsb,jp,ev/Port Bastok
-6357,evsb,jp,ev/Metalworks
-6358,evsb,jp,ev/Windurst Waters
-6359,evsb,jp,ev/Windurst Walls
-6360,evsb,jp,ev/Port Windurst
-6361,evsb,jp,ev/Windurst Woods
-6362,evsb,jp,ev/Heavens Tower
-6363,evsb,jp,ev/Ru'Lude Gardens
-6364,evsb,jp,ev/Upper Jeuno
-6365,evsb,jp,ev/Lower Jeuno
-6366,evsb,jp,ev/Port Jeuno
-6367,evsb,jp,ev/Rabao
-6368,evsb,jp,ev/Selbina
-6369,evsb,jp,ev/Mhaura
-6370,evsb,jp,ev/Kazham
-6371,evsb,jp,ev/Hall of the Gods
-6372,evsb,jp,ev/Norg
-6373,evsb,jp,ev/Abyssea - Uleguerand
-6374,evsb,jp,ev/Abyssea - Grauberg
-6375,evsb,jp,ev/Abyssea - Empyreal Paradox
-6420,evsb,en,ev/unknown
-6421,evsb,en,ev/Phanauet Channel
-6422,evsb,en,ev/Carpenters' Landing
-6423,evsb,en,ev/Manaclipper
-6424,evsb,en,ev/Bibiki Bay
-6425,evsb,en,ev/Uleguerand Range
-6426,evsb,en,ev/Bearclaw Pinnacle
-6427,evsb,en,ev/Attohwa Chasm
-6428,evsb,en,ev/Boneyard Gully
-6429,evsb,en,ev/Pso'Xja
-6430,evsb,en,ev/The Shrouded Maw
-6431,evsb,en,ev/Oldton Movalpolos
-6432,evsb,en,ev/Newton Movalpolos
-6433,evsb,en,ev/Mine Shaft #2716
-6434,evsb,en,ev/Hall of Transference
-6435,evsb,en,ev/Abyssea - Konschtat
-6436,evsb,en,ev/Promyvion - Holla
-6437,evsb,en,ev/Spire of Holla
-6438,evsb,en,ev/Promyvion - Dem
-6439,evsb,en,ev/Spire of Dem
-6440,evsb,en,ev/Promyvion - Mea
-6441,evsb,en,ev/Spire of Mea
-6442,evsb,en,ev/Promyvion - Vahzl
-6443,evsb,en,ev/Spire of Vahzl
-6444,evsb,en,ev/Lufaise Meadows
-6445,evsb,en,ev/Misareaux Coast
-6446,evsb,en,ev/Tavnazian Safehold
-6447,evsb,en,ev/Phomiuna Aqueducts
-6448,evsb,en,ev/Sacrarium
-6449,evsb,en,ev/Riverne - Site #B01
-6450,evsb,en,ev/Riverne - Site #A01
-6451,evsb,en,ev/Monarch Linn
-6452,evsb,en,ev/Sealion's Den
-6453,evsb,en,ev/Al'Taieu
-6454,evsb,en,ev/Grand Palace of Hu'Xzoi
-6455,evsb,en,ev/The Garden of Ru'Hmet
-6456,evsb,en,ev/Empyreal Paradox
-6457,evsb,en,ev/Temenos
-6458,evsb,en,ev/Apollyon
-6459,evsb,en,ev/Dynamis - Valkurm
-6460,evsb,en,ev/Dynamis - Buburimu
-6461,evsb,en,ev/Dynamis - Qufim
-6462,evsb,en,ev/Dynamis - Tavnazia
-6463,evsb,en,ev/Diorama Abdhaljs-Ghelsba
-6464,evsb,en,ev/Abdhaljs Isle-Purgonorgo
-6465,evsb,en,ev/Abyssea - Tahrongi
-6466,evsb,en,ev/Open sea route to Al Zahbi
-6467,evsb,en,ev/Open sea route to Mhaura
-6468,evsb,en,ev/Al Zahbi
-6470,evsb,en,ev/Aht Urhgan Whitegate
-6471,evsb,en,ev/Wajaom Woodlands
-6472,evsb,en,ev/Bhaflau Thickets
-6473,evsb,en,ev/Nashmau
-6474,evsb,en,ev/Arrapago Reef
-6475,evsb,en,ev/Ilrusi Atoll
-6476,evsb,en,ev/Periqia
-6477,evsb,en,ev/Talacca Cove
-6478,evsb,en,ev/Silver Sea route to Nashmau
-6479,evsb,en,ev/Silver Sea route to Al Zahbi
-6480,evsb,en,ev/The Ashu Talif
-6481,evsb,en,ev/Mount Zhayolm
-6482,evsb,en,ev/Halvung
-6483,evsb,en,ev/Lebros Cavern
-6484,evsb,en,ev/Navukgo Execution Chamber
-6485,evsb,en,ev/Mamook
-6486,evsb,en,ev/Mamool Ja Training Grounds
-6487,evsb,en,ev/Jade Sepulcher
-6488,evsb,en,ev/Aydeewa Subterrane
-6489,evsb,en,ev/Leujaoam Sanctum
-6490,evsb,en,ev/Chocobo Circuit
-6491,evsb,en,ev/The Colosseum
-6492,evsb,en,ev/Alzadaal Undersea Ruins
-6493,evsb,en,ev/Zhayolm Remnants
-6494,evsb,en,ev/Arrapago Remnants
-6495,evsb,en,ev/Bhaflau Remnants
-6496,evsb,en,ev/Silver Sea Remnants
-6497,evsb,en,ev/Nyzul Isle
-6498,evsb,en,ev/Hazhalm Testing Grounds
-6499,evsb,en,ev/Caedarva Mire
-6500,evsb,en,ev/Southern San d'Oria [S]
-6501,evsb,en,ev/East Ronfaure [S]
-6502,evsb,en,ev/Jugner Forest [S]
-6503,evsb,en,ev/Vunkerl Inlet [S]
-6504,evsb,en,ev/Batallia Downs [S]
-6505,evsb,en,ev/La Vaule [S]
-6506,evsb,en,ev/Everbloom Hollow
-6507,evsb,en,ev/Bastok Markets [S]
-6508,evsb,en,ev/North Gustaberg [S]
-6509,evsb,en,ev/Grauberg [S]
-6510,evsb,en,ev/Pashhow Marshlands [S]
-6511,evsb,en,ev/Rolanberry Fields [S]
-6512,evsb,en,ev/Beadeaux [S]
-6513,evsb,en,ev/Ruhotz Silvermines
-6514,evsb,en,ev/Windurst Waters [S]
-6515,evsb,en,ev/West Sarutabaruta [S]
-6516,evsb,en,ev/Fort Karugo-Narugo [S]
-6517,evsb,en,ev/Meriphataud Mountains [S]
-6518,evsb,en,ev/Sauromugue Champaign [S]
-6519,evsb,en,ev/Castle Oztroja [S]
-6520,evsb,en,ev/West Ronfaure
-6521,evsb,en,ev/East Ronfaure
-6522,evsb,en,ev/La Theine Plateau
-6523,evsb,en,ev/Valkurm Dunes
-6524,evsb,en,ev/Jugner Forest
-6525,evsb,en,ev/Batallia Downs
-6526,evsb,en,ev/North Gustaberg
-6527,evsb,en,ev/South Gustaberg
-6528,evsb,en,ev/Konschtat Highlands
-6529,evsb,en,ev/Pashhow Marshlands
-6530,evsb,en,ev/Rolanberry Fields
-6531,evsb,en,ev/Beaucedine Glacier
-6532,evsb,en,ev/Xarcabard
-6533,evsb,en,ev/Cape Teriggan
-6534,evsb,en,ev/Eastern Altepa Desert
-6535,evsb,en,ev/West Sarutabaruta
-6536,evsb,en,ev/East Sarutabaruta
-6537,evsb,en,ev/Tahrongi Canyon
-6538,evsb,en,ev/Buburimu Peninsula
-6539,evsb,en,ev/Meriphataud Mountains
-6540,evsb,en,ev/Sauromugue Champaign
-6541,evsb,en,ev/The Sanctuary of Zi'Tah
-6542,evsb,en,ev/Ro'Maeve
-6543,evsb,en,ev/Yuhtunga Jungle
-6544,evsb,en,ev/Yhoator Jungle
-6545,evsb,en,ev/Western Altepa Desert
-6546,evsb,en,ev/Qufim Island
-6547,evsb,en,ev/Behemoth's Dominion
-6548,evsb,en,ev/Valley of Sorrows
-6549,evsb,en,ev/Ghoyu's Reverie
-6550,evsb,en,ev/Ru'Aun Gardens
-6551,evsb,en,ev/Mordion Gaol
-6552,evsb,en,ev/Abyssea - La Theine
-6553,evsb,en,ev/Outer Ra'Kaznar [U2]
-6554,evsb,en,ev/Dynamis - Beaucedine
-6555,evsb,en,ev/Dynamis - Xarcabard
-6556,evsb,en,ev/Beaucedine Glacier [S]
-6557,evsb,en,ev/Xarcabard [S]
-6558,evsb,en,ev/Castle Zvahl Baileys [S]
-6559,evsb,en,ev/Horlais Peak
-6560,evsb,en,ev/Ghelsba Outpost
-6561,evsb,en,ev/Fort Ghelsba
-6562,evsb,en,ev/Yughott Grotto
-6563,evsb,en,ev/Palborough Mines
-6564,evsb,en,ev/Waughroon Shrine
-6565,evsb,en,ev/Giddeus
-6566,evsb,en,ev/Balga's Dais
-6567,evsb,en,ev/Beadeaux
-6568,evsb,en,ev/Qulun Dome
-6569,evsb,en,ev/Davoi
-6570,evsb,en,ev/Monastic Cavern
-6571,evsb,en,ev/Castle Oztroja
-6572,evsb,en,ev/Altar Room
-6573,evsb,en,ev/The Boyahda Tree
-6574,evsb,en,ev/Dragon's Aery
-6575,evsb,en,ev/Castle Zvahl Keep [S]
-6576,evsb,en,ev/Throne Room [S]
-6577,evsb,en,ev/Middle Delkfutt's Tower
-6578,evsb,en,ev/Upper Delkfutt's Tower
-6579,evsb,en,ev/Temple of Uggalepih
-6580,evsb,en,ev/Den of Rancor
-6581,evsb,en,ev/Castle Zvahl Baileys
-6582,evsb,en,ev/Castle Zvahl Keep
-6583,evsb,en,ev/Sacrificial Chamber
-6584,evsb,en,ev/Garlaige Citadel [S]
-6585,evsb,en,ev/Throne Room
-6586,evsb,en,ev/Ranguemont Pass
-6587,evsb,en,ev/Bostaunieux Oubliette
-6588,evsb,en,ev/Chamber of Oracles
-6589,evsb,en,ev/Toraimarai Canal
-6590,evsb,en,ev/Full Moon Fountain
-6591,evsb,en,ev/Crawlers' Nest [S]
-6592,evsb,en,ev/Zeruhn Mines
-6593,evsb,en,ev/Korroloka Tunnel
-6594,evsb,en,ev/Kuftal Tunnel
-6595,evsb,en,ev/The Eldieme Necropolis [S]
-6596,evsb,en,ev/Sea Serpent Grotto
-6597,evsb,en,ev/Ve'Lugannon Palace
-6598,evsb,en,ev/The Shrine of Ru'Avitau
-6599,evsb,en,ev/Stellar Fulcrum
-6600,evsb,en,ev/La'Loff Amphitheater
-6601,evsb,en,ev/The Celestial Nexus
-6602,evsb,en,ev/Walk of Echoes
-6603,evsb,en,ev/Maquette Abdhaljs-LegionA
-6604,evsb,en,ev/Lower Delkfutt's Tower
-6605,evsb,en,ev/Dynamis - San d'Oria
-6606,evsb,en,ev/Dynamis - Bastok
-6607,evsb,en,ev/Dynamis - Windurst
-6608,evsb,en,ev/Dynamis - Jeuno
-6609,evsb,en,ev/Outer Ra'Kaznar [U3]
-6610,evsb,en,ev/King Ranperre's Tomb
-6611,evsb,en,ev/Dangruf Wadi
-6612,evsb,en,ev/Inner Horutoto Ruins
-6613,evsb,en,ev/Ordelle's Caves
-6614,evsb,en,ev/Outer Horutoto Ruins
-6615,evsb,en,ev/The Eldieme Necropolis
-6616,evsb,en,ev/Gusgen Mines
-6617,evsb,en,ev/Crawlers' Nest
-6618,evsb,en,ev/Maze of Shakhrami
-6619,evsb,en,ev/198
-6620,evsb,en,ev/Garlaige Citadel
-6621,evsb,en,ev/Cloister of Gales
-6622,evsb,en,ev/Cloister of Storms
-6623,evsb,en,ev/Cloister of Frost
-6624,evsb,en,ev/Fei'Yin
-6625,evsb,en,ev/Ifrit's Cauldron
-6626,evsb,en,ev/Qu'Bia Arena
-6627,evsb,en,ev/Cloister of Flames
-6628,evsb,en,ev/Quicksand Caves
-6629,evsb,en,ev/Cloister of Tremors
-6630,evsb,en,ev/209
-6631,evsb,en,ev/Cloister of Tides
-6632,evsb,en,ev/Gustav Tunnel
-6633,evsb,en,ev/Labyrinth of Onzozo
-6634,evsb,en,ev/213
-6635,evsb,en,ev/Abyssea - Attohwa
-6636,evsb,en,ev/Abyssea - Misareaux
-6637,evsb,en,ev/Abyssea - Vunkerl
-6638,evsb,en,ev/Abyssea - Altepa
-6639,evsb,en,ev/218
-6640,evsb,en,ev/Ship bound for Selbina
-6641,evsb,en,ev/Ship bound for Mhaura
-6642,evsb,en,ev/Provenance
-6643,evsb,en,ev/San d'Oria-Jeuno Airship
-6644,evsb,en,ev/Bastok-Jeuno Airship
-6645,evsb,en,ev/Windurst-Jeuno Airship
-6646,evsb,en,ev/Kazham-Jeuno Airship
-6647,evsb,en,ev/Ship bound for Selbina
-6648,evsb,en,ev/Ship bound for Mhaura
-6649,evsb,en,ev/Throne Room [V]
-6650,evsb,en,ev/Southern San d'Oria
-6651,evsb,en,ev/Northern San d'Oria
-6652,evsb,en,ev/Port San d'Oria
-6653,evsb,en,ev/Chateau d'Oraguille
-6654,evsb,en,ev/Bastok Mines
-6655,evsb,en,ev/Bastok Markets
-6656,evsb,en,ev/Port Bastok
-6657,evsb,en,ev/Metalworks
-6658,evsb,en,ev/Windurst Waters
-6659,evsb,en,ev/Windurst Walls
-6660,evsb,en,ev/Port Windurst
-6661,evsb,en,ev/Windurst Woods
-6662,evsb,en,ev/Heavens Tower
-6663,evsb,en,ev/Ru'Lude Gardens
-6664,evsb,en,ev/Upper Jeuno
-6665,evsb,en,ev/Lower Jeuno
-6666,evsb,en,ev/Port Jeuno
-6667,evsb,en,ev/Rabao
-6668,evsb,en,ev/Selbina
-6669,evsb,en,ev/Mhaura
-6670,evsb,en,ev/Kazham
-6671,evsb,en,ev/Hall of the Gods
-6672,evsb,en,ev/Norg
-6673,evsb,en,ev/Abyssea - Uleguerand
-6674,evsb,en,ev/Abyssea - Grauberg
-6675,evsb,en,ev/Abyssea - Empyreal Paradox
-7020,evsb,jp,gev/skill_name
-7021,evsb,en,gev/skill_name
-7022,evsb,jp,gev/term
-7023,evsb,en,gev/term
-7024,evsb,jp,gev/emote
-7025,evsb,en,gev/emote
-7026,evsb,jp,gev/battle
-7027,evsb,en,gev/battle
-7028,evsb,jp,gev/status
-7029,evsb,en,gev/status
-7030,evsb,jp,gev/message
-7031,evsb,en,gev/message
-7034,evsb,jp,gev/action
-7035,evsb,en,gev/action
-7038,evsb,jp,gev/Unity Concord
-7039,evsb,en,gev/Unity Concord
-55465,dmsg,en,sys/area
-55466,dmsg,en,sys/area_s
-55467,dmsg,en,sys/job
-55468,dmsg,en,sys/job_abbr
+9,icb,jp,itm/currency,
+12,sd,jp,sys/status_data,
+30,xis,jp,lobby/message,
+32,xis,jp,etc/misc_message_01,
+45,xis,jp,etc/time_formatter,
+48,xis,en,lobby/message,
+50,xis,en,etc/misc_message_01,
+63,xis,en,etc/time_formatter,
+67,xis,en,etc/job_abbr,
+69,xis,en,etc/race_gender_enum,
+73,inb,en,itm/normal,
+74,iub,en,itm/usable,
+75,iwb,en,itm/weapon,
+76,iab,en,itm/armor,
+77,ipb,en,itm/puppet,
+87,sd,en,sys/status_data,
+91,icb,en,itm/currency,
+6120,evsb,jp,ev/unknown,
+6121,evsb,jp,ev/Phanauet Channel,
+6122,evsb,jp,ev/Carpenters' Landing,
+6123,evsb,jp,ev/Manaclipper,
+6124,evsb,jp,ev/Bibiki Bay,
+6125,evsb,jp,ev/Uleguerand Range,
+6126,evsb,jp,ev/Bearclaw Pinnacle,
+6127,evsb,jp,ev/Attohwa Chasm,
+6128,evsb,jp,ev/Boneyard Gully,
+6129,evsb,jp,ev/Pso'Xja,
+6130,evsb,jp,ev/The Shrouded Maw,
+6131,evsb,jp,ev/Oldton Movalpolos,
+6132,evsb,jp,ev/Newton Movalpolos,
+6133,evsb,jp,ev/Mine Shaft 2716,
+6134,evsb,jp,ev/Hall of Transference,
+6135,evsb,jp,ev/Abyssea - Konschtat,
+6136,evsb,jp,ev/Promyvion - Holla,
+6137,evsb,jp,ev/Spire of Holla,
+6138,evsb,jp,ev/Promyvion - Dem,
+6139,evsb,jp,ev/Spire of Dem,
+6140,evsb,jp,ev/Promyvion - Mea,
+6141,evsb,jp,ev/Spire of Mea,
+6142,evsb,jp,ev/Promyvion - Vahzl,
+6143,evsb,jp,ev/Spire of Vahzl,
+6144,evsb,jp,ev/Lufaise Meadows,
+6145,evsb,jp,ev/Misareaux Coast,
+6146,evsb,jp,ev/Tavnazian Safehold,
+6147,evsb,jp,ev/Phomiuna Aqueducts,
+6148,evsb,jp,ev/Sacrarium,
+6149,evsb,jp,ev/Riverne - Site B01,
+6150,evsb,jp,ev/Riverne - Site A01,
+6151,evsb,jp,ev/Monarch Linn,
+6152,evsb,jp,ev/Sealion's Den,
+6153,evsb,jp,ev/Al'Taieu,
+6154,evsb,jp,ev/Grand Palace of Hu'Xzoi,
+6155,evsb,jp,ev/The Garden of Ru'Hmet,
+6156,evsb,jp,ev/Empyreal Paradox,
+6157,evsb,jp,ev/Temenos,
+6158,evsb,jp,ev/Apollyon,
+6159,evsb,jp,ev/Dynamis - Valkurm,
+6160,evsb,jp,ev/Dynamis - Buburimu,
+6161,evsb,jp,ev/Dynamis - Qufim,
+6162,evsb,jp,ev/Dynamis - Tavnazia,
+6163,evsb,jp,ev/Diorama Abdhaljs-Ghelsba,
+6164,evsb,jp,ev/Abdhaljs Isle-Purgonorgo,
+6165,evsb,jp,ev/Abyssea - Tahrongi,
+6166,evsb,jp,ev/Open sea route to Al Zahbi,
+6167,evsb,jp,ev/Open sea route to Mhaura,
+6168,evsb,jp,ev/Al Zahbi,
+6170,evsb,jp,ev/Aht Urhgan Whitegate,
+6171,evsb,jp,ev/Wajaom Woodlands,
+6172,evsb,jp,ev/Bhaflau Thickets,
+6173,evsb,jp,ev/Nashmau,
+6174,evsb,jp,ev/Arrapago Reef,
+6175,evsb,jp,ev/Ilrusi Atoll,
+6176,evsb,jp,ev/Periqia,
+6177,evsb,jp,ev/Talacca Cove,
+6178,evsb,jp,ev/Silver Sea route to Nashmau,
+6179,evsb,jp,ev/Silver Sea route to Al Zahbi,
+6180,evsb,jp,ev/The Ashu Talif,
+6181,evsb,jp,ev/Mount Zhayolm,
+6182,evsb,jp,ev/Halvung,
+6183,evsb,jp,ev/Lebros Cavern,
+6184,evsb,jp,ev/Navukgo Execution Chamber,
+6185,evsb,jp,ev/Mamook,
+6186,evsb,jp,ev/Mamool Ja Training Grounds,
+6187,evsb,jp,ev/Jade Sepulcher,
+6188,evsb,jp,ev/Aydeewa Subterrane,
+6189,evsb,jp,ev/Leujaoam Sanctum,
+6190,evsb,jp,ev/Chocobo Circuit,
+6191,evsb,jp,ev/The Colosseum,
+6192,evsb,jp,ev/Alzadaal Undersea Ruins,
+6193,evsb,jp,ev/Zhayolm Remnants,
+6194,evsb,jp,ev/Arrapago Remnants,
+6195,evsb,jp,ev/Bhaflau Remnants,
+6196,evsb,jp,ev/Silver Sea Remnants,
+6197,evsb,jp,ev/Nyzul Isle,
+6198,evsb,jp,ev/Hazhalm Testing Grounds,
+6199,evsb,jp,ev/Caedarva Mire,
+6200,evsb,jp,ev/Southern San d'Oria [S],
+6201,evsb,jp,ev/East Ronfaure [S],
+6202,evsb,jp,ev/Jugner Forest [S],
+6203,evsb,jp,ev/Vunkerl Inlet [S],
+6204,evsb,jp,ev/Batallia Downs [S],
+6205,evsb,jp,ev/La Vaule [S],
+6206,evsb,jp,ev/Everbloom Hollow,
+6207,evsb,jp,ev/Bastok Markets [S],
+6208,evsb,jp,ev/North Gustaberg [S],
+6209,evsb,jp,ev/Grauberg [S],
+6210,evsb,jp,ev/Pashhow Marshlands [S],
+6211,evsb,jp,ev/Rolanberry Fields [S],
+6212,evsb,jp,ev/Beadeaux [S],
+6213,evsb,jp,ev/Ruhotz Silvermines,
+6214,evsb,jp,ev/Windurst Waters [S],
+6215,evsb,jp,ev/West Sarutabaruta [S],
+6216,evsb,jp,ev/Fort Karugo-Narugo [S],
+6217,evsb,jp,ev/Meriphataud Mountains [S],
+6218,evsb,jp,ev/Sauromugue Champaign [S],
+6219,evsb,jp,ev/Castle Oztroja [S],
+6220,evsb,jp,ev/West Ronfaure,
+6221,evsb,jp,ev/East Ronfaure,
+6222,evsb,jp,ev/La Theine Plateau,
+6223,evsb,jp,ev/Valkurm Dunes,
+6224,evsb,jp,ev/Jugner Forest,
+6225,evsb,jp,ev/Batallia Downs,
+6226,evsb,jp,ev/North Gustaberg,
+6227,evsb,jp,ev/South Gustaberg,
+6228,evsb,jp,ev/Konschtat Highlands,
+6229,evsb,jp,ev/Pashhow Marshlands,
+6230,evsb,jp,ev/Rolanberry Fields,
+6231,evsb,jp,ev/Beaucedine Glacier,
+6232,evsb,jp,ev/Xarcabard,
+6233,evsb,jp,ev/Cape Teriggan,
+6234,evsb,jp,ev/Eastern Altepa Desert,
+6235,evsb,jp,ev/West Sarutabaruta,
+6236,evsb,jp,ev/East Sarutabaruta,
+6237,evsb,jp,ev/Tahrongi Canyon,
+6238,evsb,jp,ev/Buburimu Peninsula,
+6239,evsb,jp,ev/Meriphataud Mountains,
+6240,evsb,jp,ev/Sauromugue Champaign,
+6241,evsb,jp,ev/The Sanctuary of Zi'Tah,
+6242,evsb,jp,ev/Ro'Maeve,
+6243,evsb,jp,ev/Yuhtunga Jungle,
+6244,evsb,jp,ev/Yhoator Jungle,
+6245,evsb,jp,ev/Western Altepa Desert,
+6246,evsb,jp,ev/Qufim Island,
+6247,evsb,jp,ev/Behemoth's Dominion,
+6248,evsb,jp,ev/Valley of Sorrows,
+6249,evsb,jp,ev/Ghoyu's Reverie,
+6250,evsb,jp,ev/Ru'Aun Gardens,
+6251,evsb,jp,ev/Mordion Gaol,
+6252,evsb,jp,ev/Abyssea - La Theine,
+6253,evsb,jp,ev/Outer Ra'Kaznar [U2],
+6254,evsb,jp,ev/Dynamis - Beaucedine,
+6255,evsb,jp,ev/Dynamis - Xarcabard,
+6256,evsb,jp,ev/Beaucedine Glacier [S],
+6257,evsb,jp,ev/Xarcabard [S],
+6258,evsb,jp,ev/Castle Zvahl Baileys [S],
+6259,evsb,jp,ev/Horlais Peak,
+6260,evsb,jp,ev/Ghelsba Outpost,
+6261,evsb,jp,ev/Fort Ghelsba,
+6262,evsb,jp,ev/Yughott Grotto,
+6263,evsb,jp,ev/Palborough Mines,
+6264,evsb,jp,ev/Waughroon Shrine,
+6265,evsb,jp,ev/Giddeus,
+6266,evsb,jp,ev/Balga's Dais,
+6267,evsb,jp,ev/Beadeaux,
+6268,evsb,jp,ev/Qulun Dome,
+6269,evsb,jp,ev/Davoi,
+6270,evsb,jp,ev/Monastic Cavern,
+6271,evsb,jp,ev/Castle Oztroja,
+6272,evsb,jp,ev/Altar Room,
+6273,evsb,jp,ev/The Boyahda Tree,
+6274,evsb,jp,ev/Dragon's Aery,
+6275,evsb,jp,ev/Castle Zvahl Keep [S],
+6276,evsb,jp,ev/Throne Room [S],
+6277,evsb,jp,ev/Middle Delkfutt's Tower,
+6278,evsb,jp,ev/Upper Delkfutt's Tower,
+6279,evsb,jp,ev/Temple of Uggalepih,
+6280,evsb,jp,ev/Den of Rancor,
+6281,evsb,jp,ev/Castle Zvahl Baileys,
+6282,evsb,jp,ev/Castle Zvahl Keep,
+6283,evsb,jp,ev/Sacrificial Chamber,
+6284,evsb,jp,ev/Garlaige Citadel [S],
+6285,evsb,jp,ev/Throne Room,
+6286,evsb,jp,ev/Ranguemont Pass,
+6287,evsb,jp,ev/Bostaunieux Oubliette,
+6288,evsb,jp,ev/Chamber of Oracles,
+6289,evsb,jp,ev/Toraimarai Canal,
+6290,evsb,jp,ev/Full Moon Fountain,
+6291,evsb,jp,ev/Crawlers' Nest [S],
+6292,evsb,jp,ev/Zeruhn Mines,
+6293,evsb,jp,ev/Korroloka Tunnel,
+6294,evsb,jp,ev/Kuftal Tunnel,
+6295,evsb,jp,ev/The Eldieme Necropolis [S],
+6296,evsb,jp,ev/Sea Serpent Grotto,
+6297,evsb,jp,ev/Ve'Lugannon Palace,
+6298,evsb,jp,ev/The Shrine of Ru'Avitau,
+6299,evsb,jp,ev/Stellar Fulcrum,
+6300,evsb,jp,ev/La'Loff Amphitheater,
+6301,evsb,jp,ev/The Celestial Nexus,
+6302,evsb,jp,ev/Walk of Echoes,
+6303,evsb,jp,ev/Maquette Abdhaljs-LegionA,
+6304,evsb,jp,ev/Lower Delkfutt's Tower,
+6305,evsb,jp,ev/Dynamis - San d'Oria,
+6306,evsb,jp,ev/Dynamis - Bastok,
+6307,evsb,jp,ev/Dynamis - Windurst,
+6308,evsb,jp,ev/Dynamis - Jeuno,
+6309,evsb,jp,ev/Outer Ra'Kaznar [U3],
+6310,evsb,jp,ev/King Ranperre's Tomb,
+6311,evsb,jp,ev/Dangruf Wadi,
+6312,evsb,jp,ev/Inner Horutoto Ruins,
+6313,evsb,jp,ev/Ordelle's Caves,
+6314,evsb,jp,ev/Outer Horutoto Ruins,
+6315,evsb,jp,ev/The Eldieme Necropolis,
+6316,evsb,jp,ev/Gusgen Mines,
+6317,evsb,jp,ev/Crawlers' Nest,
+6318,evsb,jp,ev/Maze of Shakhrami,
+6319,evsb,jp,ev/198,
+6320,evsb,jp,ev/Garlaige Citadel,
+6321,evsb,jp,ev/Cloister of Gales,
+6322,evsb,jp,ev/Cloister of Storms,
+6323,evsb,jp,ev/Cloister of Frost,
+6324,evsb,jp,ev/Fei'Yin,
+6325,evsb,jp,ev/Ifrit's Cauldron,
+6326,evsb,jp,ev/Qu'Bia Arena,
+6327,evsb,jp,ev/Cloister of Flames,
+6328,evsb,jp,ev/Quicksand Caves,
+6329,evsb,jp,ev/Cloister of Tremors,
+6330,evsb,jp,ev/209,
+6331,evsb,jp,ev/Cloister of Tides,
+6332,evsb,jp,ev/Gustav Tunnel,
+6333,evsb,jp,ev/Labyrinth of Onzozo,
+6334,evsb,jp,ev/213,
+6335,evsb,jp,ev/Abyssea - Attohwa,
+6336,evsb,jp,ev/Abyssea - Misareaux,
+6337,evsb,jp,ev/Abyssea - Vunkerl,
+6338,evsb,jp,ev/Abyssea - Altepa,
+6339,evsb,jp,ev/218,
+6340,evsb,jp,ev/Ship bound for Selbina,
+6341,evsb,jp,ev/Ship bound for Mhaura,
+6342,evsb,jp,ev/Provenance,
+6343,evsb,jp,ev/San d'Oria-Jeuno Airship,
+6344,evsb,jp,ev/Bastok-Jeuno Airship,
+6345,evsb,jp,ev/Windurst-Jeuno Airship,
+6346,evsb,jp,ev/Kazham-Jeuno Airship,
+6347,evsb,jp,ev/Ship bound for Selbina,
+6348,evsb,jp,ev/Ship bound for Mhaura,
+6349,evsb,jp,ev/Throne Room [V],
+6350,evsb,jp,ev/Southern San d'Oria,
+6351,evsb,jp,ev/Northern San d'Oria,
+6352,evsb,jp,ev/Port San d'Oria,
+6353,evsb,jp,ev/Chateau d'Oraguille,
+6354,evsb,jp,ev/Bastok Mines,
+6355,evsb,jp,ev/Bastok Markets,
+6356,evsb,jp,ev/Port Bastok,
+6357,evsb,jp,ev/Metalworks,
+6358,evsb,jp,ev/Windurst Waters,
+6359,evsb,jp,ev/Windurst Walls,
+6360,evsb,jp,ev/Port Windurst,
+6361,evsb,jp,ev/Windurst Woods,
+6362,evsb,jp,ev/Heavens Tower,
+6363,evsb,jp,ev/Ru'Lude Gardens,
+6364,evsb,jp,ev/Upper Jeuno,
+6365,evsb,jp,ev/Lower Jeuno,
+6366,evsb,jp,ev/Port Jeuno,
+6367,evsb,jp,ev/Rabao,
+6368,evsb,jp,ev/Selbina,
+6369,evsb,jp,ev/Mhaura,
+6370,evsb,jp,ev/Kazham,
+6371,evsb,jp,ev/Hall of the Gods,
+6372,evsb,jp,ev/Norg,
+6373,evsb,jp,ev/Abyssea - Uleguerand,
+6374,evsb,jp,ev/Abyssea - Grauberg,
+6375,evsb,jp,ev/Abyssea - Empyreal Paradox,
+6420,evsb,en,ev/unknown,
+6421,evsb,en,ev/Phanauet Channel,
+6422,evsb,en,ev/Carpenters' Landing,
+6423,evsb,en,ev/Manaclipper,
+6424,evsb,en,ev/Bibiki Bay,
+6425,evsb,en,ev/Uleguerand Range,
+6426,evsb,en,ev/Bearclaw Pinnacle,
+6427,evsb,en,ev/Attohwa Chasm,
+6428,evsb,en,ev/Boneyard Gully,
+6429,evsb,en,ev/Pso'Xja,
+6430,evsb,en,ev/The Shrouded Maw,
+6431,evsb,en,ev/Oldton Movalpolos,
+6432,evsb,en,ev/Newton Movalpolos,
+6433,evsb,en,ev/Mine Shaft #2716,
+6434,evsb,en,ev/Hall of Transference,
+6435,evsb,en,ev/Abyssea - Konschtat,
+6436,evsb,en,ev/Promyvion - Holla,
+6437,evsb,en,ev/Spire of Holla,
+6438,evsb,en,ev/Promyvion - Dem,
+6439,evsb,en,ev/Spire of Dem,
+6440,evsb,en,ev/Promyvion - Mea,
+6441,evsb,en,ev/Spire of Mea,
+6442,evsb,en,ev/Promyvion - Vahzl,
+6443,evsb,en,ev/Spire of Vahzl,
+6444,evsb,en,ev/Lufaise Meadows,
+6445,evsb,en,ev/Misareaux Coast,
+6446,evsb,en,ev/Tavnazian Safehold,
+6447,evsb,en,ev/Phomiuna Aqueducts,
+6448,evsb,en,ev/Sacrarium,
+6449,evsb,en,ev/Riverne - Site #B01,
+6450,evsb,en,ev/Riverne - Site #A01,
+6451,evsb,en,ev/Monarch Linn,
+6452,evsb,en,ev/Sealion's Den,
+6453,evsb,en,ev/Al'Taieu,
+6454,evsb,en,ev/Grand Palace of Hu'Xzoi,
+6455,evsb,en,ev/The Garden of Ru'Hmet,
+6456,evsb,en,ev/Empyreal Paradox,
+6457,evsb,en,ev/Temenos,
+6458,evsb,en,ev/Apollyon,
+6459,evsb,en,ev/Dynamis - Valkurm,
+6460,evsb,en,ev/Dynamis - Buburimu,
+6461,evsb,en,ev/Dynamis - Qufim,
+6462,evsb,en,ev/Dynamis - Tavnazia,
+6463,evsb,en,ev/Diorama Abdhaljs-Ghelsba,
+6464,evsb,en,ev/Abdhaljs Isle-Purgonorgo,
+6465,evsb,en,ev/Abyssea - Tahrongi,
+6466,evsb,en,ev/Open sea route to Al Zahbi,
+6467,evsb,en,ev/Open sea route to Mhaura,
+6468,evsb,en,ev/Al Zahbi,
+6470,evsb,en,ev/Aht Urhgan Whitegate,
+6471,evsb,en,ev/Wajaom Woodlands,
+6472,evsb,en,ev/Bhaflau Thickets,
+6473,evsb,en,ev/Nashmau,
+6474,evsb,en,ev/Arrapago Reef,
+6475,evsb,en,ev/Ilrusi Atoll,
+6476,evsb,en,ev/Periqia,
+6477,evsb,en,ev/Talacca Cove,
+6478,evsb,en,ev/Silver Sea route to Nashmau,
+6479,evsb,en,ev/Silver Sea route to Al Zahbi,
+6480,evsb,en,ev/The Ashu Talif,
+6481,evsb,en,ev/Mount Zhayolm,
+6482,evsb,en,ev/Halvung,
+6483,evsb,en,ev/Lebros Cavern,
+6484,evsb,en,ev/Navukgo Execution Chamber,
+6485,evsb,en,ev/Mamook,
+6486,evsb,en,ev/Mamool Ja Training Grounds,
+6487,evsb,en,ev/Jade Sepulcher,
+6488,evsb,en,ev/Aydeewa Subterrane,
+6489,evsb,en,ev/Leujaoam Sanctum,
+6490,evsb,en,ev/Chocobo Circuit,
+6491,evsb,en,ev/The Colosseum,
+6492,evsb,en,ev/Alzadaal Undersea Ruins,
+6493,evsb,en,ev/Zhayolm Remnants,
+6494,evsb,en,ev/Arrapago Remnants,
+6495,evsb,en,ev/Bhaflau Remnants,
+6496,evsb,en,ev/Silver Sea Remnants,
+6497,evsb,en,ev/Nyzul Isle,
+6498,evsb,en,ev/Hazhalm Testing Grounds,
+6499,evsb,en,ev/Caedarva Mire,
+6500,evsb,en,ev/Southern San d'Oria [S],
+6501,evsb,en,ev/East Ronfaure [S],
+6502,evsb,en,ev/Jugner Forest [S],
+6503,evsb,en,ev/Vunkerl Inlet [S],
+6504,evsb,en,ev/Batallia Downs [S],
+6505,evsb,en,ev/La Vaule [S],
+6506,evsb,en,ev/Everbloom Hollow,
+6507,evsb,en,ev/Bastok Markets [S],
+6508,evsb,en,ev/North Gustaberg [S],
+6509,evsb,en,ev/Grauberg [S],
+6510,evsb,en,ev/Pashhow Marshlands [S],
+6511,evsb,en,ev/Rolanberry Fields [S],
+6512,evsb,en,ev/Beadeaux [S],
+6513,evsb,en,ev/Ruhotz Silvermines,
+6514,evsb,en,ev/Windurst Waters [S],
+6515,evsb,en,ev/West Sarutabaruta [S],
+6516,evsb,en,ev/Fort Karugo-Narugo [S],
+6517,evsb,en,ev/Meriphataud Mountains [S],
+6518,evsb,en,ev/Sauromugue Champaign [S],
+6519,evsb,en,ev/Castle Oztroja [S],
+6520,evsb,en,ev/West Ronfaure,
+6521,evsb,en,ev/East Ronfaure,
+6522,evsb,en,ev/La Theine Plateau,
+6523,evsb,en,ev/Valkurm Dunes,
+6524,evsb,en,ev/Jugner Forest,
+6525,evsb,en,ev/Batallia Downs,
+6526,evsb,en,ev/North Gustaberg,
+6527,evsb,en,ev/South Gustaberg,
+6528,evsb,en,ev/Konschtat Highlands,
+6529,evsb,en,ev/Pashhow Marshlands,
+6530,evsb,en,ev/Rolanberry Fields,
+6531,evsb,en,ev/Beaucedine Glacier,
+6532,evsb,en,ev/Xarcabard,
+6533,evsb,en,ev/Cape Teriggan,
+6534,evsb,en,ev/Eastern Altepa Desert,
+6535,evsb,en,ev/West Sarutabaruta,
+6536,evsb,en,ev/East Sarutabaruta,
+6537,evsb,en,ev/Tahrongi Canyon,
+6538,evsb,en,ev/Buburimu Peninsula,
+6539,evsb,en,ev/Meriphataud Mountains,
+6540,evsb,en,ev/Sauromugue Champaign,
+6541,evsb,en,ev/The Sanctuary of Zi'Tah,
+6542,evsb,en,ev/Ro'Maeve,
+6543,evsb,en,ev/Yuhtunga Jungle,
+6544,evsb,en,ev/Yhoator Jungle,
+6545,evsb,en,ev/Western Altepa Desert,
+6546,evsb,en,ev/Qufim Island,
+6547,evsb,en,ev/Behemoth's Dominion,
+6548,evsb,en,ev/Valley of Sorrows,
+6549,evsb,en,ev/Ghoyu's Reverie,
+6550,evsb,en,ev/Ru'Aun Gardens,
+6551,evsb,en,ev/Mordion Gaol,
+6552,evsb,en,ev/Abyssea - La Theine,
+6553,evsb,en,ev/Outer Ra'Kaznar [U2],
+6554,evsb,en,ev/Dynamis - Beaucedine,
+6555,evsb,en,ev/Dynamis - Xarcabard,
+6556,evsb,en,ev/Beaucedine Glacier [S],
+6557,evsb,en,ev/Xarcabard [S],
+6558,evsb,en,ev/Castle Zvahl Baileys [S],
+6559,evsb,en,ev/Horlais Peak,
+6560,evsb,en,ev/Ghelsba Outpost,
+6561,evsb,en,ev/Fort Ghelsba,
+6562,evsb,en,ev/Yughott Grotto,
+6563,evsb,en,ev/Palborough Mines,
+6564,evsb,en,ev/Waughroon Shrine,
+6565,evsb,en,ev/Giddeus,
+6566,evsb,en,ev/Balga's Dais,
+6567,evsb,en,ev/Beadeaux,
+6568,evsb,en,ev/Qulun Dome,
+6569,evsb,en,ev/Davoi,
+6570,evsb,en,ev/Monastic Cavern,
+6571,evsb,en,ev/Castle Oztroja,
+6572,evsb,en,ev/Altar Room,
+6573,evsb,en,ev/The Boyahda Tree,
+6574,evsb,en,ev/Dragon's Aery,
+6575,evsb,en,ev/Castle Zvahl Keep [S],
+6576,evsb,en,ev/Throne Room [S],
+6577,evsb,en,ev/Middle Delkfutt's Tower,
+6578,evsb,en,ev/Upper Delkfutt's Tower,
+6579,evsb,en,ev/Temple of Uggalepih,
+6580,evsb,en,ev/Den of Rancor,
+6581,evsb,en,ev/Castle Zvahl Baileys,
+6582,evsb,en,ev/Castle Zvahl Keep,
+6583,evsb,en,ev/Sacrificial Chamber,
+6584,evsb,en,ev/Garlaige Citadel [S],
+6585,evsb,en,ev/Throne Room,
+6586,evsb,en,ev/Ranguemont Pass,
+6587,evsb,en,ev/Bostaunieux Oubliette,
+6588,evsb,en,ev/Chamber of Oracles,
+6589,evsb,en,ev/Toraimarai Canal,
+6590,evsb,en,ev/Full Moon Fountain,
+6591,evsb,en,ev/Crawlers' Nest [S],
+6592,evsb,en,ev/Zeruhn Mines,
+6593,evsb,en,ev/Korroloka Tunnel,
+6594,evsb,en,ev/Kuftal Tunnel,
+6595,evsb,en,ev/The Eldieme Necropolis [S],
+6596,evsb,en,ev/Sea Serpent Grotto,
+6597,evsb,en,ev/Ve'Lugannon Palace,
+6598,evsb,en,ev/The Shrine of Ru'Avitau,
+6599,evsb,en,ev/Stellar Fulcrum,
+6600,evsb,en,ev/La'Loff Amphitheater,
+6601,evsb,en,ev/The Celestial Nexus,
+6602,evsb,en,ev/Walk of Echoes,
+6603,evsb,en,ev/Maquette Abdhaljs-LegionA,
+6604,evsb,en,ev/Lower Delkfutt's Tower,
+6605,evsb,en,ev/Dynamis - San d'Oria,
+6606,evsb,en,ev/Dynamis - Bastok,
+6607,evsb,en,ev/Dynamis - Windurst,
+6608,evsb,en,ev/Dynamis - Jeuno,
+6609,evsb,en,ev/Outer Ra'Kaznar [U3],
+6610,evsb,en,ev/King Ranperre's Tomb,
+6611,evsb,en,ev/Dangruf Wadi,
+6612,evsb,en,ev/Inner Horutoto Ruins,
+6613,evsb,en,ev/Ordelle's Caves,
+6614,evsb,en,ev/Outer Horutoto Ruins,
+6615,evsb,en,ev/The Eldieme Necropolis,
+6616,evsb,en,ev/Gusgen Mines,
+6617,evsb,en,ev/Crawlers' Nest,
+6618,evsb,en,ev/Maze of Shakhrami,
+6619,evsb,en,ev/198,
+6620,evsb,en,ev/Garlaige Citadel,
+6621,evsb,en,ev/Cloister of Gales,
+6622,evsb,en,ev/Cloister of Storms,
+6623,evsb,en,ev/Cloister of Frost,
+6624,evsb,en,ev/Fei'Yin,
+6625,evsb,en,ev/Ifrit's Cauldron,
+6626,evsb,en,ev/Qu'Bia Arena,
+6627,evsb,en,ev/Cloister of Flames,
+6628,evsb,en,ev/Quicksand Caves,
+6629,evsb,en,ev/Cloister of Tremors,
+6630,evsb,en,ev/209,
+6631,evsb,en,ev/Cloister of Tides,
+6632,evsb,en,ev/Gustav Tunnel,
+6633,evsb,en,ev/Labyrinth of Onzozo,
+6634,evsb,en,ev/213,
+6635,evsb,en,ev/Abyssea - Attohwa,
+6636,evsb,en,ev/Abyssea - Misareaux,
+6637,evsb,en,ev/Abyssea - Vunkerl,
+6638,evsb,en,ev/Abyssea - Altepa,
+6639,evsb,en,ev/218,
+6640,evsb,en,ev/Ship bound for Selbina,
+6641,evsb,en,ev/Ship bound for Mhaura,
+6642,evsb,en,ev/Provenance,
+6643,evsb,en,ev/San d'Oria-Jeuno Airship,
+6644,evsb,en,ev/Bastok-Jeuno Airship,
+6645,evsb,en,ev/Windurst-Jeuno Airship,
+6646,evsb,en,ev/Kazham-Jeuno Airship,
+6647,evsb,en,ev/Ship bound for Selbina,
+6648,evsb,en,ev/Ship bound for Mhaura,
+6649,evsb,en,ev/Throne Room [V],
+6650,evsb,en,ev/Southern San d'Oria,
+6651,evsb,en,ev/Northern San d'Oria,
+6652,evsb,en,ev/Port San d'Oria,
+6653,evsb,en,ev/Chateau d'Oraguille,
+6654,evsb,en,ev/Bastok Mines,
+6655,evsb,en,ev/Bastok Markets,
+6656,evsb,en,ev/Port Bastok,
+6657,evsb,en,ev/Metalworks,
+6658,evsb,en,ev/Windurst Waters,
+6659,evsb,en,ev/Windurst Walls,
+6660,evsb,en,ev/Port Windurst,
+6661,evsb,en,ev/Windurst Woods,
+6662,evsb,en,ev/Heavens Tower,
+6663,evsb,en,ev/Ru'Lude Gardens,
+6664,evsb,en,ev/Upper Jeuno,
+6665,evsb,en,ev/Lower Jeuno,
+6666,evsb,en,ev/Port Jeuno,
+6667,evsb,en,ev/Rabao,
+6668,evsb,en,ev/Selbina,
+6669,evsb,en,ev/Mhaura,
+6670,evsb,en,ev/Kazham,
+6671,evsb,en,ev/Hall of the Gods,
+6672,evsb,en,ev/Norg,
+6673,evsb,en,ev/Abyssea - Uleguerand,
+6674,evsb,en,ev/Abyssea - Grauberg,
+6675,evsb,en,ev/Abyssea - Empyreal Paradox,
+7020,evsb,jp,gev/skill_name,
+7021,evsb,en,gev/skill_name,
+7022,evsb,jp,gev/term,
+7023,evsb,en,gev/term,
+7024,evsb,jp,gev/emote,
+7025,evsb,en,gev/emote,
+7026,evsb,jp,gev/battle,
+7027,evsb,en,gev/battle,
+7028,evsb,jp,gev/status,
+7029,evsb,en,gev/status,
+7030,evsb,jp,gev/message,
+7031,evsb,en,gev/message,
+7034,evsb,jp,gev/action,
+7035,evsb,en,gev/action,
+7038,evsb,jp,gev/Unity Concord,
+7039,evsb,en,gev/Unity Concord,
+55465,dmsg,en,sys/area,
+55466,dmsg,en,sys/area_s,
+55467,dmsg,en,sys/job,
+55468,dmsg,en,sys/job_abbr,
 55471,dmsg,jp,sys/equip_slot_en,1
 55525,dmsg,jp,lobby/misc_message,1
 55526,dmsg,jp,sys/error_message,1
@@ -565,28 +565,31 @@
 55538,dmsg,jp,sys/day_of_week,1
 55539,dmsg,jp,sys/orientation,1
 55540,dmsg,jp,sys/moon_phase,1
-55545,fp,jp,fixed_phrase
+55545,fp,jp,fixed_phrase,
 55546,dmsg,jp,sys/equip_slot,1
 55547,isb,jp,itm/slip,1|2
 55548,iab,jp,itm/armor2,1|2
-55549,mbd,jp,mb/mb_data
+55549,mbd,jp,mb/mb_data,
+55550,iib,jp,mb/instinct,
 55551,inb,jp,itm/normal2,1|2
-55552,erq,jp,roe/roe_quest
-55553,erc,jp,roe/roe_category
+55552,erq,jp,roe/roe_quest,
+55553,erc,jp,roe/roe_category,
 55554,dmsg,jp,sys/jobpoint_text_2,1
 55555,dmsg,jp,sys/emote_command,1
 55556,dmsg,jp,sys/emote_command,1
-55559,dmsg,jp,sys/kupoevent
+55557,iub,jp,dbg/ukncmd,
+55559,dmsg,jp,sys/kupoevent,
 55561,dmsg,jp,sys/mount,1
 55562,dmsg,jp,sys/mount_help,1
+55563,dmsg,jp,sys/faith_points,
 55565,dmsg,jp,sys/blue_magic_help,1
 55566,dmsg,jp,sys/meritpoint_text,1
 55567,dmsg,jp,sys/text_command_help,1
 55568,dmsg,jp,sys/cs_event_race,1
 55569,dmsg,jp,sys/job_attr,1
 55570,dmsg,jp,sys/mob_race,1
-55571,dmsg,jp,sys/maze_rune
-55572,dmsg,jp,sys/item_attr
+55571,dmsg,jp,sys/maze_rune,
+55572,dmsg,jp,sys/item_attr,
 55573,dmsg,jp,sys/faith_serifu,1
 55574,dmsg,jp,sys/jobpoint_text,1
 55575,dmsg,jp,sys/key_item,2|3
@@ -637,53 +640,55 @@
 55620,dmsg,jp,sys/qst/wc,2|3
 55621,dmsg,jp,sys/mis/rov,2|3
 55622,dmsg,jp,sys/mis/vr,2|3
-55645,dmsg,en,lobby/misc_message
-55646,dmsg,en,sys/error_message
-55648,dmsg,en,sys/misc_string_01
-55650,dmsg,en,sys/menu/text
-55651,dmsg,en,sys/menu/help
-55652,dmsg,en,sys/menu/title
-55653,dmsg,en,sys/menu/text2
-55654,dmsg,en,sys/region
-55657,dmsg,en,sys/weather
-55658,dmsg,en,sys/day_of_week
-55659,dmsg,en,sys/orientation
-55660,dmsg,en,sys/moon_phase
-55661,dmsg,en,sys/area_short
-55665,fp,en,fixed_phrase
-55666,dmsg,en,sys/equip_slot
-55667,isb,en,itm/slip
-55668,iab,en,itm/armor2
-55669,mbd,en,mb/mb_data
-55671,inb,en,itm/normal2
-55672,erq,en,roe/roe_quest
-55673,erc,en,roe/roe_category
-55674,dmsg,en,sys/jobpoint_text_2
-55675,dmsg,en,sys/emote_command
-55676,dmsg,en,sys/emote_command
-55679,dmsg,en,sys/kupoevent
-55681,dmsg,en,sys/mount
-55682,dmsg,en,sys/mount_help
-55685,dmsg,en,sys/blue_magic_help
-55686,dmsg,en,sys/meritpoint_text
-55687,dmsg,en,sys/text_command_help
-55688,dmsg,en,sys/cs_event_race
-55689,dmsg,en,sys/job_attr
-55690,dmsg,en,sys/mob_race
-55691,dmsg,en,sys/maze_rune
-55692,dmsg,en,sys/item_attr
-55693,dmsg,en,sys/faith_serifu
-55694,dmsg,en,sys/jobpoint_text
+55645,dmsg,en,lobby/misc_message,
+55646,dmsg,en,sys/error_message,
+55648,dmsg,en,sys/misc_string_01,
+55650,dmsg,en,sys/menu/text,
+55651,dmsg,en,sys/menu/help,
+55652,dmsg,en,sys/menu/title,
+55653,dmsg,en,sys/menu/text2,
+55654,dmsg,en,sys/region,
+55657,dmsg,en,sys/weather,
+55658,dmsg,en,sys/day_of_week,
+55659,dmsg,en,sys/orientation,
+55660,dmsg,en,sys/moon_phase,
+55661,dmsg,en,sys/area_short,
+55665,fp,en,fixed_phrase,
+55666,dmsg,en,sys/equip_slot,
+55667,isb,en,itm/slip,
+55668,iab,en,itm/armor2,
+55669,mbd,en,mb/mb_data,
+55670,iib,en,mb/instinct,
+55671,inb,en,itm/normal2,
+55672,erq,en,roe/roe_quest,
+55673,erc,en,roe/roe_category,
+55674,dmsg,en,sys/jobpoint_text_2,
+55675,dmsg,en,sys/emote_command,
+55676,dmsg,en,sys/emote_command,
+55679,dmsg,en,sys/kupoevent,
+55681,dmsg,en,sys/mount,
+55682,dmsg,en,sys/mount_help,
+55683,dmsg,en,sys/faith_points,
+55685,dmsg,en,sys/blue_magic_help,
+55686,dmsg,en,sys/meritpoint_text,
+55687,dmsg,en,sys/text_command_help,
+55688,dmsg,en,sys/cs_event_race,
+55689,dmsg,en,sys/job_attr,
+55690,dmsg,en,sys/mob_race,
+55691,dmsg,en,sys/maze_rune,
+55692,dmsg,en,sys/item_attr,
+55693,dmsg,en,sys/faith_serifu,
+55694,dmsg,en,sys/jobpoint_text,
 55695,dmsg,en,sys/key_item,5|6|7
 55696,dmsg,en,sys/key_item,5|6|7
 55697,dmsg,en,sys/key_item,5|6|7
 55698,dmsg,en,sys/key_item,5|6|7
 55699,dmsg,en,sys/key_item,5|6|7
 55700,dmsg,en,sys/key_item,5|6|7
-55701,dmsg,en,sys/weapon_skill
-55702,dmsg,en,sys/magic
+55701,dmsg,en,sys/weapon_skill,
+55702,dmsg,en,sys/magic,
 55703,dmsg,en,sys/key_item,5|6|7
-55704,dmsg,en,sys/title
+55704,dmsg,en,sys/title,
 55705,dmsg,en,sys/key_item,5|6|7
 55706,dmsg,en,sys/qst/sd,2|3
 55707,dmsg,en,sys/qst/bs,2|3
@@ -692,7 +697,7 @@
 55710,dmsg,en,sys/qst/ot,2|3
 55711,dmsg,en,sys/qst/fr,2|3
 55712,dmsg,en,sys/qst/at,2|3
-55713,dmsg,en,sys/qst/aby
+55713,dmsg,en,sys/qst/aby,
 55714,dmsg,en,sys/key_item,5|6|7
 55715,dmsg,en,sys/mis/sd,2|3
 55716,dmsg,en,sys/mis/bs,2|3
@@ -701,66 +706,79 @@
 55719,dmsg,en,sys/mis/pm,2|3
 55720,dmsg,en,sys/mis/as,2|3
 55721,dmsg,en,sys/mis/at,2|3
-55722,dmsg,en,sys/qst/wog
-55723,dmsg,en,sys/mis/wog
-55724,dmsg,en,sys/mis/co
-55725,dmsg,en,sys/status
-55726,dmsg,en,sys/status
-55727,dmsg,en,sys/status
-55728,dmsg,en,sys/status
-55729,dmsg,en,sys/status
-55730,dmsg,en,sys/status
-55731,dmsg,en,sys/status
-55732,dmsg,en,sys/status
-55733,dmsg,en,sys/weapon_skill_help
-55734,dmsg,en,sys/magic_help
-55735,dmsg,en,sys/mis/acp
+55722,dmsg,en,sys/qst/wog,
+55723,dmsg,en,sys/mis/wog,
+55724,dmsg,en,sys/mis/co,
+55725,dmsg,en,sys/status,
+55726,dmsg,en,sys/status,
+55727,dmsg,en,sys/status,
+55728,dmsg,en,sys/status,
+55729,dmsg,en,sys/status,
+55730,dmsg,en,sys/status,
+55731,dmsg,en,sys/status,
+55732,dmsg,en,sys/status,
+55733,dmsg,en,sys/weapon_skill_help,
+55734,dmsg,en,sys/magic_help,
+55735,dmsg,en,sys/mis/acp,
 55736,dmsg,en,sys/mis/kupo,2|3
 55737,dmsg,en,sys/mis/stt,2|3
-55738,dmsg,en,sys/mis/ad
-55739,dmsg,en,sys/qst/ad
-55740,dmsg,en,sys/qst/wc
-55741,dmsg,en,sys/mis/rov
-55742,dmsg,en,sys/mis/vr
-55765,dmsg,de,lobby/misc_message
-55766,dmsg,de,sys/error_message
-55768,dmsg,de,sys/misc_string_01
-55770,dmsg,de,sys/menu/text
-55771,dmsg,de,sys/menu/help
-55772,dmsg,de,sys/menu/title
-55773,dmsg,de,sys/menu/text2
-55774,dmsg,de,sys/region
-55775,dmsg,de,sys/area
-55776,dmsg,de,sys/job
-55777,dmsg,de,sys/weather
-55778,dmsg,de,sys/day_of_week
-55779,dmsg,de,sys/orientation
-55780,dmsg,de,sys/moon_phase
-55781,dmsg,de,sys/area_short
-55782,dmsg,de,sys/phrases
-55783,dmsg,de,sys/race_gender_enum
-55786,dmsg,de,sys/equip_slot
-55789,mbd,de,mb/mb_data
-55794,dmsg,en,sys/jobpoint_text_2
-55795,dmsg,en,sys/emote_command
-55796,dmsg,en,sys/emote_command
-55799,dmsg,en,sys/kupoevent
-55801,dmsg,en,sys/mount
-55802,dmsg,en,sys/mount_help
-55805,dmsg,de,sys/blue_magic_help
-55806,dmsg,de,sys/meritpoint_text
-55807,dmsg,de,sys/text_command_help
-55808,dmsg,de,sys/cs_event_race
-55809,dmsg,de,sys/job_attr
-55810,dmsg,de,sys/mob_race
-55811,dmsg,de,sys/maze_rune
-55812,dmsg,de,sys/item_attr
-55813,dmsg,de,sys/faith_serifu
-55814,dmsg,de,sys/jobpoint_text
-55821,dmsg,de,sys/weapon_skill
-55822,dmsg,de,sys/magic
-55824,dmsg,de,sys/title
-55825,dmsg,de,sys/key_item
+55738,dmsg,en,sys/mis/ad,
+55739,dmsg,en,sys/qst/ad,
+55740,dmsg,en,sys/qst/wc,
+55741,dmsg,en,sys/mis/rov,
+55742,dmsg,en,sys/mis/vr,
+55765,dmsg,de,lobby/misc_message,
+55766,dmsg,de,sys/error_message,
+55768,dmsg,de,sys/misc_string_01,
+55770,dmsg,de,sys/menu/text,
+55771,dmsg,de,sys/menu/help,
+55772,dmsg,de,sys/menu/title,
+55773,dmsg,de,sys/menu/text2,
+55774,dmsg,de,sys/region,
+55775,dmsg,de,sys/area,
+55776,dmsg,de,sys/job,
+55777,dmsg,de,sys/weather,
+55778,dmsg,de,sys/day_of_week,
+55779,dmsg,de,sys/orientation,
+55780,dmsg,de,sys/moon_phase,
+55781,dmsg,de,sys/area_short,
+55782,dmsg,de,sys/phrases,
+55783,dmsg,de,sys/race_gender_enum,
+55785,fp,de,fixed_phrase,
+55786,dmsg,de,sys/equip_slot,
+55787,isb,de,itm/slip,
+55788,iab_o,de,itm/armor2,
+55789,mbd,de,mb/mb_data,
+55790,iib,de,mb/instinct,
+55791,inb,de,itm/normal2,
+55792,erq_o,de,roe/roe_quest,
+55793,erc_o,de,roe/roe_category,
+55794,dmsg,en,sys/jobpoint_text_2,
+55795,dmsg,en,sys/emote_command,
+55796,dmsg,en,sys/emote_command,
+55799,dmsg,en,sys/kupoevent,
+55801,dmsg,en,sys/mount,
+55802,dmsg,en,sys/mount_help,
+55805,dmsg,de,sys/blue_magic_help,
+55806,dmsg,de,sys/meritpoint_text,
+55807,dmsg,de,sys/text_command_help,
+55808,dmsg,de,sys/cs_event_race,
+55809,dmsg,de,sys/job_attr,
+55810,dmsg,de,sys/mob_race,
+55811,dmsg,de,sys/maze_rune,
+55812,dmsg,de,sys/item_attr,
+55813,dmsg,de,sys/faith_serifu,
+55814,dmsg,de,sys/jobpoint_text,
+55815,inb,de,itm/normal,
+55816,inb,de,itm/usable,
+55817,iwb_o,de,itm/weapon,
+55818,iab_o,de,itm/armor,
+55819,ipb,de,itm/puppet,
+55820,icb,de,itm/currency,
+55821,dmsg,de,sys/weapon_skill,
+55822,dmsg,de,sys/magic,
+55824,dmsg,de,sys/title,
+55825,dmsg,de,sys/key_item,
 55826,dmsg,de,sys/qst/sd,2|3
 55827,dmsg,de,sys/qst/bs,2|3
 55828,dmsg,de,sys/qst/ws,2|3
@@ -768,8 +786,8 @@
 55830,dmsg,de,sys/qst/ot,2|3
 55831,dmsg,de,sys/qst/fr,2|3
 55832,dmsg,de,sys/qst/at,2|3
-55833,dmsg,de,sys/qst/aby
-55834,dmsg,de,sys/key_item
+55833,dmsg,de,sys/qst/aby,
+55834,dmsg,de,sys/key_item,
 55835,dmsg,de,sys/mis/sd,2|3
 55836,dmsg,de,sys/mis/bs,2|3
 55837,dmsg,de,sys/mis/ws,2|3
@@ -777,357 +795,334 @@
 55839,dmsg,de,sys/mis/pm,2|3
 55840,dmsg,de,sys/mis/as,2|3
 55841,dmsg,de,sys/mis/at,2|3
-55842,dmsg,de,sys/qst/wog
-55843,dmsg,de,sys/mis/wog
-55844,dmsg,de,sys/mis/co
-55852,dmsg,de,sys/status
-55853,dmsg,de,sys/weapon_skill_help
-55854,dmsg,de,sys/magic_help
-55855,dmsg,de,sys/mis/acp
+55842,dmsg,de,sys/qst/wog,
+55843,dmsg,de,sys/mis/wog,
+55844,dmsg,de,sys/mis/co,
+55845,evsb,de,gev/skill_name,
+55846,evsb,de,gev/term,
+55848,evsb,de,gev/emote,
+55849,evsb,de,gev/status,
+55850,evsb,de,gev/message,
+55851,evsb,de,gev/action,
+55852,dmsg,de,sys/status,
+55853,dmsg,de,sys/weapon_skill_help,
+55854,dmsg,de,sys/magic_help,
+55855,dmsg,de,sys/mis/acp,
 55856,dmsg,de,sys/mis/kupo,2|3
 55857,dmsg,de,sys/mis/stt,2|3
-55858,dmsg,de,sys/mis/ad
-55859,dmsg,de,sys/qst/ad
-55860,dmsg,de,sys/qst/wc
-55861,dmsg,en,sys/mis/rov
-55862,dmsg,en,sys/mis/vr
-55865,evsb,de,ev/unknown
-55866,evsb,de,ev/Phanauet Channel
-55867,evsb,de,ev/Carpenters' Landing
-55868,evsb,de,ev/Manaclipper
-55869,evsb,de,ev/Bibiki Bay
-55870,evsb,de,ev/Uleguerand Range
-55871,evsb,de,ev/Bearclaw Pinnacle
-55872,evsb,de,ev/Attohwa Chasm
-55873,evsb,de,ev/Boneyard Gully
-55874,evsb,de,ev/Pso'Xja
-55875,evsb,de,ev/The Shrouded Maw
-55876,evsb,de,ev/Oldton Movalpolos
-55877,evsb,de,ev/Newton Movalpolos
-55878,evsb,de,ev/Mine Shaft 2716
-55879,evsb,de,ev/Hall of Transference
-55880,evsb,de,ev/Abyssea - Konschtat
-55881,evsb,de,ev/Promyvion - Holla
-55882,evsb,de,ev/Spire of Holla
-55883,evsb,de,ev/Promyvion - Dem
-55884,evsb,de,ev/Spire of Dem
-55885,evsb,de,ev/Promyvion - Mea
-55886,evsb,de,ev/Spire of Mea
-55887,evsb,de,ev/Promyvion - Vahzl
-55888,evsb,de,ev/Spire of Vahzl
-55889,evsb,de,ev/Lufaise Meadows
-55890,evsb,de,ev/Misareaux Coast
-55891,evsb,de,ev/Tavnazian Safehold
-55892,evsb,de,ev/Phomiuna Aqueducts
-55893,evsb,de,ev/Sacrarium
-55894,evsb,de,ev/Riverne - Site B01
-55895,evsb,de,ev/Riverne - Site A01
-55896,evsb,de,ev/Monarch Linn
-55897,evsb,de,ev/Sealion's Den
-55898,evsb,de,ev/Al'Taieu
-55899,evsb,de,ev/Grand Palace of Hu'Xzoi
-55900,evsb,de,ev/The Garden of Ru'Hmet
-55901,evsb,de,ev/Empyreal Paradox
-55902,evsb,de,ev/Temenos
-55903,evsb,de,ev/Apollyon
-55904,evsb,de,ev/Dynamis - Valkurm
-55905,evsb,de,ev/Dynamis - Buburimu
-55906,evsb,de,ev/Dynamis - Qufim
-55907,evsb,de,ev/Dynamis - Tavnazia
-55908,evsb,de,ev/Diorama Abdhaljs-Ghelsba
-55909,evsb,de,ev/Abdhaljs Isle-Purgonorgo
-55910,evsb,de,ev/Abyssea - Tahrongi
-55911,evsb,de,ev/Open sea route to Al Zahbi
-55912,evsb,de,ev/Open sea route to Mhaura
-55913,evsb,de,ev/Al Zahbi
-55914,evsb,de,ev/Aht Urhgan Whitegate
-55915,evsb,de,ev/Wajaom Woodlands
-55916,evsb,de,ev/Bhaflau Thickets
-55917,evsb,de,ev/Nashmau
-55918,evsb,de,ev/Arrapago Reef
-55919,evsb,de,ev/Ilrusi Atoll
-55920,evsb,de,ev/Periqia
-55921,evsb,de,ev/Talacca Cove
-55922,evsb,de,ev/Silver Sea route to Nashmau
-55923,evsb,de,ev/Silver Sea route to Al Zahbi
-55924,evsb,de,ev/The Ashu Talif
-55925,evsb,de,ev/Mount Zhayolm
-55926,evsb,de,ev/Halvung
-55927,evsb,de,ev/Lebros Cavern
-55928,evsb,de,ev/Navukgo Execution Chamber
-55929,evsb,de,ev/Mamook
-55930,evsb,de,ev/Mamool Ja Training Grounds
-55931,evsb,de,ev/Jade Sepulcher
-55932,evsb,de,ev/Aydeewa Subterrane
-55933,evsb,de,ev/Leujaoam Sanctum
-55934,evsb,de,ev/Chocobo Circuit
-55935,evsb,de,ev/The Colosseum
-55936,evsb,de,ev/Alzadaal Undersea Ruins
-55937,evsb,de,ev/Zhayolm Remnants
-55938,evsb,de,ev/Arrapago Remnants
-55939,evsb,de,ev/Bhaflau Remnants
-55940,evsb,de,ev/Silver Sea Remnants
-55941,evsb,de,ev/Nyzul Isle
-55942,evsb,de,ev/Hazhalm Testing Grounds
-55943,evsb,de,ev/Caedarva Mire
-55944,evsb,de,ev/Southern San d'Oria [S]
-55945,evsb,de,ev/East Ronfaure [S]
-55946,evsb,de,ev/Jugner Forest [S]
-55947,evsb,de,ev/Vunkerl Inlet [S]
-55948,evsb,de,ev/Batallia Downs [S]
-55949,evsb,de,ev/La Vaule [S]
-55950,evsb,de,ev/Everbloom Hollow
-55951,evsb,de,ev/Bastok Markets [S]
-55952,evsb,de,ev/North Gustaberg [S]
-55953,evsb,de,ev/Grauberg [S]
-55954,evsb,de,ev/Pashhow Marshlands [S]
-55955,evsb,de,ev/Rolanberry Fields [S]
-55956,evsb,de,ev/Beadeaux [S]
-55957,evsb,de,ev/Ruhotz Silvermines
-55958,evsb,de,ev/Windurst Waters [S]
-55959,evsb,de,ev/West Sarutabaruta [S]
-55960,evsb,de,ev/Fort Karugo-Narugo [S]
-55961,evsb,de,ev/Meriphataud Mountains [S]
-55962,evsb,de,ev/Sauromugue Champaign [S]
-55963,evsb,de,ev/Castle Oztroja [S]
-55964,evsb,de,ev/West Ronfaure
-55965,evsb,de,ev/East Ronfaure
-55966,evsb,de,ev/La Theine Plateau
-55967,evsb,de,ev/Valkurm Dunes
-55968,evsb,de,ev/Jugner Forest
-55969,evsb,de,ev/Batallia Downs
-55970,evsb,de,ev/North Gustaberg
-55971,evsb,de,ev/South Gustaberg
-55972,evsb,de,ev/Konschtat Highlands
-55973,evsb,de,ev/Pashhow Marshlands
-55974,evsb,de,ev/Rolanberry Fields
-55975,evsb,de,ev/Beaucedine Glacier
-55976,evsb,de,ev/Xarcabard
-55977,evsb,de,ev/Cape Teriggan
-55978,evsb,de,ev/Eastern Altepa Desert
-55979,evsb,de,ev/West Sarutabaruta
-55980,evsb,de,ev/East Sarutabaruta
-55981,evsb,de,ev/Tahrongi Canyon
-55982,evsb,de,ev/Buburimu Peninsula
-55983,evsb,de,ev/Meriphataud Mountains
-55984,evsb,de,ev/Sauromugue Champaign
-55985,evsb,de,ev/The Sanctuary of Zi'Tah
-55986,evsb,de,ev/Ro'Maeve
-55987,evsb,de,ev/Yuhtunga Jungle
-55988,evsb,de,ev/Yhoator Jungle
-55989,evsb,de,ev/Western Altepa Desert
-55990,evsb,de,ev/Qufim Island
-55991,evsb,de,ev/Behemoth's Dominion
-55992,evsb,de,ev/Valley of Sorrows
-55993,evsb,de,ev/Ghoyu's Reverie
-55994,evsb,de,ev/Ru'Aun Gardens
-55995,evsb,de,ev/Mordion Gaol
-55996,evsb,de,ev/Abyssea - La Theine
-55997,evsb,de,ev/Outer Ra'Kaznar [U2]
-55998,evsb,de,ev/Dynamis - Beaucedine
-55999,evsb,de,ev/Dynamis - Xarcabard
-56000,evsb,de,ev/Beaucedine Glacier [S]
-56001,evsb,de,ev/Xarcabard [S]
-56002,evsb,de,ev/Castle Zvahl Baileys [S]
-56003,evsb,de,ev/Horlais Peak
-56004,evsb,de,ev/Ghelsba Outpost
-56005,evsb,de,ev/Fort Ghelsba
-56006,evsb,de,ev/Yughott Grotto
-56007,evsb,de,ev/Palborough Mines
-56008,evsb,de,ev/Waughroon Shrine
-56009,evsb,de,ev/Giddeus
-56010,evsb,de,ev/Balga's Dais
-56011,evsb,de,ev/Beadeaux
-56012,evsb,de,ev/Qulun Dome
-56013,evsb,de,ev/Davoi
-56014,evsb,de,ev/Monastic Cavern
-56015,evsb,de,ev/Castle Oztroja
-56016,evsb,de,ev/Altar Room
-56017,evsb,de,ev/The Boyahda Tree
-56018,evsb,de,ev/Dragon's Aery
-56019,evsb,de,ev/Castle Zvahl Keep [S]
-56020,evsb,de,ev/Throne Room [S]
-56021,evsb,de,ev/Middle Delkfutt's Tower
-56022,evsb,de,ev/Upper Delkfutt's Tower
-56023,evsb,de,ev/Temple of Uggalepih
-56024,evsb,de,ev/Den of Rancor
-56025,evsb,de,ev/Castle Zvahl Baileys
-56026,evsb,de,ev/Castle Zvahl Keep
-56027,evsb,de,ev/Sacrificial Chamber
-56028,evsb,de,ev/Garlaige Citadel [S]
-56029,evsb,de,ev/Throne Room
-56030,evsb,de,ev/Ranguemont Pass
-56031,evsb,de,ev/Bostaunieux Oubliette
-56032,evsb,de,ev/Chamber of Oracles
-56033,evsb,de,ev/Toraimarai Canal
-56034,evsb,de,ev/Full Moon Fountain
-56035,evsb,de,ev/Crawlers' Nest [S]
-56036,evsb,de,ev/Zeruhn Mines
-56037,evsb,de,ev/Korroloka Tunnel
-56038,evsb,de,ev/Kuftal Tunnel
-56039,evsb,de,ev/The Eldieme Necropolis [S]
-56040,evsb,de,ev/Sea Serpent Grotto
-56041,evsb,de,ev/Ve'Lugannon Palace
-56042,evsb,de,ev/The Shrine of Ru'Avitau
-56043,evsb,de,ev/Stellar Fulcrum
-56044,evsb,de,ev/La'Loff Amphitheater
-56045,evsb,de,ev/The Celestial Nexus
-56046,evsb,de,ev/Walk of Echoes
-56047,evsb,de,ev/Maquette Abdhaljs-LegionA
-56048,evsb,de,ev/Lower Delkfutt's Tower
-56049,evsb,de,ev/Dynamis - San d'Oria
-56050,evsb,de,ev/Dynamis - Bastok
-56051,evsb,de,ev/Dynamis - Windurst
-56052,evsb,de,ev/Dynamis - Jeuno
-56053,evsb,de,ev/Outer Ra'Kaznar [U3]
-56054,evsb,de,ev/King Ranperre's Tomb
-56055,evsb,de,ev/Dangruf Wadi
-56056,evsb,de,ev/Inner Horutoto Ruins
-56057,evsb,de,ev/Ordelle's Caves
-56058,evsb,de,ev/Outer Horutoto Ruins
-56059,evsb,de,ev/The Eldieme Necropolis
-56060,evsb,de,ev/Gusgen Mines
-56061,evsb,de,ev/Crawlers' Nest
-56062,evsb,de,ev/Maze of Shakhrami
-56063,evsb,de,ev/198
-56064,evsb,de,ev/Garlaige Citadel
-56065,evsb,de,ev/Cloister of Gales
-56066,evsb,de,ev/Cloister of Storms
-56067,evsb,de,ev/Cloister of Frost
-56068,evsb,de,ev/Fei'Yin
-56069,evsb,de,ev/Ifrit's Cauldron
-56070,evsb,de,ev/Qu'Bia Arena
-56071,evsb,de,ev/Cloister of Flames
-56072,evsb,de,ev/Quicksand Caves
-56073,evsb,de,ev/Cloister of Tremors
-56074,evsb,de,ev/209
-56075,evsb,de,ev/Cloister of Tides
-56076,evsb,de,ev/Gustav Tunnel
-56077,evsb,de,ev/Labyrinth of Onzozo
-56078,evsb,de,ev/213
-56079,evsb,de,ev/Abyssea - Attohwa
-56080,evsb,de,ev/Abyssea - Misareaux
-56081,evsb,de,ev/Abyssea - Vunkerl
-56082,evsb,de,ev/Abyssea - Altepa
-56083,evsb,de,ev/218
-56084,evsb,de,ev/Ship bound for Selbina
-56085,evsb,de,ev/Ship bound for Mhaura
-56086,evsb,de,ev/Provenance
-56087,evsb,de,ev/San d'Oria-Jeuno Airship
-56088,evsb,de,ev/Bastok-Jeuno Airship
-56089,evsb,de,ev/Windurst-Jeuno Airship
-56090,evsb,de,ev/Kazham-Jeuno Airship
-56091,evsb,de,ev/Ship bound for Selbina
-56092,evsb,de,ev/Ship bound for Mhaura
-56093,evsb,de,ev/Throne Room [V]
-56094,evsb,de,ev/Southern San d'Oria
-56095,evsb,de,ev/Northern San d'Oria
-56096,evsb,de,ev/Port San d'Oria
-56097,evsb,de,ev/Chateau d'Oraguille
-56098,evsb,de,ev/Bastok Mines
-56099,evsb,de,ev/Bastok Markets
-56100,evsb,de,ev/Port Bastok
-56101,evsb,de,ev/Metalworks
-56102,evsb,de,ev/Windurst Waters
-56103,evsb,de,ev/Windurst Walls
-56104,evsb,de,ev/Port Windurst
-56105,evsb,de,ev/Windurst Woods
-56106,evsb,de,ev/Heavens Tower
-56107,evsb,de,ev/Ru'Lude Gardens
-56108,evsb,de,ev/Upper Jeuno
-56109,evsb,de,ev/Lower Jeuno
-56110,evsb,de,ev/Port Jeuno
-56111,evsb,de,ev/Rabao
-56112,evsb,de,ev/Selbina
-56113,evsb,de,ev/Mhaura
-56114,evsb,de,ev/Kazham
-56115,evsb,de,ev/Hall of the Gods
-56116,evsb,de,ev/Norg
-56117,evsb,de,ev/Abyssea - Uleguerand
-56118,evsb,de,ev/Abyssea - Grauberg
-56119,evsb,de,ev/Abyssea - Empyreal Paradox
-56120,evsb,de,ev/Western Adoulin
-56121,evsb,de,ev/Eastern Adoulin
-56122,evsb,de,ev/Rala Waterways
-56123,evsb,de,ev/Rala Waterways [U]
-56124,evsb,de,ev/Yahse Hunting Grounds
-56125,evsb,de,ev/Ceizak Battlegrounds
-56126,evsb,de,ev/Foret de Hennetiel
-56127,evsb,de,ev/Yorcia Weald
-56128,evsb,de,ev/Yorcia Weald [U]
-56129,evsb,de,ev/Morimar Basalt Fields
-56130,evsb,de,ev/Marjami Ravine
-56131,evsb,de,ev/Kamihr Drifts
-56132,evsb,de,ev/Sih Gates
-56133,evsb,de,ev/Moh Gates
-56134,evsb,de,ev/Cirdas Caverns
-56135,evsb,de,ev/Cirdas Caverns [U]
-56136,evsb,de,ev/Dho Gates
-56137,evsb,de,ev/Woh Gates
-56138,evsb,de,ev/Outer Ra'Kaznar
-56139,evsb,de,ev/Outer Ra'Kaznar [U1]
-56140,evsb,de,ev/Ra'Kaznar Inner Court
-56141,evsb,de,ev/Ra'Kaznar Turris
-56142,evsb,de,ev/Gwora - Corridor
-56143,evsb,de,ev/Walk of Echoes [P2]
-56144,evsb,de,ev/Mog Garden
-56145,evsb,de,ev/Leafallia
-56146,evsb,de,ev/Mount Kamihr
-56147,evsb,de,ev/Silver Knife
-56148,evsb,de,ev/Celennia Memorial Library
-56149,evsb,de,ev/Feretory
-56150,evsb,de,ev/Maquette Abdhaljs-LegionB
-56151,evsb,de,ev/Escha - Zi'Tah
-56152,evsb,de,ev/Escha - Ru'Aun
-56153,evsb,de,ev/Desuetia - Empyreal Paradox
-56154,evsb,de,ev/Reisenjima
-56155,evsb,de,ev/Reisenjima Henge
-56156,evsb,de,ev/Reisenjima Sanctorium
-56157,evsb,de,ev/Dynamis - San d'Oria [D]
-56158,evsb,de,ev/Dynamis - Bastok [D]
-56159,evsb,de,ev/Dynamis - Windurst [D]
-56160,evsb,de,ev/Dynamis - Jeuno [D]
-56161,evsb,de,ev/Walk of Echoes [P1]
-56162,evsb,de,ev/Gwora - Throne Room
-56185,dmsg,fr,lobby/misc_message
-56186,dmsg,fr,sys/error_message
-56188,dmsg,fr,sys/misc_string_01
-56190,dmsg,fr,sys/menu/text
-56191,dmsg,fr,sys/menu/help
-56192,dmsg,fr,sys/menu/title
-56193,dmsg,fr,sys/menu/text2
-56194,dmsg,fr,sys/region
-56195,dmsg,fr,sys/area
-56196,dmsg,fr,sys/job
-56197,dmsg,fr,sys/weather
-56198,dmsg,fr,sys/day_of_week
-56199,dmsg,fr,sys/orientation
-56200,dmsg,fr,sys/moon_phase
-56201,dmsg,fr,sys/area_short
-56202,dmsg,fr,sys/phrases
-56203,dmsg,fr,sys/race_gender_enum
-56206,dmsg,fr,sys/equip_slot
-56209,mbd,fr,mb/mb_data
-56214,dmsg,en,sys/jobpoint_text_2
-56215,dmsg,en,sys/emote_command
-56216,dmsg,en,sys/emote_command
-56219,dmsg,en,sys/kupoevent
-56221,dmsg,en,sys/mount
-56222,dmsg,en,sys/mount_help
-56225,dmsg,fr,sys/blue_magic_help
-56226,dmsg,fr,sys/meritpoint_text
-56227,dmsg,fr,sys/text_command_help
-56228,dmsg,fr,sys/cs_event_race
-56229,dmsg,fr,sys/job_attr
-56230,dmsg,fr,sys/mob_race
-56231,dmsg,fr,sys/maze_rune
-56232,dmsg,fr,sys/item_attr
-56233,dmsg,fr,sys/faith_serifu
-56234,dmsg,fr,sys/jobpoint_text
-56241,dmsg,fr,sys/weapon_skill
-56242,dmsg,fr,sys/magic
-56244,dmsg,fr,sys/title
-56245,dmsg,fr,sys/key_item
+55858,dmsg,de,sys/mis/ad,
+55859,dmsg,de,sys/qst/ad,
+55860,dmsg,de,sys/qst/wc,
+55861,dmsg,en,sys/mis/rov,
+55862,dmsg,en,sys/mis/vr,
+55865,evsb,de,ev/unknown,
+55866,evsb,de,ev/Phanauet Channel,
+55867,evsb,de,ev/Carpenters' Landing,
+55868,evsb,de,ev/Manaclipper,
+55869,evsb,de,ev/Bibiki Bay,
+55870,evsb,de,ev/Uleguerand Range,
+55871,evsb,de,ev/Bearclaw Pinnacle,
+55872,evsb,de,ev/Attohwa Chasm,
+55873,evsb,de,ev/Boneyard Gully,
+55874,evsb,de,ev/Pso'Xja,
+55875,evsb,de,ev/The Shrouded Maw,
+55876,evsb,de,ev/Oldton Movalpolos,
+55877,evsb,de,ev/Newton Movalpolos,
+55878,evsb,de,ev/Mine Shaft 2716,
+55879,evsb,de,ev/Hall of Transference,
+55880,evsb,de,ev/Abyssea - Konschtat,
+55881,evsb,de,ev/Promyvion - Holla,
+55882,evsb,de,ev/Spire of Holla,
+55883,evsb,de,ev/Promyvion - Dem,
+55884,evsb,de,ev/Spire of Dem,
+55885,evsb,de,ev/Promyvion - Mea,
+55886,evsb,de,ev/Spire of Mea,
+55887,evsb,de,ev/Promyvion - Vahzl,
+55888,evsb,de,ev/Spire of Vahzl,
+55889,evsb,de,ev/Lufaise Meadows,
+55890,evsb,de,ev/Misareaux Coast,
+55891,evsb,de,ev/Tavnazian Safehold,
+55892,evsb,de,ev/Phomiuna Aqueducts,
+55893,evsb,de,ev/Sacrarium,
+55894,evsb,de,ev/Riverne - Site B01,
+55895,evsb,de,ev/Riverne - Site A01,
+55896,evsb,de,ev/Monarch Linn,
+55897,evsb,de,ev/Sealion's Den,
+55898,evsb,de,ev/Al'Taieu,
+55899,evsb,de,ev/Grand Palace of Hu'Xzoi,
+55900,evsb,de,ev/The Garden of Ru'Hmet,
+55901,evsb,de,ev/Empyreal Paradox,
+55902,evsb,de,ev/Temenos,
+55903,evsb,de,ev/Apollyon,
+55904,evsb,de,ev/Dynamis - Valkurm,
+55905,evsb,de,ev/Dynamis - Buburimu,
+55906,evsb,de,ev/Dynamis - Qufim,
+55907,evsb,de,ev/Dynamis - Tavnazia,
+55908,evsb,de,ev/Diorama Abdhaljs-Ghelsba,
+55909,evsb,de,ev/Abdhaljs Isle-Purgonorgo,
+55910,evsb,de,ev/Abyssea - Tahrongi,
+55911,evsb,de,ev/Open sea route to Al Zahbi,
+55912,evsb,de,ev/Open sea route to Mhaura,
+55913,evsb,de,ev/Al Zahbi,
+55914,evsb,de,ev/Aht Urhgan Whitegate,
+55915,evsb,de,ev/Wajaom Woodlands,
+55916,evsb,de,ev/Bhaflau Thickets,
+55917,evsb,de,ev/Nashmau,
+55918,evsb,de,ev/Arrapago Reef,
+55919,evsb,de,ev/Ilrusi Atoll,
+55920,evsb,de,ev/Periqia,
+55921,evsb,de,ev/Talacca Cove,
+55922,evsb,de,ev/Silver Sea route to Nashmau,
+55923,evsb,de,ev/Silver Sea route to Al Zahbi,
+55924,evsb,de,ev/The Ashu Talif,
+55925,evsb,de,ev/Mount Zhayolm,
+55926,evsb,de,ev/Halvung,
+55927,evsb,de,ev/Lebros Cavern,
+55928,evsb,de,ev/Navukgo Execution Chamber,
+55929,evsb,de,ev/Mamook,
+55930,evsb,de,ev/Mamool Ja Training Grounds,
+55931,evsb,de,ev/Jade Sepulcher,
+55932,evsb,de,ev/Aydeewa Subterrane,
+55933,evsb,de,ev/Leujaoam Sanctum,
+55934,evsb,de,ev/Chocobo Circuit,
+55935,evsb,de,ev/The Colosseum,
+55936,evsb,de,ev/Alzadaal Undersea Ruins,
+55937,evsb,de,ev/Zhayolm Remnants,
+55938,evsb,de,ev/Arrapago Remnants,
+55939,evsb,de,ev/Bhaflau Remnants,
+55940,evsb,de,ev/Silver Sea Remnants,
+55941,evsb,de,ev/Nyzul Isle,
+55942,evsb,de,ev/Hazhalm Testing Grounds,
+55943,evsb,de,ev/Caedarva Mire,
+55944,evsb,de,ev/Southern San d'Oria [S],
+55945,evsb,de,ev/East Ronfaure [S],
+55946,evsb,de,ev/Jugner Forest [S],
+55947,evsb,de,ev/Vunkerl Inlet [S],
+55948,evsb,de,ev/Batallia Downs [S],
+55949,evsb,de,ev/La Vaule [S],
+55950,evsb,de,ev/Everbloom Hollow,
+55951,evsb,de,ev/Bastok Markets [S],
+55952,evsb,de,ev/North Gustaberg [S],
+55953,evsb,de,ev/Grauberg [S],
+55954,evsb,de,ev/Pashhow Marshlands [S],
+55955,evsb,de,ev/Rolanberry Fields [S],
+55956,evsb,de,ev/Beadeaux [S],
+55957,evsb,de,ev/Ruhotz Silvermines,
+55958,evsb,de,ev/Windurst Waters [S],
+55959,evsb,de,ev/West Sarutabaruta [S],
+55960,evsb,de,ev/Fort Karugo-Narugo [S],
+55961,evsb,de,ev/Meriphataud Mountains [S],
+55962,evsb,de,ev/Sauromugue Champaign [S],
+55963,evsb,de,ev/Castle Oztroja [S],
+55964,evsb,de,ev/West Ronfaure,
+55965,evsb,de,ev/East Ronfaure,
+55966,evsb,de,ev/La Theine Plateau,
+55967,evsb,de,ev/Valkurm Dunes,
+55968,evsb,de,ev/Jugner Forest,
+55969,evsb,de,ev/Batallia Downs,
+55970,evsb,de,ev/North Gustaberg,
+55971,evsb,de,ev/South Gustaberg,
+55972,evsb,de,ev/Konschtat Highlands,
+55973,evsb,de,ev/Pashhow Marshlands,
+55974,evsb,de,ev/Rolanberry Fields,
+55975,evsb,de,ev/Beaucedine Glacier,
+55976,evsb,de,ev/Xarcabard,
+55977,evsb,de,ev/Cape Teriggan,
+55978,evsb,de,ev/Eastern Altepa Desert,
+55979,evsb,de,ev/West Sarutabaruta,
+55980,evsb,de,ev/East Sarutabaruta,
+55981,evsb,de,ev/Tahrongi Canyon,
+55982,evsb,de,ev/Buburimu Peninsula,
+55983,evsb,de,ev/Meriphataud Mountains,
+55984,evsb,de,ev/Sauromugue Champaign,
+55985,evsb,de,ev/The Sanctuary of Zi'Tah,
+55986,evsb,de,ev/Ro'Maeve,
+55987,evsb,de,ev/Yuhtunga Jungle,
+55988,evsb,de,ev/Yhoator Jungle,
+55989,evsb,de,ev/Western Altepa Desert,
+55990,evsb,de,ev/Qufim Island,
+55991,evsb,de,ev/Behemoth's Dominion,
+55992,evsb,de,ev/Valley of Sorrows,
+55993,evsb,de,ev/Ghoyu's Reverie,
+55994,evsb,de,ev/Ru'Aun Gardens,
+55995,evsb,de,ev/Mordion Gaol,
+55996,evsb,de,ev/Abyssea - La Theine,
+55997,evsb,de,ev/Outer Ra'Kaznar [U2],
+55998,evsb,de,ev/Dynamis - Beaucedine,
+55999,evsb,de,ev/Dynamis - Xarcabard,
+56000,evsb,de,ev/Beaucedine Glacier [S],
+56001,evsb,de,ev/Xarcabard [S],
+56002,evsb,de,ev/Castle Zvahl Baileys [S],
+56003,evsb,de,ev/Horlais Peak,
+56004,evsb,de,ev/Ghelsba Outpost,
+56005,evsb,de,ev/Fort Ghelsba,
+56006,evsb,de,ev/Yughott Grotto,
+56007,evsb,de,ev/Palborough Mines,
+56008,evsb,de,ev/Waughroon Shrine,
+56009,evsb,de,ev/Giddeus,
+56010,evsb,de,ev/Balga's Dais,
+56011,evsb,de,ev/Beadeaux,
+56012,evsb,de,ev/Qulun Dome,
+56013,evsb,de,ev/Davoi,
+56014,evsb,de,ev/Monastic Cavern,
+56015,evsb,de,ev/Castle Oztroja,
+56016,evsb,de,ev/Altar Room,
+56017,evsb,de,ev/The Boyahda Tree,
+56018,evsb,de,ev/Dragon's Aery,
+56019,evsb,de,ev/Castle Zvahl Keep [S],
+56020,evsb,de,ev/Throne Room [S],
+56021,evsb,de,ev/Middle Delkfutt's Tower,
+56022,evsb,de,ev/Upper Delkfutt's Tower,
+56023,evsb,de,ev/Temple of Uggalepih,
+56024,evsb,de,ev/Den of Rancor,
+56025,evsb,de,ev/Castle Zvahl Baileys,
+56026,evsb,de,ev/Castle Zvahl Keep,
+56027,evsb,de,ev/Sacrificial Chamber,
+56028,evsb,de,ev/Garlaige Citadel [S],
+56029,evsb,de,ev/Throne Room,
+56030,evsb,de,ev/Ranguemont Pass,
+56031,evsb,de,ev/Bostaunieux Oubliette,
+56032,evsb,de,ev/Chamber of Oracles,
+56033,evsb,de,ev/Toraimarai Canal,
+56034,evsb,de,ev/Full Moon Fountain,
+56035,evsb,de,ev/Crawlers' Nest [S],
+56036,evsb,de,ev/Zeruhn Mines,
+56037,evsb,de,ev/Korroloka Tunnel,
+56038,evsb,de,ev/Kuftal Tunnel,
+56039,evsb,de,ev/The Eldieme Necropolis [S],
+56040,evsb,de,ev/Sea Serpent Grotto,
+56041,evsb,de,ev/Ve'Lugannon Palace,
+56042,evsb,de,ev/The Shrine of Ru'Avitau,
+56043,evsb,de,ev/Stellar Fulcrum,
+56044,evsb,de,ev/La'Loff Amphitheater,
+56045,evsb,de,ev/The Celestial Nexus,
+56046,evsb,de,ev/Walk of Echoes,
+56047,evsb,de,ev/Maquette Abdhaljs-LegionA,
+56048,evsb,de,ev/Lower Delkfutt's Tower,
+56049,evsb,de,ev/Dynamis - San d'Oria,
+56050,evsb,de,ev/Dynamis - Bastok,
+56051,evsb,de,ev/Dynamis - Windurst,
+56052,evsb,de,ev/Dynamis - Jeuno,
+56053,evsb,de,ev/Outer Ra'Kaznar [U3],
+56054,evsb,de,ev/King Ranperre's Tomb,
+56055,evsb,de,ev/Dangruf Wadi,
+56056,evsb,de,ev/Inner Horutoto Ruins,
+56057,evsb,de,ev/Ordelle's Caves,
+56058,evsb,de,ev/Outer Horutoto Ruins,
+56059,evsb,de,ev/The Eldieme Necropolis,
+56060,evsb,de,ev/Gusgen Mines,
+56061,evsb,de,ev/Crawlers' Nest,
+56062,evsb,de,ev/Maze of Shakhrami,
+56063,evsb,de,ev/198,
+56064,evsb,de,ev/Garlaige Citadel,
+56065,evsb,de,ev/Cloister of Gales,
+56066,evsb,de,ev/Cloister of Storms,
+56067,evsb,de,ev/Cloister of Frost,
+56068,evsb,de,ev/Fei'Yin,
+56069,evsb,de,ev/Ifrit's Cauldron,
+56070,evsb,de,ev/Qu'Bia Arena,
+56071,evsb,de,ev/Cloister of Flames,
+56072,evsb,de,ev/Quicksand Caves,
+56073,evsb,de,ev/Cloister of Tremors,
+56074,evsb,de,ev/209,
+56075,evsb,de,ev/Cloister of Tides,
+56076,evsb,de,ev/Gustav Tunnel,
+56077,evsb,de,ev/Labyrinth of Onzozo,
+56078,evsb,de,ev/213,
+56079,evsb,de,ev/Abyssea - Attohwa,
+56080,evsb,de,ev/Abyssea - Misareaux,
+56081,evsb,de,ev/Abyssea - Vunkerl,
+56082,evsb,de,ev/Abyssea - Altepa,
+56083,evsb,de,ev/218,
+56084,evsb,de,ev/Ship bound for Selbina,
+56085,evsb,de,ev/Ship bound for Mhaura,
+56086,evsb,de,ev/Provenance,
+56087,evsb,de,ev/San d'Oria-Jeuno Airship,
+56088,evsb,de,ev/Bastok-Jeuno Airship,
+56089,evsb,de,ev/Windurst-Jeuno Airship,
+56090,evsb,de,ev/Kazham-Jeuno Airship,
+56091,evsb,de,ev/Ship bound for Selbina,
+56092,evsb,de,ev/Ship bound for Mhaura,
+56093,evsb,de,ev/Throne Room [V],
+56094,evsb,de,ev/Southern San d'Oria,
+56095,evsb,de,ev/Northern San d'Oria,
+56096,evsb,de,ev/Port San d'Oria,
+56097,evsb,de,ev/Chateau d'Oraguille,
+56098,evsb,de,ev/Bastok Mines,
+56099,evsb,de,ev/Bastok Markets,
+56100,evsb,de,ev/Port Bastok,
+56101,evsb,de,ev/Metalworks,
+56102,evsb,de,ev/Windurst Waters,
+56103,evsb,de,ev/Windurst Walls,
+56104,evsb,de,ev/Port Windurst,
+56105,evsb,de,ev/Windurst Woods,
+56106,evsb,de,ev/Heavens Tower,
+56107,evsb,de,ev/Ru'Lude Gardens,
+56108,evsb,de,ev/Upper Jeuno,
+56109,evsb,de,ev/Lower Jeuno,
+56110,evsb,de,ev/Port Jeuno,
+56111,evsb,de,ev/Rabao,
+56112,evsb,de,ev/Selbina,
+56113,evsb,de,ev/Mhaura,
+56114,evsb,de,ev/Kazham,
+56115,evsb,de,ev/Hall of the Gods,
+56116,evsb,de,ev/Norg,
+56117,evsb,de,ev/Abyssea - Uleguerand,
+56118,evsb,de,ev/Abyssea - Grauberg,
+56119,evsb,de,ev/Abyssea - Empyreal Paradox,
+56120,evsb,de,ev/Western Adoulin,
+56185,dmsg,fr,lobby/misc_message,
+56186,dmsg,fr,sys/error_message,
+56188,dmsg,fr,sys/misc_string_01,
+56190,dmsg,fr,sys/menu/text,
+56191,dmsg,fr,sys/menu/help,
+56192,dmsg,fr,sys/menu/title,
+56193,dmsg,fr,sys/menu/text2,
+56194,dmsg,fr,sys/region,
+56195,dmsg,fr,sys/area,
+56196,dmsg,fr,sys/job,
+56197,dmsg,fr,sys/weather,
+56198,dmsg,fr,sys/day_of_week,
+56199,dmsg,fr,sys/orientation,
+56200,dmsg,fr,sys/moon_phase,
+56201,dmsg,fr,sys/area_short,
+56202,dmsg,fr,sys/phrases,
+56203,dmsg,fr,sys/race_gender_enum,
+56205,fp,fr,fixed_phrase,
+56206,dmsg,fr,sys/equip_slot,
+56207,isb,fr,itm/slip,
+56208,iab_o,fr,itm/armor2,
+56209,mbd,fr,mb/mb_data,
+56210,iib,fr,mb/instinct,
+56211,inb,fr,itm/normal2,
+56212,erq_o,fr,roe/roe_quest,
+56213,erc_o,fr,roe/roe_category,
+56214,dmsg,en,sys/jobpoint_text_2,
+56215,dmsg,en,sys/emote_command,
+56216,dmsg,en,sys/emote_command,
+56219,dmsg,en,sys/kupoevent,
+56221,dmsg,en,sys/mount,
+56222,dmsg,en,sys/mount_help,
+56225,dmsg,fr,sys/blue_magic_help,
+56226,dmsg,fr,sys/meritpoint_text,
+56227,dmsg,fr,sys/text_command_help,
+56228,dmsg,fr,sys/cs_event_race,
+56229,dmsg,fr,sys/job_attr,
+56230,dmsg,fr,sys/mob_race,
+56231,dmsg,fr,sys/maze_rune,
+56232,dmsg,fr,sys/item_attr,
+56233,dmsg,fr,sys/faith_serifu,
+56234,dmsg,fr,sys/jobpoint_text,
+56235,inb,fr,itm/normal,
+56236,inb,fr,itm/usable,
+56237,iwb_o,fr,itm/weapon,
+56238,iab_o,fr,itm/armor,
+56239,ipb,fr,itm/puppet,
+56240,icb,fr,itm/currency,
+56241,dmsg,fr,sys/weapon_skill,
+56242,dmsg,fr,sys/magic,
+56244,dmsg,fr,sys/title,
+56245,dmsg,fr,sys/key_item,
 56246,dmsg,fr,sys/qst/sd,2|3
 56247,dmsg,fr,sys/qst/bs,2|3
 56248,dmsg,fr,sys/qst/ws,2|3
@@ -1135,8 +1130,8 @@
 56250,dmsg,fr,sys/qst/ot,2|3
 56251,dmsg,fr,sys/qst/fr,2|3
 56252,dmsg,fr,sys/qst/at,2|3
-56253,dmsg,fr,sys/qst/aby
-56254,dmsg,fr,sys/key_item
+56253,dmsg,fr,sys/qst/aby,
+56254,dmsg,fr,sys/key_item,
 56255,dmsg,fr,sys/mis/sd,2|3
 56256,dmsg,fr,sys/mis/bs,2|3
 56257,dmsg,fr,sys/mis/ws,2|3
@@ -1144,407 +1139,453 @@
 56259,dmsg,fr,sys/mis/pm,2|3
 56260,dmsg,fr,sys/mis/as,2|3
 56261,dmsg,fr,sys/mis/at,2|3
-56262,dmsg,fr,sys/qst/wog
-56263,dmsg,fr,sys/mis/wog
-56264,dmsg,fr,sys/mis/co
-56272,dmsg,fr,sys/status
-56273,dmsg,fr,sys/weapon_skill_help
-56275,dmsg,fr,sys/mis/acp
+56262,dmsg,fr,sys/qst/wog,
+56263,dmsg,fr,sys/mis/wog,
+56264,dmsg,fr,sys/mis/co,
+56267,evsb,fr,gev/emote,
+56268,evsb,fr,gev/battle,
+56269,evsb,fr,gev/status,
+56270,evsb,fr,gev/message,
+56272,dmsg,fr,sys/status,
+56273,dmsg,fr,sys/weapon_skill_help,
+56275,dmsg,fr,sys/mis/acp,
 56276,dmsg,fr,sys/mis/kupo,2|3
 56277,dmsg,fr,sys/mis/stt,2|3
-56278,dmsg,fr,sys/mis/ad
-56279,dmsg,fr,sys/qst/ad
-56280,dmsg,fr,sys/qst/wc
-56281,dmsg,en,sys/mis/rov
-56282,dmsg,en,sys/mis/vr
-56285,evsb,fr,ev/unknown
-56286,evsb,fr,ev/Phanauet Channel
-56287,evsb,fr,ev/Carpenters' Landing
-56288,evsb,fr,ev/Manaclipper
-56289,evsb,fr,ev/Bibiki Bay
-56290,evsb,fr,ev/Uleguerand Range
-56291,evsb,fr,ev/Bearclaw Pinnacle
-56292,evsb,fr,ev/Attohwa Chasm
-56293,evsb,fr,ev/Boneyard Gully
-56294,evsb,fr,ev/Pso'Xja
-56295,evsb,fr,ev/The Shrouded Maw
-56296,evsb,fr,ev/Oldton Movalpolos
-56297,evsb,fr,ev/Newton Movalpolos
-56298,evsb,fr,ev/Mine Shaft 2716
-56299,evsb,fr,ev/Hall of Transference
-56300,evsb,fr,ev/Abyssea - Konschtat
-56301,evsb,fr,ev/Promyvion - Holla
-56302,evsb,fr,ev/Spire of Holla
-56303,evsb,fr,ev/Promyvion - Dem
-56304,evsb,fr,ev/Spire of Dem
-56305,evsb,fr,ev/Promyvion - Mea
-56306,evsb,fr,ev/Spire of Mea
-56307,evsb,fr,ev/Promyvion - Vahzl
-56308,evsb,fr,ev/Spire of Vahzl
-56309,evsb,fr,ev/Lufaise Meadows
-56310,evsb,fr,ev/Misareaux Coast
-56311,evsb,fr,ev/Tavnazian Safehold
-56312,evsb,fr,ev/Phomiuna Aqueducts
-56313,evsb,fr,ev/Sacrarium
-56314,evsb,fr,ev/Riverne - Site B01
-56315,evsb,fr,ev/Riverne - Site A01
-56316,evsb,fr,ev/Monarch Linn
-56317,evsb,fr,ev/Sealion's Den
-56318,evsb,fr,ev/Al'Taieu
-56319,evsb,fr,ev/Grand Palace of Hu'Xzoi
-56320,evsb,fr,ev/The Garden of Ru'Hmet
-56321,evsb,fr,ev/Empyreal Paradox
-56322,evsb,fr,ev/Temenos
-56323,evsb,fr,ev/Apollyon
-56324,evsb,fr,ev/Dynamis - Valkurm
-56325,evsb,fr,ev/Dynamis - Buburimu
-56326,evsb,fr,ev/Dynamis - Qufim
-56327,evsb,fr,ev/Dynamis - Tavnazia
-56328,evsb,fr,ev/Diorama Abdhaljs-Ghelsba
-56329,evsb,fr,ev/Abdhaljs Isle-Purgonorgo
-56330,evsb,fr,ev/Abyssea - Tahrongi
-56331,evsb,fr,ev/Open sea route to Al Zahbi
-56332,evsb,fr,ev/Open sea route to Mhaura
-56333,evsb,fr,ev/Al Zahbi
-56334,evsb,fr,ev/Aht Urhgan Whitegate
-56335,evsb,fr,ev/Wajaom Woodlands
-56336,evsb,fr,ev/Bhaflau Thickets
-56337,evsb,fr,ev/Nashmau
-56338,evsb,fr,ev/Arrapago Reef
-56339,evsb,fr,ev/Ilrusi Atoll
-56340,evsb,fr,ev/Periqia
-56341,evsb,fr,ev/Talacca Cove
-56342,evsb,fr,ev/Silver Sea route to Nashmau
-56343,evsb,fr,ev/Silver Sea route to Al Zahbi
-56344,evsb,fr,ev/The Ashu Talif
-56345,evsb,fr,ev/Mount Zhayolm
-56346,evsb,fr,ev/Halvung
-56347,evsb,fr,ev/Lebros Cavern
-56348,evsb,fr,ev/Navukgo Execution Chamber
-56349,evsb,fr,ev/Mamook
-56350,evsb,fr,ev/Mamool Ja Training Grounds
-56351,evsb,fr,ev/Jade Sepulcher
-56352,evsb,fr,ev/Aydeewa Subterrane
-56353,evsb,fr,ev/Leujaoam Sanctum
-56354,evsb,fr,ev/Chocobo Circuit
-56355,evsb,fr,ev/The Colosseum
-56356,evsb,fr,ev/Alzadaal Undersea Ruins
-56357,evsb,fr,ev/Zhayolm Remnants
-56358,evsb,fr,ev/Arrapago Remnants
-56359,evsb,fr,ev/Bhaflau Remnants
-56360,evsb,fr,ev/Silver Sea Remnants
-56361,evsb,fr,ev/Nyzul Isle
-56362,evsb,fr,ev/Hazhalm Testing Grounds
-56363,evsb,fr,ev/Caedarva Mire
-56364,evsb,fr,ev/Southern San d'Oria [S]
-56365,evsb,fr,ev/East Ronfaure [S]
-56366,evsb,fr,ev/Jugner Forest [S]
-56367,evsb,fr,ev/Vunkerl Inlet [S]
-56368,evsb,fr,ev/Batallia Downs [S]
-56369,evsb,fr,ev/La Vaule [S]
-56370,evsb,fr,ev/Everbloom Hollow
-56371,evsb,fr,ev/Bastok Markets [S]
-56372,evsb,fr,ev/North Gustaberg [S]
-56373,evsb,fr,ev/Grauberg [S]
-56374,evsb,fr,ev/Pashhow Marshlands [S]
-56375,evsb,fr,ev/Rolanberry Fields [S]
-56376,evsb,fr,ev/Beadeaux [S]
-56377,evsb,fr,ev/Ruhotz Silvermines
-56378,evsb,fr,ev/Windurst Waters [S]
-56379,evsb,fr,ev/West Sarutabaruta [S]
-56380,evsb,fr,ev/Fort Karugo-Narugo [S]
-56381,evsb,fr,ev/Meriphataud Mountains [S]
-56382,evsb,fr,ev/Sauromugue Champaign [S]
-56383,evsb,fr,ev/Castle Oztroja [S]
-56384,evsb,fr,ev/West Ronfaure
-56385,evsb,fr,ev/East Ronfaure
-56386,evsb,fr,ev/La Theine Plateau
-56387,evsb,fr,ev/Valkurm Dunes
-56388,evsb,fr,ev/Jugner Forest
-56389,evsb,fr,ev/Batallia Downs
-56390,evsb,fr,ev/North Gustaberg
-56391,evsb,fr,ev/South Gustaberg
-56392,evsb,fr,ev/Konschtat Highlands
-56393,evsb,fr,ev/Pashhow Marshlands
-56394,evsb,fr,ev/Rolanberry Fields
-56395,evsb,fr,ev/Beaucedine Glacier
-56396,evsb,fr,ev/Xarcabard
-56397,evsb,fr,ev/Cape Teriggan
-56398,evsb,fr,ev/Eastern Altepa Desert
-56399,evsb,fr,ev/West Sarutabaruta
-56400,evsb,fr,ev/East Sarutabaruta
-56401,evsb,fr,ev/Tahrongi Canyon
-56402,evsb,fr,ev/Buburimu Peninsula
-56403,evsb,fr,ev/Meriphataud Mountains
-56404,evsb,fr,ev/Sauromugue Champaign
-56405,evsb,fr,ev/The Sanctuary of Zi'Tah
-56406,evsb,fr,ev/Ro'Maeve
-56407,evsb,fr,ev/Yuhtunga Jungle
-56408,evsb,fr,ev/Yhoator Jungle
-56409,evsb,fr,ev/Western Altepa Desert
-56410,evsb,fr,ev/Qufim Island
-56411,evsb,fr,ev/Behemoth's Dominion
-56412,evsb,fr,ev/Valley of Sorrows
-56413,evsb,fr,ev/Ghoyu's Reverie
-56414,evsb,fr,ev/Ru'Aun Gardens
-56415,evsb,fr,ev/Mordion Gaol
-56416,evsb,fr,ev/Abyssea - La Theine
-56417,evsb,fr,ev/Outer Ra'Kaznar [U2]
-56418,evsb,fr,ev/Dynamis - Beaucedine
-56419,evsb,fr,ev/Dynamis - Xarcabard
-56420,evsb,fr,ev/Beaucedine Glacier [S]
-56421,evsb,fr,ev/Xarcabard [S]
-56422,evsb,fr,ev/Castle Zvahl Baileys [S]
-56423,evsb,fr,ev/Horlais Peak
-56424,evsb,fr,ev/Ghelsba Outpost
-56425,evsb,fr,ev/Fort Ghelsba
-56426,evsb,fr,ev/Yughott Grotto
-56427,evsb,fr,ev/Palborough Mines
-56428,evsb,fr,ev/Waughroon Shrine
-56429,evsb,fr,ev/Giddeus
-56430,evsb,fr,ev/Balga's Dais
-56431,evsb,fr,ev/Beadeaux
-56432,evsb,fr,ev/Qulun Dome
-56433,evsb,fr,ev/Davoi
-56434,evsb,fr,ev/Monastic Cavern
-56435,evsb,fr,ev/Castle Oztroja
-56436,evsb,fr,ev/Altar Room
-56437,evsb,fr,ev/The Boyahda Tree
-56438,evsb,fr,ev/Dragon's Aery
-56439,evsb,fr,ev/Castle Zvahl Keep [S]
-56440,evsb,fr,ev/Throne Room [S]
-56441,evsb,fr,ev/Middle Delkfutt's Tower
-56442,evsb,fr,ev/Upper Delkfutt's Tower
-56443,evsb,fr,ev/Temple of Uggalepih
-56444,evsb,fr,ev/Den of Rancor
-56445,evsb,fr,ev/Castle Zvahl Baileys
-56446,evsb,fr,ev/Castle Zvahl Keep
-56447,evsb,fr,ev/Sacrificial Chamber
-56448,evsb,fr,ev/Garlaige Citadel [S]
-56449,evsb,fr,ev/Throne Room
-56450,evsb,fr,ev/Ranguemont Pass
-56451,evsb,fr,ev/Bostaunieux Oubliette
-56452,evsb,fr,ev/Chamber of Oracles
-56453,evsb,fr,ev/Toraimarai Canal
-56454,evsb,fr,ev/Full Moon Fountain
-56455,evsb,fr,ev/Crawlers' Nest [S]
-56456,evsb,fr,ev/Zeruhn Mines
-56457,evsb,fr,ev/Korroloka Tunnel
-56458,evsb,fr,ev/Kuftal Tunnel
-56459,evsb,fr,ev/The Eldieme Necropolis [S]
-56460,evsb,fr,ev/Sea Serpent Grotto
-56461,evsb,fr,ev/Ve'Lugannon Palace
-56462,evsb,fr,ev/The Shrine of Ru'Avitau
-56463,evsb,fr,ev/Stellar Fulcrum
-56464,evsb,fr,ev/La'Loff Amphitheater
-56465,evsb,fr,ev/The Celestial Nexus
-56466,evsb,fr,ev/Walk of Echoes
-56467,evsb,fr,ev/Maquette Abdhaljs-LegionA
-56468,evsb,fr,ev/Lower Delkfutt's Tower
-56469,evsb,fr,ev/Dynamis - San d'Oria
-56470,evsb,fr,ev/Dynamis - Bastok
-56471,evsb,fr,ev/Dynamis - Windurst
-56472,evsb,fr,ev/Dynamis - Jeuno
-56473,evsb,fr,ev/Outer Ra'Kaznar [U3]
-56474,evsb,fr,ev/King Ranperre's Tomb
-56475,evsb,fr,ev/Dangruf Wadi
-56476,evsb,fr,ev/Inner Horutoto Ruins
-56477,evsb,fr,ev/Ordelle's Caves
-56478,evsb,fr,ev/Outer Horutoto Ruins
-56479,evsb,fr,ev/The Eldieme Necropolis
-56480,evsb,fr,ev/Gusgen Mines
-56481,evsb,fr,ev/Crawlers' Nest
-56482,evsb,fr,ev/Maze of Shakhrami
-56483,evsb,fr,ev/198
-56484,evsb,fr,ev/Garlaige Citadel
-56485,evsb,fr,ev/Cloister of Gales
-56486,evsb,fr,ev/Cloister of Storms
-56487,evsb,fr,ev/Cloister of Frost
-56488,evsb,fr,ev/Fei'Yin
-56489,evsb,fr,ev/Ifrit's Cauldron
-56490,evsb,fr,ev/Qu'Bia Arena
-56491,evsb,fr,ev/Cloister of Flames
-56492,evsb,fr,ev/Quicksand Caves
-56493,evsb,fr,ev/Cloister of Tremors
-56494,evsb,fr,ev/209
-56495,evsb,fr,ev/Cloister of Tides
-56496,evsb,fr,ev/Gustav Tunnel
-56497,evsb,fr,ev/Labyrinth of Onzozo
-56498,evsb,fr,ev/213
-56499,evsb,fr,ev/Abyssea - Attohwa
-56500,evsb,fr,ev/Abyssea - Misareaux
-56501,evsb,fr,ev/Abyssea - Vunkerl
-56502,evsb,fr,ev/Abyssea - Altepa
-56503,evsb,fr,ev/218
-56504,evsb,fr,ev/Ship bound for Selbina
-56505,evsb,fr,ev/Ship bound for Mhaura
-56506,evsb,fr,ev/Provenance
-56507,evsb,fr,ev/San d'Oria-Jeuno Airship
-56508,evsb,fr,ev/Bastok-Jeuno Airship
-56509,evsb,fr,ev/Windurst-Jeuno Airship
-56510,evsb,fr,ev/Kazham-Jeuno Airship
-56511,evsb,fr,ev/Ship bound for Selbina
-56512,evsb,fr,ev/Ship bound for Mhaura
-56513,evsb,fr,ev/Throne Room [V]
-56514,evsb,fr,ev/Southern San d'Oria
-56515,evsb,fr,ev/Northern San d'Oria
-56516,evsb,fr,ev/Port San d'Oria
-56517,evsb,fr,ev/Chateau d'Oraguille
-56518,evsb,fr,ev/Bastok Mines
-56519,evsb,fr,ev/Bastok Markets
-56520,evsb,fr,ev/Port Bastok
-56521,evsb,fr,ev/Metalworks
-56522,evsb,fr,ev/Windurst Waters
-56523,evsb,fr,ev/Windurst Walls
-56524,evsb,fr,ev/Port Windurst
-56525,evsb,fr,ev/Windurst Woods
-56526,evsb,fr,ev/Heavens Tower
-56527,evsb,fr,ev/Ru'Lude Gardens
-56528,evsb,fr,ev/Upper Jeuno
-56529,evsb,fr,ev/Lower Jeuno
-56530,evsb,fr,ev/Port Jeuno
-56531,evsb,fr,ev/Rabao
-56532,evsb,fr,ev/Selbina
-56533,evsb,fr,ev/Mhaura
-56534,evsb,fr,ev/Kazham
-56535,evsb,fr,ev/Hall of the Gods
-56536,evsb,fr,ev/Norg
-56537,evsb,fr,ev/Abyssea - Uleguerand
-56538,evsb,fr,ev/Abyssea - Grauberg
-56539,evsb,fr,ev/Abyssea - Empyreal Paradox
-56540,evsb,fr,ev/Western Adoulin
-56541,evsb,fr,ev/Eastern Adoulin
-56542,evsb,fr,ev/Rala Waterways
-56543,evsb,fr,ev/Rala Waterways [U]
-56544,evsb,fr,ev/Yahse Hunting Grounds
-56545,evsb,fr,ev/Ceizak Battlegrounds
-56546,evsb,fr,ev/Foret de Hennetiel
-56547,evsb,fr,ev/Yorcia Weald
-56548,evsb,fr,ev/Yorcia Weald [U]
-56549,evsb,fr,ev/Morimar Basalt Fields
-56550,evsb,fr,ev/Marjami Ravine
-56551,evsb,fr,ev/Kamihr Drifts
-56552,evsb,fr,ev/Sih Gates
-56553,evsb,fr,ev/Moh Gates
-56554,evsb,fr,ev/Cirdas Caverns
-56555,evsb,fr,ev/Cirdas Caverns [U]
-56556,evsb,fr,ev/Dho Gates
-56557,evsb,fr,ev/Woh Gates
-56558,evsb,fr,ev/Outer Ra'Kaznar
-56559,evsb,fr,ev/Outer Ra'Kaznar [U1]
-56560,evsb,fr,ev/Ra'Kaznar Inner Court
-56561,evsb,fr,ev/Ra'Kaznar Turris
-56562,evsb,fr,ev/Gwora - Corridor
-56563,evsb,fr,ev/Walk of Echoes [P2]
-56564,evsb,fr,ev/Mog Garden
-56565,evsb,fr,ev/Leafallia
-56566,evsb,fr,ev/Mount Kamihr
-56567,evsb,fr,ev/Silver Knife
-56568,evsb,fr,ev/Celennia Memorial Library
-56569,evsb,fr,ev/Feretory
-56570,evsb,fr,ev/Maquette Abdhaljs-LegionB
-56571,evsb,fr,ev/Escha - Zi'Tah
-56572,evsb,fr,ev/Escha - Ru'Aun
-56573,evsb,fr,ev/Desuetia - Empyreal Paradox
-56574,evsb,fr,ev/Reisenjima
-56575,evsb,fr,ev/Reisenjima Henge
-56576,evsb,fr,ev/Reisenjima Sanctorium
-56577,evsb,fr,ev/Dynamis - San d'Oria [D]
-56578,evsb,fr,ev/Dynamis - Bastok [D]
-56579,evsb,fr,ev/Dynamis - Windurst [D]
-56580,evsb,fr,ev/Dynamis - Jeuno [D]
-56581,evsb,fr,ev/Walk of Echoes [P1]
-56582,evsb,fr,ev/Gwora - Throne Room
-57913,evsb,jp,evx/Aht Urhgan Whitegate
-57945,evsb,en,evx/Aht Urhgan Whitegate
-58009,evsb,fr,evx/Aht Urhgan Whitegate
-68211,evsb,jp,ev/dbg_scene
-68511,evsb,en,ev/dbg_scene
-68811,evsb,de,ev/dbg_scene
-69111,evsb,fr,ev/dbg_scene
-85291,evsb,jp,ev/Western Adoulin
-85292,evsb,jp,ev/Eastern Adoulin
-85293,evsb,jp,ev/Rala Waterways
-85294,evsb,jp,ev/Rala Waterways [U]
-85295,evsb,jp,ev/Yahse Hunting Grounds
-85296,evsb,jp,ev/Ceizak Battlegrounds
-85297,evsb,jp,ev/Foret de Hennetiel
-85298,evsb,jp,ev/Yorcia Weald
-85299,evsb,jp,ev/Yorcia Weald [U]
-85300,evsb,jp,ev/Morimar Basalt Fields
-85301,evsb,jp,ev/Marjami Ravine
-85302,evsb,jp,ev/Kamihr Drifts
-85303,evsb,jp,ev/Sih Gates
-85304,evsb,jp,ev/Moh Gates
-85305,evsb,jp,ev/Cirdas Caverns
-85306,evsb,jp,ev/Cirdas Caverns [U]
-85307,evsb,jp,ev/Dho Gates
-85308,evsb,jp,ev/Woh Gates
-85309,evsb,jp,ev/Outer Ra'Kaznar
-85310,evsb,jp,ev/Outer Ra'Kaznar [U1]
-85311,evsb,jp,ev/Ra'Kaznar Inner Court
-85312,evsb,jp,ev/Ra'Kaznar Turris
-85313,evsb,jp,ev/Gwora - Corridor
-85314,evsb,jp,ev/Walk of Echoes [P2]
-85315,evsb,jp,ev/Mog Garden
-85316,evsb,jp,ev/Leafallia
-85317,evsb,jp,ev/Mount Kamihr
-85318,evsb,jp,ev/Silver Knife
-85319,evsb,jp,ev/Celennia Memorial Library
-85320,evsb,jp,ev/Feretory
-85322,evsb,jp,ev/Maquette Abdhaljs-LegionB
-85323,evsb,jp,ev/Escha - Zi'Tah
-85324,evsb,jp,ev/Escha - Ru'Aun
-85325,evsb,jp,ev/Desuetia - Empyreal Paradox
-85326,evsb,jp,ev/Reisenjima
-85327,evsb,jp,ev/Reisenjima Henge
-85328,evsb,jp,ev/Reisenjima Sanctorium
-85329,evsb,jp,ev/Dynamis - San d'Oria [D]
-85330,evsb,jp,ev/Dynamis - Bastok [D]
-85331,evsb,jp,ev/Dynamis - Windurst [D]
-85332,evsb,jp,ev/Dynamis - Jeuno [D]
-85333,evsb,jp,ev/Walk of Echoes [P1]
-85334,evsb,jp,ev/Gwora - Throne Room
-85591,evsb,en,ev/Western Adoulin
-85592,evsb,en,ev/Eastern Adoulin
-85593,evsb,en,ev/Rala Waterways
-85594,evsb,en,ev/Rala Waterways [U]
-85595,evsb,en,ev/Yahse Hunting Grounds
-85596,evsb,en,ev/Ceizak Battlegrounds
-85597,evsb,en,ev/Foret de Hennetiel
-85598,evsb,en,ev/Yorcia Weald
-85599,evsb,en,ev/Yorcia Weald [U]
-85600,evsb,en,ev/Morimar Basalt Fields
-85601,evsb,en,ev/Marjami Ravine
-85602,evsb,en,ev/Kamihr Drifts
-85603,evsb,en,ev/Sih Gates
-85604,evsb,en,ev/Moh Gates
-85605,evsb,en,ev/Cirdas Caverns
-85606,evsb,en,ev/Cirdas Caverns [U]
-85607,evsb,en,ev/Dho Gates
-85608,evsb,en,ev/Woh Gates
-85609,evsb,en,ev/Outer Ra'Kaznar
-85610,evsb,en,ev/Outer Ra'Kaznar [U1]
-85611,evsb,en,ev/Ra'Kaznar Inner Court
-85612,evsb,en,ev/Ra'Kaznar Turris
-85613,evsb,en,ev/Gwora - Corridor
-85614,evsb,en,ev/Walk of Echoes [P2]
-85615,evsb,en,ev/Mog Garden
-85616,evsb,en,ev/Leafallia
-85617,evsb,en,ev/Mount Kamihr
-85618,evsb,en,ev/Silver Knife
-85619,evsb,en,ev/Celennia Memorial Library
-85620,evsb,en,ev/Feretory
-85622,evsb,en,ev/Maquette Abdhaljs-LegionB
-85623,evsb,en,ev/Escha - Zi'Tah
-85624,evsb,en,ev/Escha - Ru'Aun
-85625,evsb,en,ev/Desuetia - Empyreal Paradox
-85626,evsb,en,ev/Reisenjima
-85627,evsb,en,ev/Reisenjima Henge
-85628,evsb,en,ev/Reisenjima Sanctorium
-85629,evsb,en,ev/Dynamis - San d'Oria [D]
-85630,evsb,en,ev/Dynamis - Bastok [D]
-85631,evsb,en,ev/Dynamis - Windurst [D]
-85632,evsb,en,ev/Dynamis - Jeuno [D]
-85633,evsb,en,ev/Walk of Echoes [P1]
-85634,evsb,en,ev/Gwora - Throne Room
+56278,dmsg,fr,sys/mis/ad,
+56279,dmsg,fr,sys/qst/ad,
+56280,dmsg,fr,sys/qst/wc,
+56281,dmsg,en,sys/mis/rov,
+56282,dmsg,en,sys/mis/vr,
+56285,evsb,fr,ev/unknown,
+56286,evsb,fr,ev/Phanauet Channel,
+56287,evsb,fr,ev/Carpenters' Landing,
+56288,evsb,fr,ev/Manaclipper,
+56289,evsb,fr,ev/Bibiki Bay,
+56290,evsb,fr,ev/Uleguerand Range,
+56291,evsb,fr,ev/Bearclaw Pinnacle,
+56292,evsb,fr,ev/Attohwa Chasm,
+56293,evsb,fr,ev/Boneyard Gully,
+56294,evsb,fr,ev/Pso'Xja,
+56295,evsb,fr,ev/The Shrouded Maw,
+56296,evsb,fr,ev/Oldton Movalpolos,
+56297,evsb,fr,ev/Newton Movalpolos,
+56298,evsb,fr,ev/Mine Shaft 2716,
+56299,evsb,fr,ev/Hall of Transference,
+56300,evsb,fr,ev/Abyssea - Konschtat,
+56301,evsb,fr,ev/Promyvion - Holla,
+56302,evsb,fr,ev/Spire of Holla,
+56303,evsb,fr,ev/Promyvion - Dem,
+56304,evsb,fr,ev/Spire of Dem,
+56305,evsb,fr,ev/Promyvion - Mea,
+56306,evsb,fr,ev/Spire of Mea,
+56307,evsb,fr,ev/Promyvion - Vahzl,
+56308,evsb,fr,ev/Spire of Vahzl,
+56309,evsb,fr,ev/Lufaise Meadows,
+56310,evsb,fr,ev/Misareaux Coast,
+56311,evsb,fr,ev/Tavnazian Safehold,
+56312,evsb,fr,ev/Phomiuna Aqueducts,
+56313,evsb,fr,ev/Sacrarium,
+56314,evsb,fr,ev/Riverne - Site B01,
+56315,evsb,fr,ev/Riverne - Site A01,
+56316,evsb,fr,ev/Monarch Linn,
+56317,evsb,fr,ev/Sealion's Den,
+56318,evsb,fr,ev/Al'Taieu,
+56319,evsb,fr,ev/Grand Palace of Hu'Xzoi,
+56320,evsb,fr,ev/The Garden of Ru'Hmet,
+56321,evsb,fr,ev/Empyreal Paradox,
+56322,evsb,fr,ev/Temenos,
+56323,evsb,fr,ev/Apollyon,
+56324,evsb,fr,ev/Dynamis - Valkurm,
+56325,evsb,fr,ev/Dynamis - Buburimu,
+56326,evsb,fr,ev/Dynamis - Qufim,
+56327,evsb,fr,ev/Dynamis - Tavnazia,
+56328,evsb,fr,ev/Diorama Abdhaljs-Ghelsba,
+56329,evsb,fr,ev/Abdhaljs Isle-Purgonorgo,
+56330,evsb,fr,ev/Abyssea - Tahrongi,
+56331,evsb,fr,ev/Open sea route to Al Zahbi,
+56332,evsb,fr,ev/Open sea route to Mhaura,
+56333,evsb,fr,ev/Al Zahbi,
+56334,evsb,fr,ev/Aht Urhgan Whitegate,
+56335,evsb,fr,ev/Wajaom Woodlands,
+56336,evsb,fr,ev/Bhaflau Thickets,
+56337,evsb,fr,ev/Nashmau,
+56338,evsb,fr,ev/Arrapago Reef,
+56339,evsb,fr,ev/Ilrusi Atoll,
+56340,evsb,fr,ev/Periqia,
+56341,evsb,fr,ev/Talacca Cove,
+56342,evsb,fr,ev/Silver Sea route to Nashmau,
+56343,evsb,fr,ev/Silver Sea route to Al Zahbi,
+56344,evsb,fr,ev/The Ashu Talif,
+56345,evsb,fr,ev/Mount Zhayolm,
+56346,evsb,fr,ev/Halvung,
+56347,evsb,fr,ev/Lebros Cavern,
+56348,evsb,fr,ev/Navukgo Execution Chamber,
+56349,evsb,fr,ev/Mamook,
+56350,evsb,fr,ev/Mamool Ja Training Grounds,
+56351,evsb,fr,ev/Jade Sepulcher,
+56352,evsb,fr,ev/Aydeewa Subterrane,
+56353,evsb,fr,ev/Leujaoam Sanctum,
+56354,evsb,fr,ev/Chocobo Circuit,
+56355,evsb,fr,ev/The Colosseum,
+56356,evsb,fr,ev/Alzadaal Undersea Ruins,
+56357,evsb,fr,ev/Zhayolm Remnants,
+56358,evsb,fr,ev/Arrapago Remnants,
+56359,evsb,fr,ev/Bhaflau Remnants,
+56360,evsb,fr,ev/Silver Sea Remnants,
+56361,evsb,fr,ev/Nyzul Isle,
+56362,evsb,fr,ev/Hazhalm Testing Grounds,
+56363,evsb,fr,ev/Caedarva Mire,
+56364,evsb,fr,ev/Southern San d'Oria [S],
+56365,evsb,fr,ev/East Ronfaure [S],
+56366,evsb,fr,ev/Jugner Forest [S],
+56367,evsb,fr,ev/Vunkerl Inlet [S],
+56368,evsb,fr,ev/Batallia Downs [S],
+56369,evsb,fr,ev/La Vaule [S],
+56370,evsb,fr,ev/Everbloom Hollow,
+56371,evsb,fr,ev/Bastok Markets [S],
+56372,evsb,fr,ev/North Gustaberg [S],
+56373,evsb,fr,ev/Grauberg [S],
+56374,evsb,fr,ev/Pashhow Marshlands [S],
+56375,evsb,fr,ev/Rolanberry Fields [S],
+56376,evsb,fr,ev/Beadeaux [S],
+56377,evsb,fr,ev/Ruhotz Silvermines,
+56378,evsb,fr,ev/Windurst Waters [S],
+56379,evsb,fr,ev/West Sarutabaruta [S],
+56380,evsb,fr,ev/Fort Karugo-Narugo [S],
+56381,evsb,fr,ev/Meriphataud Mountains [S],
+56382,evsb,fr,ev/Sauromugue Champaign [S],
+56383,evsb,fr,ev/Castle Oztroja [S],
+56384,evsb,fr,ev/West Ronfaure,
+56385,evsb,fr,ev/East Ronfaure,
+56386,evsb,fr,ev/La Theine Plateau,
+56387,evsb,fr,ev/Valkurm Dunes,
+56388,evsb,fr,ev/Jugner Forest,
+56389,evsb,fr,ev/Batallia Downs,
+56390,evsb,fr,ev/North Gustaberg,
+56391,evsb,fr,ev/South Gustaberg,
+56392,evsb,fr,ev/Konschtat Highlands,
+56393,evsb,fr,ev/Pashhow Marshlands,
+56394,evsb,fr,ev/Rolanberry Fields,
+56395,evsb,fr,ev/Beaucedine Glacier,
+56396,evsb,fr,ev/Xarcabard,
+56397,evsb,fr,ev/Cape Teriggan,
+56398,evsb,fr,ev/Eastern Altepa Desert,
+56399,evsb,fr,ev/West Sarutabaruta,
+56400,evsb,fr,ev/East Sarutabaruta,
+56401,evsb,fr,ev/Tahrongi Canyon,
+56402,evsb,fr,ev/Buburimu Peninsula,
+56403,evsb,fr,ev/Meriphataud Mountains,
+56404,evsb,fr,ev/Sauromugue Champaign,
+56405,evsb,fr,ev/The Sanctuary of Zi'Tah,
+56406,evsb,fr,ev/Ro'Maeve,
+56407,evsb,fr,ev/Yuhtunga Jungle,
+56408,evsb,fr,ev/Yhoator Jungle,
+56409,evsb,fr,ev/Western Altepa Desert,
+56410,evsb,fr,ev/Qufim Island,
+56411,evsb,fr,ev/Behemoth's Dominion,
+56412,evsb,fr,ev/Valley of Sorrows,
+56413,evsb,fr,ev/Ghoyu's Reverie,
+56414,evsb,fr,ev/Ru'Aun Gardens,
+56415,evsb,fr,ev/Mordion Gaol,
+56416,evsb,fr,ev/Abyssea - La Theine,
+56417,evsb,fr,ev/Outer Ra'Kaznar [U2],
+56418,evsb,fr,ev/Dynamis - Beaucedine,
+56419,evsb,fr,ev/Dynamis - Xarcabard,
+56420,evsb,fr,ev/Beaucedine Glacier [S],
+56421,evsb,fr,ev/Xarcabard [S],
+56422,evsb,fr,ev/Castle Zvahl Baileys [S],
+56423,evsb,fr,ev/Horlais Peak,
+56424,evsb,fr,ev/Ghelsba Outpost,
+56425,evsb,fr,ev/Fort Ghelsba,
+56426,evsb,fr,ev/Yughott Grotto,
+56427,evsb,fr,ev/Palborough Mines,
+56428,evsb,fr,ev/Waughroon Shrine,
+56429,evsb,fr,ev/Giddeus,
+56430,evsb,fr,ev/Balga's Dais,
+56431,evsb,fr,ev/Beadeaux,
+56432,evsb,fr,ev/Qulun Dome,
+56433,evsb,fr,ev/Davoi,
+56434,evsb,fr,ev/Monastic Cavern,
+56435,evsb,fr,ev/Castle Oztroja,
+56436,evsb,fr,ev/Altar Room,
+56437,evsb,fr,ev/The Boyahda Tree,
+56438,evsb,fr,ev/Dragon's Aery,
+56439,evsb,fr,ev/Castle Zvahl Keep [S],
+56440,evsb,fr,ev/Throne Room [S],
+56441,evsb,fr,ev/Middle Delkfutt's Tower,
+56442,evsb,fr,ev/Upper Delkfutt's Tower,
+56443,evsb,fr,ev/Temple of Uggalepih,
+56444,evsb,fr,ev/Den of Rancor,
+56445,evsb,fr,ev/Castle Zvahl Baileys,
+56446,evsb,fr,ev/Castle Zvahl Keep,
+56447,evsb,fr,ev/Sacrificial Chamber,
+56448,evsb,fr,ev/Garlaige Citadel [S],
+56449,evsb,fr,ev/Throne Room,
+56450,evsb,fr,ev/Ranguemont Pass,
+56451,evsb,fr,ev/Bostaunieux Oubliette,
+56452,evsb,fr,ev/Chamber of Oracles,
+56453,evsb,fr,ev/Toraimarai Canal,
+56454,evsb,fr,ev/Full Moon Fountain,
+56455,evsb,fr,ev/Crawlers' Nest [S],
+56456,evsb,fr,ev/Zeruhn Mines,
+56457,evsb,fr,ev/Korroloka Tunnel,
+56458,evsb,fr,ev/Kuftal Tunnel,
+56459,evsb,fr,ev/The Eldieme Necropolis [S],
+56460,evsb,fr,ev/Sea Serpent Grotto,
+56461,evsb,fr,ev/Ve'Lugannon Palace,
+56462,evsb,fr,ev/The Shrine of Ru'Avitau,
+56463,evsb,fr,ev/Stellar Fulcrum,
+56464,evsb,fr,ev/La'Loff Amphitheater,
+56465,evsb,fr,ev/The Celestial Nexus,
+56466,evsb,fr,ev/Walk of Echoes,
+56467,evsb,fr,ev/Maquette Abdhaljs-LegionA,
+56468,evsb,fr,ev/Lower Delkfutt's Tower,
+56469,evsb,fr,ev/Dynamis - San d'Oria,
+56470,evsb,fr,ev/Dynamis - Bastok,
+56471,evsb,fr,ev/Dynamis - Windurst,
+56472,evsb,fr,ev/Dynamis - Jeuno,
+56473,evsb,fr,ev/Outer Ra'Kaznar [U3],
+56474,evsb,fr,ev/King Ranperre's Tomb,
+56475,evsb,fr,ev/Dangruf Wadi,
+56476,evsb,fr,ev/Inner Horutoto Ruins,
+56477,evsb,fr,ev/Ordelle's Caves,
+56478,evsb,fr,ev/Outer Horutoto Ruins,
+56479,evsb,fr,ev/The Eldieme Necropolis,
+56480,evsb,fr,ev/Gusgen Mines,
+56481,evsb,fr,ev/Crawlers' Nest,
+56482,evsb,fr,ev/Maze of Shakhrami,
+56483,evsb,fr,ev/198,
+56484,evsb,fr,ev/Garlaige Citadel,
+56485,evsb,fr,ev/Cloister of Gales,
+56486,evsb,fr,ev/Cloister of Storms,
+56487,evsb,fr,ev/Cloister of Frost,
+56488,evsb,fr,ev/Fei'Yin,
+56489,evsb,fr,ev/Ifrit's Cauldron,
+56490,evsb,fr,ev/Qu'Bia Arena,
+56491,evsb,fr,ev/Cloister of Flames,
+56492,evsb,fr,ev/Quicksand Caves,
+56493,evsb,fr,ev/Cloister of Tremors,
+56494,evsb,fr,ev/209,
+56495,evsb,fr,ev/Cloister of Tides,
+56496,evsb,fr,ev/Gustav Tunnel,
+56497,evsb,fr,ev/Labyrinth of Onzozo,
+56498,evsb,fr,ev/213,
+56499,evsb,fr,ev/Abyssea - Attohwa,
+56500,evsb,fr,ev/Abyssea - Misareaux,
+56501,evsb,fr,ev/Abyssea - Vunkerl,
+56502,evsb,fr,ev/Abyssea - Altepa,
+56503,evsb,fr,ev/218,
+56504,evsb,fr,ev/Ship bound for Selbina,
+56505,evsb,fr,ev/Ship bound for Mhaura,
+56506,evsb,fr,ev/Provenance,
+56507,evsb,fr,ev/San d'Oria-Jeuno Airship,
+56508,evsb,fr,ev/Bastok-Jeuno Airship,
+56509,evsb,fr,ev/Windurst-Jeuno Airship,
+56510,evsb,fr,ev/Kazham-Jeuno Airship,
+56511,evsb,fr,ev/Ship bound for Selbina,
+56512,evsb,fr,ev/Ship bound for Mhaura,
+56513,evsb,fr,ev/Throne Room [V],
+56514,evsb,fr,ev/Southern San d'Oria,
+56515,evsb,fr,ev/Northern San d'Oria,
+56516,evsb,fr,ev/Port San d'Oria,
+56517,evsb,fr,ev/Chateau d'Oraguille,
+56518,evsb,fr,ev/Bastok Mines,
+56519,evsb,fr,ev/Bastok Markets,
+56520,evsb,fr,ev/Port Bastok,
+56521,evsb,fr,ev/Metalworks,
+56522,evsb,fr,ev/Windurst Waters,
+56523,evsb,fr,ev/Windurst Walls,
+56524,evsb,fr,ev/Port Windurst,
+56525,evsb,fr,ev/Windurst Woods,
+56526,evsb,fr,ev/Heavens Tower,
+56527,evsb,fr,ev/Ru'Lude Gardens,
+56528,evsb,fr,ev/Upper Jeuno,
+56529,evsb,fr,ev/Lower Jeuno,
+56530,evsb,fr,ev/Port Jeuno,
+56531,evsb,fr,ev/Rabao,
+56532,evsb,fr,ev/Selbina,
+56533,evsb,fr,ev/Mhaura,
+56534,evsb,fr,ev/Kazham,
+56535,evsb,fr,ev/Hall of the Gods,
+56536,evsb,fr,ev/Norg,
+56537,evsb,fr,ev/Abyssea - Uleguerand,
+56538,evsb,fr,ev/Abyssea - Grauberg,
+56539,evsb,fr,ev/Abyssea - Empyreal Paradox,
+57913,evsb,jp,evx/Aht Urhgan Whitegate,
+57945,evsb,en,evx/Aht Urhgan Whitegate,
+58009,evsb,fr,evx/Aht Urhgan Whitegate,
+68211,evsb,jp,ev/dbg_scene,
+68511,evsb,en,ev/dbg_scene,
+68811,evsb,de,ev/dbg_scene,
+69111,evsb,fr,ev/dbg_scene,
+85291,evsb,jp,ev/Western Adoulin,
+85292,evsb,jp,ev/Eastern Adoulin,
+85293,evsb,jp,ev/Rala Waterways,
+85294,evsb,jp,ev/Rala Waterways [U],
+85295,evsb,jp,ev/Yahse Hunting Grounds,
+85296,evsb,jp,ev/Ceizak Battlegrounds,
+85297,evsb,jp,ev/Foret de Hennetiel,
+85298,evsb,jp,ev/Yorcia Weald,
+85299,evsb,jp,ev/Yorcia Weald [U],
+85300,evsb,jp,ev/Morimar Basalt Fields,
+85301,evsb,jp,ev/Marjami Ravine,
+85302,evsb,jp,ev/Kamihr Drifts,
+85303,evsb,jp,ev/Sih Gates,
+85304,evsb,jp,ev/Moh Gates,
+85305,evsb,jp,ev/Cirdas Caverns,
+85306,evsb,jp,ev/Cirdas Caverns [U],
+85307,evsb,jp,ev/Dho Gates,
+85308,evsb,jp,ev/Woh Gates,
+85309,evsb,jp,ev/Outer Ra'Kaznar,
+85310,evsb,jp,ev/Outer Ra'Kaznar [U1],
+85311,evsb,jp,ev/Ra'Kaznar Inner Court,
+85312,evsb,jp,ev/Ra'Kaznar Turris,
+85313,evsb,jp,ev/Gwora - Corridor,
+85314,evsb,jp,ev/Walk of Echoes [P2],
+85315,evsb,jp,ev/Mog Garden,
+85316,evsb,jp,ev/Leafallia,
+85317,evsb,jp,ev/Mount Kamihr,
+85318,evsb,jp,ev/Silver Knife,
+85319,evsb,jp,ev/Celennia Memorial Library,
+85320,evsb,jp,ev/Feretory,
+85322,evsb,jp,ev/Maquette Abdhaljs-LegionB,
+85323,evsb,jp,ev/Escha - Zi'Tah,
+85324,evsb,jp,ev/Escha - Ru'Aun,
+85325,evsb,jp,ev/Desuetia - Empyreal Paradox,
+85326,evsb,jp,ev/Reisenjima,
+85327,evsb,jp,ev/Reisenjima Henge,
+85328,evsb,jp,ev/Reisenjima Sanctorium,
+85329,evsb,jp,ev/Dynamis - San d'Oria [D],
+85330,evsb,jp,ev/Dynamis - Bastok [D],
+85331,evsb,jp,ev/Dynamis - Windurst [D],
+85332,evsb,jp,ev/Dynamis - Jeuno [D],
+85333,evsb,jp,ev/Walk of Echoes [P1],
+85334,evsb,jp,ev/Gwora - Throne Room,
+85591,evsb,en,ev/Western Adoulin,
+85592,evsb,en,ev/Eastern Adoulin,
+85593,evsb,en,ev/Rala Waterways,
+85594,evsb,en,ev/Rala Waterways [U],
+85595,evsb,en,ev/Yahse Hunting Grounds,
+85596,evsb,en,ev/Ceizak Battlegrounds,
+85597,evsb,en,ev/Foret de Hennetiel,
+85598,evsb,en,ev/Yorcia Weald,
+85599,evsb,en,ev/Yorcia Weald [U],
+85600,evsb,en,ev/Morimar Basalt Fields,
+85601,evsb,en,ev/Marjami Ravine,
+85602,evsb,en,ev/Kamihr Drifts,
+85603,evsb,en,ev/Sih Gates,
+85604,evsb,en,ev/Moh Gates,
+85605,evsb,en,ev/Cirdas Caverns,
+85606,evsb,en,ev/Cirdas Caverns [U],
+85607,evsb,en,ev/Dho Gates,
+85608,evsb,en,ev/Woh Gates,
+85609,evsb,en,ev/Outer Ra'Kaznar,
+85610,evsb,en,ev/Outer Ra'Kaznar [U1],
+85611,evsb,en,ev/Ra'Kaznar Inner Court,
+85612,evsb,en,ev/Ra'Kaznar Turris,
+85613,evsb,en,ev/Gwora - Corridor,
+85614,evsb,en,ev/Walk of Echoes [P2],
+85615,evsb,en,ev/Mog Garden,
+85616,evsb,en,ev/Leafallia,
+85617,evsb,en,ev/Mount Kamihr,
+85618,evsb,en,ev/Silver Knife,
+85619,evsb,en,ev/Celennia Memorial Library,
+85620,evsb,en,ev/Feretory,
+85622,evsb,en,ev/Maquette Abdhaljs-LegionB,
+85623,evsb,en,ev/Escha - Zi'Tah,
+85624,evsb,en,ev/Escha - Ru'Aun,
+85625,evsb,en,ev/Desuetia - Empyreal Paradox,
+85626,evsb,en,ev/Reisenjima,
+85627,evsb,en,ev/Reisenjima Henge,
+85628,evsb,en,ev/Reisenjima Sanctorium,
+85629,evsb,en,ev/Dynamis - San d'Oria [D],
+85630,evsb,en,ev/Dynamis - Bastok [D],
+85631,evsb,en,ev/Dynamis - Windurst [D],
+85632,evsb,en,ev/Dynamis - Jeuno [D],
+85633,evsb,en,ev/Walk of Echoes [P1],
+85634,evsb,en,ev/Gwora - Throne Room,
+85891,evsb,de,ev/Eastern Adoulin,
+85892,evsb,de,ev/Rala Waterways,
+85893,evsb,de,ev/Rala Waterways [U],
+85894,evsb,de,ev/Yahse Hunting Grounds,
+85895,evsb,de,ev/Ceizak Battlegrounds,
+85896,evsb,de,ev/Foret de Hennetiel,
+85897,evsb,de,ev/Yorcia Weald,
+85898,evsb,de,ev/Yorcia Weald [U],
+85899,evsb,de,ev/Morimar Basalt Fields,
+85900,evsb,de,ev/Marjami Ravine,
+85901,evsb,de,ev/Kamihr Drifts,
+85902,evsb,de,ev/Sih Gates,
+85903,evsb,de,ev/Moh Gates,
+85904,evsb,de,ev/Cirdas Caverns,
+85905,evsb,de,ev/Cirdas Caverns [U],
+85906,evsb,de,ev/Dho Gates,
+85907,evsb,de,ev/Woh Gates,
+85908,evsb,de,ev/Outer Ra'Kaznar,
+85909,evsb,de,ev/Outer Ra'Kaznar [U1],
+85910,evsb,de,ev/Ra'Kaznar Inner Court,
+85911,evsb,de,ev/Ra'Kaznar Turris,
+85912,evsb,de,ev/Gwora - Corridor,
+85913,evsb,de,ev/Walk of Echoes [P2],
+85914,evsb,de,ev/Mog Garden,
+85915,evsb,de,ev/Leafallia,
+85916,evsb,de,ev/Mount Kamihr,
+85917,evsb,de,ev/Silver Knife,
+85918,evsb,de,ev/Celennia Memorial Library,
+85919,evsb,de,ev/Feretory,
+85920,evsb,de,ev/Maquette Abdhaljs-LegionB,
+85921,evsb,de,ev/Escha - Zi'Tah,
+85922,evsb,de,ev/Escha - Ru'Aun,
+85923,evsb,de,ev/Desuetia - Empyreal Paradox,
+85924,evsb,de,ev/Reisenjima,
+85925,evsb,de,ev/Reisenjima Henge,
+85926,evsb,de,ev/Reisenjima Sanctorium,
+85927,evsb,de,ev/Dynamis - San d'Oria [D],
+85928,evsb,de,ev/Dynamis - Bastok [D],
+85929,evsb,de,ev/Dynamis - Windurst [D],
+85930,evsb,de,ev/Dynamis - Jeuno [D],
+85931,evsb,de,ev/Walk of Echoes [P1],
+85932,evsb,de,ev/Gwora - Throne Room,
+86191,evsb,fr,ev/Western Adoulin,
+86192,evsb,fr,ev/Eastern Adoulin,
+86193,evsb,fr,ev/Rala Waterways,
+86194,evsb,fr,ev/Rala Waterways [U],
+86195,evsb,fr,ev/Yahse Hunting Grounds,
+86196,evsb,fr,ev/Ceizak Battlegrounds,
+86197,evsb,fr,ev/Foret de Hennetiel,
+86198,evsb,fr,ev/Yorcia Weald,
+86199,evsb,fr,ev/Yorcia Weald [U],
+86200,evsb,fr,ev/Morimar Basalt Fields,
+86201,evsb,fr,ev/Marjami Ravine,
+86202,evsb,fr,ev/Kamihr Drifts,
+86203,evsb,fr,ev/Sih Gates,
+86204,evsb,fr,ev/Moh Gates,
+86205,evsb,fr,ev/Cirdas Caverns,
+86206,evsb,fr,ev/Cirdas Caverns [U],
+86207,evsb,fr,ev/Dho Gates,
+86208,evsb,fr,ev/Woh Gates,
+86209,evsb,fr,ev/Outer Ra'Kaznar,
+86210,evsb,fr,ev/Outer Ra'Kaznar [U1],
+86211,evsb,fr,ev/Ra'Kaznar Inner Court,
+86212,evsb,fr,ev/Ra'Kaznar Turris,
+86213,evsb,fr,ev/Gwora - Corridor,
+86214,evsb,fr,ev/Walk of Echoes [P2],
+86215,evsb,fr,ev/Mog Garden,
+86216,evsb,fr,ev/Leafallia,
+86217,evsb,fr,ev/Mount Kamihr,
+86218,evsb,fr,ev/Silver Knife,
+86219,evsb,fr,ev/Celennia Memorial Library,
+86220,evsb,fr,ev/Feretory,
+86221,evsb,fr,ev/Maquette Abdhaljs-LegionB,
+86222,evsb,fr,ev/Escha - Zi'Tah,
+86223,evsb,fr,ev/Escha - Ru'Aun,
+86224,evsb,fr,ev/Desuetia - Empyreal Paradox,
+86225,evsb,fr,ev/Reisenjima,
+86226,evsb,fr,ev/Reisenjima Henge,
+86227,evsb,fr,ev/Reisenjima Sanctorium,
+86228,evsb,fr,ev/Dynamis - San d'Oria [D],
+86229,evsb,fr,ev/Dynamis - Bastok [D],
+86230,evsb,fr,ev/Dynamis - Windurst [D],
+86231,evsb,fr,ev/Dynamis - Jeuno [D],
+86232,evsb,fr,ev/Walk of Echoes [P1],
+86233,evsb,fr,ev/Gwora - Throne Room,

@@ -862,7 +862,7 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 				++rowNum;
 			}
 		}
-		else if (type == "ieb" || type == "inb" || type == "iub" || type == "iwb" || type == "iab" || type == "ipb" || type == "isb" || type == "icb")
+		else if (type == "ieb" || type == "inb" || type == "iub" || type == "iwb" || type == "iab" || type == "ipb" || type == "isb" || type == "icb" || type == "iib")
 		{
 			ImportItemDat(file_id, datPath, xybase::string::sys_mbs_to_wcs(type));
 		}
@@ -1109,7 +1109,7 @@ void SQLiteDataSource::TranslateDat(int file_id, const char *file_path, const ch
 		}
 		statusData.Write(outPath);
 	}
-	else if (t == "ieb" || t == "inb" || t == "iub" || t == "iwb" || t == "iab" || type == "ipb" || type == "isb" || type == "icb")
+	else if (t == "ieb" || t == "inb" || t == "iub" || t == "iwb" || t == "iab" || type == "ipb" || type == "isb" || type == "icb" || type == "iib")
 	{
 		TranslateItemDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str(), t.c_str());
 	}
@@ -1157,6 +1157,7 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
 	else if (type == L"isb") specType = ItemSpecType::SLIP;
 	else if (type == L"ipb") specType = ItemSpecType::PUPPET;
 	else if (type == L"icb") specType = ItemSpecType::CURRENCY;
+	else if (type == L"iib") specType = ItemSpecType::INSTINCT;
 	
 	itemData.Read(path, specType);
 	
@@ -1557,6 +1558,7 @@ void SQLiteDataSource::TranslateItemDat(int file_id, const wchar_t *file_path, c
 	else if (typeStr == "isb") specType = ItemSpecType::SLIP;
 	else if (typeStr == "ipb") specType = ItemSpecType::PUPPET;
 	else if (typeStr == "icb") specType = ItemSpecType::CURRENCY;
+	else if (typeStr == "iib") specType = ItemSpecType::INSTINCT;
 	
 	// Read original data first
 	itemData.Read(datPath, specType);

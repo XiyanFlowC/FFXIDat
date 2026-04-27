@@ -167,6 +167,9 @@ void ItemData::Read(std::wstring path, ItemSpecType defaultSpecType)
 			case ItemSpecType::CURRENCY:
 				rec = &entry.spec.currency.info_rec;
 				break;
+			case ItemSpecType::INSTINCT:
+				rec = &entry.spec.instinct.info_rec;
+				break;
 		}
 		
 		if (rec && rec->cellCount > 0) {
@@ -261,6 +264,9 @@ void ItemData::Write(std::wstring path)
 				break;
 			case ItemSpecType::CURRENCY:
 				rec = &entry.spec.currency.info_rec;
+				break;
+			case ItemSpecType::INSTINCT:
+				rec = &entry.spec.instinct.info_rec;
 				break;
 		}
 		
@@ -359,6 +365,7 @@ void ItemData::ToICsv(const std::wstring& path) const
 		case ItemSpecType::PUPPET: return std::u8string(u8"PUPPET");
 		case ItemSpecType::SLIP: return std::u8string(u8"SLIP");
 		case ItemSpecType::CURRENCY: return std::u8string(u8"CURRENCY");
+		case ItemSpecType::INSTINCT: return std::u8string(u8"INSTINCT");
 		case ItemSpecType::NORMAL:
 		default: return std::u8string(u8"NORMAL");
 		}
@@ -524,6 +531,11 @@ void ItemData::ToICsv(const std::wstring& path) const
 			csv.NewCell(xybase::string::to_utf8(std::string("Ukn") + std::to_string(i)));
 		}
 		break;
+	case ItemSpecType::INSTINCT:
+		for (int i = 0; i < 13; ++i) {
+			csv.NewCell(xybase::string::to_utf8(std::string("Ukn") + std::to_string(i)));
+		}
+		break;
 	case ItemSpecType::CURRENCY:
 		csv.NewCell(u8"Ukn");
 		break;
@@ -648,6 +660,14 @@ void ItemData::ToICsv(const std::wstring& path) const
 			}
 			break;
 		}
+		case ItemSpecType::INSTINCT:
+		{
+			const auto& spec = datum.originalEntry.spec.instinct;
+			for (uint16_t b : spec.ukn) {
+				csv.NewCell(toU8(static_cast<unsigned>(b)));
+			}
+		}
+			break;
 		case ItemSpecType::CURRENCY:
 		{
 			const auto& spec = datum.originalEntry.spec.currency;

@@ -213,6 +213,13 @@ struct ItemSlipSpec
 	Record info_rec;
 };
 
+struct ItemInstinctSpec
+{
+	uint16_t ukn[13];
+
+	Record info_rec;
+};
+
 struct ItemCurrencySpec
 {
 	uint16_t ukn;
@@ -229,6 +236,7 @@ union ItemSpecData
 	ItemWeaponSpec weapon;
 	ItemSlipSpec slip;
 	ItemCurrencySpec currency;
+	ItemInstinctSpec instinct;
 };
 
 struct ItemEntry
@@ -250,7 +258,8 @@ enum class ItemSpecType {
     ARMOUR,
 	PUPPET,
 	SLIP,
-	CURRENCY  // ?? Special: Currency files have exactly 1 entry and fixed 0xC000 byte size
+	CURRENCY,  // ?? Special: Currency files have exactly 1 entry and fixed 0xC000 byte size
+	INSTINCT,
 };
 
 class ItemData

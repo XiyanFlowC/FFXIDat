@@ -364,7 +364,7 @@ bool MainFrame::PromptForFileType(std::string& outType)
 
 	const std::vector<std::wstring> types = {
 		L"dmsg", L"xis", L"evsb", L"sd", L"fp",
-		L"iab", L"iwb", L"iub", L"inb", L"ipb", L"isb", L"icb",
+		L"iab", L"iwb", L"iub", L"inb", L"ipb", L"isb", L"icb", L"iib",
 		L"mbd", L"erq", L"erc"
 	};
 	for (const auto& type : types)
@@ -715,7 +715,7 @@ bool MainFrame::PromptForFileId(int& outGlobalId, std::string& outRomFolder, int
 
 	const std::vector<std::wstring> types = {
 		L"dmsg", L"xis", L"evsb", L"sd", L"fp",
-		L"iab", L"iwb", L"iub", L"inb", L"ipb", L"isb", L"icb",
+		L"iab", L"iwb", L"iub", L"inb", L"ipb", L"isb", L"icb", L"iib",
 		L"mbd", L"erq", L"erc"
 	};
 	for (const auto& type : types)

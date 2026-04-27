@@ -177,7 +177,7 @@ int main(int argc, const char **argv)
 		SQLiteDataSource ds;
 		if (cfg_type && strcmp(cfg_type, "item") == 0)
 		{
-			const char* types[] = {"ieb", "inb", "iub", "iwb", "iab", "isb", "ipb", "icb"};
+			const char* types[] = {"ieb", "inb", "iub", "iwb", "iab", "isb", "ipb", "icb", "iib"};
 			for (const auto& type : types)
 			{
 				ds.DatToDatabase(cfg_lang, type, cfg_path);
@@ -332,7 +332,8 @@ int main(int argc, const char **argv)
 						std::wcout << "Failed: " << ex.what() << std::endl;
 					}
 				}
-				else if (memcmp(m, "\x02\x01\x01", 4) == 0 || memcmp(m, "\x02\x02\x01", 4) == 0)
+				else if (memcmp(m, "\x02\x01\x01", 4) == 0 || memcmp(m, "\x02\x02\x01", 4) == 0 ||
+					memcmp(m, "\x02\x03\x01", 4) == 0 || memcmp(m, "\x02\x04\x02\x01", 4) == 0)
 				{
 					std::wcout << "fp p=" << path.c_str() << std::endl;
 					try

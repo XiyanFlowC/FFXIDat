@@ -41,6 +41,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决�
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FFXIDatEG", "FFXIDatEG\FFXIDatEG.vcxproj", "{C0BAA145-F1CF-492A-85C5-FCC0D7C2CC30}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoreUnitTest", "CoreUnitTest\CoreUnitTest.vcxproj", "{E5681B92-9BC6-4326-BA7D-323A14C70BCA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -97,6 +99,14 @@ Global
 		{C0BAA145-F1CF-492A-85C5-FCC0D7C2CC30}.Release|x64.Build.0 = Release|x64
 		{C0BAA145-F1CF-492A-85C5-FCC0D7C2CC30}.Release|x86.ActiveCfg = Release|Win32
 		{C0BAA145-F1CF-492A-85C5-FCC0D7C2CC30}.Release|x86.Build.0 = Release|Win32
+		{E5681B92-9BC6-4326-BA7D-323A14C70BCA}.Debug|x64.ActiveCfg = Debug|x64
+		{E5681B92-9BC6-4326-BA7D-323A14C70BCA}.Debug|x64.Build.0 = Debug|x64
+		{E5681B92-9BC6-4326-BA7D-323A14C70BCA}.Debug|x86.ActiveCfg = Debug|Win32
+		{E5681B92-9BC6-4326-BA7D-323A14C70BCA}.Debug|x86.Build.0 = Debug|Win32
+		{E5681B92-9BC6-4326-BA7D-323A14C70BCA}.Release|x64.ActiveCfg = Release|x64
+		{E5681B92-9BC6-4326-BA7D-323A14C70BCA}.Release|x64.Build.0 = Release|x64
+		{E5681B92-9BC6-4326-BA7D-323A14C70BCA}.Release|x86.ActiveCfg = Release|Win32
+		{E5681B92-9BC6-4326-BA7D-323A14C70BCA}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

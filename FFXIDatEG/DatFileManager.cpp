@@ -404,7 +404,7 @@ bool DatFileManager::ExportDatToCsv(const DatFileInfo& info, const std::filesyst
 			f.ToCsv(csvPath.wstring());
 			return true;
 		}
-		if (info.fileType == "iab" || info.fileType == "iwb" || info.fileType == "iub" ||
+		if (info.fileType == "iab" || info.fileType == "iwb" || info.fileType == "iub" || info.fileType == "iib" ||
 			info.fileType == "inb" || info.fileType == "ipb" || info.fileType == "isb" || info.fileType == "icb")
 		{
 			ItemSpecType specType = ItemSpecType::NORMAL;
@@ -414,6 +414,7 @@ bool DatFileManager::ExportDatToCsv(const DatFileInfo& info, const std::filesyst
 			else if (info.fileType == "ipb") specType = ItemSpecType::PUPPET;
 			else if (info.fileType == "isb") specType = ItemSpecType::SLIP;
 			else if (info.fileType == "icb") specType = ItemSpecType::CURRENCY;
+			else if (info.fileType == "iib") specType = ItemSpecType::INSTINCT;
 
 			ItemData f;
 			f.Read(datPath.wstring(), specType);
@@ -921,7 +922,7 @@ bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentVi
 		}
 		else if (info.fileType == "iab" || info.fileType == "iwb" || info.fileType == "iub" ||
 			info.fileType == "inb" || info.fileType == "ipb" || info.fileType == "isb" ||
-			info.fileType == "icb")
+			info.fileType == "icb" || info.fileType == "iib")
 		{
 			return LoadItemDataFile(filePath, info.fileType, contentView);
 		}
@@ -999,7 +1000,7 @@ bool DatFileManager::LoadArbitraryFile(const std::filesystem::path& filePath, co
 		else if (fileType == "fp") return LoadFixedPhraseFile(filePath, contentView);
 		else if (fileType == "iab" || fileType == "iwb" || fileType == "iub" ||
 			fileType == "inb" || fileType == "ipb" || fileType == "isb" ||
-			fileType == "icb") return LoadItemDataFile(filePath, fileType, contentView);
+			fileType == "icb" || fileType == "iib") return LoadItemDataFile(filePath, fileType, contentView);
 		else if (fileType == "mbd") return LoadMonBridgeFile(filePath, contentView);
 		else if (fileType == "erq") return LoadRoeQuestFile(filePath, contentView);
 		else if (fileType == "erc") return LoadRoeCategoryFile(filePath, contentView);
@@ -1334,6 +1335,7 @@ bool DatFileManager::LoadItemDataFile(const std::filesystem::path& filePath, con
 	else if (fileType == "ipb") specType = ItemSpecType::PUPPET;
 	else if (fileType == "isb") specType = ItemSpecType::SLIP;
 	else if (fileType == "icb") specType = ItemSpecType::CURRENCY;
+	else if (fileType == "iib") specType = ItemSpecType::INSTINCT;
 
 	m_currentItemData->Read(filePath, specType);
 

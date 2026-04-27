@@ -129,6 +129,7 @@ ItemSpecType GetItemSpecType(const std::u8string& type)
 	if (type == u8"ipb") return ItemSpecType::PUPPET;
 	if (type == u8"isb") return ItemSpecType::SLIP;
 	if (type == u8"icb") return ItemSpecType::CURRENCY;
+	if (type == u8"iib") return ItemSpecType::INSTINCT;
 	return ItemSpecType::NORMAL;
 }
 
@@ -446,7 +447,7 @@ std::vector<std::u8string> CollectStrings(const fs::path& datPath, const std::u8
 			}
 		}
 	}
-	else if (type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb" || type == u8"ipb" || type == u8"isb" || type == u8"icb")
+	else if (type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb" || type == u8"ipb" || type == u8"isb" || type == u8"icb" || type == u8"iib")
 	{
 		std::set<int> targetCells = ParseCellIndices(cellIndicesStr);
 		bool translateAllCells = targetCells.empty();
@@ -470,6 +471,9 @@ std::vector<std::u8string> CollectStrings(const fs::path& datPath, const std::u8
 		}
 		else if (type == u8"icb") {
 			specType = ItemSpecType::CURRENCY;
+		}
+		else if (type == u8"iib") {
+			specType = ItemSpecType::INSTINCT;
 		}
 
 		itemData.Read(datPath, specType);
@@ -1329,6 +1333,9 @@ int PrepareSourceData()
 				else if (itr->type == u8"icb") {
 					stype = ItemSpecType::CURRENCY;
 				}
+				else if (itr->type == u8"iib") {
+					stype = ItemSpecType::INSTINCT;
+				}
 				id.Read(gameRoot / itr->path, stype);
 				CsvFile output(csvOutputPath, std::ios::out | std::ios::binary);
 
@@ -1840,7 +1847,7 @@ int main(int argc, char **argv)
 			std::vector<std::u8string> referenceTexts;
 			bool useJaReference = false;
 			bool useIdMappedDMsgReference = type == u8"dmsg" && IsQuestDMsg(comm);
-			bool useIdMappedItemReference = type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb" || type == u8"ipb" || type == u8"isb" || type == u8"icb";
+			bool useIdMappedItemReference = type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb" || type == u8"ipb" || type == u8"isb" || type == u8"icb" || type == u8"iib";
 			bool useIdMappedMonBridgeReference = type == u8"mbd";
 			if (englishMode && en_as_ja && !useIdMappedDMsgReference && !useIdMappedItemReference && !useIdMappedMonBridgeReference)
 			{
@@ -2105,7 +2112,7 @@ int main(int argc, char **argv)
 				}
 				fixedPhrase.Write(outPath);
 			}
-			else if (type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb" || type == u8"ipb" || type == u8"isb" || type == u8"icb")
+			else if (type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb" || type == u8"ipb" || type == u8"isb" || type == u8"icb" || type == u8"iib")
 			{
 
 				// 解析要翻译的cell索引
