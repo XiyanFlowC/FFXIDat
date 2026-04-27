@@ -20,9 +20,9 @@ void FixedPhrase::Read(std::wstring path)
 			throw std::runtime_error("Failed to read full header from file " + xybase::string::to_string(path));
 		}
 
-		bool isNotJa = false;
-		if (header.cat.b != 1)
-			isNotJa = true;
+		bool isNoPron = false;
+		if (header.cat.b == 2 || header.cat.b == 3) // EN and DE has no pronounciation, weird though but FR does have
+			isNoPron = true;
 
 		FixedPhraseCategory category;
 		category.cat = header.cat;
@@ -48,7 +48,7 @@ void FixedPhrase::Read(std::wstring path)
 			ptr += textLen;
 
 			// Read pronunciation only if not English
-			if (!isNotJa) {
+			if (!isNoPron) {
 				uint8_t pronLen = *((uint8_t*)ptr++);
 				entry.pron = xybase::string::to_utf8(std::string(ptr));
 				ptr += pronLen;
@@ -71,9 +71,9 @@ void FixedPhrase::Write(std::wstring path)
 		fixed_phrase_category_header header;
 		header.cat = category.cat;
 
-		bool isNotJa = false;
+		bool isNoPron = false;
 		if (header.cat.b != 1)
-			isNotJa = true;
+			isNoPron = true;
 		
 		// Convert category name and pronunciation to fixed-size char arrays
 		std::string catName = xybase::string::to_string(category.categoryName);
@@ -93,7 +93,7 @@ void FixedPhrase::Write(std::wstring path)
 			entriesSize += sizeof(fixed_phrase_category); // category
 			entriesSize += 1; // text length byte
 			entriesSize += static_cast<int32_t>(xybase::string::to_string(entry.text).length() + 1); // text
-			if (!isNotJa)
+			if (!isNoPron)
 			{
 				entriesSize += 1; // pron length byte
 				entriesSize += static_cast<int32_t>(xybase::string::to_string(entry.pron).length() + 1); // pron
@@ -116,7 +116,7 @@ void FixedPhrase::Write(std::wstring path)
 			
 			output.write((char*)&textLen, 1);
 			output.write(text.c_str(), textLen);
-			if (!isNotJa)
+			if (!isNoPron)
 			{
 				output.write((char*)&pronLen, 1);
 				output.write(pron.c_str(), pronLen);
