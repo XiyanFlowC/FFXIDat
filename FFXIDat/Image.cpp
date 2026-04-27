@@ -22,7 +22,7 @@ void Image::Read(std::istream &eye)
 {
 	int type = eye.get();
 
-	if (type != 0xA1 && type != 0x91)
+	if (type != 0xA1 && type != 0x91 && type != 0xB1)
 		throw std::invalid_argument("unknown type");
 	eye.seekg(-1, std::ios::cur);
 	
@@ -32,7 +32,7 @@ void Image::Read(std::istream &eye)
 	assert(header.mipmapCount == 1); // 发现mipmapcount != 1时需做处理
 
 	// Bitmap 读取
-	if (type == 0x91)
+	if (type == 0x91 || type == 0xB1)
 	{
 		this->type = ImageType::IT_BITMAP;
 		if (header.bitCount == 8)

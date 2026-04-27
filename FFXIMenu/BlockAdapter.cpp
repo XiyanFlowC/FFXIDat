@@ -996,6 +996,7 @@ void ImageBlockNode::GetProperties(CMFCPropertyGridCtrl &grid)
 	switch (imageHeader.type) {
 	case 0x91: strType = _T("Bitmap (0x91)"); break;
 	case 0xA1: strType = _T("DXT (0xA1)"); break;
+	case 0xB1: strType = _T("DXT (0xB1)"); break;
 	default:  strType.Format(_T("未知类型 (0x%02X)"), imageHeader.type);
 	}
 	pImgHeaderGroup->AddSubItem(new CMFCPropertyGridProperty(
@@ -1139,6 +1140,53 @@ void ImageBlockNode::UpdateBitmap()
 	int w = imageBlock->image.header.width;
 
 	std::unique_ptr<char[]> buffer = std::make_unique<char[]>(h * w * 4);
+	if (imageBlock->image.header.type == 0x91 || imageBlock->image.header.type == 0xB1) {
+		// 读取并转换Bitmap数据到32bppARGB
+		const char *src = imageBlock->image.texture.get();
+		char *dst = buffer.get();
+
+		if (imageBlock->image.header.bitCount == 8) {
+			// 8位索引色（带调色板）
+			const uint32_t *palette = reinterpret_cast<const uint32_t *>(src);
+			const uint8_t *indices = reinterpret_cast<const uint8_t *>(src + 256 * 4);
+
+			for (int y = 0; y < h; ++y) {
+				for (int x = 0; x < w; ++x) {
+					uint8_t index = indices[y * w + x];
+					uint32_t color = palette[index];
+					// 调色板格式为 A8R8G8B8 (little-endian)，需要转为 ARGB
+					reinterpret_cast<uint32_t *>(dst)[(y * w + x)] = color;
+				}
+			}
+		}
+		else if (imageBlock->image.header.bitCount == 16) {
+			// 16位 RGB565
+			const uint16_t *src16 = reinterpret_cast<const uint16_t *>(src);
+			uint32_t *dst32 = reinterpret_cast<uint32_t *>(dst);
+
+			for (int i = 0; i < h * w; ++i) {
+				uint16_t pixel = src16[i];
+				uint32_t r = ((pixel >> 11) & 0x1F) * 255 / 31;
+				uint32_t g = ((pixel >> 5) & 0x3F) * 255 / 63;
+				uint32_t b = (pixel & 0x1F) * 255 / 31;
+				dst32[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
+			}
+		}
+		else if (imageBlock->image.header.bitCount == 24) {
+			// 24位 RGB
+			for (int i = 0; i < h * w; ++i) {
+				uint8_t b = src[i * 3 + 0];
+				uint8_t g = src[i * 3 + 1];
+				uint8_t r = src[i * 3 + 2];
+				reinterpret_cast<uint32_t *>(dst)[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
+			}
+		}
+		else if (imageBlock->image.header.bitCount == 32) {
+			// 32位 ARGB，直接复制
+			memcpy(dst, src, h * w * 4);
+		}
+	}
+	else
 	switch (*(int *)imageBlock->image.dxtHeader.fourCC)
 	{
 	case 'DXT1':
