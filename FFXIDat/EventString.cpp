@@ -63,6 +63,10 @@ EventStringControlSeqDef *EventStringCodecUtil::CheckControl(const char *start, 
 			{
 				return &gender2;
 			}
+			if (start[1] == 0x91)
+			{
+				return &gender3;
+			}
 			if (start[1] == 0x38)
 			{
 				return &con7f38v;

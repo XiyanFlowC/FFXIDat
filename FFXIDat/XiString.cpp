@@ -174,6 +174,7 @@ std::string XiString::Encode(const std::string &in)
 				params.push_back(std::string(p, 2));
 				p += 2;
 				if (*p == ':') ++p;
+				else throw std::runtime_error("Expected ':' after first param in $switch");
 
 				// Parse remaining parameters (2 bytes each = 4 hex chars)
 				while (*p != ';')
@@ -181,6 +182,7 @@ std::string XiString::Encode(const std::string &in)
 					params.push_back(std::string(p, 4));
 					p += 4;
 					if (*p == ':') ++p;
+					else if (*p != ';') throw std::runtime_error("Expected ':' or ';' after parameter in $switch");
 				}
 				if (*p != ';') throw std::runtime_error("Expected ';' after $switch");
 				++p;
@@ -240,7 +242,6 @@ std::string XiString::Encode(const std::string &in)
 
 				sb += "\xFA\x40\x8B\x01";
 				sb += Encode("\\" + std::string("x") + param1);
-				sb += '\x00';
 			}
 			else if (strncmp(p, "str:", 4) == 0)
 			{
@@ -249,9 +250,6 @@ std::string XiString::Encode(const std::string &in)
 				if (*p != ':') throw std::runtime_error("Expected ':' in $str");
 				++p;
 				std::string param2 = std::string(p, 2); p += 2;
-				if (*p != ':') throw std::runtime_error("Expected ':' in $str");
-				++p;
-				std::string param3 = std::string(p, 2); p += 2;
 				if (*p != ';') throw std::runtime_error("Expected ';' after $str");
 				++p;
 
@@ -456,10 +454,7 @@ std::string XiString::DecodeInternal(const char *p, const char *end, size_t &con
 
 					p += ifConsumed;
 
-					if (ifHasElse)
-					{
-						sb += "$endif;";
-					}
+					sb += "$endif;";
 				}
 				break;
 			case 0x84: // $else;
@@ -505,12 +500,6 @@ std::string XiString::DecodeInternal(const char *p, const char *end, size_t &con
 					sb += content;
 
 					p += length;
-
-					if (hasElse)
-					{
-						consumed = p - start;
-						return sb.ToString();
-					}
 				}
 				break;
 			case 0x8B: // $num:param;
@@ -524,8 +513,6 @@ std::string XiString::DecodeInternal(const char *p, const char *end, size_t &con
 					if (cb < 16) sb += '0';
 					sb += xybase::string::itos<char>(cb, 16).c_str();
 					sb += ';';
-
-					if (p < end && *p == 0x00) ++p;
 				}
 				break;
 			case 0x8C: // $str:param;
