@@ -276,9 +276,6 @@ std::string XiString::Encode(const std::string &in)
 				if (*p != ':') throw std::runtime_error("Expected ':' in $item");
 				++p;
 				std::string param6 = std::string(p, 2); p += 2;
-				if (*p != ':') throw std::runtime_error("Expected ':' in $item");
-				++p;
-				std::string param7 = std::string(p, 2); p += 2;
 				if (*p != ';') throw std::runtime_error("Expected ';' after $item");
 				++p;
 
@@ -289,7 +286,6 @@ std::string XiString::Encode(const std::string &in)
 				sb += Encode("\\" + std::string("x") + param4);
 				sb += Encode("\\" + std::string("x") + param5);
 				sb += Encode("\\" + std::string("x") + param6);
-				sb += Encode("\\" + std::string("x") + param7);
 			}
 			else if (strncmp(p, "sep;", 4) == 0)
 			{
@@ -563,12 +559,12 @@ std::string XiString::DecodeInternal(const char *p, const char *end, size_t &con
 					++p;
 
 					sb += "$item:";
-					for (int i = 0; i < 7; ++i)
+					for (int i = 0; i < 6; ++i)
 					{
 						int cb = (unsigned char)*p++;
 						if (cb < 16) sb += '0';
 						sb += xybase::string::itos<char>(cb, 16).c_str();
-						if (i < 6) sb += ':';
+						if (i < 5) sb += ':';
 					}
 					sb += ';';
 				}
@@ -701,7 +697,7 @@ int XiString::GetStep(const char *p)
 		// i.e. <FA 40 8D>
 	case 0x8E: // $item:param;
 		return 2 + 1 + 1 + 6; // item name insertion?
-		// e.g. <FA 40 8E 01 80 XX XX XX XX XX XX>
+		// e.g. <FA 40 8E 01 XX XX XX XX XX XX>
 	default:
 		break;
 	}

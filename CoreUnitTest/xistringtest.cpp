@@ -237,7 +237,7 @@ TEST_F(XiStringCodecTest, EncodeDecodeStr) {
 
 // $item control sequence
 TEST_F(XiStringCodecTest, EncodeDecodeItem) {
-    TestRoundTrip("$item:01:02:03:04:05:06:07;");
+    TestRoundTrip("$item:01:02:03:04:05:06;");
 }
 
 // $sep control sequence
@@ -353,7 +353,7 @@ TEST_F(XiStringCodecTest, ComprehensiveRoundTrip) {
     std::string original = 
         "Quest: $str:01:02;\r"
         "Status: $if:10:20:30:40;$eq;Complete$else;Incomplete$endif;\r"
-        "Reward: $item:01:02:03:04:05:06:07;\r"
+        "Reward: $item:01:02:03:04:05:06;\r"
         "Count: $num:FF;\r"
         "Price: $$180\r"
         "Path: \\\\x42\\\\x43";
