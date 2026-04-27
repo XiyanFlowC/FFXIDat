@@ -564,7 +564,7 @@ void ContentView::OnPaint(HDC hdc)
 	{
 		RECT rcCol = { xPos + 4, 0, xPos + m_columnWidths[i] - 4, m_headerHeight };
 		::DrawTextW(hdcMem, m_columnTitles[i].c_str(), -1, &rcCol,
-				 DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
+				 DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
 		
 		xPos += m_columnWidths[i];
 		
@@ -690,12 +690,12 @@ void ContentView::DrawTextItem(HDC hdc, const std::wstring& text, RECT& rect, bo
 	if (multiline)
 	{
 		::DrawTextW(hdc, text.c_str(), -1, &rect, 
-				 DT_LEFT | DT_WORDBREAK | DT_END_ELLIPSIS);
+				 DT_LEFT | DT_WORDBREAK | DT_END_ELLIPSIS | DT_NOPREFIX);
 	}
 	else
 	{
 		::DrawTextW(hdc, text.c_str(), -1, &rect, 
-				 DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
+				 DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS | DT_NOPREFIX);
 	}
 }
 

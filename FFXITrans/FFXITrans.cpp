@@ -359,9 +359,16 @@ bool TryAdaptInsCategoryForEnglish(const std::u8string& englishSource, std::u8st
 		if (sourceItr == sourcePartsByVar.end())
 			return false;
 
-		const auto& sourceParts = sourceItr->second;
+		auto sourceParts = sourceItr->second;
 		if (sourceParts.size() < 5)
 			return false;
+
+		// Convert type 24 (English with articles) to type 26 (no articles) for Japanese-like processing
+		// Token format: <ins:length:type:...>
+		if (sourceParts.size() >= 2 && sourceParts[1] == u8"24")
+		{
+			sourceParts[1] = u8"26";
+		}
 
 		auto newToken = BuildInsToken(sourceParts);
 		translated.replace(token.start, token.end - token.start, newToken);
@@ -1576,7 +1583,7 @@ int main(int argc, char **argv)
 			in_situ = true;
 		else
 		{
-			std::wcout << L"FFXI汉化插入工具 Ver.0.16-alpha by Hyururu\n"
+			std::wcout << L"FFXI汉化插入工具 Ver.0.17-alpha by Hyururu\n"
 				L"用法：FFXITrans [insitu]\n"
 				L"  insitu：直接在游戏目录修改文件，否则输出到output目录\n"
 				L"  prepare：输出要准备的游戏数据文件（翻译用）\n"
@@ -1586,7 +1593,7 @@ int main(int argc, char **argv)
 	}
 	try
 	{
-		std::wcout << L"FFXI汉化插入工具 Ver.0.16-alpha by Hyururu" << std::endl;
+		std::wcout << L"FFXI汉化插入工具 Ver.0.17-alpha by Hyururu" << std::endl;
 		if (PathInit())
 		{
 			system("pause");
@@ -1944,19 +1951,27 @@ int main(int argc, char **argv)
 							if (itrCsv == csvTranslations.end())
 							{
 								auto& c = row.GetCells();
-								c[1].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(c[1].Get<std::u8string>())))));
-								c[2].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(c[2].Get<std::u8string>())))));
+								if (c.size() >= 2 && c[1].GetType() == 0)
+									c[1].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(c[1].Get<std::u8string>())))));
+								if (c.size() >= 3 && c[2].GetType() == 0)
+									c[2].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(c[2].Get<std::u8string>())))));
 								continue;
 							}
 
 							auto& mutableCells = row.GetCells();
-							if (!itrCsv->second.name.empty() && mutableCells.size() >= 2 && mutableCells[1].GetType() == 0)
+							if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0)
 							{
-								mutableCells[1].Set(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.name));
+								if (!itrCsv->second.name.empty())
+									mutableCells[1].Set(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.name));
+								else
+									mutableCells[1].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(mutableCells[1].Get<std::u8string>())))));
 							}
-							if (!itrCsv->second.description.empty() && mutableCells.size() >= 3 && mutableCells[2].GetType() == 0)
+							if (mutableCells.size() >= 3 && mutableCells[2].GetType() == 0)
 							{
-								mutableCells[2].Set(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.description));
+								if (!itrCsv->second.description.empty())
+									mutableCells[2].Set(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.description));
+								else
+									mutableCells[2].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(mutableCells[2].Get<std::u8string>())))));
 							}
 						}
 					}
@@ -1971,19 +1986,27 @@ int main(int argc, char **argv)
 						if (itrCsv == csvTranslations.end())
 						{
 							auto& c = row.GetCells();
-							c[1].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(c[1].Get<std::u8string>())))));
-							c[2].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(c[2].Get<std::u8string>())))));
+							if (c.size() >= 2 && c[1].GetType() == 0)
+								c[1].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(c[1].Get<std::u8string>())))));
+							if (c.size() >= 3 && c[2].GetType() == 0)
+								c[2].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(c[2].Get<std::u8string>())))));
 							continue;
 						}
 
 						auto& mutableCells = row.GetCells();
-						if (!itrCsv->second.name.empty() && mutableCells.size() >= 2 && mutableCells[1].GetType() == 0)
+						if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0)
 						{
-							mutableCells[1].Set(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.name));
+							if (!itrCsv->second.name.empty())
+								mutableCells[1].Set(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.name));
+							else
+								mutableCells[1].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(mutableCells[1].Get<std::u8string>())))));
 						}
-						if (!itrCsv->second.description.empty() && mutableCells.size() >= 3 && mutableCells[2].GetType() == 0)
+						if (mutableCells.size() >= 3 && mutableCells[2].GetType() == 0)
 						{
-							mutableCells[2].Set(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.description));
+							if (!itrCsv->second.description.empty())
+								mutableCells[2].Set(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.description));
+							else
+								mutableCells[2].Set(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(mutableCells[2].Get<std::u8string>())))));
 						}
 					}
 					dmsg.path = outPath;
@@ -2130,7 +2153,11 @@ int main(int argc, char **argv)
 					{
 						auto itrCsv = csvTranslations.find(datum.id);
 						if (itrCsv == csvTranslations.end())
+						{
+							datum.setName(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.name())))));
+							datum.setDescription(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.description())))));
 							continue;
+						}
 
 						if (!itrCsv->second.first.empty()) {
 						auto convertedName = ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.first);
@@ -2268,7 +2295,12 @@ int main(int argc, char **argv)
 					{
 						auto itrCsv = csvTranslations.find(datum.id);
 						if (itrCsv == csvTranslations.end())
+						{
+							datum.setQuestName(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.questName())))));
+							datum.setDescription(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.description())))));
+							datum.setNote(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.note())))));
 							continue;
+						}
 
 						if (!itrCsv->second.questName.empty())
 							datum.setQuestName(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.questName));
@@ -2321,7 +2353,10 @@ int main(int argc, char **argv)
 					{
 						auto itrCsv = csvTranslations.find(datum.id);
 						if (itrCsv == csvTranslations.end())
+						{
+							datum.setCategoryName(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.categoryName())))));
 							continue;
+						}
 						if (!itrCsv->second.empty())
 							datum.setCategoryName(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second));
 						else
