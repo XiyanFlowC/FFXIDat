@@ -18,7 +18,9 @@ void Row::ReadRow(Record *buffer, int limit)
 		else
 		{
 			RecordString *str = (RecordString *)(base + offset);
-			assert(str->one == 1 && str->zero[0] == 0 && str->zero[1] == 0 && str->zero[2] == 0 && str->zero[3] == 0 && str->zero[4] == 0 && str->zero[5] == 0);
+			//assert(str->one == 1 && str->zero[0] == 0 && str->zero[1] == 0 && str->zero[2] == 0 && str->zero[3] == 0 && str->zero[4] == 0 && str->zero[5] == 0);
+			bool valid = str->one == 1 && str->zero[0] == 0 && str->zero[1] == 0 && str->zero[2] == 0 && str->zero[3] == 0 && str->zero[4] == 0 && str->zero[5] == 0;
+			if (!valid) throw std::runtime_error("Invalid RecordString format.");
 
 			cells.push_back(Cell(xybase::string::to_utf8(str->str)));
 		}
