@@ -365,9 +365,15 @@ bool TryAdaptInsCategoryForEnglish(const std::u8string& englishSource, std::u8st
 
 		// Convert type 24 (English with articles) to type 26 (no articles) for Japanese-like processing
 		// Token format: <ins:length:type:...>
-		if (sourceParts.size() >= 2 && sourceParts[1] == u8"24")
+		// Normal Item's type replacement
+		if (sourceParts.size() >= 2 && (sourceParts[1] == u8"24" || sourceParts[1] == u8"25" || sourceParts[1] == u8"26" || sourceParts[1] == u8"27"))
 		{
-			sourceParts[1] = u8"26";
+			sourceParts[1] = u8"23";
+		}
+		// Key Item's type replacement
+		if (sourceParts.size() >= 2 && (sourceParts[1] == u8"36" || sourceParts[1] == u8"45"))
+		{
+			sourceParts[1] = u8"33";
 		}
 
 		auto newToken = BuildInsToken(sourceParts);
@@ -1583,7 +1589,7 @@ int main(int argc, char **argv)
 			in_situ = true;
 		else
 		{
-			std::wcout << L"FFXI汉化插入工具 Ver.0.17-alpha by Hyururu\n"
+			std::wcout << L"FFXI汉化插入工具 Ver.0.17-delta by Hyururu\n"
 				L"用法：FFXITrans [insitu]\n"
 				L"  insitu：直接在游戏目录修改文件，否则输出到output目录\n"
 				L"  prepare：输出要准备的游戏数据文件（翻译用）\n"
@@ -1593,7 +1599,7 @@ int main(int argc, char **argv)
 	}
 	try
 	{
-		std::wcout << L"FFXI汉化插入工具 Ver.0.17-alpha by Hyururu" << std::endl;
+		std::wcout << L"FFXI汉化插入工具 Ver.0.17-delta by Hyururu" << std::endl;
 		if (PathInit())
 		{
 			system("pause");
