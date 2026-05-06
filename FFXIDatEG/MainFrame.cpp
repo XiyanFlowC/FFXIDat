@@ -1975,8 +1975,8 @@ void MainFrame::OnAbout()
 {
 	std::wstring message = 
 		L"FFXI DAT Viewer\n\n"
-		L"Version: 1.0\n\n"
-		L"A tool for viewing and editing(not yet) FFXI DAT files.\n\n"
+		L"Version: 1.1\n\n"
+		L"A tool for viewing and editing FFXI text DAT files.\n\n"
 		L"Built with Win32 API\n"
 		L"https://github.com/XiyanFlowC/FFXIDat";
 	

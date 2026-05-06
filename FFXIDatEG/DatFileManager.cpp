@@ -1370,8 +1370,36 @@ bool DatFileManager::LoadItemDataFile(const std::filesystem::path& filePath, con
 	contentView->SetColumnWidth(appendedBase + 0, 150);
 	contentView->SetColumnTitle(appendedBase + 1, L"Stack");
 	contentView->SetColumnWidth(appendedBase + 1, 60);
-	/*contentView->SetColumnTitle(appendedBase + 2, L"Type");
-	contentView->SetColumnWidth(appendedBase + 2, 80);*/
+	contentView->SetColumnTitle(appendedBase + 2, L"SubFlags");
+	contentView->SetColumnWidth(appendedBase + 2, 200);
+	contentView->SetColumnTitle(appendedBase + 3, L"Type");
+	contentView->SetColumnWidth(appendedBase + 3, 80);
+	contentView->SetColumnTitle(appendedBase + 4, L"ResourceId");
+	contentView->SetColumnWidth(appendedBase + 4, 60);
+	contentView->SetColumnTitle(appendedBase + 5, L"ValidTarget");
+	contentView->SetColumnWidth(appendedBase + 5, 200);
+
+	switch (specType)
+	{
+	case ItemSpecType::NORMAL:
+		break;
+	case ItemSpecType::USABLE:
+		break;
+	case ItemSpecType::WEAPON:
+		break;
+	case ItemSpecType::ARMOUR:
+		break;
+	case ItemSpecType::PUPPET:
+		break;
+	case ItemSpecType::SLIP:
+		break;
+	case ItemSpecType::CURRENCY:
+		break;
+	case ItemSpecType::INSTINCT:
+		break;
+	default:
+		break;
+	}
 
 	for (const auto& datum : m_currentItemData->data)
 	{
@@ -1438,20 +1466,154 @@ bool DatFileManager::LoadItemDataFile(const std::filesystem::path& filePath, con
 			stackCol.editable = false;
 			item->columns.push_back(stackCol);
 
-			// Spec type as text
-			/*std::wstring typeStr;
-			switch (datum.spec_type) {
-			case ItemSpecType::WEAPON: typeStr = L"WEAPON"; break;
-			case ItemSpecType::ARMOUR: typeStr = L"ARMOUR"; break;
-			case ItemSpecType::USABLE: typeStr = L"USABLE"; break;
-			case ItemSpecType::PUPPET: typeStr = L"PUPPET"; break;
-			case ItemSpecType::SLIP:   typeStr = L"SLIP"; break;
-			case ItemSpecType::CURRENCY: typeStr = L"CURRENCY"; break;
-			case ItemSpecType::NORMAL: default: typeStr = L"NORMAL"; break;
+			// SubFlags
+			std::wstring subFlagsStr;
+			if (flg.is_equipment) subFlagsStr += L"Equip ";
+			if (flg.is_gm_item) subFlagsStr += L"GM ";
+			if (flg.is_inscribable) subFlagsStr += L"Inscribable ";
+			if (flg.is_in_mystery_box) subFlagsStr += L"MysteryBox ";
+			if (flg.is_linkshell) subFlagsStr += L"Linkshell ";
+			if (flg.is_not_listable) subFlagsStr += L"NotListable ";
+			if (flg.is_npc_tradeable) subFlagsStr += L"Tradeable ";
+			if (flg.is_scroll) subFlagsStr += L"Scroll ";
+			if (flg.is_unmailable) subFlagsStr += L"Unmailable ";
+			if (flg.is_unsellable) subFlagsStr += L"Unsellable ";
+			if (flg.is_usable) subFlagsStr += L"Usable ";
+			if (flg.is_wall_decoration) subFlagsStr += L"WallDeco ";
+			ColumnData subFlagsCol = ColumnData::MakeText(subFlagsStr.empty() ? L"-" : subFlagsStr);
+			subFlagsCol.editable = false;
+			item->columns.push_back(subFlagsCol);
+
+			// Type column
+			ColumnData typeCol;
+			switch (datum.item_type())
+			{
+			case 1:
+				typeCol = ColumnData::MakeText(L"Item");
+				break;
+			case 2:
+				typeCol = ColumnData::MakeText(L"Quest Item");
+				break;
+			case 3:
+				typeCol = ColumnData::MakeText(L"Fish");
+				break;
+			case 4:
+				typeCol = ColumnData::MakeText(L"Weapon");
+				break;
+			case 5:
+				typeCol = ColumnData::MakeText(L"Armor");
+				break;
+			case 6:
+				typeCol = ColumnData::MakeText(L"Linkshell");
+				break;
+			case 7:
+				typeCol = ColumnData::MakeText(L"Usable Item");
+				break;
+			case 8:
+				typeCol = ColumnData::MakeText(L"Crystal");
+				break;
+			case 10:
+				typeCol = ColumnData::MakeText(L"Furnishing");
+				break;
+			case 11:
+				typeCol = ColumnData::MakeText(L"Plant");
+				break;
+			case 12:
+				typeCol = ColumnData::MakeText(L"Flowerpot");
+				break;
+			case 13:
+				typeCol = ColumnData::MakeText(L"Material");
+				break;
+			case 14:
+				typeCol = ColumnData::MakeText(L"Mannequin");
+				break;
+			case 15:
+				typeCol = ColumnData::MakeText(L"Book");
+				break;
+			case 16:
+				typeCol = ColumnData::MakeText(L"Chocobo Breeding");
+				break;
+			case 17:
+				typeCol = ColumnData::MakeText(L"Chocobo Racing");
+				break;
+			case 18:
+				typeCol = ColumnData::MakeText(L"Pankration Plate");
+				break;
+			case 19:
+				typeCol = ColumnData::MakeText(L"Pankration Mirror");
+				break;
+			case 20:
+				typeCol = ColumnData::MakeText(L"Assault/Imperial");
+				break;
+			case 21:
+				typeCol = ColumnData::MakeText(L"Mog Bonanza");
+				break;
+			case 22:
+				typeCol = ColumnData::MakeText(L"MMM Tabula M");
+				break;
+			case 23:
+				typeCol = ColumnData::MakeText(L"MMM Tabula R");
+				break;
+			case 24:
+				typeCol = ColumnData::MakeText(L"MMM Voucher");
+				break;
+			case 25:
+				typeCol = ColumnData::MakeText(L"MMM Rune");
+				break;
+			case 26:
+				typeCol = ColumnData::MakeText(L"Evolith");
+				break;
+			case 27:
+				typeCol = ColumnData::MakeText(L"Storage Slip");
+				break;
+			case 28:
+				typeCol = ColumnData::MakeText(L"Legion/Ambuscade");
+				break;
+			case 29:
+				typeCol = ColumnData::MakeText(L"Skirmish");
+				break;
+			case 31:
+				typeCol = ColumnData::MakeText(L"Guild/Crafting");
+				break;
+			case 0:
+			default:
+				typeCol = ColumnData::MakeText(L"Invalid");
+				break;
 			}
-			ColumnData typeCol = ColumnData::MakeText(typeStr);
 			typeCol.editable = false;
-			item->columns.push_back(typeCol);*/
+			item->columns.push_back(typeCol);
+
+			// ResourceId column
+			ColumnData resourceIdCol = ColumnData::MakeInteger(datum.resource_id());
+			resourceIdCol.editable = false;
+			item->columns.push_back(resourceIdCol);
+
+			// ValidTarget column
+			ColumnData validTargetCol = ColumnData::MakeInteger(datum.valid_targets());
+			validTargetCol.editable = false;
+			item->columns.push_back(validTargetCol);
+
+			switch (specType)
+			{
+			case ItemSpecType::NORMAL:
+				break;
+			case ItemSpecType::USABLE:
+				break;
+			case ItemSpecType::WEAPON:
+				break;
+			case ItemSpecType::ARMOUR:
+				break;
+			case ItemSpecType::PUPPET:
+				break;
+			case ItemSpecType::SLIP:
+				break;
+			case ItemSpecType::CURRENCY:
+				break;
+			case ItemSpecType::INSTINCT:
+				break;
+			default:
+				break;
+			}
 		}
 
 		item->customHeight = 3 * 24;

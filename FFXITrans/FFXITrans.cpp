@@ -43,6 +43,7 @@ bool no_mismatch_log = false;
 bool en_as_ja = false; 
 bool ejref_tolerance = false;
 bool verbose = false;
+bool noname = false; // if true, skip entries' names, only translate descriptions
 
 #include "../FFXIDatProcessor/codepage.h"
 #include "ChsToSJis.h"
@@ -1668,6 +1669,10 @@ int main(int argc, char **argv)
 				{
 					verbose = (value == L"1" || value == L"true" || value == L"yes");
 				}
+				else if (key == L"noname")
+				{
+					noname = (value == L"1" || value == L"true" || value == L"yes");
+				}
 			}
 			configFile.close();
 		}
@@ -2160,12 +2165,15 @@ int main(int argc, char **argv)
 						auto itrCsv = csvTranslations.find(datum.id);
 						if (itrCsv == csvTranslations.end())
 						{
-							datum.setName(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.name())))));
-							datum.setDescription(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.description())))));
+							// 没有找到 CSV 翻译，回退到普通翻译逻辑（但仍受 targetCells 影响）
+							if (!translateAllCells && targetCells.count(1) == 1)
+								datum.setName(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.name())))));
+							if (!translateAllCells && targetCells.count(2) == 1)
+								datum.setDescription(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.description())))));
 							continue;
 						}
 
-						if (!itrCsv->second.first.empty()) {
+						if (!itrCsv->second.first.empty() && (translateAllCells || targetCells.count(1) == 1)) {
 						auto convertedName = ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.first);
 						datum.setName(convertedName);
 						datum.setName_sg(convertedName);
@@ -2174,7 +2182,7 @@ int main(int argc, char **argv)
 						else {
 							datum.setName(ChsToSJis::Instance().ReplaceHanzi(xybase::string::unescape(GetTranslation(xybase::string::escape(datum.name())))));
 						}
-						if (!itrCsv->second.second.empty()) {
+						if (!itrCsv->second.second.empty() && (translateAllCells || targetCells.count(2) == 1)) {
 						datum.setDescription(ChsToSJis::Instance().ReplaceHanzi(itrCsv->second.second));
 						}
 						else {

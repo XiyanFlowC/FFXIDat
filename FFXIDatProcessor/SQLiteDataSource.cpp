@@ -1328,12 +1328,12 @@ void SQLiteDataSource::InsertWeaponSpec(int item_id, const ItemWeaponSpec &spec)
 	{
 		sqlite3_bind_int(stmt, 1, item_id);
 		sqlite3_bind_int(stmt, 2, spec.level);
-		sqlite3_bind_int(stmt, 3, spec.ukn);
+		sqlite3_bind_int(stmt, 3, spec.slvl);
 		sqlite3_bind_int(stmt, 4, spec.ukn2);
 		sqlite3_bind_int(stmt, 5, spec.dmg);
 		sqlite3_bind_int(stmt, 6, spec.delay);
-		sqlite3_bind_int(stmt, 7, spec.ukn5);
-		sqlite3_bind_int(stmt, 8, spec.ukn6);
+		sqlite3_bind_int(stmt, 7, spec.dps);
+		sqlite3_bind_int(stmt, 8, spec.skill);
 		sqlite3_bind_int(stmt, 9, spec.ukn12);
 		sqlite3_bind_int(stmt, 10, spec.ukn7);
 		sqlite3_bind_int(stmt, 11, spec.ukn9);
@@ -1342,7 +1342,7 @@ void SQLiteDataSource::InsertWeaponSpec(int item_id, const ItemWeaponSpec &spec)
 		sqlite3_bind_int(stmt, 14, spec.use_time);
 		sqlite3_bind_int(stmt, 15, spec.reuse_time);
 		sqlite3_bind_int(stmt, 16, spec.ukn20);
-		sqlite3_bind_int(stmt, 17, spec.ukn21);
+		sqlite3_bind_int(stmt, 17, spec.related_item_id);
 		sqlite3_bind_int(stmt, 18, spec.ilvl);
 		sqlite3_bind_int(stmt, 19, spec.ukn22);
 		sqlite3_bind_int(stmt, 20, spec.ukn23);
@@ -1366,14 +1366,14 @@ void SQLiteDataSource::InsertArmourSpec(int item_id, const ItemArmourSpec &spec)
 	{
 		sqlite3_bind_int(stmt, 1, item_id);
 		sqlite3_bind_int(stmt, 2, spec.level);
-		sqlite3_bind_int(stmt, 3, spec.ukn);
+		sqlite3_bind_int(stmt, 3, spec.slvl);
 		sqlite3_bind_int(stmt, 4, spec.shield_size);
 		sqlite3_bind_int(stmt, 5, spec.max_charges);
 		sqlite3_bind_int(stmt, 6, spec.cast_factor);
 		sqlite3_bind_int(stmt, 7, spec.use_time);
 		sqlite3_bind_int(stmt, 8, spec.reuse_time);
 		sqlite3_bind_int(stmt, 9, spec.ukn1);
-		sqlite3_bind_int(stmt, 10, spec.ukn2);
+		sqlite3_bind_int(stmt, 10, spec.related_item_id);
 		sqlite3_bind_int(stmt, 11, spec.ilvl);
 		sqlite3_bind_int(stmt, 12, spec.ukn3);
 		sqlite3_bind_int(stmt, 13, spec.ukn4);
@@ -1417,9 +1417,9 @@ void SQLiteDataSource::InsertNormalSpec(int item_id, const ItemNormalSpec &spec)
 	if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
 	{
 		sqlite3_bind_int(stmt, 1, item_id);
-		sqlite3_bind_int(stmt, 2, spec.ukn1);
-		sqlite3_bind_int(stmt, 3, spec.ukn2);
-		sqlite3_bind_int(stmt, 4, spec.ukn3);
+		sqlite3_bind_int(stmt, 2, spec.element);
+		sqlite3_bind_int(stmt, 3, spec.element_value);
+		sqlite3_bind_int(stmt, 4, spec.related_item_id);
 		sqlite3_bind_int(stmt, 5, spec.ukn4);
 		sqlite3_bind_int(stmt, 6, spec.ukn5);
 		sqlite3_step(stmt);

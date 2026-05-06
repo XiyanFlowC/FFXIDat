@@ -43,6 +43,7 @@ struct ItemHeader
 	uint16_t valid_targets;
 };
 
+
 struct ItemJobApplicability
 {
 	uint32_t rsv1 : 1; // Bit 0
@@ -115,14 +116,14 @@ struct ItemArmourSpec
 	ItemEquipSlot equip_slots;
 	ItemRaceApplicability equip_races;
 	ItemJobApplicability equip_jobs;
-	uint16_t ukn;
+	uint16_t slvl;
 	uint16_t shield_size;
 	uint8_t max_charges;
 	uint8_t cast_factor; // 使用后到效果生效的延迟时间系数，1/4秒，动画硬直时间
 	uint16_t use_time;
 	uint16_t reuse_time;
 	uint16_t ukn1;
-	uint16_t ukn2;
+	uint16_t related_item_id;
 	uint16_t ilvl;
 	uint16_t ukn3;
 	uint16_t ukn4;
@@ -159,9 +160,9 @@ struct ItemPuppetSpec
 
 struct ItemNormalSpec
 {
-	int16_t ukn1;
-	int16_t ukn2;
-	int16_t ukn3;
+	int16_t element;
+	int16_t element_value;
+	int16_t related_item_id;
 	int16_t ukn4;
 	int16_t ukn5;
 	Record info_rec;
@@ -183,13 +184,13 @@ struct ItemWeaponSpec
 	ItemEquipSlot equip_slots;
 	ItemRaceApplicability races;
 	ItemJobApplicability jobs;
-	uint16_t ukn;
+	uint16_t slvl;
 
 	uint16_t ukn2;
 	uint16_t dmg;
 	uint16_t delay;
-	uint16_t ukn5;
-	uint8_t ukn6;
+	uint16_t dps;
+	uint8_t skill;
 	uint8_t ukn12;
 	uint16_t ukn7;
 	uint16_t ukn9;
@@ -199,12 +200,80 @@ struct ItemWeaponSpec
 	uint16_t use_time;
 	uint16_t reuse_time;
 	uint16_t ukn20;
-	uint16_t ukn21;
+	uint16_t related_item_id;
 	uint16_t ilvl;
 	uint16_t ukn22;
 	uint16_t ukn23;
 
 	Record info_rec;
+};
+
+enum class SkillType : uint8_t
+{
+	None = 0,
+	HandToHand = 1,
+	Dagger = 2,
+	Sword = 3,
+	GreatSword = 4,
+	Axe = 5,
+	GreatAxe = 6,
+	Scythe = 7,
+	Polearm = 8,
+	Katana = 9,
+	GreatKatana = 10,
+	Club = 11,
+	Staff = 12,
+	Weapon12 = 13,
+	Weapon11 = 14,
+	Weapon10 = 15,
+	Weapon9 = 16,
+	Weapon8 = 17,
+	Weapon7 = 18,
+	Weapon6 = 19,
+	Weapon5 = 20,
+	Weapon4 = 21,
+	AutomatonMelee = 22,
+	AutomatonArchery = 23,
+	AutomatonMagic = 24,
+	Archery = 25,
+	Marksmanship = 26,
+	Throwing = 27,
+	Guard = 28,
+	Evasion = 29,
+	Shield = 30,
+	Parrying = 31,
+	DivineMagic = 32,
+	HealingMagic = 33,
+	EnhancingMagic = 34,
+	EnfeeblingMagic = 35,
+	ElementalMagic = 36,
+	DarkMagic = 37,
+	SummoningMagic = 38,
+	Ninjutsu = 39,
+	Singing = 40,
+	StringedInstrument = 41,
+	WindInstrument = 42,
+	BlueMagic = 43,
+	Geomancy = 44,
+	Handbell = 45,
+	Magic2 = 46,
+	Magic1 = 47,
+	Fishing = 48,
+	Woodworking = 49,
+	Smithing = 50,
+	Goldsmithing = 51,
+	Clothcraft = 52,
+	Leatherworking = 53,
+	Bonecraft = 54,
+	Alchemy = 55,
+	Cooking = 56,
+	Synergy = 57,
+	Synthesis6 = 58,
+	Synthesis5 = 59,
+	Synthesis4 = 60,
+	Synthesis3 = 61,
+	Synthesis2 = 62,
+	Synthesis1 = 63
 };
 
 struct ItemSlipSpec
@@ -265,6 +334,14 @@ enum class ItemSpecType {
 class ItemData
 {
 public:
+	using ValidTarget = uint16_t; // bitmask for valid target types, e.g. player, NPC, etc.
+	const ValidTarget VT_SELF = 0x0001,
+		VT_PLAYER = 0x0002,
+		VT_PARTY = 0x0004,
+		VT_ALLY = 0x0008,
+		VT_ENEMY = 0x0010,
+		VT_CORPSE = 0x0080;
+
 	bool encryptionSuppression = false;
 
 	class ItemDatum

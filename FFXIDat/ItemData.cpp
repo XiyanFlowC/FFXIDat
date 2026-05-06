@@ -354,10 +354,115 @@ void ItemData::ToICsv(const std::wstring& path) const
 	auto toU8 = [](auto v) {
 		return xybase::string::to_utf8(std::to_string(v));
 	};
+	auto elementToText = [&toU8](int16_t element) -> std::u8string {
+		if (element == -1) return u8"N/A";
+		switch (element) {
+		case 0: return u8"Fire";
+		case 1: return u8"Ice";
+		case 2: return u8"Wind";
+		case 3: return u8"Earth";
+		case 4: return u8"Thunder";
+		case 5: return u8"Water";
+		case 6: return u8"Light";
+		case 7: return u8"Dark";
+		default: return toU8(element);
+		}
+	};
+	auto validTargetsToText = [](uint16_t targets) -> std::u8string {
+		if (targets == 0) return u8"None";
+		std::u8string result;
+		// Common FFXI target flags
+		if (targets & 0x01) { if (!result.empty()) result += u8" "; result += u8"Self"; }
+		if (targets & 0x02) { if (!result.empty()) result += u8" "; result += u8"Player"; }
+		if (targets & 0x04) { if (!result.empty()) result += u8" "; result += u8"Party"; }
+		if (targets & 0x08) { if (!result.empty()) result += u8" "; result += u8"Alliance"; }
+		if (targets & 0x10) { if (!result.empty()) result += u8" "; result += u8"NPC"; }
+		if (targets & 0x20) { if (!result.empty()) result += u8" "; result += u8"Enemy"; }
+		if (targets & 0x40) { if (!result.empty()) result += u8" "; result += u8"Unknown_0x40"; }
+		if (targets & 0x80) { if (!result.empty()) result += u8" "; result += u8"Corpse"; }
+		if (targets & 0x100) { if (!result.empty()) result += u8" "; result += u8"Unknown_0x100"; }
+		if (targets & 0x200) { if (!result.empty()) result += u8" "; result += u8"Unknown_0x200"; }
+		if (targets & 0x400) { if (!result.empty()) result += u8" "; result += u8"Unknown_0x400"; }
+		if (targets & 0x800) { if (!result.empty()) result += u8" "; result += u8"Unknown_0x800"; }
+		if (targets & 0x1000) { if (!result.empty()) result += u8" "; result += u8"Unknown_0x1000"; }
+		if (targets & 0x2000) { if (!result.empty()) result += u8" "; result += u8"Unknown_0x2000"; }
+		if (targets & 0x4000) { if (!result.empty()) result += u8" "; result += u8"Unknown_0x4000"; }
+		if (targets & 0x8000) { if (!result.empty()) result += u8" "; result += u8"Unknown_0x8000"; }
+		return result;
+	};
 	auto boolToU8 = [](bool v) {
 		return v ? u8"1" : u8"0";
 	};
-	auto specTypeToU8 = [](ItemSpecType specType) {
+	auto skillTypeToU8 = [](uint8_t skill) -> std::u8string {
+		switch (static_cast<SkillType>(skill)) {
+		case SkillType::None: return u8"N/A";
+		case SkillType::HandToHand: return u8"Hand-to-Hand";
+		case SkillType::Dagger: return u8"Dagger";
+		case SkillType::Sword: return u8"Sword";
+		case SkillType::GreatSword: return u8"Great Sword";
+		case SkillType::Axe: return u8"Axe";
+		case SkillType::GreatAxe: return u8"Great Axe";
+		case SkillType::Scythe: return u8"Scythe";
+		case SkillType::Polearm: return u8"Polearm";
+		case SkillType::Katana: return u8"Katana";
+		case SkillType::GreatKatana: return u8"Great Katana";
+		case SkillType::Club: return u8"Club";
+		case SkillType::Staff: return u8"Staff";
+		case SkillType::Weapon12: return u8"(Weapon 12)";
+		case SkillType::Weapon11: return u8"(Weapon 11)";
+		case SkillType::Weapon10: return u8"(Weapon 10)";
+		case SkillType::Weapon9: return u8"(Weapon 9)";
+		case SkillType::Weapon8: return u8"(Weapon 8)";
+		case SkillType::Weapon7: return u8"(Weapon 7)";
+		case SkillType::Weapon6: return u8"(Weapon 6)";
+		case SkillType::Weapon5: return u8"(Weapon 5)";
+		case SkillType::Weapon4: return u8"(Weapon 4)";
+		case SkillType::AutomatonMelee: return u8"Automaton Melee";
+		case SkillType::AutomatonArchery: return u8"Automaton Archery";
+		case SkillType::AutomatonMagic: return u8"Automaton Magic";
+		case SkillType::Archery: return u8"Archery";
+		case SkillType::Marksmanship: return u8"Marksmanship";
+		case SkillType::Throwing: return u8"Throwing";
+		case SkillType::Guard: return u8"Guard";
+		case SkillType::Evasion: return u8"Evasion";
+		case SkillType::Shield: return u8"Shield";
+		case SkillType::Parrying: return u8"Parrying";
+		case SkillType::DivineMagic: return u8"Divine Magic";
+		case SkillType::HealingMagic: return u8"Healing Magic";
+		case SkillType::EnhancingMagic: return u8"Enhancing Magic";
+		case SkillType::EnfeeblingMagic: return u8"Enfeebling Magic";
+		case SkillType::ElementalMagic: return u8"Elemental Magic";
+		case SkillType::DarkMagic: return u8"Dark Magic";
+		case SkillType::SummoningMagic: return u8"Summoning Magic";
+		case SkillType::Ninjutsu: return u8"Ninjutsu";
+		case SkillType::Singing: return u8"Singing";
+		case SkillType::StringedInstrument: return u8"Stringed Instrument";
+		case SkillType::WindInstrument: return u8"Wind Instrument";
+		case SkillType::BlueMagic: return u8"Blue Magic";
+		case SkillType::Geomancy: return u8"Geomancy";
+		case SkillType::Handbell: return u8"Handbell";
+		case SkillType::Magic2: return u8"(Magic 2)";
+		case SkillType::Magic1: return u8"(Magic 1)";
+		case SkillType::Fishing: return u8"Fishing";
+		case SkillType::Woodworking: return u8"Woodworking";
+		case SkillType::Smithing: return u8"Smithing";
+		case SkillType::Goldsmithing: return u8"Goldsmithing";
+		case SkillType::Clothcraft: return u8"Clothcraft";
+		case SkillType::Leatherworking: return u8"Leatherworking";
+		case SkillType::Bonecraft: return u8"Bonecraft";
+		case SkillType::Alchemy: return u8"Alchemy";
+		case SkillType::Cooking: return u8"Cooking";
+		case SkillType::Synergy: return u8"Synergy";
+		case SkillType::Synthesis6: return u8"(Synthesis 6)";
+		case SkillType::Synthesis5: return u8"(Synthesis 5)";
+		case SkillType::Synthesis4: return u8"(Synthesis 4)";
+		case SkillType::Synthesis3: return u8"(Synthesis 3)";
+		case SkillType::Synthesis2: return u8"(Synthesis 2)";
+		case SkillType::Synthesis1: return u8"(Synthesis 1)";
+		default: return xybase::string::to_utf8(std::to_string(skill));
+		}
+	};
+	auto specTypeToText = [](ItemSpecType specType) {
 		switch (specType) {
 		case ItemSpecType::WEAPON: return std::u8string(u8"WEAPON");
 		case ItemSpecType::ARMOUR: return std::u8string(u8"ARMOUR");
@@ -497,8 +602,8 @@ void ItemData::ToICsv(const std::wstring& path) const
 		csv.NewCell(u8"Slots");
 		csv.NewCell(u8"Races");
 		csv.NewCell(u8"Jobs");
-		for (auto&& h : { u8"Ukn", u8"Ukn2", u8"DMG", u8"Delay", u8"Ukn5", u8"Ukn6", u8"Ukn12", u8"Ukn7", u8"Ukn9",
-			u8"MaxCharges", u8"CastFactor", u8"UseTime", u8"ReuseTime", u8"Ukn20", u8"Ukn21", u8"iLvl", u8"Ukn22", u8"Ukn23" }) {
+		for (auto&& h : { u8"SuperiorLevel", u8"Ukn2", u8"DMG", u8"Delay", u8"DPS", u8"Skill", u8"Ukn12", u8"Ukn7", u8"Ukn9",
+			u8"MaxCharges", u8"CastFactor", u8"UseTime", u8"ReuseTime", u8"Ukn20", u8"RelatedItemId", u8"iLvl", u8"Ukn22", u8"Ukn23" }) {
 			csv.NewCell(h);
 		}
 		break;
@@ -507,7 +612,7 @@ void ItemData::ToICsv(const std::wstring& path) const
 		csv.NewCell(u8"Slots");
 		csv.NewCell(u8"Races");
 		csv.NewCell(u8"Jobs");
-		for (auto&& h : { u8"Ukn", u8"ShieldSize", u8"MaxCharges", u8"CastFactor", u8"UseTime", u8"ReuseTime", u8"Ukn1", u8"Ukn2", u8"iLvl", u8"Ukn3", u8"Ukn4" }) {
+		for (auto&& h : { u8"SuperiorLevel", u8"ShieldSize", u8"MaxCharges", u8"CastFactor", u8"UseTime", u8"ReuseTime", u8"Ukn1", u8"RelatedItemId", u8"iLvl", u8"Ukn3", u8"Ukn4" }) {
 			csv.NewCell(h);
 		}
 		break;
@@ -517,7 +622,7 @@ void ItemData::ToICsv(const std::wstring& path) const
 		}
 		break;
 	case ItemSpecType::NORMAL:
-		for (auto&& h : { u8"Ukn1", u8"Ukn2", u8"Ukn3", u8"Ukn4", u8"Ukn5" }) {
+		for (auto&& h : { u8"Element", u8"ElementQuantity", u8"RelatedItemId", u8"Ukn4", u8"Ukn5" }) {
 			csv.NewCell(h);
 		}
 		break;
@@ -567,7 +672,7 @@ void ItemData::ToICsv(const std::wstring& path) const
 		csv.NewCell(toU8(datum.item_type()));
 		// csv.NewCell(specTypeToU8(datum.spec_type));
 		csv.NewCell(toU8(datum.resource_id()));
-		csv.NewCell(toU8(datum.valid_targets()));
+		csv.NewCell(validTargetsToText(datum.valid_targets()));
 		csv.NewCell(toU8(datum.originalEntry.image_length));
 		if (isEnglish) {
 			csv.NewCell(logFlag);
@@ -583,12 +688,12 @@ void ItemData::ToICsv(const std::wstring& path) const
 			csv.NewCell(equipSlotText(spec.equip_slots));
 			csv.NewCell(raceText(spec.races));
 			csv.NewCell(jobText(spec.jobs));
-			csv.NewCell(toU8(spec.ukn));
+			csv.NewCell(toU8(spec.slvl));
 			csv.NewCell(toU8(spec.ukn2));
 			csv.NewCell(toU8(spec.dmg));
 			csv.NewCell(toU8(spec.delay));
-			csv.NewCell(toU8(spec.ukn5));
-			csv.NewCell(toU8(spec.ukn6));
+			csv.NewCell(toU8(spec.dps));
+			csv.NewCell(skillTypeToU8(spec.skill));
 			csv.NewCell(toU8(spec.ukn12));
 			csv.NewCell(toU8(spec.ukn7));
 			csv.NewCell(toU8(spec.ukn9));
@@ -597,7 +702,7 @@ void ItemData::ToICsv(const std::wstring& path) const
 			csv.NewCell(toU8(spec.use_time));
 			csv.NewCell(toU8(spec.reuse_time));
 			csv.NewCell(toU8(spec.ukn20));
-			csv.NewCell(toU8(spec.ukn21));
+			csv.NewCell(toU8(spec.related_item_id));
 			csv.NewCell(toU8(spec.ilvl));
 			csv.NewCell(toU8(spec.ukn22));
 			csv.NewCell(toU8(spec.ukn23));
@@ -610,14 +715,14 @@ void ItemData::ToICsv(const std::wstring& path) const
 			csv.NewCell(equipSlotText(spec.equip_slots));
 			csv.NewCell(raceText(spec.equip_races));
 			csv.NewCell(jobText(spec.equip_jobs));
-			csv.NewCell(toU8(spec.ukn));
+			csv.NewCell(toU8(spec.slvl));
 			csv.NewCell(toU8(spec.shield_size));
 			csv.NewCell(toU8(spec.max_charges));
 			csv.NewCell(toU8(spec.cast_factor));
 			csv.NewCell(toU8(spec.use_time));
 			csv.NewCell(toU8(spec.reuse_time));
 			csv.NewCell(toU8(spec.ukn1));
-			csv.NewCell(toU8(spec.ukn2));
+			csv.NewCell(toU8(spec.related_item_id));
 			csv.NewCell(toU8(spec.ilvl));
 			csv.NewCell(toU8(spec.ukn3));
 			csv.NewCell(toU8(spec.ukn4));
@@ -635,9 +740,9 @@ void ItemData::ToICsv(const std::wstring& path) const
 		case ItemSpecType::NORMAL:
 		{
 			const auto& spec = datum.originalEntry.spec.normal;
-			csv.NewCell(toU8(spec.ukn1));
-			csv.NewCell(toU8(spec.ukn2));
-			csv.NewCell(toU8(spec.ukn3));
+			csv.NewCell(elementToText(spec.element));
+			csv.NewCell(toU8(spec.element_value));
+			csv.NewCell(toU8(spec.related_item_id));
 			csv.NewCell(toU8(spec.ukn4));
 			csv.NewCell(toU8(spec.ukn5));
 			break;
