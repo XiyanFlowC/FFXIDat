@@ -141,6 +141,7 @@
     <ClCompile Include="codepage.cpp" />
     <ClCompile Include="DataManager.cpp" />
     <ClCompile Include="FFXIDatProcessor.cpp" />
+    <ClCompile Include="IdResolver.cpp" />
     <ClCompile Include="sqlite3\sqlite3.c" />
     <ClCompile Include="SQLiteDataSource.cpp" />
     <ClCompile Include="SQLiteDataSource_ROE.cpp" />
@@ -150,8 +151,10 @@
     <ClInclude Include="codepage.h" />
     <ClInclude Include="DataManager.h" />
     <ClInclude Include="FFXIDatProcessor.h" />
+    <ClInclude Include="IdResolver.h" />
     <ClInclude Include="liteopt.h" />
     <ClInclude Include="SQLiteDataSource.h" />
+    <ClInclude Include="stb_image_write.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

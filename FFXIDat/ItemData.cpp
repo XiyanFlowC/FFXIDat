@@ -622,12 +622,12 @@ void ItemData::ToICsv(const std::wstring& path) const
 		}
 		break;
 	case ItemSpecType::NORMAL:
-		for (auto&& h : { u8"Element", u8"ElementQuantity", u8"RelatedItemId", u8"Ukn4", u8"Ukn5" }) {
+		for (auto&& h : { u8"Element", u8"Storage", u8"RelatedItemId", u8"Ukn4", u8"Ukn5" }) {
 			csv.NewCell(h);
 		}
 		break;
 	case ItemSpecType::PUPPET:
-		for (auto&& h : { u8"Slot_Head", u8"Slot_Body", u8"Slot_Attachment", u8"Ukn1", u8"Ukn2" }) {
+		for (auto&& h : { u8"Slot_Head", u8"Slot_Body", u8"Slot_Attachment", u8"SUkn1", u8"SUkn2", u8"Fire", u8"Ice", u8"Wind", u8"Earth", u8"Thunder", u8"Water", u8"Light", u8"Dark", u8"Ukn", u8"Ukn2", u8"Ukn3"}) {
 			csv.NewCell(h);
 		}
 		break;
@@ -741,7 +741,7 @@ void ItemData::ToICsv(const std::wstring& path) const
 		{
 			const auto& spec = datum.originalEntry.spec.normal;
 			csv.NewCell(elementToText(spec.element));
-			csv.NewCell(toU8(spec.element_value));
+			csv.NewCell(toU8(spec.storage));
 			csv.NewCell(toU8(spec.related_item_id));
 			csv.NewCell(toU8(spec.ukn4));
 			csv.NewCell(toU8(spec.ukn5));
@@ -750,11 +750,22 @@ void ItemData::ToICsv(const std::wstring& path) const
 		case ItemSpecType::PUPPET:
 		{
 			const auto& spec = datum.originalEntry.spec.puppet;
-			csv.NewCell(boolToU8(spec.head));
-			csv.NewCell(boolToU8(spec.body));
-			csv.NewCell(boolToU8(spec.attachment));
-			csv.NewCell(toU8(spec.ukn1));
+			csv.NewCell(boolToU8(spec.equip_slots.head));
+			csv.NewCell(boolToU8(spec.equip_slots.body));
+			csv.NewCell(boolToU8(spec.equip_slots.attachment));
+			csv.NewCell(toU8(spec.equip_slots.ukn1));
+			csv.NewCell(toU8(spec.equip_slots.ukn2));
+			csv.NewCell(toU8(spec.fire));
+			csv.NewCell(toU8(spec.ice));
+			csv.NewCell(toU8(spec.air));
+			csv.NewCell(toU8(spec.earth));
+			csv.NewCell(toU8(spec.thunder));
+			csv.NewCell(toU8(spec.water));
+			csv.NewCell(toU8(spec.light));
+			csv.NewCell(toU8(spec.dark));
+			csv.NewCell(toU8(spec.ukn));
 			csv.NewCell(toU8(spec.ukn2));
+			csv.NewCell(toU8(spec.ukn3));
 			break;
 		}
 		case ItemSpecType::SLIP:

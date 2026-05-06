@@ -50,6 +50,17 @@ DatFileManager::~DatFileManager()
 {
 }
 
+bool DatFileManager::IsLanguageAllowed(const std::u8string& language) const
+{
+	if (m_languageFilters.empty())
+	{
+		return true;
+	}
+
+	const std::string lang = xybase::string::to_string(language);
+	return m_languageFilters.find(lang) != m_languageFilters.end();
+}
+
 std::vector<DatFileInfo> DatFileManager::LoadROMFileInfos(const std::filesystem::path& csvPath)
 {
 	// Extract ROM folder name from CSV filename
@@ -84,7 +95,7 @@ std::vector<DatFileInfo> DatFileManager::LoadROMFileInfos(const std::filesystem:
 			continue;
 
 		// Apply language filter
-		if (!m_languageFilter.empty() && language != xybase::string::to_utf8(m_languageFilter))
+		if (!IsLanguageAllowed(language))
 		{
 			continue;
 		}
@@ -558,7 +569,7 @@ std::vector<DatFileInfo> DatFileManager::LoadFLISTFileInfos(const std::filesyste
 			continue;
 
 		// Apply language filter
-		if (!m_languageFilter.empty() && language != xybase::string::to_utf8(m_languageFilter))
+		if (!IsLanguageAllowed(language))
 		{
 			continue;
 		}
@@ -1376,8 +1387,8 @@ bool DatFileManager::LoadItemDataFile(const std::filesystem::path& filePath, con
 	contentView->SetColumnWidth(appendedBase + 3, 80);
 	contentView->SetColumnTitle(appendedBase + 4, L"ResourceId");
 	contentView->SetColumnWidth(appendedBase + 4, 60);
-	contentView->SetColumnTitle(appendedBase + 5, L"ValidTarget");
-	contentView->SetColumnWidth(appendedBase + 5, 200);
+	contentView->SetColumnTitle(appendedBase + 5, L"Targets");
+	contentView->SetColumnWidth(appendedBase + 5, 50);
 
 	switch (specType)
 	{

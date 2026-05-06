@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <CommCtrl.h>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 #include <filesystem>
@@ -76,7 +77,7 @@ private:
 	std::unique_ptr<DatFileManager> m_fileManager;
 	std::unique_ptr<SearchDialog> m_searchDialog;
 	
-	std::string m_languageFilter = "";  // Empty string means show all languages
+	std::set<std::string> m_languageFilters;  // Empty means show all languages
 	std::wstring m_uiLanguage = L"en";  // Current UI language
 	std::vector<LanguageInfo> m_availableUILanguages;  // Available UI languages
 	std::filesystem::path m_localDir;  // Path to local directory

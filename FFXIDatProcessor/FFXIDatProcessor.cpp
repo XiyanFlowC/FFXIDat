@@ -27,11 +27,15 @@
 
 #include "EventStringBase.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #undef GetMessage
 void CsvToEventStringData(const char *src, const char *out);
 void CsvToFixedPhrase(const char *src, const char *out = nullptr);
+void ExportItemData(void);
 
 int cfg_block = 0, cfg_xor = 0;
 
@@ -271,6 +275,10 @@ int main(int argc, const char **argv)
 		ExtractSysText();
 		return 0;
 		}, L"扫描并导出游戏目录。");
+	lopt_regopt("export-item-data", 0, 0, [](const char *str)-> int {
+		ExportItemData();
+		return 0;
+		}, L"导出游戏中的物品数据。");
 	lopt_regopt("help", '?', 0, help, L"显示本信息。");
 	if (argc == 1) help(nullptr);
 
@@ -870,4 +878,417 @@ void ExtractSysText()
 			}
 		}
 	}
+}
+
+#include "IdResolver.h"
+
+void ExportItemData(void)
+{
+	IdResolver ir;
+	ir.Initialise();
+
+	// Create output directory
+	std::filesystem::path exportDir = std::filesystem::path(PathUtil::progRootPath) / L"item_export";
+	std::filesystem::create_directories(exportDir);
+	std::filesystem::path imageDir = exportDir / L"images";
+	std::filesystem::create_directories(imageDir);
+
+	std::wcout << L"Exporting item data..." << std::endl;
+
+	// Read Japanese item data
+	ItemData janorm, jausable, jaweapon, jaarmour, japuppet, jaslip, jacurrency, janorm2, jaarmour2, jains;
+	MonBridge jamb;
+
+	std::wcout << L"Reading Japanese item data..." << std::endl;
+	janorm.Read(ir.GetDatFilePath(4), ItemSpecType::NORMAL);
+	jausable.Read(ir.GetDatFilePath(5), ItemSpecType::USABLE);	
+	jaweapon.Read(ir.GetDatFilePath(6), ItemSpecType::WEAPON);
+	jaarmour.Read(ir.GetDatFilePath(7), ItemSpecType::ARMOUR);
+	japuppet.Read(ir.GetDatFilePath(8), ItemSpecType::PUPPET);
+	jacurrency.Read(ir.GetDatFilePath(9), ItemSpecType::CURRENCY);
+	jaslip.Read(ir.GetDatFilePath(55547), ItemSpecType::SLIP);
+	jaarmour2.Read(ir.GetDatFilePath(55548), ItemSpecType::ARMOUR);
+	jamb.Read(ir.GetDatFilePath(55549));
+	jains.Read(ir.GetDatFilePath(55550), ItemSpecType::INSTINCT);
+	janorm2.Read(ir.GetDatFilePath(55551), ItemSpecType::NORMAL);
+
+	// Read English item data
+	ItemData ennorm, enusable, enweapon, enarmour, enpuppet, enslip, encurrency, ennorm2, enarmour2, enins;
+	MonBridge enmb;
+
+	std::wcout << L"Reading English item data..." << std::endl;
+	ennorm.Read(ir.GetDatFilePath(73), ItemSpecType::NORMAL);
+	enusable.Read(ir.GetDatFilePath(74), ItemSpecType::USABLE);
+	enweapon.Read(ir.GetDatFilePath(75), ItemSpecType::WEAPON);
+	enarmour.Read(ir.GetDatFilePath(76), ItemSpecType::ARMOUR);
+	enpuppet.Read(ir.GetDatFilePath(77), ItemSpecType::PUPPET);
+	encurrency.Read(ir.GetDatFilePath(91), ItemSpecType::CURRENCY);
+	enins.Read(ir.GetDatFilePath(55670), ItemSpecType::INSTINCT);
+	ennorm2.Read(ir.GetDatFilePath(55671), ItemSpecType::NORMAL);
+
+	// Helper lambda to export a specific item type
+	auto exportItemType = [&](const ItemData& jaData, const ItemData& enData, const wchar_t* typeName, ItemSpecType specType) {
+		std::wcout << L"Exporting " << typeName << L" items..." << std::endl;
+
+		// Create map of English names by ID
+		std::unordered_map<uint32_t, std::tuple<std::u8string, std::u8string, std::u8string>> enNames;
+		for (const auto& datum : enData.data) {
+			try {
+				std::u8string name = datum.name();
+				std::u8string sg, pl;
+				try { sg = datum.name_sg(); } catch (...) {}
+				try { pl = datum.name_pl(); } catch (...) {}
+				enNames[datum.id] = std::make_tuple(name, sg, pl);
+			} catch (...) {}
+		}
+
+		// Open CSV file
+		std::filesystem::path csvPath = exportDir / (std::wstring(typeName) + L".csv");
+		CsvFile csv(csvPath, std::ios::out | std::ios::binary);
+
+		// Write header
+		csv.NewCell(u8"ID");
+		csv.NewCell(u8"Name_JA");
+		csv.NewCell(u8"Name_EN");
+		csv.NewCell(u8"Name_EN_Singular");
+		csv.NewCell(u8"Name_EN_Plural");
+		csv.NewCell(u8"Description_JA");
+		csv.NewCell(u8"StackSize");
+		csv.NewCell(u8"ItemType");
+		csv.NewCell(u8"ResourceID");
+
+		// ValidTargets flags
+		csv.NewCell(u8"Target_Self");
+		csv.NewCell(u8"Target_Player");
+		csv.NewCell(u8"Target_Party");
+		csv.NewCell(u8"Target_Alliance");
+		csv.NewCell(u8"Target_NPC");
+		csv.NewCell(u8"Target_Enemy");
+		csv.NewCell(u8"Target_Ukn0x40");
+		csv.NewCell(u8"Target_Corpse");
+		csv.NewCell(u8"Target_Ukn0x100");
+		csv.NewCell(u8"Target_Ukn0x200");
+		csv.NewCell(u8"Target_Ukn0x400");
+		csv.NewCell(u8"Target_Ukn0x800");
+		csv.NewCell(u8"Target_Ukn0x1000");
+		csv.NewCell(u8"Target_Ukn0x2000");
+		csv.NewCell(u8"Target_Ukn0x4000");
+		csv.NewCell(u8"Target_Ukn0x8000");
+
+		// Item header flags
+		csv.NewCell(u8"Flag_WallDecoration");
+		csv.NewCell(u8"Flag_GMItem");
+		csv.NewCell(u8"Flag_MysteryBox");
+		csv.NewCell(u8"Flag_Ukn1");
+		csv.NewCell(u8"Flag_Alt");
+		csv.NewCell(u8"Flag_Inscribable");
+		csv.NewCell(u8"Flag_NotListable");
+		csv.NewCell(u8"Flag_Scroll");
+		csv.NewCell(u8"Flag_Linkshell");
+		csv.NewCell(u8"Flag_Usable");
+		csv.NewCell(u8"Flag_NPCTradeable");
+		csv.NewCell(u8"Flag_Equipment");
+		csv.NewCell(u8"Flag_Unsellable");
+		csv.NewCell(u8"Flag_Unmailable");
+		csv.NewCell(u8"Flag_Ex");
+		csv.NewCell(u8"Flag_Rare");
+
+		// Add spec-specific headers
+		if (specType == ItemSpecType::WEAPON) {
+			for (auto&& h : { u8"Level", u8"EquipSlots", u8"Races", u8"Jobs", u8"SuperiorLevel", u8"Ukn2", 
+				u8"DMG", u8"Delay", u8"DPS", u8"Skill", u8"Ukn12", u8"Ukn7", u8"Ukn9",
+				u8"MaxCharges", u8"CastFactor", u8"UseTime", u8"ReuseTime", u8"Ukn20", 
+				u8"RelatedItemId", u8"iLvl", u8"Ukn22", u8"Ukn23" }) {
+				csv.NewCell(h);
+			}
+		} else if (specType == ItemSpecType::ARMOUR) {
+			for (auto&& h : { u8"Level", u8"EquipSlots", u8"Races", u8"Jobs", u8"SuperiorLevel", u8"ShieldSize", 
+				u8"MaxCharges", u8"CastFactor", u8"UseTime", u8"ReuseTime", u8"Ukn1", 
+				u8"RelatedItemId", u8"iLvl", u8"Ukn3", u8"Ukn4" }) {
+				csv.NewCell(h);
+			}
+		} else if (specType == ItemSpecType::USABLE) {
+			for (auto&& h : { u8"CastFactor", u8"Ukn1", u8"Ukn2", u8"Ukn3" }) {
+				csv.NewCell(h);
+			}
+		} else if (specType == ItemSpecType::NORMAL) {
+			for (auto&& h : { u8"Element", u8"Storage", u8"RelatedItemId", u8"Ukn4", u8"Ukn5" }) {
+				csv.NewCell(h);
+			}
+		} else if (specType == ItemSpecType::PUPPET) {
+			for (auto&& h : { u8"Slot_Head", u8"Slot_Body", u8"Slot_Attachment", u8"Slot_Raw",
+				u8"Slot_Ukn1", u8"Slot_Ukn2",
+				u8"Fire", u8"Ice", u8"Air", u8"Earth", u8"Thunder", u8"Water", u8"Light", u8"Dark", 
+				u8"Ukn", u8"Ukn2", u8"Ukn3" }) {
+				csv.NewCell(h);
+			}
+		} else if (specType == ItemSpecType::SLIP) {
+			for (int i = 0; i < 70; ++i) {
+				csv.NewCell(xybase::string::to_utf8(std::string("Ukn") + std::to_string(i)));
+			}
+		} else if (specType == ItemSpecType::CURRENCY) {
+			csv.NewCell(u8"Ukn");
+		} else if (specType == ItemSpecType::INSTINCT) {
+			for (int i = 0; i < 13; ++i) {
+				csv.NewCell(xybase::string::to_utf8(std::string("Ukn") + std::to_string(i)));
+			}
+		}
+
+		csv.NewLine();
+
+		// Write data rows
+		for (const auto& datum : jaData.data) {
+			auto toU8 = [](auto v) {
+				return xybase::string::to_utf8(std::to_string(v));
+			};
+
+			// Get Japanese text
+			std::u8string jaName, jaDesc;
+			try { jaName = datum.name(); } catch (...) {}
+			try { jaDesc = datum.description(); } catch (...) {}
+
+			// Get English text
+			std::u8string enName, enSg, enPl;
+			auto enIt = enNames.find(datum.id);
+			if (enIt != enNames.end()) {
+				enName = std::get<0>(enIt->second);
+				enSg = std::get<1>(enIt->second);
+				enPl = std::get<2>(enIt->second);
+			}
+
+			const auto& hdr = datum.flags();
+
+			// Write basic fields
+			csv.NewCell(toU8(datum.id));
+			csv.NewCell(jaName);
+			csv.NewCell(enName);
+			csv.NewCell(enSg);
+			csv.NewCell(enPl);
+			csv.NewCell(jaDesc);
+			csv.NewCell(toU8(datum.stack_size()));
+			csv.NewCell(toU8(datum.item_type()));
+			csv.NewCell(toU8(datum.resource_id()));
+
+			// ValidTargets flags
+			uint16_t targets = datum.valid_targets();
+			csv.NewCell((targets & 0x01) ? u8"1" : u8"0"); // Self
+			csv.NewCell((targets & 0x02) ? u8"1" : u8"0"); // Player
+			csv.NewCell((targets & 0x04) ? u8"1" : u8"0"); // Party
+			csv.NewCell((targets & 0x08) ? u8"1" : u8"0"); // Alliance
+			csv.NewCell((targets & 0x10) ? u8"1" : u8"0"); // NPC
+			csv.NewCell((targets & 0x20) ? u8"1" : u8"0"); // Enemy
+			csv.NewCell((targets & 0x40) ? u8"1" : u8"0"); // Ukn0x40
+			csv.NewCell((targets & 0x80) ? u8"1" : u8"0"); // Corpse
+			csv.NewCell((targets & 0x100) ? u8"1" : u8"0"); // Ukn0x100
+			csv.NewCell((targets & 0x200) ? u8"1" : u8"0"); // Ukn0x200
+			csv.NewCell((targets & 0x400) ? u8"1" : u8"0"); // Ukn0x400
+			csv.NewCell((targets & 0x800) ? u8"1" : u8"0"); // Ukn0x800
+			csv.NewCell((targets & 0x1000) ? u8"1" : u8"0"); // Ukn0x1000
+			csv.NewCell((targets & 0x2000) ? u8"1" : u8"0"); // Ukn0x2000
+			csv.NewCell((targets & 0x4000) ? u8"1" : u8"0"); // Ukn0x4000
+			csv.NewCell((targets & 0x8000) ? u8"1" : u8"0"); // Ukn0x8000
+
+			// Write flags as 1/0
+			csv.NewCell(hdr.is_wall_decoration ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_gm_item ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_in_mystery_box ? u8"1" : u8"0");
+			csv.NewCell(hdr.ukn_flg1 ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_alt ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_inscribable ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_not_listable ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_scroll ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_linkshell ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_usable ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_npc_tradeable ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_equipment ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_unsellable ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_unmailable ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_ex ? u8"1" : u8"0");
+			csv.NewCell(hdr.is_rare ? u8"1" : u8"0");
+
+			// Write spec-specific fields
+			if (specType == ItemSpecType::WEAPON) {
+				const auto& spec = datum.originalEntry.spec.weapon;
+				csv.NewCell(toU8(spec.level));
+				csv.NewCell(toU8(*(uint16_t*)&spec.equip_slots));
+				csv.NewCell(toU8(*(uint16_t*)&spec.races));
+				csv.NewCell(toU8(*(uint32_t*)&spec.jobs));
+				csv.NewCell(toU8(spec.slvl));
+				csv.NewCell(toU8(spec.ukn2));
+				csv.NewCell(toU8(spec.dmg));
+				csv.NewCell(toU8(spec.delay));
+				csv.NewCell(toU8(spec.dps));
+				csv.NewCell(toU8(spec.skill));
+				csv.NewCell(toU8(spec.ukn12));
+				csv.NewCell(toU8(spec.ukn7));
+				csv.NewCell(toU8(spec.ukn9));
+				csv.NewCell(toU8(spec.max_charges));
+				csv.NewCell(toU8(spec.cast_factor));
+				csv.NewCell(toU8(spec.use_time));
+				csv.NewCell(toU8(spec.reuse_time));
+				csv.NewCell(toU8(spec.ukn20));
+				csv.NewCell(toU8(spec.related_item_id));
+				csv.NewCell(toU8(spec.ilvl));
+				csv.NewCell(toU8(spec.ukn22));
+				csv.NewCell(toU8(spec.ukn23));
+			} else if (specType == ItemSpecType::ARMOUR) {
+				const auto& spec = datum.originalEntry.spec.armour;
+				csv.NewCell(toU8(spec.level));
+				csv.NewCell(toU8(*(uint16_t*)&spec.equip_slots));
+				csv.NewCell(toU8(*(uint16_t*)&spec.equip_races));
+				csv.NewCell(toU8(*(uint32_t*)&spec.equip_jobs));
+				csv.NewCell(toU8(spec.slvl));
+				csv.NewCell(toU8(spec.shield_size));
+				csv.NewCell(toU8(spec.max_charges));
+				csv.NewCell(toU8(spec.cast_factor));
+				csv.NewCell(toU8(spec.use_time));
+				csv.NewCell(toU8(spec.reuse_time));
+				csv.NewCell(toU8(spec.ukn1));
+				csv.NewCell(toU8(spec.related_item_id));
+				csv.NewCell(toU8(spec.ilvl));
+				csv.NewCell(toU8(spec.ukn3));
+				csv.NewCell(toU8(spec.ukn4));
+			} else if (specType == ItemSpecType::USABLE) {
+				const auto& spec = datum.originalEntry.spec.usable;
+				csv.NewCell(toU8(spec.cast_factor));
+				csv.NewCell(toU8(spec.ukn1));
+				csv.NewCell(toU8(spec.ukn2));
+				csv.NewCell(toU8(spec.ukn3));
+			} else if (specType == ItemSpecType::NORMAL) {
+				const auto& spec = datum.originalEntry.spec.normal;
+				csv.NewCell(toU8(spec.element));
+				csv.NewCell(toU8(spec.storage));
+				csv.NewCell(toU8(spec.related_item_id));
+				csv.NewCell(toU8(spec.ukn4));
+				csv.NewCell(toU8(spec.ukn5));
+			} else if (specType == ItemSpecType::PUPPET) {
+				const auto& spec = datum.originalEntry.spec.puppet;
+				csv.NewCell(spec.equip_slots.head ? u8"1" : u8"0");
+				csv.NewCell(spec.equip_slots.body ? u8"1" : u8"0");
+				csv.NewCell(spec.equip_slots.attachment ? u8"1" : u8"0");
+				csv.NewCell(toU8(*(uint16_t*)&spec.equip_slots)); // Raw slot value
+				csv.NewCell(toU8(spec.equip_slots.ukn1));
+				csv.NewCell(toU8(spec.equip_slots.ukn2));
+				csv.NewCell(toU8(spec.fire));
+				csv.NewCell(toU8(spec.ice));
+				csv.NewCell(toU8(spec.air));
+				csv.NewCell(toU8(spec.earth));
+				csv.NewCell(toU8(spec.thunder));
+				csv.NewCell(toU8(spec.water));
+				csv.NewCell(toU8(spec.light));
+				csv.NewCell(toU8(spec.dark));
+				csv.NewCell(toU8(spec.ukn));
+				csv.NewCell(toU8(spec.ukn2));
+				csv.NewCell(toU8(spec.ukn3));
+			} else if (specType == ItemSpecType::SLIP) {
+				const auto& spec = datum.originalEntry.spec.slip;
+				for (int i = 0; i < 70; ++i) {
+					csv.NewCell(toU8(spec.ukn[i]));
+				}
+			} else if (specType == ItemSpecType::CURRENCY) {
+				const auto& spec = datum.originalEntry.spec.currency;
+				csv.NewCell(toU8(spec.ukn));
+			} else if (specType == ItemSpecType::INSTINCT) {
+				const auto& spec = datum.originalEntry.spec.instinct;
+				for (int i = 0; i < 13; ++i) {
+					csv.NewCell(toU8(spec.ukn[i]));
+				}
+			}
+
+			csv.NewLine();
+
+			// Export image if exists
+			if (datum.image.texture) {
+				try {
+					auto bmp = datum.image.GetBitmap();
+					if (bmp) {
+						const BITMAPFILEHEADER* fileHeader = reinterpret_cast<const BITMAPFILEHEADER*>(bmp.get());
+						const BITMAPINFOHEADER* infoHeader = reinterpret_cast<const BITMAPINFOHEADER*>(bmp.get() + sizeof(BITMAPFILEHEADER));
+						const char* pixelData = bmp.get() + fileHeader->bfOffBits;
+
+						int width = infoHeader->biWidth;
+						int height = abs(infoHeader->biHeight);
+						int channels = infoHeader->biBitCount / 8;
+
+						// Convert to RGBA if needed
+						std::vector<unsigned char> rgba;
+						if (channels == 4) {
+							// Already RGBA, but need to flip vertically and convert BGRA to RGBA
+							// Also convert alpha from FFXI range (0-128) to standard range (0-255)
+							rgba.resize(width * height * 4);
+							for (int y = 0; y < height; ++y) {
+								for (int x = 0; x < width; ++x) {
+									int srcIdx = ((height - 1 - y) * width + x) * 4;
+									int dstIdx = (y * width + x) * 4;
+									rgba[dstIdx + 0] = pixelData[srcIdx + 2]; // R
+									rgba[dstIdx + 1] = pixelData[srcIdx + 1]; // G
+									rgba[dstIdx + 2] = pixelData[srcIdx + 0]; // B
+									// Convert alpha: FFXI uses 0-128 (128=opaque), convert to 0-255
+									unsigned char ffxiAlpha = pixelData[srcIdx + 3];
+									rgba[dstIdx + 3] = (ffxiAlpha <= 128) ? (ffxiAlpha * 255 / 128) : 255;
+								}
+							}
+						} else if (channels == 3) {
+							// RGB, convert to RGBA
+							rgba.resize(width * height * 4);
+							for (int y = 0; y < height; ++y) {
+								for (int x = 0; x < width; ++x) {
+									int srcIdx = ((height - 1 - y) * width + x) * 3;
+									int dstIdx = (y * width + x) * 4;
+									rgba[dstIdx + 0] = pixelData[srcIdx + 2]; // R
+									rgba[dstIdx + 1] = pixelData[srcIdx + 1]; // G
+									rgba[dstIdx + 2] = pixelData[srcIdx + 0]; // B
+									rgba[dstIdx + 3] = 255; // A (full opaque for RGB)
+								}
+							}
+						} else if (channels == 1) {
+							// Indexed color with palette
+							const unsigned char* palette = reinterpret_cast<const unsigned char*>(bmp.get() + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER));
+							rgba.resize(width * height * 4);
+							for (int y = 0; y < height; ++y) {
+								for (int x = 0; x < width; ++x) {
+									int srcIdx = (height - 1 - y) * width + x;
+									int dstIdx = (y * width + x) * 4;
+									unsigned char paletteIdx = pixelData[srcIdx];
+									rgba[dstIdx + 0] = palette[paletteIdx * 4 + 2]; // R
+									rgba[dstIdx + 1] = palette[paletteIdx * 4 + 1]; // G
+									rgba[dstIdx + 2] = palette[paletteIdx * 4 + 0]; // B
+									// Convert alpha: FFXI uses 0-128 (128=opaque), convert to 0-255
+									unsigned char ffxiAlpha = palette[paletteIdx * 4 + 3];
+									rgba[dstIdx + 3] = (ffxiAlpha <= 128) ? (ffxiAlpha * 255 / 128) : 255;
+								}
+							}
+						}
+
+						if (!rgba.empty()) {
+							std::filesystem::path pngPath = imageDir / (std::to_wstring(datum.id) + L".png");
+							stbi_write_png(xybase::string::sys_wcs_to_mbs(pngPath.wstring()).c_str(), width, height, 4, rgba.data(), width * 4);
+						}
+					}
+				} catch (...) {
+					// Ignore image export errors
+				}
+			}
+		}
+
+		csv.Close();
+	};
+
+	// Export all item types
+	exportItemType(janorm, ennorm, L"items_normal", ItemSpecType::NORMAL);
+	exportItemType(jausable, enusable, L"items_usable", ItemSpecType::USABLE);
+	exportItemType(jaweapon, enweapon, L"items_weapon", ItemSpecType::WEAPON);
+	exportItemType(jaarmour, enarmour, L"items_armour", ItemSpecType::ARMOUR);
+	exportItemType(japuppet, enpuppet, L"items_puppet", ItemSpecType::PUPPET);
+	exportItemType(jaslip, enslip, L"items_slip", ItemSpecType::SLIP);
+	exportItemType(jacurrency, encurrency, L"items_currency", ItemSpecType::CURRENCY);
+	exportItemType(jains, enins, L"items_instinct", ItemSpecType::INSTINCT);
+
+	// Handle additional armour and normal files
+	std::wcout << L"Exporting additional armour items..." << std::endl;
+	exportItemType(jaarmour2, enarmour2, L"items_armour2", ItemSpecType::ARMOUR);
+	std::wcout << L"Exporting additional normal items..." << std::endl;
+	exportItemType(janorm2, ennorm2, L"items_normal2", ItemSpecType::NORMAL);
+
+	std::wcout << L"Item export complete! Files saved to: " << exportDir << std::endl;
 }

@@ -1596,7 +1596,16 @@ void MainFrame::OnCreate()
 	AppendMenuW(m_hLanguageFilterMenu, MF_STRING, IDM_VIEW_FILTER_DE, LOCS(L"menu_view_filter_de"));
 
 	// Set default checked item (All Languages)
-	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_ALL, MF_CHECKED);
+	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_ALL,
+		m_languageFilters.empty() ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_JP,
+		m_languageFilters.contains("jp") ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_EN,
+		m_languageFilters.contains("en") ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_FR,
+		m_languageFilters.contains("fr") ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_DE,
+		m_languageFilters.contains("de") ? MF_CHECKED : MF_UNCHECKED);
 
 	AppendMenuW(hViewMenu, MF_POPUP, (UINT_PTR)m_hLanguageFilterMenu, LOCS(L"menu_view_langfilter"));
 
@@ -1751,7 +1760,7 @@ void MainFrame::OnTreeItemActivated(HTREEITEM hItem)
 void MainFrame::LoadROMDefinitions()
 {
 	// Set language filter
-	m_fileManager->SetLanguageFilter(m_languageFilter);
+	m_fileManager->SetLanguageFilters(m_languageFilters);
 
 	// Get exe path
 	wchar_t exePath[MAX_PATH];
@@ -2401,20 +2410,33 @@ void MainFrame::OnResetGamePath()
 
 void MainFrame::OnFilterLanguage(const std::string& language)
 {
-	// Update language filter
-	m_languageFilter = language;
+	if (language.empty())
+	{
+		m_languageFilters.clear();
+	}
+	else
+	{
+		if (m_languageFilters.contains(language))
+		{
+			m_languageFilters.erase(language);
+		}
+		else
+		{
+			m_languageFilters.insert(language);
+		}
+	}
 
 	// Update menu checkmarks
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_ALL,
-		language.empty() ? MF_CHECKED : MF_UNCHECKED);
+		m_languageFilters.empty() ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_JP,
-		language == "jp" ? MF_CHECKED : MF_UNCHECKED);
+		m_languageFilters.contains("jp") ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_EN,
-		language == "en" ? MF_CHECKED : MF_UNCHECKED);
+		m_languageFilters.contains("en") ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_FR,
-		language == "fr" ? MF_CHECKED : MF_UNCHECKED);
+		m_languageFilters.contains("fr") ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_DE,
-		language == "de" ? MF_CHECKED : MF_UNCHECKED);
+		m_languageFilters.contains("de") ? MF_CHECKED : MF_UNCHECKED);
 
 	// Reload ROM definitions with filter
 	TreeView_DeleteAllItems(m_hTreeView);
@@ -2422,13 +2444,23 @@ void MainFrame::OnFilterLanguage(const std::string& language)
 
 	// Update status bar
 	std::wstring statusText;
-	if (language.empty())
+	if (m_languageFilters.empty())
 	{
 		statusText = L"Showing all languages";
 	}
 	else
 	{
-		statusText = L"Showing only " + std::wstring(language.begin(), language.end()) + L" files";
+		statusText = L"Showing languages: ";
+		bool first = true;
+		for (const auto& lang : m_languageFilters)
+		{
+			if (!first)
+			{
+				statusText += L"+";
+			}
+			statusText += std::wstring(lang.begin(), lang.end());
+			first = false;
+		}
 	}
 	SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
 }
@@ -2538,15 +2570,14 @@ void MainFrame::RefreshUIText()
 	AppendMenuW(hDataMenu, MF_STRING, IDM_DATA_IMPORT_ALL,
 		LocalizedOrDefault(L"menu_data_import_all", L"Import All...").c_str());
 
-	// View menu
+	// View menu - with Language Filter submenu
 	HMENU hViewMenu = CreateMenu();
 	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_FONT, LOCS(L"menu_view_font"));
 	AppendMenuW(hViewMenu, MF_SEPARATOR, 0, nullptr);
 	AppendMenuW(hViewMenu, MF_STRING, IDM_VIEW_ENABLE_CATEGORY_HIERARCHY, LOCS(L"menu_view_enable_category_hierarchy"));
-	AppendMenuW(hViewMenu, MF_SEPARATOR, 0, nullptr);
-
 	CheckMenuItem(hViewMenu, IDM_VIEW_ENABLE_CATEGORY_HIERARCHY,
 		m_enableCategoryHierarchy ? MF_CHECKED : MF_UNCHECKED);
+	AppendMenuW(hViewMenu, MF_SEPARATOR, 0, nullptr);
 
 	// Language Filter submenu
 	m_hLanguageFilterMenu = CreateMenu();
@@ -2559,15 +2590,15 @@ void MainFrame::RefreshUIText()
 
 	// Restore language filter checkmarks
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_ALL,
-		m_languageFilter.empty() ? MF_CHECKED : MF_UNCHECKED);
+		m_languageFilters.empty() ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_JP,
-		m_languageFilter == "jp" ? MF_CHECKED : MF_UNCHECKED);
+		m_languageFilters.contains("jp") ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_EN,
-		m_languageFilter == "en" ? MF_CHECKED : MF_UNCHECKED);
+		m_languageFilters.contains("en") ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_FR,
-		m_languageFilter == "fr" ? MF_CHECKED : MF_UNCHECKED);
+		m_languageFilters.contains("fr") ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_DE,
-		m_languageFilter == "de" ? MF_CHECKED : MF_UNCHECKED);
+		m_languageFilters.contains("de") ? MF_CHECKED : MF_UNCHECKED);
 
 	AppendMenuW(hViewMenu, MF_POPUP, (UINT_PTR)m_hLanguageFilterMenu, LOCS(L"menu_view_langfilter"));
 

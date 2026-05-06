@@ -161,7 +161,7 @@ struct ItemPuppetSpec
 struct ItemNormalSpec
 {
 	int16_t element;
-	int16_t element_value;
+	int16_t storage;
 	int16_t related_item_id;
 	int16_t ukn4;
 	int16_t ukn5;
@@ -174,6 +174,15 @@ struct ItemUsableSpec
 	int32_t ukn1;
 	int32_t ukn2;
 	int32_t ukn3;
+
+	Record info_rec;
+};
+
+struct ItemUsableOldSpec
+{
+	int16_t cast_factor;
+	int32_t ukn1;
+	int32_t ukn2;
 
 	Record info_rec;
 };
@@ -301,7 +310,7 @@ union ItemSpecData
 	ItemArmourSpec armour;
 	ItemNormalSpec normal;
 	ItemUsableSpec usable;
-	ItemPuppetSlot puppet;
+	ItemPuppetSpec puppet;
 	ItemWeaponSpec weapon;
 	ItemSlipSpec slip;
 	ItemCurrencySpec currency;
@@ -321,10 +330,10 @@ struct ItemEntry
 
 // Enum to specify the type of item spec data
 enum class ItemSpecType {
-    NORMAL,
-    USABLE,
-    WEAPON,
-    ARMOUR,
+	NORMAL,
+	USABLE,
+	WEAPON,
+	ARMOUR,
 	PUPPET,
 	SLIP,
 	CURRENCY,  // ?? Special: Currency files have exactly 1 entry and fixed 0xC000 byte size

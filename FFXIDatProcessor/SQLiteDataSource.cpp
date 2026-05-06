@@ -1418,7 +1418,7 @@ void SQLiteDataSource::InsertNormalSpec(int item_id, const ItemNormalSpec &spec)
 	{
 		sqlite3_bind_int(stmt, 1, item_id);
 		sqlite3_bind_int(stmt, 2, spec.element);
-		sqlite3_bind_int(stmt, 3, spec.element_value);
+		sqlite3_bind_int(stmt, 3, spec.storage);
 		sqlite3_bind_int(stmt, 4, spec.related_item_id);
 		sqlite3_bind_int(stmt, 5, spec.ukn4);
 		sqlite3_bind_int(stmt, 6, spec.ukn5);

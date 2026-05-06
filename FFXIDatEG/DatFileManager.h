@@ -5,6 +5,7 @@
 #include <CommCtrl.h>
 #include <filesystem>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 #include <memory>
@@ -69,8 +70,24 @@ public:
 	// Load file by local ID
 	bool LoadLocalId(const std::string& romFolder, int localId, const std::string& fileType, ContentView* contentView);
 
-	void SetLanguageFilter(const std::string& language) { m_languageFilter = language; }
-	std::string GetLanguageFilter() const { return m_languageFilter; }
+	void SetLanguageFilter(const std::string& language)
+	{
+		m_languageFilters.clear();
+		if (!language.empty())
+		{
+			m_languageFilters.insert(language);
+		}
+	}
+	std::string GetLanguageFilter() const
+	{
+		if (m_languageFilters.empty())
+		{
+			return "";
+		}
+		return *m_languageFilters.begin();
+	}
+	void SetLanguageFilters(const std::set<std::string>& languages) { m_languageFilters = languages; }
+	const std::set<std::string>& GetLanguageFilters() const { return m_languageFilters; }
 	const std::vector<DatFileInfo>& GetAllFileInfos() const { return m_allFileInfos; }
 	bool ExportDatToCsv(const DatFileInfo& info, const std::filesystem::path& csvPath, std::wstring* errorMessage = nullptr) const;
 	bool ImportCsvToDat(const DatFileInfo& info, const std::filesystem::path& csvPath, std::wstring* errorMessage = nullptr) const;
@@ -82,7 +99,7 @@ private:
 	mutable std::map<int, std::vector<uint8_t>> m_vtableCache;
 	mutable std::map<int, std::vector<uint16_t>> m_ftableCache;
 
-	std::string m_languageFilter = "";  // Empty string means show all
+	std::set<std::string> m_languageFilters;  // Empty means show all
 	std::vector<DatFileInfo> m_allFileInfos;
 	
 	// Current loaded file data
@@ -104,6 +121,7 @@ private:
 	std::vector<uint8_t> ReadVTable(int romNumber) const;
 	std::vector<uint16_t> ReadFTable(int romNumber) const;
 	bool ResolveGlobalId(int globalId, std::string& romFolder, int& localFileId) const;
+	bool IsLanguageAllowed(const std::u8string& language) const;
 	
 	// Load FLIST.csv definition
 	std::vector<DatFileInfo> LoadFLISTFileInfos(const std::filesystem::path& flistPath);
