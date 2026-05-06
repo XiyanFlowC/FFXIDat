@@ -420,6 +420,19 @@ public:
 			}
 			
 			const auto& cells = originalRow.GetCellsConst();
+
+			if (cells.size() >= 9) {
+				if (cells[4].GetType() == 0)
+					return cells[4].Get<std::u8string>();
+				throw std::runtime_error("Cell 4 is not a string - de");
+			}
+
+			if (cells.size() >= 6) {
+				if (cells[3].GetType() == 0)
+					return cells[3].Get<std::u8string>();
+				throw std::runtime_error("Cell 3 is not a string - fr");
+			}
+
 			if (cells.size() < 3) {
 				throw std::out_of_range("Cell 2 (singular form) does not exist");
 			}
@@ -437,6 +450,19 @@ public:
 			if (!hasOriginalRow) return false;
 			
 			auto& cells = originalRow.GetCells();
+
+			// de format
+			if (cells.size() >= 9) {
+				cells[4].Set(newName);
+				return true;
+			}
+
+			// fr format
+			if (cells.size() >= 6) {
+				cells[3].Set(newName);
+				return true;
+			}
+
 			if (cells.size() < 3) return false;  // Not English format
 			
 			cells[2].Set(newName);
@@ -450,6 +476,20 @@ public:
 			}
 			
 			const auto& cells = originalRow.GetCellsConst();
+
+			if (cells.size() >= 9) {
+				if (cells[7].GetType() == 0)
+					return cells[7].Get<std::u8string>();
+				throw std::runtime_error("Cell 7 is not a string - de");
+			}
+
+			// fr format
+			if (cells.size() >= 6) {
+				if (cells[4].GetType() == 0)
+					return cells[4].Get<std::u8string>();
+				throw std::runtime_error("Cell 4 is not a string - fr");
+			}
+
 			if (cells.size() < 4) {
 				throw std::out_of_range("Cell 3 (plural form) does not exist");
 			}
@@ -466,6 +506,21 @@ public:
 			if (!hasOriginalRow) return false;
 			
 			auto& cells = originalRow.GetCells();
+
+			// try DE
+			if (cells.size() >= 9)
+			{
+				cells[7].Set(newName);
+				return true;
+			}
+
+			// FR
+			if (cells.size() >= 6)
+			{
+				cells[4].Set(newName);
+				return true;
+			}
+
 			if (cells.size() < 4) return false;  // Not English format
 			
 			cells[3].Set(newName);
@@ -480,6 +535,15 @@ public:
 			}
 			
 			const auto& cells = originalRow.GetCellsConst();
+
+			if (cells.size() >= 9 && cells[8].GetType() == 0) {
+				return cells[8].Get<std::u8string>();
+			}
+
+			// try French format (cell 5)
+			if (cells.size() >= 6 && cells[5].GetType() == 0) {
+				return cells[5].Get<std::u8string>();
+			}
 			
 			// Try English format first (cell 4)
 			if (cells.size() >= 5 && cells[4].GetType() == 0) {
@@ -500,6 +564,18 @@ public:
 			if (!hasOriginalRow) return false;
 			
 			auto& cells = originalRow.GetCells();
+
+			// de format
+			if (cells.size() >= 9) {
+				cells[8].Set(newDesc);
+				return true;
+			}
+
+			// fr format
+			if (cells.size() >= 6) {
+				cells[5].Set(newDesc);
+				return true;
+			}
 			
 			// Try English format first (cell 4)
 			if (cells.size() >= 5) {
