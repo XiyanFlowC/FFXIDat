@@ -348,7 +348,8 @@ public:
 		VT_PLAYER = 0x0002,
 		VT_PARTY = 0x0004,
 		VT_ALLY = 0x0008,
-		VT_ENEMY = 0x0010,
+		VT_NPC = 0x0010,
+		VT_ENEMY = 0x0020,
 		VT_CORPSE = 0x0080;
 
 	bool encryptionSuppression = false;

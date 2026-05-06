@@ -923,6 +923,9 @@ void ExportItemData(void)
 	enarmour.Read(ir.GetDatFilePath(76), ItemSpecType::ARMOUR);
 	enpuppet.Read(ir.GetDatFilePath(77), ItemSpecType::PUPPET);
 	encurrency.Read(ir.GetDatFilePath(91), ItemSpecType::CURRENCY);
+	enslip.Read(ir.GetDatFilePath(55667), ItemSpecType::SLIP);
+	enarmour2.Read(ir.GetDatFilePath(55668), ItemSpecType::ARMOUR);
+	enmb.Read(ir.GetDatFilePath(55669));
 	enins.Read(ir.GetDatFilePath(55670), ItemSpecType::INSTINCT);
 	ennorm2.Read(ir.GetDatFilePath(55671), ItemSpecType::NORMAL);
 
@@ -931,14 +934,16 @@ void ExportItemData(void)
 		std::wcout << L"Exporting " << typeName << L" items..." << std::endl;
 
 		// Create map of English names by ID
-		std::unordered_map<uint32_t, std::tuple<std::u8string, std::u8string, std::u8string>> enNames;
+		std::unordered_map<uint32_t, std::tuple<std::u8string, std::u8string, std::u8string, std::u8string>> enNames;
 		for (const auto& datum : enData.data) {
 			try {
 				std::u8string name = datum.name();
-				std::u8string sg, pl;
+				std::u8string sg, pl, desc;
 				try { sg = datum.name_sg(); } catch (...) {}
 				try { pl = datum.name_pl(); } catch (...) {}
-				enNames[datum.id] = std::make_tuple(name, sg, pl);
+				try { desc = datum.description(); }
+				catch (...) {}	
+				enNames[datum.id] = std::make_tuple(name, sg, pl, desc);
 			} catch (...) {}
 		}
 
@@ -953,6 +958,7 @@ void ExportItemData(void)
 		csv.NewCell(u8"Name_EN_Singular");
 		csv.NewCell(u8"Name_EN_Plural");
 		csv.NewCell(u8"Description_JA");
+		csv.NewCell(u8"Description_EN");
 		csv.NewCell(u8"StackSize");
 		csv.NewCell(u8"ItemType");
 		csv.NewCell(u8"ResourceID");
@@ -1048,12 +1054,13 @@ void ExportItemData(void)
 			try { jaDesc = datum.description(); } catch (...) {}
 
 			// Get English text
-			std::u8string enName, enSg, enPl;
+			std::u8string enName, enSg, enPl, enDesc;
 			auto enIt = enNames.find(datum.id);
 			if (enIt != enNames.end()) {
 				enName = std::get<0>(enIt->second);
 				enSg = std::get<1>(enIt->second);
 				enPl = std::get<2>(enIt->second);
+				enDesc = std::get<3>(enIt->second);
 			}
 
 			const auto& hdr = datum.flags();
@@ -1065,6 +1072,7 @@ void ExportItemData(void)
 			csv.NewCell(enSg);
 			csv.NewCell(enPl);
 			csv.NewCell(jaDesc);
+			csv.NewCell(enDesc);
 			csv.NewCell(toU8(datum.stack_size()));
 			csv.NewCell(toU8(datum.item_type()));
 			csv.NewCell(toU8(datum.resource_id()));

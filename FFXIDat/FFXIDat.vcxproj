@@ -154,7 +154,6 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="ItemData.h" />
-    <ClInclude Include="ItemData_new.h" />
     <ClInclude Include="MonBridge.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Record.h" />
