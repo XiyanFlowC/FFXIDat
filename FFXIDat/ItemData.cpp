@@ -627,7 +627,7 @@ void ItemData::ToICsv(const std::wstring& path) const
 		}
 		break;
 	case ItemSpecType::PUPPET:
-		for (auto&& h : { u8"Slot_Head", u8"Slot_Body", u8"Slot_Attachment", u8"SUkn1", u8"SUkn2", u8"Fire", u8"Ice", u8"Wind", u8"Earth", u8"Thunder", u8"Water", u8"Light", u8"Dark", u8"Ukn", u8"Ukn2", u8"Ukn3"}) {
+		for (auto&& h : { u8"Slot_Head", u8"Slot_Body", u8"Slot_Attachment", u8"Fire", u8"Ice", u8"Wind", u8"Earth", u8"Thunder", u8"Water", u8"Light", u8"Dark", u8"Ukn"}) {
 			csv.NewCell(h);
 		}
 		break;
@@ -753,8 +753,6 @@ void ItemData::ToICsv(const std::wstring& path) const
 			csv.NewCell(boolToU8(spec.equip_slots.head));
 			csv.NewCell(boolToU8(spec.equip_slots.body));
 			csv.NewCell(boolToU8(spec.equip_slots.attachment));
-			csv.NewCell(toU8(spec.equip_slots.ukn1));
-			csv.NewCell(toU8(spec.equip_slots.ukn2));
 			csv.NewCell(toU8(spec.fire));
 			csv.NewCell(toU8(spec.ice));
 			csv.NewCell(toU8(spec.air));
@@ -764,8 +762,6 @@ void ItemData::ToICsv(const std::wstring& path) const
 			csv.NewCell(toU8(spec.light));
 			csv.NewCell(toU8(spec.dark));
 			csv.NewCell(toU8(spec.ukn));
-			csv.NewCell(toU8(spec.ukn2));
-			csv.NewCell(toU8(spec.ukn3));
 			break;
 		}
 		case ItemSpecType::SLIP:

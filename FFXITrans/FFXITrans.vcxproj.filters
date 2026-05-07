@@ -1,43 +1,152 @@
-О╩©<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Ф╨░Ф√┤Д╩╤">
+    <Filter Include="т╢нд╪Ч">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Е╓╢Ф√┤Д╩╤">
+    <Filter Include="м╥нд╪Ч">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Х╣└Ф╨░Ф√┤Д╩╤">
+    <Filter Include="вйт╢нд╪Ч">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FFXITrans.cpp">
-      <Filter>Ф╨░Ф√┤Д╩╤</Filter>
+      <Filter>т╢нд╪Ч</Filter>
     </ClCompile>
     <ClCompile Include="..\FFXIDatProcessor\codepage.cpp">
-      <Filter>Ф╨░Ф√┤Д╩╤</Filter>
+      <Filter>т╢нд╪Ч</Filter>
     </ClCompile>
     <ClCompile Include="ChsToSJis.cpp">
-      <Filter>Ф╨░Ф√┤Д╩╤</Filter>
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="Config.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="TranslationDatabase.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="BackupManager.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessorUtils.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="CsvTranslationLoader.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="FileProcessor.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="Processors\XisProcessor.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="ProcessorFactory.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="Processors\EvsbProcessor.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+        <ClCompile Include="Processors\EjrefToleranceProcessor.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+<ClCompile Include="Processors\DMsgProcessor.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="Processors\ItemProcessor.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="Processors\StatusDataProcessor.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="Processors\FixedPhraseProcessor.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="Processors\MonBridgeProcessor.cpp">
+      <Filter>т╢нд╪Ч</Filter>
+    </ClCompile>
+    <ClCompile Include="Processors\RoeProcessor.cpp">
+      <Filter>т╢нд╪Ч</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FFXIDatProcessor\codepage.h">
-      <Filter>Е╓╢Ф√┤Д╩╤</Filter>
+      <Filter>м╥нд╪Ч</Filter>
     </ClInclude>
     <ClInclude Include="ChsToSJis.h">
-      <Filter>Е╓╢Ф√┤Д╩╤</Filter>
+      <Filter>м╥нд╪Ч</Filter>
     </ClInclude>
     <ClInclude Include="liteopt.h">
-      <Filter>Е╓╢Ф√┤Д╩╤</Filter>
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="Config.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="TranslationDatabase.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="BackupManager.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessorUtils.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="CsvTranslationLoader.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="FileProcessor.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="Processors\XisProcessor.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="ProcessorFactory.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="Processors\EvsbProcessor.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+        <ClInclude Include="Processors\EjrefToleranceProcessor.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+<ClInclude Include="Processors\DMsgProcessor.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="Processors\ItemProcessor.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="Processors\StatusDataProcessor.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="Processors\FixedPhraseProcessor.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="Processors\MonBridgeProcessor.h">
+      <Filter>м╥нд╪Ч</Filter>
+    </ClInclude>
+    <ClInclude Include="Processors\RoeProcessor.h">
+      <Filter>м╥нд╪Ч</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="defs_sample.csv" />
     <None Include="README.md" />
+    <None Include="REFACTORING_PLAN.md" />
+    <None Include="README_REFACTORING.md" />
+    <None Include="MIGRATION_CHECKLIST.md" />
+    <None Include="REFACTORING_SUMMARY.md" />
+    <None Include="FINAL_SUMMARY.md" />
+    <None Include="README_QUICK_START.md" />
+    <None Include="ARCHITECTURE_DIAGRAMS.md" />
   </ItemGroup>
 </Project>

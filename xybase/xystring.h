@@ -1,4 +1,4 @@
-/**
+﻿/**
 * xystring.h - A platform isolation string processing util
 * @author Xiyan
 */

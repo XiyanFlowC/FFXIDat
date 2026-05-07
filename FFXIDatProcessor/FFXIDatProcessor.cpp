@@ -1023,9 +1023,8 @@ void ExportItemData(void)
 			}
 		} else if (specType == ItemSpecType::PUPPET) {
 			for (auto&& h : { u8"Slot_Head", u8"Slot_Body", u8"Slot_Attachment", u8"Slot_Raw",
-				u8"Slot_Ukn1", u8"Slot_Ukn2",
 				u8"Fire", u8"Ice", u8"Air", u8"Earth", u8"Thunder", u8"Water", u8"Light", u8"Dark", 
-				u8"Ukn", u8"Ukn2", u8"Ukn3" }) {
+				u8"Ukn" }) {
 				csv.NewCell(h);
 			}
 		} else if (specType == ItemSpecType::SLIP) {
@@ -1175,8 +1174,6 @@ void ExportItemData(void)
 				csv.NewCell(spec.equip_slots.body ? u8"1" : u8"0");
 				csv.NewCell(spec.equip_slots.attachment ? u8"1" : u8"0");
 				csv.NewCell(toU8(*(uint16_t*)&spec.equip_slots)); // Raw slot value
-				csv.NewCell(toU8(spec.equip_slots.ukn1));
-				csv.NewCell(toU8(spec.equip_slots.ukn2));
 				csv.NewCell(toU8(spec.fire));
 				csv.NewCell(toU8(spec.ice));
 				csv.NewCell(toU8(spec.air));
@@ -1186,8 +1183,6 @@ void ExportItemData(void)
 				csv.NewCell(toU8(spec.light));
 				csv.NewCell(toU8(spec.dark));
 				csv.NewCell(toU8(spec.ukn));
-				csv.NewCell(toU8(spec.ukn2));
-				csv.NewCell(toU8(spec.ukn3));
 			} else if (specType == ItemSpecType::SLIP) {
 				const auto& spec = datum.originalEntry.spec.slip;
 				for (int i = 0; i < 70; ++i) {

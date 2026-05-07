@@ -125,6 +125,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)FFXIDat;$(SolutionDir)xybase;</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/J %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,17 +138,58 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\FFXIDatProcessor\codepage.cpp" />
+    <ClCompile Include="Application.cpp" />
+    <ClCompile Include="BackupManager.cpp" />
     <ClCompile Include="ChsToSJis.cpp" />
+    <ClCompile Include="Config.cpp" />
+    <ClCompile Include="CsvTranslationLoader.cpp" />
     <ClCompile Include="FFXITrans.cpp" />
+    <ClCompile Include="FileProcessor.cpp" />
+    <ClCompile Include="ProcessorFactory.cpp" />
+    <ClCompile Include="Processors\DMsgProcessor.cpp" />
+    <ClCompile Include="Processors\EjrefToleranceProcessor.cpp" />
+    <ClCompile Include="Processors\EvsbProcessor.cpp" />
+    <ClCompile Include="Processors\FixedPhraseProcessor.cpp" />
+    <ClCompile Include="Processors\ItemProcessor.cpp" />
+    <ClCompile Include="Processors\MonBridgeProcessor.cpp" />
+    <ClCompile Include="Processors\RoeProcessor.cpp" />
+    <ClCompile Include="Processors\StatusDataProcessor.cpp" />
+    <ClCompile Include="Processors\XisProcessor.cpp" />
+    <ClCompile Include="ProcessorUtils.cpp" />
+    <ClCompile Include="TranslationDatabase.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FFXIDatProcessor\codepage.h" />
+    <ClInclude Include="Application.h" />
+    <ClInclude Include="BackupManager.h" />
     <ClInclude Include="ChsToSJis.h" />
+    <ClInclude Include="Config.h" />
+    <ClInclude Include="CsvTranslationLoader.h" />
+    <ClInclude Include="FileProcessor.h" />
     <ClInclude Include="liteopt.h" />
+    <ClInclude Include="ProcessorFactory.h" />
+    <ClInclude Include="Processors\DMsgProcessor.h" />
+    <ClInclude Include="Processors\EjrefToleranceProcessor.h" />
+    <ClInclude Include="Processors\EvsbProcessor.h" />
+    <ClInclude Include="Processors\FixedPhraseProcessor.h" />
+    <ClInclude Include="Processors\ItemProcessor.h" />
+    <ClInclude Include="Processors\MonBridgeProcessor.h" />
+    <ClInclude Include="Processors\RoeProcessor.h" />
+    <ClInclude Include="Processors\StatusDataProcessor.h" />
+    <ClInclude Include="Processors\XisProcessor.h" />
+    <ClInclude Include="ProcessorUtils.h" />
+    <ClInclude Include="TranslationDatabase.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ARCHITECTURE_DIAGRAMS.md" />
     <None Include="defs_sample.csv" />
+    <None Include="FINAL_SUMMARY.md" />
+    <None Include="MIGRATION_CHECKLIST.md" />
     <None Include="README.md" />
+    <None Include="README_QUICK_START.md" />
+    <None Include="README_REFACTORING.md" />
+    <None Include="REFACTORING_PLAN.md" />
+    <None Include="REFACTORING_SUMMARY.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

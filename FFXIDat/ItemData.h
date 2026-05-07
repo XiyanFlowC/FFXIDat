@@ -136,9 +136,6 @@ struct ItemPuppetSlot
 	uint16_t body : 1;
 	uint16_t attachment : 1;
 	uint16_t rsv : 13;
-	uint32_t ukn1;
-	uint32_t ukn2;
-	Record info_rec;
 };
 
 struct ItemPuppetSpec
@@ -152,9 +149,7 @@ struct ItemPuppetSpec
 	uint8_t water : 4;
 	uint8_t light : 4;
 	uint8_t dark : 4;
-	uint8_t ukn;
-	uint16_t ukn2;
-	uint16_t ukn3;
+	uint32_t ukn;
 	Record info_rec;
 };
 
