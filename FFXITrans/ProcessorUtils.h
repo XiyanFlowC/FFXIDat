@@ -27,6 +27,10 @@ namespace ProcessorUtils
     bool IsEjrefShorterReferenceComment(const std::u8string& comment);
     bool IsEjrefSameRowCell0Comment(const std::u8string& comment);
     bool IsEjrefSpecialComment(const std::u8string& comment);
+    std::u8string GetCurrentLanguageCode();
+    std::u8string GetAlternateLanguageCode();
+    bool TryGetFileDef(const std::u8string& comment, const std::u8string& type, const std::u8string& lang, FileProcessDef& fileDef);
+    std::u8string PrependBabelText(const std::u8string& translatedText, const std::u8string& currentOriginalText, const std::u8string& alternateOriginalText);
 
     // InsToken handling
     struct InsToken

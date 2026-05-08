@@ -317,9 +317,9 @@ bool EjrefToleranceProcessor::TryProcessKeyItem(const FileProcessDef& fileDef,
         int id = cells[0].Get<int>();
         KeyItemReference ref;
         if (cells[1].GetType() == 0)
-            ref.name = xybase::string::escape(cells[1].Get<std::u8string>());
+            ref.name = cells[1].Get<std::u8string>();
         if (cells[2].GetType() == 0)
-            ref.description = xybase::string::escape(cells[2].Get<std::u8string>());
+            ref.description = cells[2].Get<std::u8string>();
         if (id != 0)
             jpById[id] = std::move(ref);
     }
@@ -376,12 +376,12 @@ bool EjrefToleranceProcessor::TryProcessKeyItem(const FileProcessDef& fileDef,
             if (cells[4].GetType() == 0)
             {
                 std::u8string text = xybase::string::escape(cells[4].Get<std::u8string>());
-                cells[4].Set(xybase::string::unescape(db.GetTranslationFromReference(text, ref->name)));
+                cells[4].Set(xybase::string::unescape(db.GetTranslationFromReference(text, xybase::string::escape(ref->name))));
             }
             if (cells[5].GetType() == 0)
             {
                 std::u8string text = xybase::string::escape(cells[5].Get<std::u8string>());
-                cells[5].Set(xybase::string::unescape(db.GetTranslationFromReference(text, ref->name)));
+                cells[5].Set(xybase::string::unescape(db.GetTranslationFromReference(text, xybase::string::escape(ref->name))));
             }
         }
 
@@ -389,9 +389,8 @@ bool EjrefToleranceProcessor::TryProcessKeyItem(const FileProcessDef& fileDef,
         if (!ref->description.empty() && cells[6].GetType() == 0)
         {
             std::u8string text = xybase::string::escape(cells[6].Get<std::u8string>());
-			std::u8string translated = xybase::string::unescape(db.GetTranslationFromReference(text, ref->description));
-            if (Config::Instance().IsBilingual() && !originalName.empty())
-				translated = u8"(" + originalName + u8")\n" + translated;
+            std::u8string translated = xybase::string::unescape(db.GetTranslationFromReference(text, xybase::string::escape(ref->description)));
+            translated = ProcessorUtils::PrependBabelText(translated, originalName, ref->name);
             cells[6].Set(translated);
         }
     }

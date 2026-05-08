@@ -39,6 +39,25 @@ bool ItemProcessor::Process(
     ItemSpecType specType = GetItemSpecType(fileDef.type);
     itemData.Read(datPath, specType);
 
+    std::map<uint32_t, std::u8string> alternateNamesById;
+    if (Config::Instance().IsBabelAlternateOriginalEnabled())
+    {
+        FileProcessDef alternateDef;
+        if (ProcessorUtils::TryGetFileDef(fileDef.comment, fileDef.type, ProcessorUtils::GetAlternateLanguageCode(), alternateDef))
+        {
+            auto alternateDatPath = Config::Instance().GetGameRoot() / (alternateDef.path + u8".DAT");
+            if (std::filesystem::exists(alternateDatPath))
+            {
+                auto alternateTextsById = ProcessorUtils::CollectItemTextsById(alternateDatPath, fileDef.type);
+                for (const auto& [id, texts] : alternateTextsById)
+                {
+                    if (!texts.empty())
+                        alternateNamesById[id] = xybase::string::unescape(texts.front());
+                }
+            }
+        }
+    }
+
     auto& db = TranslationDatabase::Instance();
     auto& csvLoader = CsvTranslationLoader::Instance();
 
@@ -57,6 +76,9 @@ bool ItemProcessor::Process(
                 // Fallback to regular translation
                 auto& config = Config::Instance();
                 std::u8string originalName = datum.name();
+                std::u8string alternateOriginalName;
+                if (const auto altItr = alternateNamesById.find(datum.id); altItr != alternateNamesById.end())
+                    alternateOriginalName = altItr->second;
 
                 if ((translateAllCells || targetCells.count(1)) && !config.IsNoName())
                     datum.setName(ChsToSJis::Instance().ReplaceHanzi(
@@ -68,8 +90,7 @@ bool ItemProcessor::Process(
                     std::u8string translatedDesc = ChsToSJis::Instance().ReplaceHanzi(
                         xybase::string::unescape(db.GetTranslation(
                             xybase::string::escape(datum.description()))));
-                    if (config.IsBilingual())
-                        translatedDesc = u8"(" + originalName + u8")\n" + translatedDesc;
+                    translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
                     datum.setDescription(translatedDesc);
                 }
                 continue;
@@ -78,6 +99,9 @@ bool ItemProcessor::Process(
             // Apply CSV translation
             auto& config = Config::Instance();
             std::u8string originalName = datum.name();
+            std::u8string alternateOriginalName;
+            if (const auto altItr = alternateNamesById.find(datum.id); altItr != alternateNamesById.end())
+                alternateOriginalName = altItr->second;
 
             if (!config.IsNoName())
             {
@@ -110,8 +134,7 @@ bool ItemProcessor::Process(
                             xybase::string::escape(datum.description()))));
                 }
 
-                if (config.IsBilingual())
-                    translatedDesc = u8"(" + originalName + u8")\n" + translatedDesc;
+                translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
 
                 datum.setDescription(translatedDesc);
             }
@@ -147,6 +170,9 @@ bool ItemProcessor::Process(
         // Use ID-mapped reference if available
         auto& config = Config::Instance();
         std::u8string originalName = datum.name();
+        std::u8string alternateOriginalName;
+        if (const auto altItr = alternateNamesById.find(datum.id); altItr != alternateNamesById.end())
+            alternateOriginalName = altItr->second;
 
         if (!jpTextsById.empty())
         {
@@ -167,8 +193,7 @@ bool ItemProcessor::Process(
                     auto translatedDesc = db.GetTranslationFromReference(
                         xybase::string::escape(datum.description()), jpTextItr->second.back());
                     std::u8string finalDesc = xybase::string::unescape(translatedDesc);
-                    if (config.IsBilingual())
-                        finalDesc = u8"(" + originalName + u8")\n" + finalDesc;
+                    finalDesc = ProcessorUtils::PrependBabelText(finalDesc, originalName, alternateOriginalName);
                     datum.setDescription(finalDesc);
                 }
                 continue;

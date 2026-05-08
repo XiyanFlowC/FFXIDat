@@ -31,6 +31,25 @@ bool DMsgProcessor::ProcessQuestDMsg(
     DMsg dmsg(datPath);
     dmsg.Read();
 
+    std::map<int, std::u8string> alternateNamesById;
+    if (Config::Instance().IsBabelAlternateOriginalEnabled())
+    {
+        FileProcessDef alternateDef;
+        if (ProcessorUtils::TryGetFileDef(fileDef.comment, fileDef.type, ProcessorUtils::GetAlternateLanguageCode(), alternateDef))
+        {
+            auto alternateDatPath = Config::Instance().GetGameRoot() / (alternateDef.path + u8".DAT");
+            if (std::filesystem::exists(alternateDatPath))
+            {
+                auto alternateTextsById = ProcessorUtils::CollectDMsgTextsById(alternateDatPath, alternateDef.cellIndicesStr);
+                for (const auto& [id, texts] : alternateTextsById)
+                {
+                    if (!texts.empty())
+                        alternateNamesById[id] = xybase::string::unescape(texts.front());
+                }
+            }
+        }
+    }
+
     auto csvTranslations = CsvTranslationLoader::Instance().LoadQuestDMsgCsvTranslations(
         CsvTranslationLoader::Instance().GetTranslatedCsvPath(fileDef.comment));
 
@@ -46,6 +65,7 @@ bool DMsgProcessor::ProcessQuestDMsg(
                 continue;
 
             int rowId = cells[0].Get<int>();
+            const int sourceRowId = rowId;
 
             // Section header detection
             if (cells.size() >= 2 && cells[1].GetType() == 0 
@@ -64,6 +84,9 @@ bool DMsgProcessor::ProcessQuestDMsg(
                 std::u8string originalName;
                 if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0)
                     originalName = mutableCells[1].Get<std::u8string>();
+                std::u8string alternateOriginalName;
+                if (const auto altItr = alternateNamesById.find(sourceRowId); altItr != alternateNamesById.end())
+                    alternateOriginalName = altItr->second;
 
                 if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0 && !config.IsNoName())
                     mutableCells[1].Set(ChsToSJis::Instance().ReplaceHanzi(
@@ -75,8 +98,7 @@ bool DMsgProcessor::ProcessQuestDMsg(
                     std::u8string translatedDesc = ChsToSJis::Instance().ReplaceHanzi(
                         xybase::string::unescape(db.GetTranslation(
                             xybase::string::escape(mutableCells[2].Get<std::u8string>()))));
-                    if (config.IsBilingual() && !originalName.empty())
-                        translatedDesc = u8"(" + originalName + u8")\n" + translatedDesc;
+                    translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
                     mutableCells[2].Set(translatedDesc);
                 }
                 continue;
@@ -87,6 +109,9 @@ bool DMsgProcessor::ProcessQuestDMsg(
             std::u8string originalName;
             if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0)
                 originalName = mutableCells[1].Get<std::u8string>();
+            std::u8string alternateOriginalName;
+            if (const auto altItr = alternateNamesById.find(sourceRowId); altItr != alternateNamesById.end())
+                alternateOriginalName = altItr->second;
 
             if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0 && !config.IsNoName())
             {
@@ -107,8 +132,7 @@ bool DMsgProcessor::ProcessQuestDMsg(
                     translatedDesc = ChsToSJis::Instance().ReplaceHanzi(
                         xybase::string::unescape(db.GetTranslation(
                             xybase::string::escape(mutableCells[2].Get<std::u8string>()))));
-                if (config.IsBilingual() && !originalName.empty())
-                    translatedDesc = u8"(" + originalName + u8")\n" + translatedDesc;
+                translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
                 mutableCells[2].Set(translatedDesc);
             }
         }
@@ -133,6 +157,9 @@ bool DMsgProcessor::ProcessQuestDMsg(
                 std::u8string originalName;
                 if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0)
                     originalName = mutableCells[1].Get<std::u8string>();
+                std::u8string alternateOriginalName;
+                if (const auto altItr = alternateNamesById.find(rowId); altItr != alternateNamesById.end())
+                    alternateOriginalName = altItr->second;
 
                 if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0 && !config.IsNoName())
                     mutableCells[1].Set(ChsToSJis::Instance().ReplaceHanzi(
@@ -144,8 +171,7 @@ bool DMsgProcessor::ProcessQuestDMsg(
                     std::u8string translatedDesc = ChsToSJis::Instance().ReplaceHanzi(
                         xybase::string::unescape(db.GetTranslation(
                             xybase::string::escape(mutableCells[2].Get<std::u8string>()))));
-                    if (config.IsBilingual() && !originalName.empty())
-                        translatedDesc = u8"(" + originalName + u8")\n" + translatedDesc;
+                    translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
                     mutableCells[2].Set(translatedDesc);
                 }
                 continue;
@@ -156,6 +182,9 @@ bool DMsgProcessor::ProcessQuestDMsg(
             std::u8string originalName;
             if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0)
                 originalName = mutableCells[1].Get<std::u8string>();
+            std::u8string alternateOriginalName;
+            if (const auto altItr = alternateNamesById.find(rowId); altItr != alternateNamesById.end())
+                alternateOriginalName = altItr->second;
 
             if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0 && !config.IsNoName())
             {
@@ -176,8 +205,7 @@ bool DMsgProcessor::ProcessQuestDMsg(
                     translatedDesc = ChsToSJis::Instance().ReplaceHanzi(
                         xybase::string::unescape(db.GetTranslation(
                             xybase::string::escape(mutableCells[2].Get<std::u8string>()))));
-                if (config.IsBilingual() && !originalName.empty())
-                    translatedDesc = u8"(" + originalName + u8")\n" + translatedDesc;
+                translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
                 mutableCells[2].Set(translatedDesc);
             }
         }
@@ -217,8 +245,27 @@ bool DMsgProcessor::ProcessRegularDMsg(
     auto& db = TranslationDatabase::Instance();
     size_t textIdx = 0;
 
-	// The following process only need when translating key items with bilingual enabled, as we need to append original name to description. For other cases we can just translate as normal without worrying about the order of text.
-    if (keyItemSpecialCase && Config::Instance().IsBilingual()) {
+  // The following process only need when translating key items with babel enabled, as we need to append original name to description. For other cases we can just translate as normal without worrying about the order of text.
+    if (keyItemSpecialCase && Config::Instance().IsBabelEnabled()) {
+        std::map<int, std::u8string> alternateNamesById;
+        if (Config::Instance().IsBabelAlternateOriginalEnabled())
+        {
+            FileProcessDef alternateDef;
+            if (ProcessorUtils::TryGetFileDef(fileDef.comment, fileDef.type, ProcessorUtils::GetAlternateLanguageCode(), alternateDef))
+            {
+                auto alternateDatPath = Config::Instance().GetGameRoot() / (alternateDef.path + u8".DAT");
+                if (std::filesystem::exists(alternateDatPath))
+                {
+                    auto alternateTextsById = ProcessorUtils::CollectDMsgTextsById(alternateDatPath, alternateDef.cellIndicesStr);
+                    for (const auto& [id, texts] : alternateTextsById)
+                    {
+                        if (!texts.empty())
+                            alternateNamesById[id] = xybase::string::unescape(texts.front());
+                    }
+                }
+            }
+        }
+
         for (auto& row : dmsg)
         {
             int rowId = 0;
@@ -231,13 +278,16 @@ bool DMsgProcessor::ProcessRegularDMsg(
             if (cells.size() >= 3 && cells[1].GetType() == 0 && cells[2].GetType() == 0)
             {
                 std::u8string originalName = cells[1].Get<std::u8string>();
+                std::u8string alternateOriginalName;
+                if (const auto altItr = alternateNamesById.find(rowId); altItr != alternateNamesById.end())
+                    alternateOriginalName = altItr->second;
                 std::u8string translatedDesc;
 				translatedDesc = xybase::string::unescape(db.GetTranslation(xybase::string::escape(cells[2].Get<std::u8string>())));
 				if (!Config::Instance().IsNoName())
                     cells[1].Set(ChsToSJis::Instance().ReplaceHanzi(
                         xybase::string::unescape(db.GetTranslation(
 						    xybase::string::escape(originalName)))));
-                translatedDesc = u8"(" + originalName + u8")\n" + ChsToSJis::Instance().ReplaceHanzi(translatedDesc);
+               translatedDesc = ProcessorUtils::PrependBabelText(ChsToSJis::Instance().ReplaceHanzi(translatedDesc), originalName, alternateOriginalName);
                 cells[2].Set(translatedDesc);
 			}
         }

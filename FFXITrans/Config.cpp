@@ -1,9 +1,69 @@
 #include "Config.h"
+#include "Config.h"
 #include <Windows.h>
 #include <iostream>
 #include <fstream>
 #include <regex>
+#include <algorithm>
+#include <cwctype>
 #include <xystring.h>
+
+namespace
+{
+    bool IsTruthyValue(const std::wstring& value)
+    {
+        return value == L"1" || value == L"true" || value == L"yes" || value == L"on";
+    }
+
+    bool IsFalsyValue(const std::wstring& value)
+    {
+        return value == L"0" || value == L"false" || value == L"no" || value == L"off" || value == L"native";
+    }
+
+    std::wstring ToLowerAscii(std::wstring value)
+    {
+        std::transform(value.begin(), value.end(), value.begin(), [](wchar_t ch)
+            {
+                return static_cast<wchar_t>(::towlower(ch));
+            });
+        return value;
+    }
+
+    bool TryParseBabelMode(const std::wstring& rawValue, bool& currentOriginalEnabled, bool& alternateOriginalEnabled)
+    {
+        const std::wstring value = ToLowerAscii(rawValue);
+
+        if (IsFalsyValue(value))
+        {
+            currentOriginalEnabled = false;
+            alternateOriginalEnabled = false;
+            return true;
+        }
+
+        if (value == L"bilingual" || value == L"1" || value == L"true" || value == L"on")
+        {
+            currentOriginalEnabled = true;
+            alternateOriginalEnabled = false;
+            return true;
+        }
+
+        if (value == L"exotic")
+        {
+            currentOriginalEnabled = false;
+            alternateOriginalEnabled = true;
+            return true;
+        }
+
+        if (value == L"yes" || value == L"tower" || value == L"trilingual")
+        {
+            currentOriginalEnabled = true;
+            alternateOriginalEnabled = true;
+            return true;
+        }
+
+        return false;
+    }
+}
 
 Config& Config::Instance()
 {
@@ -193,6 +253,8 @@ bool Config::LoadFromFile(const fs::path& configPath)
     std::wcout << L"读取配置文件中..." << std::endl;
     std::wifstream configFile(configPath);
     std::wstring line;
+    bool babelConfigured = false;
+    bool legacyBilingualConfigured = false;
 
     while (std::getline(configFile, line))
     {
@@ -251,11 +313,31 @@ bool Config::LoadFromFile(const fs::path& configPath)
         }
         else if (key == L"noname")
         {
-            noname = (value == L"1" || value == L"true" || value == L"yes");
+            noname = IsTruthyValue(value);
+        }
+        else if (key == L"babel")
+        {
+            bool currentOriginalEnabled = babelCurrentOriginal;
+            bool alternateOriginalEnabled = babelAlternateOriginal;
+            if (TryParseBabelMode(value, currentOriginalEnabled, alternateOriginalEnabled))
+            {
+                babelCurrentOriginal = currentOriginalEnabled;
+                babelAlternateOriginal = alternateOriginalEnabled;
+                babelConfigured = true;
+            }
+            else
+            {
+                std::wcerr << L"未识别的 babel 配置值：" << value << L"，将保持当前设置。" << std::endl;
+            }
         }
         else if (key == L"bilingual")
         {
-            bilingual = (value == L"1" || value == L"true" || value == L"yes");
+            legacyBilingualConfigured = true;
+            if (!babelConfigured)
+            {
+                babelCurrentOriginal = IsTruthyValue(value);
+                babelAlternateOriginal = false;
+            }
         }
         else if (key == L"excludes")
         {
@@ -293,6 +375,10 @@ bool Config::LoadFromFile(const fs::path& configPath)
     }
 
     configFile.close();
+    if (legacyBilingualConfigured)
+    {
+        std::wcout << L"注意：bilingual 配置项已废弃，请改用 babel。" << std::endl;
+    }
     return true;
 }
 

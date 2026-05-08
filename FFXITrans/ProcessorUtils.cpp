@@ -1,7 +1,9 @@
 #include "ProcessorUtils.h"
+#include "Config.h"
 #include <sstream>
 #include <set>
 #include <regex>
+#include <tuple>
 #include <XiString.h>
 #include <DMsg.h>
 #include <EventStringBase.h>
@@ -10,6 +12,7 @@
 #include <FixedPhrase.h>
 #include <MonBridge.h>
 #include <RecordsOfEminence.h>
+#include <CsvFile.h>
 #include <xystring.h>
 
 namespace ProcessorUtils
@@ -68,6 +71,95 @@ namespace ProcessorUtils
 			|| comment == u8"evx/Aht Urhgan Whitegate"
             || IsEjrefShorterReferenceComment(comment)
             || IsEjrefSameRowCell0Comment(comment);
+    }
+
+    std::u8string GetCurrentLanguageCode()
+    {
+        return Config::Instance().IsEnglishMode() ? u8"en" : u8"jp";
+    }
+
+    std::u8string GetAlternateLanguageCode()
+    {
+        return Config::Instance().IsEnglishMode() ? u8"jp" : u8"en";
+    }
+
+    bool TryGetFileDef(const std::u8string& comment, const std::u8string& type, const std::u8string& lang, FileProcessDef& fileDef)
+    {
+        using FileDefKey = std::tuple<std::u8string, std::u8string, std::u8string>;
+
+        static const auto defsByKey = []()
+            {
+                std::map<FileDefKey, FileProcessDef> defs;
+                const auto defsPath = Config::Instance().GetProgRoot() / "defs.csv";
+                if (!std::filesystem::exists(defsPath))
+                    return defs;
+
+                CsvFile def(defsPath, std::ios::in | std::ios::binary);
+                while (!def.IsEof())
+                {
+                    FileProcessDef loadedDef;
+                    loadedDef.path = def.NextCell();
+                    loadedDef.type = def.NextCell();
+                    loadedDef.lang = def.NextCell();
+                    loadedDef.comment = def.NextCell();
+                    if (!def.IsEol())
+                    {
+                        loadedDef.cellIndicesStr = def.NextCell();
+                    }
+                    def.NextLine();
+
+                    if (loadedDef.path.empty() || loadedDef.type.empty() || loadedDef.lang.empty() || loadedDef.comment.empty())
+                        continue;
+
+                    if (loadedDef.path[0] == u8'#')
+                    {
+                        loadedDef.path.erase(loadedDef.path.begin());
+                        if (loadedDef.path.empty())
+                            continue;
+                    }
+
+                    defs[FileDefKey{ loadedDef.comment, loadedDef.type, loadedDef.lang }] = std::move(loadedDef);
+                }
+
+                return defs;
+            }();
+
+        const auto itr = defsByKey.find(FileDefKey{ comment, type, lang });
+        if (itr == defsByKey.end())
+            return false;
+
+        fileDef = itr->second;
+        return true;
+    }
+
+    std::u8string PrependBabelText(const std::u8string& translatedText, const std::u8string& currentOriginalText, const std::u8string& alternateOriginalText)
+    {
+        if (!Config::Instance().IsBabelEnabled())
+            return translatedText;
+
+        std::vector<std::u8string> originals;
+        if (Config::Instance().IsBabelCurrentOriginalEnabled() && !currentOriginalText.empty())
+        {
+            originals.push_back(currentOriginalText);
+        }
+        if (Config::Instance().IsBabelAlternateOriginalEnabled()
+            && !alternateOriginalText.empty()
+            && std::find(originals.begin(), originals.end(), alternateOriginalText) == originals.end())
+        {
+            originals.push_back(alternateOriginalText);
+        }
+        if (originals.empty())
+            return translatedText;
+
+        std::u8string prefix = u8"(";
+        for (size_t i = 0; i < originals.size(); ++i)
+        {
+            if (i > 0)
+                prefix += u8"|";
+            prefix += originals[i];
+        }
+        prefix += u8")\n";
+        return prefix + translatedText;
     }
 
     std::vector<InsToken> ParseInsTokens(const std::u8string& text)

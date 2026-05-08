@@ -33,6 +33,25 @@ bool RoeProcessor::ProcessQuestData(
     RecordsOfEminence roe;
     roe.ReadQuest(datPath);
 
+    std::map<uint32_t, std::u8string> alternateNamesById;
+    if (Config::Instance().IsBabelAlternateOriginalEnabled())
+    {
+        FileProcessDef alternateDef;
+        if (ProcessorUtils::TryGetFileDef(fileDef.comment, fileDef.type, ProcessorUtils::GetAlternateLanguageCode(), alternateDef))
+        {
+            auto alternateDatPath = Config::Instance().GetGameRoot() / (alternateDef.path + u8".DAT");
+            if (std::filesystem::exists(alternateDatPath))
+            {
+                RecordsOfEminence alternateRoe;
+                alternateRoe.ReadQuest(alternateDatPath);
+                for (const auto& alternateDatum : alternateRoe.questData)
+                {
+                    alternateNamesById[alternateDatum.id] = alternateDatum.questName();
+                }
+            }
+        }
+    }
+
     auto& csvLoader = CsvTranslationLoader::Instance();
 
     // Check for CSV translation
@@ -49,6 +68,9 @@ bool RoeProcessor::ProcessQuestData(
                 // Fallback to regular translation
                 auto& config = Config::Instance();
                 std::u8string originalName = datum.questName();
+                std::u8string alternateOriginalName;
+                if (const auto altItr = alternateNamesById.find(datum.id); altItr != alternateNamesById.end())
+                    alternateOriginalName = altItr->second;
 
                 if (!config.IsNoName())
                     datum.setQuestName(ChsToSJis::Instance().ReplaceHanzi(
@@ -58,8 +80,7 @@ bool RoeProcessor::ProcessQuestData(
                 std::u8string translatedDesc = ChsToSJis::Instance().ReplaceHanzi(
                     xybase::string::unescape(TranslationDatabase::Instance().GetTranslation(
                         xybase::string::escape(datum.description()))));
-                if (config.IsBilingual())
-                    translatedDesc = u8"(" + originalName + u8")\n" + translatedDesc;
+                translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
                 datum.setDescription(translatedDesc);
 
                 datum.setNote(ChsToSJis::Instance().ReplaceHanzi(
@@ -70,6 +91,9 @@ bool RoeProcessor::ProcessQuestData(
 
             auto& config = Config::Instance();
             std::u8string originalName = datum.questName();
+            std::u8string alternateOriginalName;
+            if (const auto altItr = alternateNamesById.find(datum.id); altItr != alternateNamesById.end())
+                alternateOriginalName = altItr->second;
 
             if (!config.IsNoName())
             {
@@ -88,8 +112,7 @@ bool RoeProcessor::ProcessQuestData(
                 translatedDesc = ChsToSJis::Instance().ReplaceHanzi(
                     xybase::string::unescape(TranslationDatabase::Instance().GetTranslation(
                         xybase::string::escape(datum.description()))));
-            if (config.IsBilingual())
-                translatedDesc = u8"(" + originalName + u8")\n" + translatedDesc;
+            translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
             datum.setDescription(translatedDesc);
 
             if (!itrCsv->second.note.empty())

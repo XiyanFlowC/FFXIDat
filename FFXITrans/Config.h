@@ -32,7 +32,10 @@ public:
     bool IsEjrefTolerance() const { return ejrefTolerance; }
     bool IsVerbose() const { return verbose; }
     bool IsNoName() const { return noname; }
-    bool IsBilingual() const { return bilingual; }
+    bool IsBilingual() const { return babelCurrentOriginal; }
+    bool IsBabelEnabled() const { return babelCurrentOriginal || babelAlternateOriginal; }
+    bool IsBabelCurrentOriginalEnabled() const { return babelCurrentOriginal; }
+    bool IsBabelAlternateOriginalEnabled() const { return babelAlternateOriginal; }
 
     // Excludes
     bool IsExcluded(const std::u8string& comment) const;
@@ -71,7 +74,8 @@ private:
     bool ejrefTolerance = false;
     bool verbose = false;
     bool noname = false;
-    bool bilingual = false;
+    bool babelCurrentOriginal = false;
+    bool babelAlternateOriginal = false;
 
     std::set<std::u8string> excludes;
 };
