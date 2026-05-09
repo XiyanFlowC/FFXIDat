@@ -43,8 +43,13 @@ bool DMsgProcessor::ProcessQuestDMsg(
                 auto alternateTextsById = ProcessorUtils::CollectDMsgTextsById(alternateDatPath, alternateDef.cellIndicesStr);
                 for (const auto& [id, texts] : alternateTextsById)
                 {
+                    // 部分任务名有 _ 前缀，需要剔除
+                    auto str = xybase::string::unescape(texts.front());
+					size_t startPos = str.find_first_not_of(u8'_');
+					if (startPos != std::u8string::npos)
+					    str = str.substr(str.find_first_not_of(u8'_'));
                     if (!texts.empty())
-                        alternateNamesById[id] = xybase::string::unescape(texts.front());
+                        alternateNamesById[id] = str;
                 }
             }
         }
