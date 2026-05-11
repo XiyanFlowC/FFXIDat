@@ -66,9 +66,12 @@ std::wstring CodeCvt::CvtToWString(const std::string &str)
 	int current = 0;
 	for (char ch : str)
 	{
+		const auto byte = static_cast<uint8_t>(ch);
 		if (current)
 		{
-			auto wc = cp2uc[(current | (ch & 0xFF)) & 0xFFFF];
+			const auto cp = static_cast<uint32_t>((current | byte) & 0xFFFF);
+			auto it = cp2uc.find(cp);
+			auto wc = it == cp2uc.end() ? 0 : it->second;
 			if (wc == 0)
 			{
 #ifdef NDEBUG
@@ -81,7 +84,7 @@ std::wstring CodeCvt::CvtToWString(const std::string &str)
 					sb.Append('0');
 				sb.Append(xybase::string::itos<char32_t>(cb, 16).c_str());
 				sb.Append(U"\\x");
-				cb = ch;
+				cb = byte;
 				cb &= 0xFF;
 				if (cb < 16)
 					sb.Append('0');
@@ -89,7 +92,7 @@ std::wstring CodeCvt::CvtToWString(const std::string &str)
 #endif
 				std::wcerr << L"警告：无法转换代码页字符 0x"
 					<< std::hex << ((current & 0xFF00) >> 8)
-					<< std::hex << (ch & 0xFF)
+				  << std::hex << byte
 					<< L"。" << std::endl;
 			}
 			else
@@ -98,22 +101,33 @@ std::wstring CodeCvt::CvtToWString(const std::string &str)
 		}
 		else
 		{
-			if (ch & 0x80)
+			auto singleByteIt = cp2uc.find(byte);
+			if (singleByteIt != cp2uc.end())
 			{
-				current = ch << 8;
+			  sb.Append(singleByteIt->second);
+			}
+			else if (leadBytes.contains(byte))
+			{
+				current = static_cast<int>(byte) << 8;
 			}
 			else
 			{
-				auto wc = cp2uc[ch];
-				if (wc == 0)
-				{
-					wc = U'�';
-				}
-
-				sb.Append(wc);
+				sb.Append(U'�');
+				std::wcerr << L"警告：无法转换代码页字符 0x"
+					<< std::hex << static_cast<uint32_t>(byte)
+					<< L"。" << std::endl;
 			}
 		}
 	}
+
+	if (current)
+	{
+		sb.Append(U'�');
+		std::wcerr << L"警告：检测到不完整的双字节前导字节 0x"
+			<< std::hex << ((current & 0xFF00) >> 8)
+			<< L"。" << std::endl;
+	}
+
 	return xybase::string::to_wstring(sb.ToString());
 }
 
@@ -123,6 +137,7 @@ void CodeCvt::Init(std::filesystem::path path)
 {
 	uc2cp.clear();
 	cp2uc.clear();
+	leadBytes.clear();
 
 	CsvFile csv(path, std::ios::in | std::ios::binary);
 	while (!csv.IsEof())
@@ -134,6 +149,8 @@ void CodeCvt::Init(std::filesystem::path path)
 			uc2cp[uc] = cp;
 		if (!cp2uc.contains(cp))
 			cp2uc[cp] = uc;
+		if (cp > 0xFF)
+			leadBytes.insert(static_cast<uint8_t>((cp >> 8) & 0xFF));
 
 		csv.NextLine();
 	}
@@ -143,16 +160,16 @@ void CodeCvt::Init(std::filesystem::path path)
 
 bool CodeCvt::TryUcToCp(uint32_t uc, uint32_t &cp) const
 {
-    auto it = uc2cp.find(uc);
-    if (it == uc2cp.end()) return false;
-    cp = it->second;
-    return true;
+	auto it = uc2cp.find(uc);
+	if (it == uc2cp.end()) return false;
+	cp = it->second;
+	return true;
 }
 
 bool CodeCvt::TryCpToUc(uint32_t cp, uint32_t &uc) const
 {
-    auto it = cp2uc.find(cp);
-    if (it == cp2uc.end()) return false;
-    uc = it->second;
-    return true;
+	auto it = cp2uc.find(cp);
+	if (it == cp2uc.end()) return false;
+	uc = it->second;
+	return true;
 }

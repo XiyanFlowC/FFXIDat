@@ -2,6 +2,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 #include <cstdint>
 #include <filesystem>
 #include "xystring.h"
@@ -10,6 +11,7 @@ class CodeCvt
 {
 	std::map<uint32_t, uint32_t> uc2cp;
 	std::map<uint32_t, uint32_t> cp2uc;
+ std::set<uint8_t> leadBytes;
 public:
 	~CodeCvt();
 
