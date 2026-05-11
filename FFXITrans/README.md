@@ -1,17 +1,20 @@
 # FFXITrans - FFXI 汉化文本插入工具
+# FFXITrans - FFXI 汉化文本插入工具
 
 ## 简介
 
-FFXITrans 是一个专为《最终幻想XI》设计的汉化文本插入工具，支持多种游戏数据文件格式的文本翻译和替换。该工具可以将预先准备好的翻译文本插入到游戏文件中，实现游戏界面和内容的中文化。
+FFXITrans 是一个面向《最终幻想XI》的文本提取与汉化插入工具。它可以从游戏数据文件中导出待翻译文本，也可以将已经准备好的翻译重新写回游戏 DAT 文件，用于界面、系统文本、任务文本和部分数据表的中文化。
 
 ## 功能特性
-- 支持多种FFXI数据格式：XiString、DMsg、EventStringBase、StatusData、ItemData
+- 支持多种 FFXI 数据格式：`XiString`、`DMsg`、`EventStringBase`、`StatusData`、`ItemData`、`MonBridge`、`RecordsOfEminence`
+- 支持 `prepare` 模式导出待翻译源数据
 - 自动备份原始游戏文件
 - 支持原位修改或输出到独立目录
 - 简体中文到Shift-JIS编码转换
 - 失配文本统计和记录
 - 灵活的翻译配置系统
-- dmsg Cell级别的精细翻译控制
+- 支持 `text/src` / `text/tgt` 目录结构覆盖基础文本库
+- 支持 `dmsg` 及部分结构化数据的 Cell 级别精细翻译控制
 
 ## 支持的文件类型
 
@@ -27,7 +30,14 @@ FFXITrans 是一个专为《最终幻想XI》设计的汉化文本插入工具，支持多种游戏数据文件格
 | `inb` | ItemData Normal | 普通物品数据 |
 | `ipb` | ItemData Puppet | 人偶用装备 |
 | `isb` | ItemData Slip | 莫古寄存存单 |
+| `icb` | ItemData Currency | 货币/票券等项目 |
+| `iib` | ItemData Instinct | Instinct 相关项目 |
 | `fp` | FixedPhrase | 定型文辞书 |
+| `mbd` | MonBridge | Monstrosity / Monipulator 显示名称 |
+| `erq` | RecordsOfEminence Quest | 目标任务名称、描述、备注 |
+| `erc` | RecordsOfEminence Category | 目标分类名称 |
+
+> `prepare` 模式还会兼容处理部分旧定义中的类型，例如 `mb`。
 
 ## 系统要求
 
@@ -85,32 +95,45 @@ FFXITrans 是一个专为《最终幻想XI》设计的汉化文本插入工具，支持多种游戏数据文件格
 **字段说明：**
 - **路径** - 游戏文件在 ROM 目录中的路径（如 `ROM/97/8`）
 - **类型** - 文件类型（xis、dmsg、evsb、sd、iab、iwb 等）
-- **语言** - 语言代码（1 表示日语，jp 也可用）
-- **注释** - 该文件的用途描述
-- **Cell索引** - 仅用于 dmsg 类型，指定要翻译的列（可选）
+- **语言** - 语言代码，当前版本请使用 `jp` 或 `en`
+- **注释** - 文件的逻辑标识；任务 CSV、参考匹配、排除规则等都依赖该字段
+- **Cell索引** - 指定要处理的列，多个索引用 `|` 分隔（可选）
 
 **示例配置：**
 ```csv
-ROM/120/77,xis,1,Menu Strings
-ROM/118/44,dmsg,1,Dialog Messages
+ROM/120/77,xis,jp,Menu Strings
+ROM/118/44,dmsg,jp,Dialog Messages
 ROM/176/46,dmsg,jp,sys/qst/sd,2|3
-ROM/175/22,dmsg,1,Battle Messages,1
-ROM/119/7,evsb,1,Event Strings
-ROM/76/14,sd,1,Status Data
-ROM/5/8,iab,1,Item Armour Data
-ROM/6/8,iwb,1,Item Weapon Data
-ROM/7/8,iub,1,Item Usable Data
-ROM/4/8,inb,1,Item Normal Data
+ROM/175/22,dmsg,jp,Battle Messages,1
+ROM/119/7,evsb,jp,Event Strings
+ROM/76/14,sd,jp,Status Data
+ROM/5/8,iab,jp,Item Armour Data
+ROM/6/8,iwb,jp,Item Weapon Data
+ROM/7/8,iub,jp,Item Usable Data
+ROM/4/8,inb,jp,Item Normal Data
 ```
 
 #### 翻译文本文件
 
-翻译文本按行对应原文本，支持多个文本集合：
+FFXITrans 目前支持两套翻译来源：基础行对行文本库，以及目录化源文本覆盖。
+
+##### 基础文本库
+
+基础翻译文本按行对应原文本，支持多个文本集合：
 
 - **text.txt** - 原始文本（UTF-8 编码，转义格式）
 - **text_translated.txt** - 翻译文本（UTF-8 编码，与原文对应行）
 - **text{1-n}.txt** - 原始文本增补（按顺序递增）
 - **text{1-n}_translated.txt** - 增补的对应翻译
+
+##### 目录化源文本覆盖
+
+如果存在 `text/src` 和 `text/tgt`，程序会递归加载其中同名相对路径的文件，并将其作为对基础文本库的额外覆盖：
+
+- `text/src/...` - 原文文件
+- `text/tgt/...` - 对应译文文件
+
+这套结构适合把 `prepare` 导出的结果按文件分类整理后再逐步翻译。
 
 **文本格式示例：**
 
@@ -136,6 +159,18 @@ ROM/4/8,inb,1,Item Normal Data
 
 ### 3. 运行程序
 
+#### 命令行模式
+
+```text
+FFXITrans.exe
+FFXITrans.exe insitu
+FFXITrans.exe prepare
+```
+
+- `FFXITrans.exe` - 常规模式；读取翻译并写出结果
+- `FFXITrans.exe insitu` - 强制原位修改游戏目录中的 DAT 文件
+- `FFXITrans.exe prepare` - 导出待翻译源数据到 `text/src_`
+
 #### 标准工作流
 
 1. **启动程序**
@@ -154,8 +189,31 @@ ROM/4/8,inb,1,Item Normal Data
 4. **自动处理流程**
    - 读取 defs.csv 中定义的文件
    - 加载翻译文本
+   - 如果存在 `text/src` / `text/tgt`，会额外加载目录化覆盖文本
    - 应用翻译到游戏文件
    - 生成处理报告并显示统计信息
+
+#### `prepare` 工作流
+
+`prepare` 模式用于从游戏 DAT 中提取待翻译内容，输出到程序目录下的 `text/src_`。
+
+```text
+FFXITrans.exe prepare
+```
+
+行为说明：
+
+- 自动读取 `defs.csv`
+- 仅导出 `jp` 定义项
+- 事件文本通常导出为 `.txt`
+- 物品、任务、定型文等结构化数据会导出为 `.csv`
+- 输出目录不存在时会自动创建
+
+建议流程：
+
+1. 运行 `prepare` 生成 `text/src_`
+2. 按需要整理为 `text/src` 与 `text/tgt`
+3. 完成翻译后运行 `FFXITrans.exe` 或 `FFXITrans.exe insitu`
 
 #### 处理结果
 
@@ -173,16 +231,16 @@ ROM/4/8,inb,1,Item Normal Data
 
 ```csv
 # 翻译所有列（默认行为）
-ROM/118/44,dmsg,1,Dialog Messages
+ROM/118/44,dmsg,jp,Dialog Messages
 
 # 只翻译第 2 列和第 3 列
 ROM/176/46,dmsg,jp,sys/qst/sd,2|3
 
 # 只翻译第 1 列
-ROM/175/22,dmsg,1,Battle Messages,1
+ROM/175/22,dmsg,jp,Battle Messages,1
 
 # 翻译第 1、3、5 列
-ROM/200/50,dmsg,1,Multi Column,1|3|5
+ROM/200/50,dmsg,jp,Multi Column,1|3|5
 ```
 
 **Cell索引规则：**
@@ -191,6 +249,8 @@ ROM/200/50,dmsg,1,Multi Column,1|3|5
 - 无效索引自动忽略
 - 超出范围的索引不会报错
 - 只对字符串类型 Cell 生效，数值 Cell 被忽略
+
+除 `dmsg` 外，部分结构化类型在当前实现中也会使用该字段进行列级控制。
 
 ## 文件结构
 
@@ -206,6 +266,10 @@ FFXITrans/
 ├── text1_translated.txt # 翻译文本1（若有）
 ├── cp932.csv          # 代码页转换表
 ├── chs2sjis.csv       # 中文转Shift-JIS映射
+├── text/
+│   ├── src/           # 目录化原文
+│   ├── tgt/           # 目录化译文
+│   └── src_/          # prepare 输出目录
 ├── backup/            # 备份目录（自动创建）
 │   └── ROM/...        # 原始文件备份
 ├── output/            # 输出目录（可选）
@@ -215,9 +279,11 @@ FFXITrans/
 
 ### 游戏文件路径
 
-程序会自动从 Windows 注册表读取游戏安装路径。通常位于：
+程序会自动从 Windows 注册表读取游戏安装路径。当前实现会依次尝试以下位置：
 ```
-HKEY_LOCAL_MACHINE\SOFTWARE\PlayOnline\InstallFolder
+HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\PlayOnline\InstallFolder
+HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\PlayOnlineEU\InstallFolder
+HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\PlayOnlineUS\InstallFolder
 ```
 
 ## 高级配置
@@ -238,6 +304,14 @@ HKEY_LOCAL_MACHINE\SOFTWARE\PlayOnline\InstallFolder
 | `in_situ` | 布尔值 | 是否原位修改游戏文件，而非输出到 output 目录 | `in_situ=true` |
 | `english_mode` | 布尔值 | 强制英文模式，仅处理 PlayOnlineEU/US 安装 | `english_mode=false` |
 | `output_path` | 路径 | 自定义输出目录（仅在 in_situ=false 时有效） | `output_path=./output` |
+| `no_mismatch_log` | 布尔值 | 不生成 `text_mismatch.txt` | `no_mismatch_log=true` |
+| `en_as_ja` | 布尔值 | 英文模式下优先按 JP 参考文本做映射 | `en_as_ja=true` |
+| `ejref_tolerance` | 布尔值 | 启用更宽松的 EJ 参考匹配处理 | `ejref_tolerance=true` |
+| `verbose` | 布尔值 | 输出更详细的处理日志 | `verbose=true` |
+| `noname` | 布尔值 | 跳过名称字段，只处理描述等文本 | `noname=true` |
+| `babel` | 字符串 | 控制是否在译文前附带原文；支持 `false`、`bilingual`、`exotic`、`trilingual` 等值 | `babel=trilingual` |
+| `bilingual` | 布尔值 | 旧版兼容配置，等价于启用当前语言原文前缀 | `bilingual=true` |
+| `excludes` | 列表 | 按 `comment` 排除定义项，支持 `,` 分隔和通配符 | `excludes=ev/*,sys/debug_*` |
 
 **布尔值格式** - 支持以下任意一种：
 - 数字：`1`（真）或 `0`（假）
@@ -288,19 +362,21 @@ game_path=C:\Program Files (x86)\PlayOnline\SquareEnix\FFXI
 
 #### 读取优先级
 
-程序按以下优先级读取配置：
+程序按以下顺序应用配置：
 
-1. **config.ini 配置** - 最高优先级（如果存在）
-2. **命令行参数** - 次级优先级
-3. **用户交互** - 最低优先级（默认行为）
+1. **注册表或自动检测结果** - 提供默认游戏路径与语言模式
+2. **config.ini** - 覆盖默认设置
+3. **命令行参数** - `prepare` 进入导出模式，`insitu` 强制原位输出
+4. **用户交互** - 仅在仍需确认输出方式时使用
 
-因此，使用 config.ini 可以完全自动化程序运行，无需用户交互。
+因此，使用 `config.ini` 可以显著减少交互；使用 `insitu` 则可直接强制原位写出。
 
 #### 运行模式
 
 - **无参数 + 无 config.ini** - 交互模式（询问用户选择）
 - **无参数 + 有 config.ini** - 自动模式（按配置运行）
 - **命令行 `insitu` 参数** - 强制原位修改模式，忽略 config.ini 的 `in_situ` 设置
+- **命令行 `prepare` 参数** - 导出待翻译源数据，不执行插入流程
 
 #### 配置文件示例完整版本
 
@@ -330,6 +406,22 @@ english_mode=false
 ; 说明：当 in_situ=false 时，指定输出目录
 ; 默认：./output（当前目录的 output 文件夹）
 ; output_path=./output
+
+; 关闭失配日志
+; no_mismatch_log=false
+
+; 输出详细日志
+; verbose=false
+
+; 旧版/兼容项：跳过名称翻译
+; noname=false
+
+; 在译文前附加原文
+; 可选：false / bilingual / exotic / trilingual
+; babel=false
+
+; 排除指定 comment，支持通配符
+; excludes=ev/*,sys/debug_*
 ```
 
 ### 编码转换表
@@ -367,18 +459,19 @@ CJK字符,对应的Shift-JIS字符或组合
 **解决方案**
 - 确认 FFXI 和 POL 已正确安装
 - 以管理员权限运行程序
-- 检查注册表项 `HKEY_LOCAL_MACHINE\SOFTWARE\PlayOnline\InstallFolder` 是否存在
-- 在 64 位系统上可能需要检查 `HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\PlayOnline\InstallFolder`
+- 检查 `HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\PlayOnline\InstallFolder` 是否存在
+- 如果是英文客户端，也检查 `...\PlayOnlineEU\InstallFolder` 或 `...\PlayOnlineUS\InstallFolder`
 
 #### 2. "翻译文件和原文文件的行数不一致"
 
-**原因** - text.txt 和 text_translated.txt 的行数不匹配
+**原因** - `text.txt` 和 `text_translated.txt` 的行数不匹配，或 `text/src` / `text/tgt` 中同名文件内容未对应
 
 **解决方案**
 - 检查两个文件的行数是否完全相同
 - 确认文件编码均为 UTF-8
 - 检查是否有空行或额外的换行符
 - 确保文件末尾没有多余空白行
+- 如果使用目录化覆盖，确认 `text/src` 与 `text/tgt` 具有一致的相对路径结构
 
 #### 3. 翻译效果不生效
 
@@ -418,6 +511,7 @@ CJK字符,对应的Shift-JIS字符或组合
 | 文件 | 用途 |
 |------|------|
 | `text_mismatch.txt` | 记录所有未找到翻译的原始文本 |
+| `text/src_/...` | `prepare` 导出的待翻译文本/CSV |
 | `backup/ROM/...` | 处理前的原始文件备份 |
 | `output/ROM/...` | 处理后的输出文件（仅在"输出到 output"模式） |
 
@@ -450,16 +544,11 @@ CJK字符,对应的Shift-JIS字符或组合
 
 ## 更新日志
 
-### v1.0.0
-- 初始版本发布
-- 支持基本文件格式
-- 实现自动备份功能
-- 添加 dmsg Cell 指定翻译
-
-### v1.1.0 (2025-12-04)
-- 改进编码转换精度
-- 优化性能
-- 增强错误报告
+### 当前版本
+- 支持 `prepare` 源数据导出
+- 支持 `text/src` / `text/tgt` 目录化覆盖
+- 支持 `MonBridge`、`RecordsOfEminence` 等更多类型
+- 支持更细粒度的配置项与排除规则
 
 ## 技术细节
 
@@ -477,6 +566,8 @@ FFXITrans 使用 FFXIDat 库解析以下格式：
 - **EventStringBase** - 事件文本
 - **ItemData** - 物品信息
 - **StatusData** - 状态效果描述
+- **MonBridge** - 特殊名称表
+- **RecordsOfEminence** - 目标任务/分类数据
 
 ### 内存要求
 
@@ -512,7 +603,7 @@ FFXITrans 使用 FFXIDat 库解析以下格式：
 ## 相关资源
 
 - [FFXIDat GitHub](https://github.com/XiyanFlowC/FFXIDat)
-- [最终幻想XI官网](https://www.ffxiah.com/)
+- [FFXIAH](https://www.ffxiah.com/)
 - [PlayOnline](https://www.playonline.com/)
 
 ## 声明
@@ -522,4 +613,4 @@ FINAL FANTASY XI 及 PLAYONLINE 等是 Square Enix Co., Ltd. 的商标或注册商标。版权
 
 ---
 
-**最后更新** - 2025-12-04
+**最后更新** - 2026-05-11

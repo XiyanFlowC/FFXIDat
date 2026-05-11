@@ -181,15 +181,8 @@
     <ClInclude Include="TranslationDatabase.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ARCHITECTURE_DIAGRAMS.md" />
     <None Include="defs_sample.csv" />
-    <None Include="FINAL_SUMMARY.md" />
-    <None Include="MIGRATION_CHECKLIST.md" />
     <None Include="README.md" />
-    <None Include="README_QUICK_START.md" />
-    <None Include="README_REFACTORING.md" />
-    <None Include="REFACTORING_PLAN.md" />
-    <None Include="REFACTORING_SUMMARY.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

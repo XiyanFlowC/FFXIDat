@@ -277,7 +277,7 @@ namespace ProcessorUtils
                 sourceParts[1] = u8"23";
             }
             // Key Item's type replacement
-            if (sourceParts.size() >= 2 && (sourceParts[1] == u8"36" || sourceParts[1] == u8"45"))
+            if (sourceParts.size() >= 2 && (sourceParts[1] == u8"36"/* || sourceParts[1] == u8"45"*/))
             {
                 sourceParts[1] = u8"33";
             }

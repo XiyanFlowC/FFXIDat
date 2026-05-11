@@ -30,7 +30,7 @@ private:
     void ShowUsage();
 
     // File processing
-    std::vector<FileProcessDef> LoadFileDefinitions();
+  std::vector<FileProcessDef> LoadFileDefinitions(bool respectExcludes = true);
     bool ProcessSingleFile(
         const FileProcessDef& fileDef,
         const std::map<std::u8string, FileProcessDef>& jpDefsByComment,
