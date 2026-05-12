@@ -271,15 +271,26 @@ namespace ProcessorUtils
             if (sourceParts.size() < 5)
                 return false;
 
-            // Convert type 24 (English with articles) to type 26 (no articles) for Japanese-like processing
-            if (sourceParts.size() >= 2 && (sourceParts[1] == u8"24" || sourceParts[1] == u8"25" || sourceParts[1] == u8"26" || sourceParts[1] == u8"27"))
+            if (sourceParts.size() >= 2)
             {
-                sourceParts[1] = u8"23";
-            }
-            // Key Item's type replacement
-            if (sourceParts.size() >= 2 && (sourceParts[1] == u8"36"/* || sourceParts[1] == u8"45"*/))
-            {
-                sourceParts[1] = u8"33";
+                // Convert type 24 (English with articles) to type 26 (no articles) for Japanese-like processing
+                if (sourceParts[1] == u8"24" || sourceParts[1] == u8"25") // 13 in jp
+                {
+                    sourceParts[1] = u8"23";
+                }
+                if (sourceParts[1] == u8"28" || sourceParts[1] == u8"27") { // 14  in jp
+					sourceParts[1] = u8"26";
+                }
+				// Key Item's type replacement (perment key item?)
+                if (sourceParts[1] == u8"36"/* || sourceParts[1] == u8"45"*/)
+                {
+                    sourceParts[1] = u8"33";
+                }
+                // Key Item's type replacement (temperary key item?)
+                if (sourceParts[1] == u8"45")
+                {
+                    sourceParts[1] = u8"42";
+				}
             }
 
             auto newToken = BuildInsToken(sourceParts);

@@ -223,6 +223,15 @@ std::string EventStringCodecUtil::Decode(const char *in, size_t limit)
 		}
 
 		// ins, special proc
+		// followed by a length byte
+		// then followed by a type byte
+		// The type byte:
+		// 1A - weather in ja, 17 weather(adj.?), 18 weather(n.?) in English
+		// 13 - normal items? in ja, 23 stem, 24 sg., 25 pl. in en.
+		// 14 - equipment? in ja, 26 stem, 27 sg., 28 pl. in en.
+		// 15 - usable items? in ja, 30 stem in en
+		// 16 - KI, 33 in en. 36 in en, 
+		// 17 - KI, 42 in en. 45 in en.
 		if (*p == 0x01)
 		{
 			sb += "<ins";
