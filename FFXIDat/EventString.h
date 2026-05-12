@@ -31,7 +31,7 @@ static struct EventStringControlSeqDef {
 		int     step;
 } gameStringControlSequenceDefinition[] = {
 	{"ins", 1, "\x01", 1}, // special proc: \x01\xXX XX is ins type? 08-> 8 bytes following others: none
-	{"02", 0, "\x02", 1},
+	{"ind", 5, "\x02", 1}, // indent?
 	{"03", 0, "\x03", 1},
 	{"04", 0, "\x04", 1},
 	{"05", 1, "\x05", 1},

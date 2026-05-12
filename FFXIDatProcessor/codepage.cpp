@@ -112,7 +112,16 @@ std::wstring CodeCvt::CvtToWString(const std::string &str)
 			}
 			else
 			{
+#ifdef NDEBUG
 				sb.Append(U'�');
+#else
+				sb.Append(U"\\x");
+				int cb = byte;
+				cb &= 0xFF;
+				if (cb < 16)
+					sb.Append('0');
+				sb.Append(xybase::string::itos<char32_t>(cb, 16).c_str());
+#endif
 				std::wcerr << L"警告：无法转换代码页字符 0x"
 					<< std::hex << static_cast<uint32_t>(byte)
 					<< L"。" << std::endl;
@@ -122,7 +131,16 @@ std::wstring CodeCvt::CvtToWString(const std::string &str)
 
 	if (current)
 	{
+#ifdef NDEBUG
 		sb.Append(U'�');
+#else
+		sb.Append(U"\\x");
+		int cb = (current >> 8);
+		cb &= 0xFF;
+		if (cb < 16)
+			sb.Append('0');
+		sb.Append(xybase::string::itos<char32_t>(cb, 16).c_str());
+#endif
 		std::wcerr << L"警告：检测到不完整的双字节前导字节 0x"
 			<< std::hex << ((current & 0xFF00) >> 8)
 			<< L"。" << std::endl;
