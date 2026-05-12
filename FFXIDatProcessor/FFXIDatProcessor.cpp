@@ -674,7 +674,7 @@ void ExtractSysText()
 
 	for (int rom = 1; rom < 12; ++rom)
 	{
-		int cmax = rom == 1 ? 365 : 30;
+		int cmax = rom == 1 ? 385 : 30;
 		for (int c = 0; c < cmax; ++c)
 		{
 			for (int n = 0; n < 128; ++n)
