@@ -220,6 +220,97 @@ namespace ProcessorUtils
         return key;
     }
 
+    namespace
+    {
+        bool TryMapJapaneseInsTypeToEnglishMiddle(std::u8string& type)
+        {
+            if (type == u8"13")
+            {
+                type = u8"23";
+                return true;
+            }
+            if (type == u8"14")
+            {
+                type = u8"26";
+                return true;
+            }
+            if (type == u8"15")
+            {
+                type = u8"30";
+                return true;
+            }
+            if (type == u8"16")
+            {
+                type = u8"33";
+                return true;
+            }
+            if (type == u8"17")
+            {
+                type = u8"42";
+                return true;
+            }
+            if (type == u8"1A")
+            {
+                type = u8"17";
+                return true;
+            }
+
+            return false;
+        }
+
+        void NormalizeEnglishInsTypeToMiddle(std::u8string& type)
+        {
+            if (type == u8"24" || type == u8"25")
+            {
+                type = u8"23";
+            }
+            else if (type == u8"27" || type == u8"28")
+            {
+                type = u8"26";
+            }
+            else if (type == u8"36")
+            {
+                type = u8"33";
+            }
+            else if (type == u8"45")
+            {
+                type = u8"42";
+            }
+        }
+
+        bool TryBuildEnglishInsTokenParts(
+            const InsToken& translatedToken,
+            const std::map<std::u8string, std::vector<std::u8string>>& sourcePartsByVar,
+            std::vector<std::u8string>& tokenParts)
+        {
+            tokenParts = translatedToken.parts;
+            if (tokenParts.size() >= 2 && TryMapJapaneseInsTypeToEnglishMiddle(tokenParts[1]))
+            {
+                return true;
+            }
+
+            const auto key = BuildInsKey(translatedToken.parts);
+            const auto sourceItr = sourcePartsByVar.find(key);
+            if (sourceItr == sourcePartsByVar.end())
+            {
+                return false;
+            }
+
+            tokenParts = sourceItr->second;
+            if (tokenParts.size() < 5)
+            {
+                return false;
+            }
+
+            if (tokenParts.size() >= 2)
+            {
+                NormalizeEnglishInsTypeToMiddle(tokenParts[1]);
+            }
+
+            return true;
+        }
+    }
+
     bool TryAdaptInsCategoryForEnglish(const std::u8string& englishSource, std::u8string& translated)
     {
         auto sourceTokens = ParseInsTokens(englishSource);
@@ -262,38 +353,11 @@ namespace ProcessorUtils
             if (token.parts.size() < 5)
                 continue;
 
-            auto key = BuildInsKey(token.parts);
-            auto sourceItr = sourcePartsByVar.find(key);
-            if (sourceItr == sourcePartsByVar.end())
+            std::vector<std::u8string> tokenParts;
+            if (!TryBuildEnglishInsTokenParts(token, sourcePartsByVar, tokenParts))
                 return false;
 
-            auto sourceParts = sourceItr->second;
-            if (sourceParts.size() < 5)
-                return false;
-
-            if (sourceParts.size() >= 2)
-            {
-                // Convert type 24 (English with articles) to type 26 (no articles) for Japanese-like processing
-                if (sourceParts[1] == u8"24" || sourceParts[1] == u8"25") // 13 in jp
-                {
-                    sourceParts[1] = u8"23";
-                }
-                if (sourceParts[1] == u8"28" || sourceParts[1] == u8"27") { // 14  in jp
-					sourceParts[1] = u8"26";
-                }
-				// Key Item's type replacement (perment key item?)
-                if (sourceParts[1] == u8"36"/* || sourceParts[1] == u8"45"*/)
-                {
-                    sourceParts[1] = u8"33";
-                }
-                // Key Item's type replacement (temperary key item?)
-                if (sourceParts[1] == u8"45")
-                {
-                    sourceParts[1] = u8"42";
-				}
-            }
-
-            auto newToken = BuildInsToken(sourceParts);
+            auto newToken = BuildInsToken(tokenParts);
             translated.replace(token.start, token.end - token.start, newToken);
         }
 
