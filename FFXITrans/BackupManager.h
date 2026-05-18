@@ -22,4 +22,9 @@ private:
     BackupManager() = default;
     BackupManager(const BackupManager&) = delete;
     BackupManager& operator=(const BackupManager&) = delete;
+
+    static std::filesystem::path GetBackupRoot();
+    static std::filesystem::path GetMetadataRoot();
+    static std::filesystem::path GetBackupPath(const std::filesystem::path& relativePath);
+    static std::filesystem::path GetCrcPath(const std::filesystem::path& relativePath);
 };

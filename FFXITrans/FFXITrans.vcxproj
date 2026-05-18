@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -156,6 +156,7 @@
     <ClCompile Include="Processors\StatusDataProcessor.cpp" />
     <ClCompile Include="Processors\XisProcessor.cpp" />
     <ClCompile Include="ProcessorUtils.cpp" />
+    <ClCompile Include="SetupWizard.cpp" />
     <ClCompile Include="TranslationDatabase.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -178,6 +179,7 @@
     <ClInclude Include="Processors\StatusDataProcessor.h" />
     <ClInclude Include="Processors\XisProcessor.h" />
     <ClInclude Include="ProcessorUtils.h" />
+    <ClInclude Include="SetupWizard.h" />
     <ClInclude Include="TranslationDatabase.h" />
   </ItemGroup>
   <ItemGroup>

@@ -4,7 +4,9 @@
 #include "BackupManager.h"
 #include "ProcessorFactory.h"
 #include "ChsToSJis.h"
+#include "SetupWizard.h"
 #include "../FFXIDatProcessor/codepage.h"
+#include <Windows.h>
 #include <EventStringBase.h>
 #include <ItemData.h>
 #include <FixedPhrase.h>
@@ -21,6 +23,14 @@
 namespace
 {
 	namespace fs = std::filesystem;
+
+	fs::path GetProgramRootFromModulePath()
+	{
+		wchar_t modulePath[MAX_PATH] = {};
+		if (GetModuleFileNameW(nullptr, modulePath, MAX_PATH) == 0)
+			return {};
+		return fs::path(modulePath).parent_path();
+	}
 
 	std::u8string BuildDatRelativePath(const std::u8string& relativePath)
 	{
@@ -436,7 +446,7 @@ std::vector<FileProcessDef> Application::LoadFileDefinitions(bool respectExclude
 			continue;
 
 		// Check if this definition should be excluded
-     if (respectExcludes && Config::Instance().IsExcluded(fileDef.comment))
+	 if (respectExcludes && Config::Instance().IsExcluded(fileDef.comment))
 		{
 			if (Config::Instance().IsVerbose())
 			{
@@ -463,6 +473,12 @@ int Application::Run(int argc, char** argv)
 
 	try
 	{
+		const auto progRoot = GetProgramRootFromModulePath();
+		if (!progRoot.empty() && SetupWizard::RunIfConfigMissing(progRoot))
+		{
+			return 0;
+		}
+
 		// Parse command line
 		bool inSitu = false;
 		if (argc > 1)
@@ -602,6 +618,30 @@ int Application::ProcessTranslations()
 		}
 	}
 
+	if (overwrite)
+	{
+		std::wcout << L"正在检查并创建备份，请稍候..." << std::endl;
+		for (const auto& fileDef : fileDefs)
+		{
+			if (Config::Instance().IsEnglishMode())
+			{
+				if (fileDef.lang != u8"en")
+					continue;
+			}
+			else
+			{
+				if (fileDef.lang != u8"jp")
+					continue;
+			}
+
+			const std::filesystem::path datPath = gameRoot / (fileDef.path + u8".DAT");
+			if (!std::filesystem::exists(datPath))
+				continue;
+
+			BackupManager::Instance().BackupGameFile(fileDef.path + u8".DAT");
+		}
+	}
+
 	for (const auto& fileDef : fileDefs)
 	{
 		// Filter by language
@@ -635,12 +675,6 @@ int Application::ProcessTranslations()
 		if (!std::filesystem::exists(outputPath.parent_path()))
 		{
 			std::filesystem::create_directories(outputPath.parent_path());
-		}
-
-		// Backup if overwriting
-		if (overwrite)
-		{
-			BackupManager::Instance().BackupGameFile(fileDef.path + u8".DAT");
 		}
 
 		// Try ejref_tolerance special processor first
