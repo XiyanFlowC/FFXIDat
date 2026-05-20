@@ -6,7 +6,9 @@
 #include "ChsToSJis.h"
 #include "SetupWizard.h"
 #include "../FFXIDatProcessor/codepage.h"
+#include "SpecialProcessor.h"
 #include <Windows.h>
+#include <CommCtrl.h>
 #include <EventStringBase.h>
 #include <ItemData.h>
 #include <FixedPhrase.h>
@@ -17,12 +19,196 @@
 #include <iostream>
 #include <fstream>
 #include <set>
-#include <conio.h>
 #include <xystring.h>
+
+#pragma comment(lib, "Comctl32.lib")
 
 namespace
 {
 	namespace fs = std::filesystem;
+	constexpr wchar_t kAppTitle[] = L"FFXI汉化插入工具";
+	constexpr wchar_t kProgressWindowClassName[] = L"FFXITransProgressWindow";
+
+	void PumpWindowMessages()
+	{
+		MSG msg{};
+		while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessageW(&msg);
+		}
+	}
+
+	void ShowMessageBox(const std::wstring& message, UINT flags, const wchar_t* title = kAppTitle)
+	{
+		MessageBoxW(nullptr, message.c_str(), title, flags | MB_SETFOREGROUND | MB_TOPMOST);
+	}
+
+	void ShowErrorMessage(const std::wstring& message)
+	{
+		ShowMessageBox(message, MB_OK | MB_ICONERROR);
+	}
+
+	void ShowInfoMessage(const std::wstring& message)
+	{
+		ShowMessageBox(message, MB_OK | MB_ICONINFORMATION);
+	}
+
+	LRESULT CALLBACK ProgressWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		switch (message)
+		{
+		case WM_CLOSE:
+			return 0;
+		default:
+			return DefWindowProcW(hwnd, message, wParam, lParam);
+		}
+	}
+
+	class ProgressDialog
+	{
+	public:
+		explicit ProgressDialog(const wchar_t* title)
+		{
+			INITCOMMONCONTROLSEX icc{};
+			icc.dwSize = sizeof(icc);
+			icc.dwICC = ICC_PROGRESS_CLASS;
+			InitCommonControlsEx(&icc);
+
+			EnsureWindowClassRegistered();
+
+			const HINSTANCE instance = GetModuleHandleW(nullptr);
+			window_ = CreateWindowExW(
+				WS_EX_DLGMODALFRAME | WS_EX_TOPMOST,
+				kProgressWindowClassName,
+				title,
+				WS_CAPTION | WS_SYSMENU,
+				CW_USEDEFAULT,
+				CW_USEDEFAULT,
+				420,
+				150,
+				nullptr,
+				nullptr,
+				instance,
+				nullptr);
+
+			if (!window_)
+				return;
+
+			const HFONT font = static_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+			statusLabel_ = CreateWindowExW(
+				0,
+				L"STATIC",
+				L"准备中...",
+				WS_CHILD | WS_VISIBLE,
+				20,
+				20,
+				360,
+				36,
+				window_,
+				nullptr,
+				instance,
+				nullptr);
+			progressBar_ = CreateWindowExW(
+				0,
+				PROGRESS_CLASSW,
+				nullptr,
+				WS_CHILD | WS_VISIBLE | PBS_SMOOTH,
+				20,
+				70,
+				360,
+				24,
+				window_,
+				nullptr,
+				instance,
+				nullptr);
+
+			if (statusLabel_ && font)
+				SendMessageW(statusLabel_, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);
+
+			if (progressBar_)
+			{
+				SendMessageW(progressBar_, PBM_SETRANGE32, 0, 100);
+				SendMessageW(progressBar_, PBM_SETPOS, 0, 0);
+			}
+
+			CenterWindow();
+			ShowWindow(window_, SW_SHOW);
+			UpdateWindow(window_);
+			PumpWindowMessages();
+		}
+
+		~ProgressDialog()
+		{
+			if (window_)
+			{
+				DestroyWindow(window_);
+				window_ = nullptr;
+			}
+			PumpWindowMessages();
+		}
+
+		void Update(int current, int total, const std::wstring& statusText)
+		{
+			if (!window_ || !statusLabel_ || !progressBar_)
+				return;
+
+			const int safeTotal = total > 0 ? total : 1;
+			int safeCurrent = current;
+			if (safeCurrent < 0)
+				safeCurrent = 0;
+			if (safeCurrent > safeTotal)
+				safeCurrent = safeTotal;
+
+			SetWindowTextW(statusLabel_, statusText.c_str());
+			SendMessageW(progressBar_, PBM_SETRANGE32, 0, safeTotal);
+			SendMessageW(progressBar_, PBM_SETPOS, safeCurrent, 0);
+			RedrawWindow(window_, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+			PumpWindowMessages();
+		}
+
+	private:
+		void EnsureWindowClassRegistered()
+		{
+			const HINSTANCE instance = GetModuleHandleW(nullptr);
+			WNDCLASSEXW existing{};
+			if (GetClassInfoExW(instance, kProgressWindowClassName, &existing))
+				return;
+
+			WNDCLASSEXW windowClass{};
+			windowClass.cbSize = sizeof(windowClass);
+			windowClass.lpfnWndProc = ProgressWindowProc;
+			windowClass.hInstance = instance;
+			windowClass.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+			windowClass.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1);
+			windowClass.lpszClassName = kProgressWindowClassName;
+			RegisterClassExW(&windowClass);
+		}
+
+		void CenterWindow() const
+		{
+			if (!window_)
+				return;
+
+			RECT rect{};
+			if (!GetWindowRect(window_, &rect))
+				return;
+
+			RECT workArea{};
+			SystemParametersInfoW(SPI_GETWORKAREA, 0, &workArea, 0);
+
+			const int width = rect.right - rect.left;
+			const int height = rect.bottom - rect.top;
+			const int x = workArea.left + ((workArea.right - workArea.left) - width) / 2;
+			const int y = workArea.top + ((workArea.bottom - workArea.top) - height) / 2;
+
+			SetWindowPos(window_, HWND_TOPMOST, x, y, 0, 0, SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+		}
+
+		HWND window_ = nullptr;
+		HWND statusLabel_ = nullptr;
+		HWND progressBar_ = nullptr;
+	};
 
 	fs::path GetProgramRootFromModulePath()
 	{
@@ -307,15 +493,12 @@ Application& Application::Instance()
 // Use extern function from FFXITrans.cpp
 int YesNoPrompt(const std::wstring& prompt)
 {
-	std::wcout << prompt << L" (Y/N): ";
-	while (true)
-	{
-		int key = _getch();
-		if (key == 'Y' || key == 'y')
-			return 'Y';
-		else if (key == 'N' || key == 'n')
-			return 'N';
-	}
+    const int result = MessageBoxW(
+		nullptr,
+		prompt.c_str(),
+		kAppTitle,
+		MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2 | MB_SETFOREGROUND | MB_TOPMOST);
+	return result == IDYES ? 'Y' : 'N';
 }
 
 void Application::ShowUsage()
@@ -338,6 +521,7 @@ bool Application::InitializeCodePages()
 	{
 		std::wcerr << ex.what() << std::endl;
 		std::wcerr << L"处理代码页cp932.csv失败了。" << std::endl;
+       ShowErrorMessage(std::wstring(L"处理代码页 cp932.csv 失败。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
 		return false;
 	}
 
@@ -350,6 +534,7 @@ bool Application::InitializeCodePages()
 	{
 		std::wcerr << ex.what() << std::endl;
 		std::wcerr << L"处理简体汉字转换逻辑chs2sjis.csv失败了。" << std::endl;
+       ShowErrorMessage(std::wstring(L"处理 chs2sjis.csv 失败。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
 		return false;
 	}
 
@@ -367,6 +552,7 @@ bool Application::LoadTranslations()
 		if (loaded < 0)
 		{
 			std::wcerr << L"加载文本文件失败。" << std::endl;
+           ShowErrorMessage(L"加载文本文件失败。");
 			return false;
 		}
 		if (loaded == 0)
@@ -378,6 +564,7 @@ bool Application::LoadTranslations()
 	if (sourceCount < 0)
 	{
 		std::wcerr << L"加载 text\\src / text\\tgt 结构失败。" << std::endl;
+       ShowErrorMessage(L"加载 text\\src / text\\tgt 结构失败。");
 		return false;
 	}
 
@@ -399,6 +586,7 @@ bool Application::Initialize()
 	// Initialize configuration
 	if (!Config::Instance().Initialize())
 	{
+       ShowErrorMessage(L"初始化配置失败。请检查 config.ini 或游戏安装路径设置。");
 		return false;
 	}
 
@@ -494,7 +682,7 @@ int Application::Run(int argc, char** argv)
 			{
 				if (!Config::Instance().Initialize())
 				{
-					system("pause");
+                    ShowErrorMessage(L"初始化配置失败。请检查 config.ini 或游戏安装路径设置。");
 					return -1;
 				}
 
@@ -508,10 +696,10 @@ int Application::Run(int argc, char** argv)
 				if (ret != 0)
 				{
 					std::wcerr << L"prepare 执行失败。" << std::endl;
-					system("pause");
 					return ret;
 				}
 				std::wcout << L"prepare 执行成功。" << std::endl;
+               ShowInfoMessage(L"prepare 执行成功。");
 				return 0;
 			}
 			else if (cmd == "insitu")
@@ -529,14 +717,12 @@ int Application::Run(int argc, char** argv)
 		// Initialize application
 		if (!Initialize())
 		{
-			system("pause");
 			return -1;
 		}
 
 		// Load translations
 		if (!LoadTranslations())
 		{
-			system("pause");
 			return -4;
 		}
 
@@ -572,7 +758,10 @@ int Application::Run(int argc, char** argv)
 		std::wcout << L"共有 " << std::to_wstring(TranslationDatabase::Instance().GetMismatchCount())
 			<< L" 条文本失配。失配文本已经保存到 text_mismatch.txt 中。" << std::endl;
 
-		system("pause");
+        ShowInfoMessage(
+			L"处理完毕。\n\n共有 "
+			+ std::to_wstring(TranslationDatabase::Instance().GetMismatchCount())
+			+ L" 条文本失配。失配文本已经保存到 text_mismatch.txt 中。");
 		return ret;
 	}
 	catch (std::exception& ex)
@@ -580,7 +769,7 @@ int Application::Run(int argc, char** argv)
 		TranslationDatabase::Instance().CloseMismatchLog();
 		std::wcerr << L"发生了意外错误。" << std::endl;
 		std::wcerr << xybase::string::sys_mbs_to_wcs(ex.what()) << std::endl;
-		system("pause");
+        ShowErrorMessage(std::wstring(L"发生了意外错误。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
 		return -1;
 	}
 }
@@ -618,9 +807,13 @@ int Application::ProcessTranslations()
 		}
 	}
 
+	ProgressDialog progressDialog(L"FFXI汉化插入工具 - 翻译进度");
+	progressDialog.Update(0, totalFiles, L"正在准备处理列表...");
+
 	if (overwrite)
 	{
 		std::wcout << L"正在检查并创建备份，请稍候..." << std::endl;
+        progressDialog.Update(0, totalFiles, L"正在检查并创建备份，请稍候...");
 		for (const auto& fileDef : fileDefs)
 		{
 			if (Config::Instance().IsEnglishMode())
@@ -661,8 +854,10 @@ int Application::ProcessTranslations()
 		// Display progress
 		wchar_t progress[128];
 		swprintf_s(progress, L"[%d/%d] %d%%", fileCounter, totalFiles, fileCounter * 100 / totalFiles);
+     const auto commentText = xybase::string::to_wstring(fileDef.comment);
 		std::wcout << L"\r处理中：" << progress << L" "
-			<< xybase::string::to_wstring(fileDef.comment) << L"          ";
+            << commentText << L"          ";
+		progressDialog.Update(fileCounter, totalFiles, std::wstring(progress) + L" " + commentText);
 
 		// Prepare paths
 		std::filesystem::path datPath = gameRoot / (fileDef.path + u8".DAT");
@@ -697,6 +892,12 @@ int Application::ProcessTranslations()
 			}
 		}
 
+		if (!processed)
+		{
+			auto specProc = SpecialProcessor();
+			processed = specProc.Process(fileDef, datPath, outputPath, jpDefsByComment);
+		}
+
 		// If not processed by ejref, use regular processor
 		if (!processed)
 		{
@@ -724,6 +925,7 @@ int Application::ProcessTranslations()
 		}
 	}
 
+    progressDialog.Update(totalFiles, totalFiles, L"处理完毕。");
 	std::wcout << std::endl;
 	return 0;
 }
@@ -742,6 +944,7 @@ int Application::PrepareSourceData()
 		{
 			std::wcerr << ex.what() << std::endl;
 			std::wcerr << L"处理代码页cp932.csv失败了。" << std::endl;
+          ShowErrorMessage(std::wstring(L"prepare 阶段初始化 cp932.csv 失败。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
 			return -2;
 		}
 
@@ -773,6 +976,19 @@ int Application::PrepareSourceData()
 
 		std::wcout << L"已加载 " << remainingDefs.size() << L" 个 JP 文件定义。" << std::endl;
 
+		const int totalFiles = static_cast<int>(remainingDefs.size());
+		int processedCount = 0;
+		ProgressDialog progressDialog(L"FFXI汉化插入工具 - Prepare 进度");
+		progressDialog.Update(0, totalFiles, L"正在准备源数据...");
+		auto updatePrepareProgress = [&](const FileProcessDef& fileDef)
+		{
+			++processedCount;
+			progressDialog.Update(
+				processedCount,
+				totalFiles,
+				L"正在准备：" + xybase::string::to_wstring(fileDef.comment));
+		};
+
 		std::set<std::u8string> processedStrings;
 		bool foundDbgScene = false;
 
@@ -781,6 +997,7 @@ int Application::PrepareSourceData()
 			if (it->comment == u8"ev/dbg_scene")
 			{
 				foundDbgScene = true;
+                updatePrepareProgress(*it);
 				ExportEventStringBase(*it, processedStrings, outputDir);
 				it = remainingDefs.erase(it);
 			}
@@ -799,6 +1016,7 @@ int Application::PrepareSourceData()
 		{
 			if (IsEventPrepareComment(it->comment))
 			{
+                updatePrepareProgress(*it);
 				ExportEventStringBase(*it, processedStrings, outputDir);
 				it = remainingDefs.erase(it);
 			}
@@ -812,6 +1030,7 @@ int Application::PrepareSourceData()
 		{
 			if (IsItemPrepareComment(it->comment))
 			{
+              updatePrepareProgress(*it);
 				ExportItemCsv(*it, outputDir);
 				it = remainingDefs.erase(it);
 			}
@@ -823,6 +1042,7 @@ int Application::PrepareSourceData()
 
 		for (const auto& fileDef : remainingDefs)
 		{
+           updatePrepareProgress(fileDef);
 			const auto inputPath = BuildDatPath(fileDef);
 
 			if (fileDef.type == u8"fp")
@@ -871,12 +1091,14 @@ int Application::PrepareSourceData()
 			}
 		}
 
+     progressDialog.Update(totalFiles, totalFiles, L"源数据准备完成。");
 		std::wcout << L"源数据准备完成。" << std::endl;
 		return 0;
 	}
 	catch (const std::exception& ex)
 	{
 		std::wcerr << L"准备源数据失败：" << xybase::string::sys_mbs_to_wcs(ex.what()) << std::endl;
+      ShowErrorMessage(std::wstring(L"准备源数据失败。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
 		return -1;
 	}
 }

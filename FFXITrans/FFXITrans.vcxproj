@@ -157,6 +157,7 @@
     <ClCompile Include="Processors\XisProcessor.cpp" />
     <ClCompile Include="ProcessorUtils.cpp" />
     <ClCompile Include="SetupWizard.cpp" />
+    <ClCompile Include="SpecialProcessor.cpp" />
     <ClCompile Include="TranslationDatabase.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -180,6 +181,7 @@
     <ClInclude Include="Processors\XisProcessor.h" />
     <ClInclude Include="ProcessorUtils.h" />
     <ClInclude Include="SetupWizard.h" />
+    <ClInclude Include="SpecialProcessor.h" />
     <ClInclude Include="TranslationDatabase.h" />
   </ItemGroup>
   <ItemGroup>

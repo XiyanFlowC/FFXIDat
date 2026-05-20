@@ -372,6 +372,21 @@ bool Config::LoadFromFile(const fs::path& configPath)
                 std::wcout << std::endl;
             }
         }
+        else if (key == L"sys_job_workaround")
+        {
+            if (value == L"off" || value == L"0" || value == L"false" || value == L"no")
+            {
+                samuraiJobTransNot = false;
+                monkJobAbbreviated = false;
+                samuraiJobSpecial = false;
+			}
+			if (value == L"samurai_trans_not")
+				samuraiJobTransNot = true, samuraiJobSpecial = false;
+            if (value == L"monk_abbreviated")
+				monkJobAbbreviated = true;
+			if (value == L"samurai_special")
+				samuraiJobSpecial = true, samuraiJobTransNot = false;
+        }
     }
 
     configFile.close();

@@ -36,6 +36,9 @@ public:
     bool IsBabelEnabled() const { return babelCurrentOriginal || babelAlternateOriginal; }
     bool IsBabelCurrentOriginalEnabled() const { return babelCurrentOriginal; }
     bool IsBabelAlternateOriginalEnabled() const { return babelAlternateOriginal; }
+	bool IsSamuraiJobTransNot() const { return samuraiJobTransNot; }
+	bool IsMonkJobAbbreviated() const { return monkJobAbbreviated; }
+	bool IsSamuraiJobSpecial() const { return samuraiJobSpecial; }
 
     // Excludes
     bool IsExcluded(const std::u8string& comment) const;
@@ -76,6 +79,9 @@ private:
     bool noname = false;
     bool babelCurrentOriginal = false;
     bool babelAlternateOriginal = false;
+    bool samuraiJobTransNot = true;
+	bool monkJobAbbreviated = false;
+	bool samuraiJobSpecial = false;
 
     std::set<std::u8string> excludes;
 };
