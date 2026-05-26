@@ -570,6 +570,15 @@ void CFFXIMenuApp::OnFileMerge()
 	fileC.header = fileA->header;
 	fileC.type = fileA->type;
 
+	for (size_t ib = 0; ib < fileB.blocks.size(); ++ib)
+	{
+		if (matchedB[ib]) continue;
+		if (appendB[ib])
+		{
+			fileC.blocks.push_back(fileB.blocks[ib]->Clone());
+		}
+	}
+
 	for (size_t i = 0; i < fileA->blocks.size(); ++i)
 	{
 		Block *blkA = fileA->blocks[i];
@@ -607,15 +616,6 @@ void CFFXIMenuApp::OnFileMerge()
 		else if (blkA)
 		{
 			fileC.blocks.push_back(blkA->Clone());
-		}
-	}
-
-	for (size_t ib = 0; ib < fileB.blocks.size(); ++ib)
-	{
-		if (matchedB[ib]) continue;
-		if (appendB[ib])
-		{
-			fileC.blocks.push_back(fileB.blocks[ib]->Clone());
 		}
 	}
 

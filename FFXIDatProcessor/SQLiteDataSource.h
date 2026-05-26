@@ -59,7 +59,7 @@ public:
 	void SetRing(void (*callback)(const char8_t *msg));
 protected:
 
-	void InsertText(const char * text, int file_id, int rowNum, int colNum);
+	int InsertText(const char * text, int file_id, int rowNum, int colNum);
 
 	void TranslateDat(int file_id, const char *file_path, const char *type);
 	std::u8string GetFileLang(int file_id);

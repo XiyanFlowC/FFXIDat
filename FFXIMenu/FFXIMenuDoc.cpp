@@ -17,6 +17,7 @@
 #include "FFXIMenuDoc.h"
 
 #include <propkey.h>
+#include <xystring.h>
 
 //#ifdef _DEBUG
 //#define new DEBUG_NEW
@@ -469,7 +470,7 @@ BOOL CFFXIMenuDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		if (CMainFrame *frm = dynamic_cast<CMainFrame *>(AfxGetMainWnd()))
 		{
 			CString msg;
-			msg.Format(_T("打开文件 %s 失败。%s"), lpszPathName, CA2T(ex.what()));
+			msg.Format(_T("打开文件 %ls 失败。%ls"), lpszPathName, xybase::string::to_wstring(ex.what()).c_str());
 			frm->OutputLog(msg.GetString(), 1);
 		}
 	}

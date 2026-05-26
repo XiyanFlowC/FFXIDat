@@ -400,6 +400,29 @@ void SQLiteDataSource::Initialise()
 	// Index for faster tree traversal
 	Execute("CREATE INDEX IF NOT EXISTS idx_roe_category_children_parent ON roe_category_children(category_id);");
 	Execute("CREATE INDEX IF NOT EXISTS idx_roe_category_children_child ON roe_category_children(child_id, quest_flag);");
+
+	Execute(R"(
+		CREATE TABLE IF NOT EXISTS key_item(
+			id INTEGER PRIMARY KEY,
+			name_jp_text_id INTEGER,
+			name_en_text_id INTEGER,
+			name_de_text_id INTEGER,
+			name_fr_text_id INTEGER,
+			description_jp_text_id INTEGER,
+			description_en_text_id INTEGER,
+			description_de_text_id INTEGER,
+			description_fr_text_id INTEGER,	
+
+			FOREIGN KEY (name_jp_text_id) REFERENCES text(id),
+			FOREIGN KEY (name_en_text_id) REFERENCES text(id),
+			FOREIGN KEY (name_de_text_id) REFERENCES text(id),
+			FOREIGN KEY (name_fr_text_id) REFERENCES text(id),
+			FOREIGN KEY (description_jp_text_id) REFERENCES text(id),
+			FOREIGN KEY (description_en_text_id) REFERENCES text(id),
+			FOREIGN KEY (description_de_text_id) REFERENCES text(id),
+			FOREIGN KEY (description_fr_text_id) REFERENCES text(id)
+		);
+)");
 }
 
 void SQLiteDataSource::InitialiseFileDefinition(CsvFile &csv)
@@ -762,6 +785,12 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 			}
 			sqlite3_finalize(stmt);
 		}
+
+		if (type == "dmsg" && fileComment == u8"sys/key_item") {
+			std::string lang = xybase::string::to_string(fileLang);
+			std::string sql = "UPDATE key_item SET name_" + lang + "_text_id = NULL, description_" + lang + "_text_id = NULL";
+			Execute(sql);
+		}
 	}
 	catch (SQLException &ex)
 	{
@@ -813,6 +842,79 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 
 					int questRecordId = InsertOrGetQuestDMsgRecord(fileComment, questId);
 					UpdateQuestDMsgRecord(fileLang, questRecordId, name, description);
+				}
+				if (fileComment == u8"sys/key_item" && cells.size() >= 3 && cells[0].GetType() == 1)
+				{
+					int keyItemId = cells[0].Get<int>();
+					if (keyItemId) {
+						std::u8string name;
+						std::u8string description;
+						if (fileLang == u8"jp") {
+							if (cells[1].GetType() == 0)
+							{
+								name = xybase::string::escape(cells[1].Get<std::u8string>());
+							}
+							if (cells[2].GetType() == 0)
+							{
+								description = xybase::string::escape(cells[2].Get<std::u8string>());
+							}
+						} else if (fileLang == u8"en") {
+							if (cells[4].GetType() == 0)
+							{
+								name = xybase::string::escape(cells[4].Get<std::u8string>());
+							}
+							if (cells[6].GetType() == 0)
+							{
+								description = xybase::string::escape(cells[6].Get<std::u8string>());
+							}
+						} else if (fileLang == u8"de") {
+							if (cells[4].GetType() == 0)
+							{
+								name = xybase::string::escape(cells[4].Get<std::u8string>());
+								if (name.empty() && cells[7].GetType() == 0)
+								{
+									name = xybase::string::escape(cells[7].Get<std::u8string>());
+								}
+							}
+							if (cells[8].GetType() == 0)
+							{
+								description = xybase::string::escape(cells[8].Get<std::u8string>());
+							}
+						} else if (fileLang == u8"fr") {
+							if (cells[5].GetType() == 0)
+							{
+								name = xybase::string::escape(cells[5].Get<std::u8string>());
+								if (name.empty() && cells[9].GetType() == 0)
+								{
+									name = xybase::string::escape(cells[9].Get<std::u8string>());
+								}
+							}
+							if (cells[10].GetType() == 0)
+							{
+								description = xybase::string::escape(cells[10].Get<std::u8string>());
+							}
+						}
+
+						std::string ensureEntSql = "INSERT INTO key_item (id) VALUES (?) ON CONFLICT(id) DO NOTHING";
+						if (sqlite3_prepare_v2(db, ensureEntSql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
+						{
+							sqlite3_bind_int(stmt, 1, keyItemId);
+							sqlite3_step(stmt);
+						}
+
+						int nameId = InsertOrGetText(name);
+						int descId = InsertOrGetText(description);
+						std::string ki_sql = "UPDATE key_item SET name_" + xybase::string::to_string(fileLang) + "_text_id = ?, description_" + xybase::string::to_string(fileLang) + "_text_id = ? WHERE id = ?";
+						if (sqlite3_prepare_v2(db, ki_sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
+						{
+							sqlite3_bind_int(stmt, 1, nameId);
+							sqlite3_bind_int(stmt, 2, descId);
+							sqlite3_bind_int(stmt, 3, keyItemId);
+							sqlite3_step(stmt);
+						}
+						sqlite3_finalize(stmt);
+
+					}
 				}
 
 				int colNum = 1;
@@ -911,7 +1013,7 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 	Execute("COMMIT;");
 }
 
-void SQLiteDataSource::InsertText(const char * text, int file_id, int rowNum, int colNum)
+int SQLiteDataSource::InsertText(const char * text, int file_id, int rowNum, int colNum)
 {
 	int text_id = -1;
 	sqlite3_stmt *stmt;
@@ -965,6 +1067,8 @@ void SQLiteDataSource::InsertText(const char * text, int file_id, int rowNum, in
 		sqlite3_finalize(stmt);
 		throw;
 	}
+
+	return text_id;
 }
 
 void SQLiteDataSource::TransAndOut()

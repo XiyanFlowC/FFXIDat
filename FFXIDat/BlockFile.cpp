@@ -8,7 +8,7 @@ void BlockFile::Read()
 	eye.read((char *)&header, sizeof(header));
 	type = std::string(header.type, 4);
 
-	if (header.ukn || header.ukn1 || header.ukn2 || header.ukn3 || header.ukn4 || header.ukn5 || header.ukn6)
+	if (header.ukn || header.ukn1 || header.ukn2/* || header.ukn3 || header.ukn4 || header.ukn5 || header.ukn6*/)
 		throw std::runtime_error("File format error: unexpected non-zero fields in header.");
 
 	BlockHeader hdr;
