@@ -100,6 +100,8 @@ namespace
         std::optional<bool> manualEnglishMode;
         LauncherChoice launcherChoice = LauncherChoice::Ashita;
         bool willingToInstall = false;
+        bool isWindower = false;
+		fs::path windowerPath;
         fs::path ashitaPath;
         fs::path pivotRoot;
         fs::path outputPath;
@@ -117,8 +119,10 @@ namespace
     {
         bool valid = false;
         std::wstring errorMessage;
-        fs::path pivotIniPath;
+        fs::path configPath;
         IniData iniData;
+        std::string textData;
+        bool isTextConfiguration = false;
         fs::path pivotRoot;
         fs::path outputPath;
     };
@@ -126,6 +130,11 @@ namespace
     std::wstring Trim(const std::wstring& value)
     {
         return std::regex_replace(value, std::wregex(L"^\\s+|\\s+$"), L"");
+    }
+
+    std::string Trim(const std::string& value)
+    {
+        return std::regex_replace(value, std::regex("^\\s+|\\s+$"), std::string{});
     }
 
     std::wstring Unquote(std::wstring value)
@@ -281,6 +290,85 @@ namespace
         return fs::exists(ashitaPath / L"Ashita.dll") && fs::exists(ashitaPath / L"Ashita-cli.exe");
     }
 
+    bool ContainsRequiredWindowerFiles(const fs::path& windowerPath)
+    {
+        return fs::exists(windowerPath / L"Windower.exe");
+    }
+
+    fs::path GetWindowerPivotAddonsPath(const fs::path& windowerPath)
+    {
+        const fs::path addonsPath = windowerPath / L"addons" / L"XIPivot";
+        if (fs::exists(addonsPath / L"XIPivot.lua"))
+            return addonsPath;
+
+        return L"";
+    }
+
+    fs::path GetWindowerPivotScriptPath(const fs::path& windowerPath)
+    {
+        return GetWindowerPivotAddonsPath(windowerPath) / L"XIPivot.lua";
+    }
+
+    fs::path GetWindowerPivotSettingsPath(const fs::path& windowerPath)
+    {
+        return GetWindowerPivotAddonsPath(windowerPath) / L"data" / L"settings.xml";
+    }
+
+    fs::path GetWindowerPivotRoot(const fs::path& windowerPath)
+    {
+        return GetWindowerPivotAddonsPath(windowerPath) / L"data" / L"DATs";
+    }
+
+    bool LoadTextFile(const fs::path& filePath, std::string& text)
+    {
+        if (!fs::exists(filePath))
+            return false;
+
+        std::ifstream file(filePath, std::ios::binary);
+        if (!file.is_open())
+            return false;
+
+        text.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+        return true;
+    }
+
+    bool SaveTextFile(const fs::path& filePath, const std::string& text)
+    {
+        fs::create_directories(filePath.parent_path());
+        std::ofstream file(filePath, std::ios::binary | std::ios::trunc);
+        if (!file.is_open())
+            return false;
+
+        file.write(text.data(), static_cast<std::streamsize>(text.size()));
+        return file.good();
+    }
+
+    std::vector<std::string> SplitCommaSeparatedValues(const std::string& text)
+    {
+        std::vector<std::string> values;
+        std::stringstream stream(text);
+        std::string value;
+        while (std::getline(stream, value, ','))
+        {
+            value = Trim(value);
+            if (!value.empty())
+                values.push_back(value);
+        }
+        return values;
+    }
+
+    std::string JoinCommaSeparatedValues(const std::vector<std::string>& values)
+    {
+        std::ostringstream stream;
+        for (size_t i = 0; i < values.size(); ++i)
+        {
+            if (i > 0)
+                stream << ',';
+            stream << values[i];
+        }
+        return stream.str();
+    }
+
     bool LoadIniFile(const fs::path& iniPath, IniData& data)
     {
         if (!fs::exists(iniPath))
@@ -369,10 +457,10 @@ namespace
     PivotConfiguration BuildPivotConfiguration(const fs::path& ashitaPath)
     {
         PivotConfiguration result;
-        result.pivotIniPath = ashitaPath / L"config" / L"pivot" / L"pivot.ini";
+        result.configPath = ashitaPath / L"config" / L"pivot" / L"pivot.ini";
         const fs::path defaultPivotRoot = ashitaPath / L"polplugins" / L"DATs";
 
-        LoadIniFile(result.pivotIniPath, result.iniData);
+        LoadIniFile(result.configPath, result.iniData);
         auto& settings = result.iniData.sections[L"settings"];
         auto& overlays = result.iniData.sections[L"overlays"];
 
@@ -419,6 +507,42 @@ namespace
             overlays[std::to_wstring(maxIndex + 1)] = L"LocCNTxt";
 
         result.outputPath = result.pivotRoot / L"LocCNTxt";
+        result.valid = true;
+        return result;
+    }
+
+    PivotConfiguration BuildWindowerPivotConfiguration(const fs::path& windowerPath)
+    {
+        PivotConfiguration result;
+        result.configPath = GetWindowerPivotSettingsPath(windowerPath);
+        result.pivotRoot = GetWindowerPivotRoot(windowerPath);
+        result.outputPath = result.pivotRoot / L"LocCNTxt";
+        result.isTextConfiguration = true;
+
+        if (!LoadTextFile(result.configPath, result.textData))
+        {
+            result.textData =
+                "<?xml version=\"1.1\" ?>\r\n"
+                "<settings>\r\n"
+                "    <global>\r\n"
+                "        <overlays>LocCNTxt</overlays>\r\n"
+                "    </global>\r\n"
+                "</settings>\r\n";
+        }
+
+        const std::regex overlaysPattern(R"((<overlays>)([\s\S]*?)(</overlays>))", std::regex_constants::icase);
+        std::smatch match;
+        if (!std::regex_search(result.textData, match, overlaysPattern))
+        {
+            result.errorMessage = L"settings.xml 中未找到 <overlays> 节点，必须手动设定。";
+            return result;
+        }
+
+        auto overlays = SplitCommaSeparatedValues(match[2].str());
+        if (std::find(overlays.begin(), overlays.end(), std::string("LocCNTxt")) == overlays.end())
+            overlays.push_back("LocCNTxt");
+
+        result.textData = std::regex_replace(result.textData, overlaysPattern, match[1].str() + JoinCommaSeparatedValues(overlays) + match[3].str(), std::regex_constants::format_first_only);
         result.valid = true;
         return result;
     }
@@ -722,7 +846,7 @@ namespace
                 break;
             case StepId::PivotConfig:
                 if (id == IdAction1)
-                    OpenPath(draft.ashitaPath / L"config" / L"pivot");
+                    OpenPath(draft.isWindower ? GetWindowerPivotAddonsPath(draft.windowerPath) / L"data" : draft.ashitaPath / L"config" / L"pivot");
                 else if (id == IdAction2)
                     RefreshPivotPreview();
                 break;
@@ -826,9 +950,9 @@ namespace
                 return ValidateAshitaPathStep();
 
             case StepId::PivotCheck:
-                if (!fs::exists(draft.ashitaPath / L"polplugins" / L"pivot.dll"))
+                if (!fs::exists(draft.isWindower ? GetWindowerPivotScriptPath(draft.windowerPath) : draft.ashitaPath / L"polplugins" / L"pivot.dll"))
                 {
-                    SetStatus(L"未找到 pivot.dll。请先安装 Pivot，或返回上一步检查 Ashita 路径。", true);
+                    SetStatus(draft.isWindower ? L"未找到 XIPivot.lua。请先安装 XIPivot，或返回上一步检查 Windower 路径。" : L"未找到 pivot.dll。请先安装 Pivot，或返回上一步检查 Ashita 路径。", true);
                     return std::nullopt;
                 }
                 return StepId::PivotConfig;
@@ -908,19 +1032,14 @@ namespace
             else
                 draft.launcherChoice = LauncherChoice::NoneInstalled;
 
+            draft.isWindower = draft.launcherChoice == LauncherChoice::Windower;
             draft.willingToInstall = IsButtonChecked(IdCheck1);
-
-            if (draft.launcherChoice == LauncherChoice::Windower)
-            {
-                terminalMessage = L"已选择正在使用 Windower。该场景必须手动设定，请阅读“请读我”后自行配置。";
-                return StepId::ManualFinish;
-            }
 
             if (draft.launcherChoice == LauncherChoice::NoneInstalled)
             {
                 if (!draft.willingToInstall)
                 {
-                    terminalMessage = L"未使用 Windower/Ashita，且不安装 Ashita。该场景必须手动设定，请阅读“请读我”后自行配置。";
+                    terminalMessage = L"未使用 Windower/Ashita，且不愿意安装 Ashita。该场景必须手动设定，请阅读“请读我”后自行配置。";
                     return StepId::ManualFinish;
                 }
                 return StepId::InstallFinish;
@@ -934,29 +1053,46 @@ namespace
             const auto rawPath = Trim(ReadWindowText(GetDlgItem(hwnd, IdEdit1)));
             if (rawPath.empty())
             {
-                SetStatus(L"请输入 Ashita 安装目录。", true);
+                SetStatus(draft.isWindower ? L"请输入 Windower 安装目录。" : L"请输入 Ashita 安装目录。", true);
                 return std::nullopt;
             }
 
-            const fs::path ashitaPath = rawPath;
-            if (!fs::exists(ashitaPath) || !fs::is_directory(ashitaPath))
+            const fs::path launcherPath = rawPath;
+            if (!fs::exists(launcherPath) || !fs::is_directory(launcherPath))
             {
-                SetStatus(L"Ashita 安装目录无效。", true);
-                return std::nullopt;
-            }
-            if (!ContainsRequiredAshitaFiles(ashitaPath))
-            {
-                SetStatus(L"该目录下缺少 Ashita.dll 或 Ashita-cli.exe。", true);
+                SetStatus(draft.isWindower ? L"Windower 安装目录无效。" : L"Ashita 安装目录无效。", true);
                 return std::nullopt;
             }
 
-            draft.ashitaPath = ashitaPath;
+            if (draft.isWindower)
+            {
+                if (!ContainsRequiredWindowerFiles(launcherPath))
+                {
+                    SetStatus(L"该目录下缺少 Windower.exe。", true);
+                    return std::nullopt;
+                }
+
+                draft.windowerPath = launcherPath;
+                draft.ashitaPath.clear();
+            }
+            else
+            {
+                if (!ContainsRequiredAshitaFiles(launcherPath))
+                {
+                    SetStatus(L"该目录下缺少 Ashita.dll 或 Ashita-cli.exe。", true);
+                    return std::nullopt;
+                }
+
+                draft.ashitaPath = launcherPath;
+                draft.windowerPath.clear();
+            }
+
             return StepId::PivotCheck;
         }
 
         bool PreparePivotPreview()
         {
-            pivotPreview = BuildPivotConfiguration(draft.ashitaPath);
+            pivotPreview = draft.isWindower ? BuildWindowerPivotConfiguration(draft.windowerPath) : BuildPivotConfiguration(draft.ashitaPath);
             if (!pivotPreview.valid)
             {
                 SetStatus(pivotPreview.errorMessage, true);
@@ -971,9 +1107,13 @@ namespace
         {
             if (!PreparePivotPreview())
                 return false;
-            if (!SaveIniFile(pivotPreview.pivotIniPath, pivotPreview.iniData))
+
+            const bool pivotSaved = pivotPreview.isTextConfiguration
+                ? SaveTextFile(pivotPreview.configPath, pivotPreview.textData)
+                : SaveIniFile(pivotPreview.configPath, pivotPreview.iniData);
+            if (!pivotSaved)
             {
-                SetStatus(L"写入 pivot.ini 失败，请确认 Ashita 目录可写。", true);
+                SetStatus(draft.isWindower ? L"写入 settings.xml 失败，请确认 Windower 目录可写。" : L"写入 pivot.ini 失败，请确认 Ashita 目录可写。", true);
                 return false;
             }
             if (!WriteConfigIni(progRoot, draft))
@@ -1054,7 +1194,7 @@ namespace
         void RenderWelcomeStep()
         {
             SetWindowTextW(titleLabel, L"欢迎使用 FFXITrans 配置向导");
-            SetWindowTextW(descriptionLabel, L"未检测到 config.ini。该向导会逐步收集配置，并在最后生成配置文件。\r\n你可以随时使用“上一步”返回修改。\r\n\r\n首先请选择是否改为手动配置。");
+            SetWindowTextW(descriptionLabel, L"未检测到 config.ini，开始初次运行引导。该向导会逐步收集配置，并在最后生成配置文件。\r\n你可以随时使用“上一步”返回修改。\r\n\r\n首先请选择是否转为手动配置。");
 
             CreateRadio(IdPrimaryRadio1, L"改为手动配置（阅读请读我后自行编辑 config.ini）", 30, 130, 620, 24, draft.manualConfig, true);
             CreateRadio(IdPrimaryRadio2, L"使用向导自动配置", 30, 160, 620, 24, !draft.manualConfig, false);
@@ -1066,7 +1206,7 @@ namespace
             SetWindowTextW(titleLabel, L"步骤 1：游戏安装目录");
             std::wstring description = L"将检查游戏安装目录，并允许手动修改。\r\n";
             if (detectedGamePath.has_value())
-                description += L"若自动检测没有问题，一般不需要手动设定。\r\n";
+                description += L"若自动检测没有问题，一般不需要手动设定。如果自动检测或稍后实际运行时发生问题，请手动配置。\r\n";
             else
                 description += L"自动获取游戏安装信息失败，必须手动设定游戏安装目录和游戏版本。\r\n";
             SetWindowTextW(descriptionLabel, description.c_str());
@@ -1089,7 +1229,7 @@ namespace
         void RenderLauncherStep()
         {
             SetWindowTextW(titleLabel, L"步骤 2：启动器类型");
-            SetWindowTextW(descriptionLabel, L"请选择你当前使用的启动器类型。若未安装，可选择是否愿意安装 Ashita。\r\n不兼容或未安装且不愿安装的情况，会在后续提示改为手动配置。\r\n\r\n可通过下方按钮打开下载页面。\r\n");
+            SetWindowTextW(descriptionLabel, L"请选择你当前使用的启动器类型。当前向导支持 Ashita 与 Windower 的自动配置。\r\n若未安装，可选择是否愿意安装 Ashita。未安装且不愿安装的情况，会在后续提示改为手动配置。\r\n\r\n可通过下方按钮打开下载页面。\r\n");
 
             CreateRadio(IdPrimaryRadio1, L"我已安装 Ashita", 30, 120, 250, 24, draft.launcherChoice == LauncherChoice::Ashita, true);
             CreateRadio(IdPrimaryRadio2, L"我已安装 Windower", 30, 150, 250, 24, draft.launcherChoice == LauncherChoice::Windower, false);
@@ -1101,11 +1241,13 @@ namespace
 
         void RenderAshitaPathStep()
         {
-            SetWindowTextW(titleLabel, L"步骤 3：Ashita 安装目录");
-            SetWindowTextW(descriptionLabel, L"请输入或选择 Ashita 安装目录。下一步会检查该目录下是否存在 Ashita.dll 与 Ashita-cli.exe。\r\n你需要选择Ashita安装的根目录，即目录下有Ashita-cli.exe。\r\n");
+            SetWindowTextW(titleLabel, draft.isWindower ? L"步骤 3：Windower 安装目录" : L"步骤 3：Ashita 安装目录");
+            SetWindowTextW(descriptionLabel, draft.isWindower
+                ? L"请输入或选择 Windower 安装目录。下一步会检查该目录下是否存在 Windower.exe。\r\n你需要选择 Windower 安装的根目录，即目录下有 Windower.exe。\r\n"
+                : L"请输入或选择 Ashita 安装目录。下一步会检查该目录下是否存在 Ashita.dll 与 Ashita-cli.exe。\r\n你需要选择Ashita安装的根目录，即目录下有Ashita-cli.exe。\r\n");
 
-            CreateStatic(IdStatic1, L"Ashita 安装目录：", 30, 130, 130, 20);
-            CreateEdit(IdEdit1, draft.ashitaPath.wstring(), 165, 126, 430, 24, true);
+            CreateStatic(IdStatic1, draft.isWindower ? L"Windower 安装目录：" : L"Ashita 安装目录：", 30, 130, 130, 20);
+            CreateEdit(IdEdit1, (draft.isWindower ? draft.windowerPath : draft.ashitaPath).wstring(), 165, 126, 430, 24, true);
             CreateButton(IdBrowse1, L"浏览...", 605, 125, 90, 26);
             CreateStatic(IdStatic2, BuildAshitaValidationText().c_str(), 30, 170, 660, 50);
         }
@@ -1113,11 +1255,17 @@ namespace
         void RenderPivotCheckStep()
         {
             SetWindowTextW(titleLabel, L"步骤 4：Pivot 检查");
-            SetWindowTextW(descriptionLabel, L"将检查 Ashita 安装目录下是否存在 polplugins/pivot.dll。\r\n如果尚未安装 Pivot，可先打开下载页或安装说明，安装完成后点击“刷新检查”。\r\n");
+            SetWindowTextW(descriptionLabel, draft.isWindower
+                ? L"将检查 Windower 安装目录下是否存在 addons/XIPivot/XIPivot.lua。\r\n如果尚未安装 XIPivot，可先打开下载页或安装说明，安装完成后点击“刷新检查”。\r\n"
+                : L"将检查 Ashita 安装目录下是否存在 polplugins/pivot.dll。\r\n如果尚未安装 Pivot，可先打开下载页或安装说明，安装完成后点击“刷新检查”。\r\n");
 
-            const bool hasPivot = fs::exists(draft.ashitaPath / L"polplugins" / L"pivot.dll");
-            std::wstring status = L"Ashita 目录：\r\n" + draft.ashitaPath.wstring() + L"\r\n\r\n";
-            status += hasPivot ? L"已检测到 pivot.dll，可以继续。" : L"未检测到 pivot.dll，请先安装 Pivot。";
+            const bool hasPivot = fs::exists(draft.isWindower ? GetWindowerPivotScriptPath(draft.windowerPath) : draft.ashitaPath / L"polplugins" / L"pivot.dll");
+            const std::wstring launcherName = draft.isWindower ? L"Windower" : L"Ashita";
+            const fs::path launcherPath = draft.isWindower ? draft.windowerPath : draft.ashitaPath;
+            std::wstring status = launcherName + L" 目录：\r\n" + launcherPath.wstring() + L"\r\n\r\n";
+            status += hasPivot
+                ? (draft.isWindower ? L"已检测到 XIPivot.lua，可以继续。" : L"已检测到 pivot.dll，可以继续。")
+                : (draft.isWindower ? L"未检测到 XIPivot.lua，请先安装 XIPivot。" : L"未检测到 pivot.dll，请先安装 Pivot。");
 
             CreateStatic(IdStatic1, status.c_str(), 30, 130, 660, 90);
             CreateButton(IdAction1, L"打开 Pivot 页面", 30, 245, 130, 28);
@@ -1127,13 +1275,15 @@ namespace
         void RenderPivotConfigStep()
         {
             SetWindowTextW(titleLabel, L"步骤 5：Pivot 与输出目录");
-            SetWindowTextW(descriptionLabel, L"将检查并准备 pivot.ini 配置，并根据规则计算 pivotroot 与 output_path。\r\n若您在 Pivot 中设定了相对路径的 root_path，请改为手动配置。\r\n");
+            SetWindowTextW(descriptionLabel, draft.isWindower
+                ? L"将检查并准备 XIPivot 的 settings.xml，并确保 overlays 中包含 LocCNTxt。\r\noutput_path 将设置到 addons/XIPivot/data/DATs/LocCNTxt。\r\n"
+                : L"将检查并准备 pivot.ini 配置，并根据规则计算 pivotroot 与 output_path。\r\n若您在 Pivot 中设定了相对路径的 root_path，请改为手动配置。\r\n");
 
             RefreshPivotPreview();
             std::wstring content;
             if (pivotPreview.valid)
             {
-                content = L"pivot.ini：\r\n" + pivotPreview.pivotIniPath.wstring()
+                content = (draft.isWindower ? L"settings.xml：\r\n" : L"pivot.ini：\r\n") + pivotPreview.configPath.wstring()
                     + L"\r\n\r\npivotroot：\r\n" + pivotPreview.pivotRoot.wstring()
                     + L"\r\n\r\noutput_path：\r\n" + pivotPreview.outputPath.wstring();
             }
@@ -1188,7 +1338,7 @@ namespace
         void RenderSummaryStep()
         {
             SetWindowTextW(titleLabel, L"步骤 9：确认并生成配置");
-            SetWindowTextW(descriptionLabel, L"请确认以下配置。点击“完成”后，将写入 pivot.ini 与 config.ini，然后退出程序。\r\n");
+            SetWindowTextW(descriptionLabel, draft.isWindower ? L"请确认以下配置。点击“完成”后，将写入 settings.xml 与 config.ini，然后退出程序。\r\n" : L"请确认以下配置。点击“完成”后，将写入 pivot.ini 与 config.ini，然后退出程序。\r\n");
 
             std::wstringstream ss;
             ss << L"游戏目录："
@@ -1196,7 +1346,8 @@ namespace
                << L"\r\n";
             if (!draft.useDetectedGamePath && draft.manualEnglishMode.has_value())
                 ss << L"english_mode：" << (*draft.manualEnglishMode ? L"true" : L"false") << L"\r\n";
-            ss << L"Ashita：" << draft.ashitaPath.wstring() << L"\r\n"
+            ss << L"启动器：" << (draft.isWindower ? L"Windower" : L"Ashita") << L"\r\n"
+               << (draft.isWindower ? L"Windower：" : L"Ashita：") << (draft.isWindower ? draft.windowerPath.wstring() : draft.ashitaPath.wstring()) << L"\r\n"
                << L"pivotroot：" << draft.pivotRoot.wstring() << L"\r\n"
                << L"output_path：" << draft.outputPath.wstring() << L"\r\n"
                << L"babel：" << GetBabelDisplayName(draft.babelMode) << L"（" << GetBabelConfigValue(draft.babelMode) << L"）\r\n"
@@ -1230,7 +1381,7 @@ namespace
 
         void RefreshPivotPreview()
         {
-            pivotPreview = BuildPivotConfiguration(draft.ashitaPath);
+            pivotPreview = draft.isWindower ? BuildWindowerPivotConfiguration(draft.windowerPath) : BuildPivotConfiguration(draft.ashitaPath);
             if (!pivotPreview.valid)
                 SetStatus(pivotPreview.errorMessage, true);
             else
@@ -1239,6 +1390,17 @@ namespace
 
         std::wstring BuildAshitaValidationText() const
         {
+            if (draft.isWindower)
+            {
+                if (draft.windowerPath.empty())
+                    return L"尚未选择 Windower 安装目录。";
+                if (!fs::exists(draft.windowerPath))
+                    return L"当前目录不存在。";
+                if (ContainsRequiredWindowerFiles(draft.windowerPath))
+                    return L"当前目录校验通过：已找到 Windower.exe。";
+                return L"当前目录校验未通过：缺少 Windower.exe。";
+            }
+
             if (draft.ashitaPath.empty())
                 return L"尚未选择 Ashita 安装目录。";
             if (!fs::exists(draft.ashitaPath))
@@ -1275,11 +1437,14 @@ namespace
 
         void BrowseAshitaPath()
         {
-            const auto selected = PickFolder(L"请选择 Ashita 安装目录", draft.ashitaPath);
+            const auto selected = PickFolder(draft.isWindower ? L"请选择 Windower 安装目录" : L"请选择 Ashita 安装目录", draft.isWindower ? draft.windowerPath : draft.ashitaPath);
             if (selected.has_value())
             {
                 SetWindowTextW(GetDlgItem(hwnd, IdEdit1), selected->wstring().c_str());
-                draft.ashitaPath = *selected;
+                if (draft.isWindower)
+                    draft.windowerPath = *selected;
+                else
+                    draft.ashitaPath = *selected;
                 RenderStep();
             }
         }
