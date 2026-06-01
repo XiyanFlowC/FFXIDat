@@ -71,7 +71,7 @@ FFXITrans.exe insitu
 ## Building
 
 Requires:
-- Visual Studio 2019 or later
+- Visual Studio 2022 or later
 - C++20 support
 - SQLite 3.48.0
 

@@ -1,6 +1,7 @@
 #include "SpecialProcessor.h"
 #include "Config.h"
 #include "DMsg.h"
+#include "FinalTextProcessor.h"
 #include "TranslationDatabase.h"
 #include "xystring.h"
 
@@ -15,7 +16,7 @@ bool SpecialProcessor::Process(const FileProcessDef& fileDef, const std::filesys
 
 std::u8string SpecialProcessor::GetSupportedType() const
 {
-    return std::u8string();
+	return std::u8string();
 }
 
 
@@ -28,19 +29,26 @@ bool SpecialProcessor::TryProcessJobName(const FileProcessDef& fileDef, const st
 
 	DMsg jobDmsg(inputPath);
 	jobDmsg.Read();
+ FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 	/*std::set<int> targetCells = ProcessorUtils::ParseCellIndices(fileDef.cellIndicesStr);
 	if (targetCells.empty())
 		return true;*/
 
-	auto& db = TranslationDatabase::Instance();
+ auto& db = TranslationDatabase::Instance();
+	int64_t rowIndex = 0;
 	for (auto& row : jobDmsg)
 	{
+	   ++rowIndex;
 		auto& cells = row.GetCells();
 		if (cells.size() < 1 || cells[0].GetType() != 0)
 			continue;
 
 		std::u8string text = xybase::string::escape(cells[0].Get<std::u8string>());
-		std::u8string trans = xybase::string::unescape(db.GetTranslation(text));
+		std::u8string trans = xybase::string::unescape(finalTextProcessor.ProcessEscaped(
+			db.GetTranslation(text),
+			text,
+			rowIndex,
+			1));
 		if (Config::Instance().IsSamuraiJobTransNot() && text == u8"侍")
 			continue; // 特例：侍翻译为武士则简称和武僧冲突，故不翻译侍这个职业名称，玩家能看懂
 		if (Config::Instance().IsSamuraiJobSpecial() && text == u8"侍")

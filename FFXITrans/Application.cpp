@@ -4,6 +4,7 @@
 #include "BackupManager.h"
 #include "ProcessorFactory.h"
 #include "ChsToSJis.h"
+#include "Logger.h"
 #include "SetupWizard.h"
 #include "../FFXIDatProcessor/codepage.h"
 #include "SpecialProcessor.h"
@@ -23,6 +24,8 @@
 
 #pragma comment(lib, "Comctl32.lib")
 
+int YesNoPrompt(const std::wstring& prompt);
+
 namespace
 {
 	namespace fs = std::filesystem;
@@ -41,6 +44,7 @@ namespace
 
 	void ShowMessageBox(const std::wstring& message, UINT flags, const wchar_t* title = kAppTitle)
 	{
+		Logger::Instance().Info(std::string("Displaying message box. title=") + Logger::ToUtf8(std::wstring(title)) + ", flags=" + std::to_string(flags));
 		MessageBoxW(nullptr, message.c_str(), title, flags | MB_SETFOREGROUND | MB_TOPMOST);
 	}
 
@@ -52,6 +56,52 @@ namespace
 	void ShowInfoMessage(const std::wstring& message)
 	{
 		ShowMessageBox(message, MB_OK | MB_ICONINFORMATION);
+	}
+
+	bool ConfirmInSituMode(bool triggeredByCommandLine, bool triggeredByConfig)
+	{
+		std::wstring sourceText = L"交互选择";
+		if (triggeredByCommandLine)
+		{
+			sourceText = L"命令行参数 insitu";
+		}
+		else if (triggeredByConfig)
+		{
+			sourceText = L"config.ini 的 in_situ=true";
+		}
+
+		const std::wstring firstWarning =
+			L"【危险：InSitu 模式】\n\n"
+			L"当前将直接覆盖游戏目录中的 DAT 文件，而不是输出到 output 目录。\n"
+			L"只有在你明确知道自己在做什么时才应继续。\n\n"
+			L"触发来源：" + sourceText + L"\n\n"
+			L"强烈建议先使用 output 模式验证结果，再考虑 InSitu。\n\n"
+			L"是否继续进入 InSitu 模式？";
+
+		if (YesNoPrompt(firstWarning) != 'Y')
+		{
+			Logger::Instance().Warning("User cancelled InSitu mode at first safety confirmation.");
+			ShowInfoMessage(L"已取消 InSitu 模式，本次不会覆盖游戏原始文件。");
+			return false;
+		}
+
+		const std::wstring secondWarning =
+			L"继续前请逐项确认：\n\n"
+			L"1. 游戏和 PlayOnline 已完全关闭。\n"
+			L"2. backup 目录只能存放程序自动创建的原始 DAT 备份，绝对不要手动把修改过的 DAT 复制进去。\n"
+			L"3. 只要游戏更新过，旧 backup 就全部失效；必须先删除整个 backup 目录，再重新运行，让程序从新版本原始文件重新建备份。\n"
+			L"4. 你最好已经另外备份了整个游戏目录。\n\n"
+			L"只有以上全部满足时才应继续。是否确认覆盖原始游戏文件？";
+
+		if (YesNoPrompt(secondWarning) != 'Y')
+		{
+			Logger::Instance().Warning("User cancelled InSitu mode at second safety confirmation.");
+			ShowInfoMessage(L"已取消 InSitu 模式，本次不会覆盖游戏原始文件。\n\n如需继续，建议先用 output 模式测试。");
+			return false;
+		}
+
+		Logger::Instance().Warning("User explicitly confirmed dangerous InSitu mode after double warning.");
+		return true;
 	}
 
 	LRESULT CALLBACK ProgressWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -286,6 +336,8 @@ namespace
 	{
 		const auto inputPath = BuildDatPath(fileDef);
 		const auto outputPath = BuildPrepareOutputPath(outputDir, fileDef.comment, L".txt");
+		Logger::Instance().Info("Preparing EventStringBase export. comment='" + Logger::ToUtf8(fileDef.comment)
+			+ "', input=" + Logger::ToUtf8(inputPath) + ", output=" + Logger::ToUtf8(outputPath));
 
 		std::wcout << L"正在处理 " << inputPath << L" -> " << outputPath << std::endl;
 
@@ -316,6 +368,8 @@ namespace
 	{
 		const auto inputPath = BuildDatPath(fileDef);
 		const auto outputPath = BuildPrepareOutputPath(outputDir, fileDef.comment, L".csv");
+		Logger::Instance().Info("Preparing item CSV export. comment='" + Logger::ToUtf8(fileDef.comment)
+			+ "', input=" + Logger::ToUtf8(inputPath) + ", output=" + Logger::ToUtf8(outputPath));
 		EnsureParentDirectory(outputPath);
 
 		std::wcout << L"正在导出 CSV " << inputPath << L" -> " << outputPath << std::endl;
@@ -347,6 +401,8 @@ namespace
 	{
 		const auto inputPath = BuildDatPath(fileDef);
 		const auto outputPath = BuildPrepareOutputPath(outputDir, fileDef.comment, L".csv");
+		Logger::Instance().Info("Preparing quest DMsg CSV export. comment='" + Logger::ToUtf8(fileDef.comment)
+			+ "', input=" + Logger::ToUtf8(inputPath) + ", output=" + Logger::ToUtf8(outputPath));
 		EnsureParentDirectory(outputPath);
 
 		std::wcout << L"正在导出 CSV " << inputPath << L" -> " << outputPath << std::endl;
@@ -388,6 +444,8 @@ namespace
 	{
 		const auto inputPath = BuildDatPath(fileDef);
 		const auto outputPath = BuildPrepareOutputPath(outputDir, fileDef.comment, L".csv");
+		Logger::Instance().Info("Preparing ROE quest CSV export. comment='" + Logger::ToUtf8(fileDef.comment)
+			+ "', input=" + Logger::ToUtf8(inputPath) + ", output=" + Logger::ToUtf8(outputPath));
 		EnsureParentDirectory(outputPath);
 
 		std::wcout << L"正在导出 CSV " << inputPath << L" -> " << outputPath << std::endl;
@@ -418,6 +476,8 @@ namespace
 	{
 		const auto inputPath = BuildDatPath(fileDef);
 		const auto outputPath = BuildPrepareOutputPath(outputDir, fileDef.comment, L".csv");
+		Logger::Instance().Info("Preparing ROE category CSV export. comment='" + Logger::ToUtf8(fileDef.comment)
+			+ "', input=" + Logger::ToUtf8(inputPath) + ", output=" + Logger::ToUtf8(outputPath));
 		EnsureParentDirectory(outputPath);
 
 		std::wcout << L"正在导出 CSV " << inputPath << L" -> " << outputPath << std::endl;
@@ -444,6 +504,8 @@ namespace
 	{
 		const auto inputPath = BuildDatPath(fileDef);
 		const auto outputPath = BuildPrepareOutputPath(outputDir, fileDef.comment, L".csv");
+		Logger::Instance().Info("Preparing fixed phrase CSV export. comment='" + Logger::ToUtf8(fileDef.comment)
+			+ "', input=" + Logger::ToUtf8(inputPath) + ", output=" + Logger::ToUtf8(outputPath));
 		EnsureParentDirectory(outputPath);
 
 		std::wcout << L"正在导出 CSV " << inputPath << L" -> " << outputPath << std::endl;
@@ -493,11 +555,13 @@ Application& Application::Instance()
 // Use extern function from FFXITrans.cpp
 int YesNoPrompt(const std::wstring& prompt)
 {
-    const int result = MessageBoxW(
+	const int result = MessageBoxW(
 		nullptr,
 		prompt.c_str(),
 		kAppTitle,
 		MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2 | MB_SETFOREGROUND | MB_TOPMOST);
+	Logger::Instance().Info(std::string("User prompt result=") + (result == IDYES ? "Yes" : "No")
+		+ ", prompt=" + Logger::ToUtf8(prompt));
 	return result == IDYES ? 'Y' : 'N';
 }
 
@@ -505,7 +569,7 @@ void Application::ShowUsage()
 {
 	std::wcout << L"FFXI汉化插入工具 Ver." VERSION " by Hyururu\n"
 		L"用法：FFXITrans [insitu]\n"
-		L"  insitu：直接在游戏目录修改文件，否则输出到output目录\n"
+		L"  insitu：危险，直接覆盖游戏目录中的 DAT 文件；仅在确认备份可靠且已理解游戏更新影响时使用\n"
 		L"  prepare：输出要准备的游戏数据文件（翻译用）\n"
 		L"  无参数则进入交互模式\n";
 }
@@ -516,12 +580,14 @@ bool Application::InitializeCodePages()
 	{
 		const auto& progRoot = Config::Instance().GetProgRoot();
 		CodeCvt::GetInstance().Init(progRoot / L"cp932.csv");
+		Logger::Instance().Info("Loaded cp932.csv successfully from " + Logger::ToUtf8(progRoot / L"cp932.csv"));
 	}
 	catch (std::exception& ex)
 	{
 		std::wcerr << ex.what() << std::endl;
 		std::wcerr << L"处理代码页cp932.csv失败了。" << std::endl;
-       ShowErrorMessage(std::wstring(L"处理代码页 cp932.csv 失败。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
+		Logger::Instance().Error(std::string("Failed to load cp932.csv: ") + ex.what());
+		ShowErrorMessage(std::wstring(L"处理代码页 cp932.csv 失败。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
 		return false;
 	}
 
@@ -529,12 +595,15 @@ bool Application::InitializeCodePages()
 	{
 		const auto& progRoot = Config::Instance().GetProgRoot();
 		ChsToSJis::Instance().Init(progRoot / L"chs2sjis.csv");
+		Logger::Instance().Info("Loaded chs2sjis.csv successfully from " + Logger::ToUtf8(progRoot / L"chs2sjis.csv")
+			+ ", replacements=" + std::to_string(ChsToSJis::Instance().GetReplacementCount()));
 	}
 	catch (std::exception& ex)
 	{
 		std::wcerr << ex.what() << std::endl;
 		std::wcerr << L"处理简体汉字转换逻辑chs2sjis.csv失败了。" << std::endl;
-       ShowErrorMessage(std::wstring(L"处理 chs2sjis.csv 失败。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
+		Logger::Instance().Error(std::string("Failed to load chs2sjis.csv: ") + ex.what());
+		ShowErrorMessage(std::wstring(L"处理 chs2sjis.csv 失败。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
 		return false;
 	}
 
@@ -544,6 +613,7 @@ bool Application::InitializeCodePages()
 bool Application::LoadTranslations()
 {
 	auto& db = TranslationDatabase::Instance();
+	Logger::Instance().Info("Loading translation databases.");
 
 	// Load numbered text files
 	for (int i = 0;; ++i)
@@ -552,7 +622,8 @@ bool Application::LoadTranslations()
 		if (loaded < 0)
 		{
 			std::wcerr << L"加载文本文件失败。" << std::endl;
-           ShowErrorMessage(L"加载文本文件失败。");
+			Logger::Instance().Error("Failed to load numbered text translation database.");
+			ShowErrorMessage(L"加载文本文件失败。");
 			return false;
 		}
 		if (loaded == 0)
@@ -564,7 +635,8 @@ bool Application::LoadTranslations()
 	if (sourceCount < 0)
 	{
 		std::wcerr << L"加载 text\\src / text\\tgt 结构失败。" << std::endl;
-       ShowErrorMessage(L"加载 text\\src / text\\tgt 结构失败。");
+		Logger::Instance().Error("Failed to load text/src -> text/tgt translation database.");
+		ShowErrorMessage(L"加载 text\\src / text\\tgt 结构失败。");
 		return false;
 	}
 
@@ -574,19 +646,24 @@ bool Application::LoadTranslations()
 	}
 
 	std::wcout << L"共读取了 " << std::to_wstring(db.GetTranslationCount()) << L" 条文本数据。" << std::endl;
+	Logger::Instance().Info("Translation database loaded. totalEntries=" + std::to_string(db.GetTranslationCount())
+		+ ", sourceDataEntries=" + std::to_string(sourceCount));
 	return true;
 }
 
 bool Application::Initialize()
 {
 	setlocale(LC_ALL, "");
+	Logger::Instance().Initialize(GetProgramRootFromModulePath() / "log.txt");
+	Logger::Instance().Info(std::string("Application initialize started. version=") + VERSION);
 
 	std::wcout << L"FFXI汉化插入工具 Ver." VERSION " by Hyururu" << std::endl;
 
 	// Initialize configuration
 	if (!Config::Instance().Initialize())
 	{
-       ShowErrorMessage(L"初始化配置失败。请检查 config.ini 或游戏安装路径设置。");
+		Logger::Instance().Error("Config initialization failed.");
+		ShowErrorMessage(L"初始化配置失败。请检查 config.ini 或游戏安装路径设置。");
 		return false;
 	}
 
@@ -595,6 +672,11 @@ bool Application::Initialize()
 	if (std::filesystem::exists(progRoot / "config.ini"))
 	{
 		Config::Instance().LoadFromFile(progRoot / "config.ini");
+	}
+	else
+	{
+		Logger::Instance().Warning("config.ini does not exist. Using registry/default values only.");
+		Logger::Instance().Info("Final config state: " + Config::Instance().DescribeStateForLog());
 	}
 
 	// Initialize code pages
@@ -605,6 +687,7 @@ bool Application::Initialize()
 
 	// Initialize mismatch log
 	TranslationDatabase::Instance().InitializeMismatchLog(progRoot / "text_mismatch.txt");
+	Logger::Instance().Info("Application initialize completed.");
 
 	return true;
 }
@@ -612,6 +695,8 @@ bool Application::Initialize()
 std::vector<FileProcessDef> Application::LoadFileDefinitions(bool respectExcludes)
 {
 	const auto& progRoot = Config::Instance().GetProgRoot();
+	Logger::Instance().Info("Loading defs.csv from " + Logger::ToUtf8(progRoot / "defs.csv")
+		+ ", respectExcludes=" + std::string(respectExcludes ? "true" : "false"));
 	CsvFile def(progRoot / "defs.csv", std::ios::in | std::ios::binary);
 	std::vector<FileProcessDef> fileDefs;
 
@@ -634,7 +719,7 @@ std::vector<FileProcessDef> Application::LoadFileDefinitions(bool respectExclude
 			continue;
 
 		// Check if this definition should be excluded
-	 if (respectExcludes && Config::Instance().IsExcluded(fileDef.comment))
+		if (respectExcludes && Config::Instance().IsExcluded(fileDef.comment))
 		{
 			if (Config::Instance().IsVerbose())
 			{
@@ -647,7 +732,7 @@ std::vector<FileProcessDef> Application::LoadFileDefinitions(bool respectExclude
 		fileDefs.push_back(fileDef);
 	}
 
-  if (respectExcludes && excludedCount > 0)
+	if (respectExcludes && excludedCount > 0)
 	{
 		std::wcout << L"根据配置已排除 " << excludedCount << L" 项文件定义。" << std::endl;
 	}
@@ -657,7 +742,7 @@ std::vector<FileProcessDef> Application::LoadFileDefinitions(bool respectExclude
 
 int Application::Run(int argc, char** argv)
 {
- setlocale(LC_ALL, "");
+	setlocale(LC_ALL, "");
 
 	try
 	{
@@ -680,9 +765,13 @@ int Application::Run(int argc, char** argv)
 			std::string cmd{ argv[1] };
 			if (cmd == "prepare")
 			{
+				Logger::Instance().Initialize(progRoot / "log.txt");
+				Logger::Instance().Info("Command line mode: prepare");
 				if (!Config::Instance().Initialize())
 				{
-                    ShowErrorMessage(L"初始化配置失败。请检查 config.ini 或游戏安装路径设置。");
+					Logger::Instance().Error("Config initialization failed in prepare mode.");
+					ShowErrorMessage(L"初始化配置失败。请检查 config.ini 或游戏安装路径设置。");
+					Logger::Instance().Close();
 					return -1;
 				}
 
@@ -696,16 +785,22 @@ int Application::Run(int argc, char** argv)
 				if (ret != 0)
 				{
 					std::wcerr << L"prepare 执行失败。" << std::endl;
+					Logger::Instance().Error("Prepare mode failed with exit code " + std::to_string(ret));
+					Logger::Instance().Close();
 					return ret;
 				}
 				std::wcout << L"prepare 执行成功。" << std::endl;
-               ShowInfoMessage(L"prepare 执行成功。");
+				Logger::Instance().Info("Prepare mode completed successfully.");
+				ShowInfoMessage(L"prepare 执行成功。");
+				Logger::Instance().Close();
 				return 0;
 			}
 			else if (cmd == "insitu")
 			{
 				inSitu = true;
 				Config::Instance().SetInSituMode(true);
+				Logger::Instance().Initialize(progRoot / "log.txt");
+				Logger::Instance().Info("Command line mode: insitu");
 			}
 			else
 			{
@@ -717,34 +812,48 @@ int Application::Run(int argc, char** argv)
 		// Initialize application
 		if (!Initialize())
 		{
+			Logger::Instance().Close();
 			return -1;
 		}
 
 		// Load translations
 		if (!LoadTranslations())
 		{
+			Logger::Instance().Close();
 			return -4;
 		}
 
-		// Handle backup
-		BackupManager::Instance().PromptAndRestore();
-
 		// Determine output mode
-		bool overwrite;
-		if (inSitu)
+		const bool configForcesInSitu = Config::Instance().IsInSituMode();
+		bool overwrite = inSitu || configForcesInSitu;
+		if (!overwrite)
 		{
-			overwrite = true;
-		}
-		else
-		{
-			overwrite = Config::Instance().IsInSituNoPrompt() ? false : (YesNoPrompt(L"要在原位修改游戏文件吗？") == 'Y');
+			if (!Config::Instance().IsInSituNoPrompt())
+				overwrite = (YesNoPrompt(L"要在原位修改游戏文件吗？\n\n选择“否”将输出到 output 目录（推荐）。") == 'Y');
 		}
 
 		if (overwrite)
 		{
+			if (!ConfirmInSituMode(inSitu, configForcesInSitu && !inSitu))
+			{
+				TranslationDatabase::Instance().CloseMismatchLog();
+				Logger::Instance().Info("Application run cancelled before entering InSitu mode.");
+				Logger::Instance().Close();
+				return 0;
+			}
+
 			Config::Instance().SetInSituMode(true); // Update config for processors
-			std::wcout << L"将在原位修改游戏文件。文件修改前将被备份。" << std::endl;
+			std::wcout << L"将在原位修改游戏文件。文件修改前将验证/创建备份。" << std::endl;
+			std::wcout << L"注意：如果游戏已经更新，必须先删除整个 backup 目录后再重新运行。" << std::endl;
 		}
+		else
+		{
+			Config::Instance().SetInSituMode(false);
+		}
+		Logger::Instance().Info(std::string("Output mode selected: ") + (overwrite ? "in-place" : "output directory"));
+
+		// Handle backup
+		BackupManager::Instance().PromptAndRestore();
 
 		std::wcout << L"开始处理文件，请勿关闭程序。" << std::endl;
 
@@ -753,12 +862,14 @@ int Application::Run(int argc, char** argv)
 
 		// Close mismatch log
 		TranslationDatabase::Instance().CloseMismatchLog();
+		Logger::Instance().Info("Application run finished with exit code " + std::to_string(ret));
+		Logger::Instance().Close();
 
 		std::wcout << L"处理完毕。" << std::endl;
 		std::wcout << L"共有 " << std::to_wstring(TranslationDatabase::Instance().GetMismatchCount())
 			<< L" 条文本失配。失配文本已经保存到 text_mismatch.txt 中。" << std::endl;
 
-        ShowInfoMessage(
+		ShowInfoMessage(
 			L"处理完毕。\n\n共有 "
 			+ std::to_wstring(TranslationDatabase::Instance().GetMismatchCount())
 			+ L" 条文本失配。失配文本已经保存到 text_mismatch.txt 中。");
@@ -769,7 +880,9 @@ int Application::Run(int argc, char** argv)
 		TranslationDatabase::Instance().CloseMismatchLog();
 		std::wcerr << L"发生了意外错误。" << std::endl;
 		std::wcerr << xybase::string::sys_mbs_to_wcs(ex.what()) << std::endl;
-        ShowErrorMessage(std::wstring(L"发生了意外错误。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
+		Logger::Instance().Error(std::string("Unhandled exception: ") + ex.what());
+		ShowErrorMessage(std::wstring(L"发生了意外错误。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
+		Logger::Instance().Close();
 		return -1;
 	}
 }
@@ -778,6 +891,7 @@ int Application::ProcessTranslations()
 {
 	auto fileDefs = LoadFileDefinitions();
 	std::map<std::u8string, FileProcessDef> jpDefsByComment;
+	Logger::Instance().Info("ProcessTranslations started.");
 
 	// Build JP definition mapping
 	for (const auto& def : fileDefs)
@@ -813,7 +927,7 @@ int Application::ProcessTranslations()
 	if (overwrite)
 	{
 		std::wcout << L"正在检查并创建备份，请稍候..." << std::endl;
-        progressDialog.Update(0, totalFiles, L"正在检查并创建备份，请稍候...");
+		progressDialog.Update(0, totalFiles, L"正在检查并创建备份，请稍候...");
 		for (const auto& fileDef : fileDefs)
 		{
 			if (Config::Instance().IsEnglishMode())
@@ -854,17 +968,25 @@ int Application::ProcessTranslations()
 		// Display progress
 		wchar_t progress[128];
 		swprintf_s(progress, L"[%d/%d] %d%%", fileCounter, totalFiles, fileCounter * 100 / totalFiles);
-     const auto commentText = xybase::string::to_wstring(fileDef.comment);
+		const auto commentText = xybase::string::to_wstring(fileDef.comment);
 		std::wcout << L"\r处理中：" << progress << L" "
-            << commentText << L"          ";
+			<< commentText << L"          ";
 		progressDialog.Update(fileCounter, totalFiles, std::wstring(progress) + L" " + commentText);
 
 		// Prepare paths
 		std::filesystem::path datPath = gameRoot / (fileDef.path + u8".DAT");
 		std::filesystem::path outputPath = overwrite ? datPath : outRoot / (fileDef.path + u8".DAT");
+		Logger::Instance().Info("Processing file comment='" + Logger::ToUtf8(fileDef.comment)
+			+ "', type='" + Logger::ToUtf8(fileDef.type)
+			+ "', lang='" + Logger::ToUtf8(fileDef.lang)
+			+ "', input=" + Logger::ToUtf8(datPath)
+			+ ", output=" + Logger::ToUtf8(outputPath));
 
 		if (!std::filesystem::exists(datPath))
+		{
+			Logger::Instance().Warning("Input DAT file does not exist: " + Logger::ToUtf8(datPath));
 			continue;
+		}
 
 		// Create output directory if needed
 		if (!std::filesystem::exists(outputPath.parent_path()))
@@ -880,13 +1002,17 @@ int Application::ProcessTranslations()
 			try
 			{
 				processed = ejrefProcessor->Process(fileDef, datPath, outputPath, jpDefsByComment);
+				if (processed)
+					Logger::Instance().Info("Completed file via ejref tolerance processor. comment='" + Logger::ToUtf8(fileDef.comment) + "'.");
 			}
 			catch (const std::exception& ex)
 			{
 				// Continue to regular processor if ejref fails
+				Logger::Instance().Error("Ejref tolerance processor failed for comment='" + Logger::ToUtf8(fileDef.comment)
+					+ "': " + ex.what());
 				if (Config::Instance().IsVerbose())
 				{
-					std::wcerr << L"\nEjref处理器失败，回退到常规处理器：" 
+					std::wcerr << L"\nEjref处理器失败，回退到常规处理器："
 						<< xybase::string::sys_mbs_to_wcs(ex.what()) << std::endl;
 				}
 			}
@@ -896,6 +1022,8 @@ int Application::ProcessTranslations()
 		{
 			auto specProc = SpecialProcessor();
 			processed = specProc.Process(fileDef, datPath, outputPath, jpDefsByComment);
+			if (processed)
+				Logger::Instance().Info("Completed file via special processor. comment='" + Logger::ToUtf8(fileDef.comment) + "'.");
 		}
 
 		// If not processed by ejref, use regular processor
@@ -907,15 +1035,20 @@ int Application::ProcessTranslations()
 				try
 				{
 					processor->Process(fileDef, datPath, outputPath, jpDefsByComment);
+					Logger::Instance().Info("Completed file via regular processor. comment='" + Logger::ToUtf8(fileDef.comment) + "'.");
 				}
 				catch (const std::exception& ex)
 				{
 					std::wcerr << L"\n处理失败：" << xybase::string::to_wstring(fileDef.path)
 						<< L" - " << xybase::string::sys_mbs_to_wcs(ex.what()) << std::endl;
+					Logger::Instance().Error("Regular processor failed for comment='" + Logger::ToUtf8(fileDef.comment)
+						+ "', type='" + Logger::ToUtf8(fileDef.type) + "': " + ex.what());
 				}
 			}
 			else
 			{
+				Logger::Instance().Warning("No processor found for comment='" + Logger::ToUtf8(fileDef.comment)
+					+ "', type='" + Logger::ToUtf8(fileDef.type) + "'.");
 				if (Config::Instance().IsVerbose())
 				{
 					std::wcerr << L"\n未找到处理器：" << xybase::string::to_wstring(fileDef.type)
@@ -925,26 +1058,29 @@ int Application::ProcessTranslations()
 		}
 	}
 
-    progressDialog.Update(totalFiles, totalFiles, L"处理完毕。");
+	progressDialog.Update(totalFiles, totalFiles, L"处理完毕。");
 	std::wcout << std::endl;
+	Logger::Instance().Info("ProcessTranslations finished.");
 	return 0;
 }
 
 int Application::PrepareSourceData()
 {
-  const auto& progRoot = Config::Instance().GetProgRoot();
+	const auto& progRoot = Config::Instance().GetProgRoot();
+	Logger::Instance().Info("PrepareSourceData started.");
 
 	try
 	{
 		try
 		{
 			CodeCvt::GetInstance().Init(progRoot / L"cp932.csv");
+			Logger::Instance().Info("Loaded cp932.csv successfully for prepare mode from " + Logger::ToUtf8(progRoot / L"cp932.csv"));
 		}
 		catch (std::exception& ex)
 		{
 			std::wcerr << ex.what() << std::endl;
 			std::wcerr << L"处理代码页cp932.csv失败了。" << std::endl;
-          ShowErrorMessage(std::wstring(L"prepare 阶段初始化 cp932.csv 失败。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
+			ShowErrorMessage(std::wstring(L"prepare 阶段初始化 cp932.csv 失败。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
 			return -2;
 		}
 
@@ -968,6 +1104,7 @@ int Application::PrepareSourceData()
 			if (!fs::exists(datPath))
 			{
 				std::wcout << L"警告：游戏文件不存在，跳过 " << datPath << std::endl;
+				Logger::Instance().Warning("Prepare mode skipped missing DAT file: " + Logger::ToUtf8(datPath));
 				continue;
 			}
 
@@ -981,13 +1118,13 @@ int Application::PrepareSourceData()
 		ProgressDialog progressDialog(L"FFXI汉化插入工具 - Prepare 进度");
 		progressDialog.Update(0, totalFiles, L"正在准备源数据...");
 		auto updatePrepareProgress = [&](const FileProcessDef& fileDef)
-		{
-			++processedCount;
-			progressDialog.Update(
-				processedCount,
-				totalFiles,
-				L"正在准备：" + xybase::string::to_wstring(fileDef.comment));
-		};
+			{
+				++processedCount;
+				progressDialog.Update(
+					processedCount,
+					totalFiles,
+					L"正在准备：" + xybase::string::to_wstring(fileDef.comment));
+			};
 
 		std::set<std::u8string> processedStrings;
 		bool foundDbgScene = false;
@@ -997,7 +1134,7 @@ int Application::PrepareSourceData()
 			if (it->comment == u8"ev/dbg_scene")
 			{
 				foundDbgScene = true;
-                updatePrepareProgress(*it);
+				updatePrepareProgress(*it);
 				ExportEventStringBase(*it, processedStrings, outputDir);
 				it = remainingDefs.erase(it);
 			}
@@ -1016,7 +1153,7 @@ int Application::PrepareSourceData()
 		{
 			if (IsEventPrepareComment(it->comment))
 			{
-                updatePrepareProgress(*it);
+				updatePrepareProgress(*it);
 				ExportEventStringBase(*it, processedStrings, outputDir);
 				it = remainingDefs.erase(it);
 			}
@@ -1030,7 +1167,7 @@ int Application::PrepareSourceData()
 		{
 			if (IsItemPrepareComment(it->comment))
 			{
-              updatePrepareProgress(*it);
+				updatePrepareProgress(*it);
 				ExportItemCsv(*it, outputDir);
 				it = remainingDefs.erase(it);
 			}
@@ -1042,7 +1179,9 @@ int Application::PrepareSourceData()
 
 		for (const auto& fileDef : remainingDefs)
 		{
-           updatePrepareProgress(fileDef);
+			updatePrepareProgress(fileDef);
+			Logger::Instance().Info("Preparing source data for comment='" + Logger::ToUtf8(fileDef.comment)
+				+ "', type='" + Logger::ToUtf8(fileDef.type) + "'.");
 			const auto inputPath = BuildDatPath(fileDef);
 
 			if (fileDef.type == u8"fp")
@@ -1091,14 +1230,14 @@ int Application::PrepareSourceData()
 			}
 		}
 
-     progressDialog.Update(totalFiles, totalFiles, L"源数据准备完成。");
+		progressDialog.Update(totalFiles, totalFiles, L"源数据准备完成。");
 		std::wcout << L"源数据准备完成。" << std::endl;
 		return 0;
 	}
 	catch (const std::exception& ex)
 	{
 		std::wcerr << L"准备源数据失败：" << xybase::string::sys_mbs_to_wcs(ex.what()) << std::endl;
-      ShowErrorMessage(std::wstring(L"准备源数据失败。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
+		ShowErrorMessage(std::wstring(L"准备源数据失败。\n\n") + xybase::string::sys_mbs_to_wcs(ex.what()));
 		return -1;
 	}
 }

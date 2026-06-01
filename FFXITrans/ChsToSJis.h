@@ -11,6 +11,7 @@ public:
 	std::u8string ReplaceHanzi(std::u8string in);
 
 	void Init(std::filesystem::path csv);
+	size_t GetReplacementCount() const { return repMap.size(); }
 
 	static ChsToSJis &Instance();
 };

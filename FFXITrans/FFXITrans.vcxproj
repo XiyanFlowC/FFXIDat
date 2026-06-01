@@ -145,6 +145,8 @@
     <ClCompile Include="CsvTranslationLoader.cpp" />
     <ClCompile Include="FFXITrans.cpp" />
     <ClCompile Include="FileProcessor.cpp" />
+    <ClCompile Include="FinalTextProcessor.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="ProcessorFactory.cpp" />
     <ClCompile Include="Processors\DMsgProcessor.cpp" />
     <ClCompile Include="Processors\EjrefToleranceProcessor.cpp" />
@@ -168,7 +170,9 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="CsvTranslationLoader.h" />
     <ClInclude Include="FileProcessor.h" />
+    <ClInclude Include="FinalTextProcessor.h" />
     <ClInclude Include="liteopt.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="ProcessorFactory.h" />
     <ClInclude Include="Processors\DMsgProcessor.h" />
     <ClInclude Include="Processors\EjrefToleranceProcessor.h" />

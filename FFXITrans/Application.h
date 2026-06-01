@@ -4,37 +4,37 @@
 #include <map>
 #include "ProcessorUtils.h"
 
-#define VERSION "0.23.0-JW-2"
+#define VERSION "0.25"
 
 class Application
 {
 public:
-    static Application& Instance();
+	static Application& Instance();
 
-    // Main entry points
-    int Run(int argc, char** argv);
-    int PrepareSourceData();
-    int ProcessTranslations();
+	// Main entry points
+	int Run(int argc, char** argv);
+	int PrepareSourceData();
+	int ProcessTranslations();
 
 private:
-    Application() = default;
-    Application(const Application&) = delete;
-    Application& operator=(const Application&) = delete;
+	Application() = default;
+	Application(const Application&) = delete;
+	Application& operator=(const Application&) = delete;
 
-    // Initialization
-    bool Initialize();
-    bool InitializeCodePages();
-    bool LoadTranslations();
+	// Initialization
+	bool Initialize();
+	bool InitializeCodePages();
+	bool LoadTranslations();
 
-    // UI helpers
-    void ShowUsage();
+	// UI helpers
+	void ShowUsage();
 
-    // File processing
+	// File processing
   std::vector<FileProcessDef> LoadFileDefinitions(bool respectExcludes = true);
-    bool ProcessSingleFile(
-        const FileProcessDef& fileDef,
-        const std::map<std::u8string, FileProcessDef>& jpDefsByComment,
-        int fileCounter,
-        int totalFiles,
-        bool overwrite);
+	bool ProcessSingleFile(
+		const FileProcessDef& fileDef,
+		const std::map<std::u8string, FileProcessDef>& jpDefsByComment,
+		int fileCounter,
+		int totalFiles,
+		bool overwrite);
 };

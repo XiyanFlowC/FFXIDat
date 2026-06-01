@@ -1,5 +1,6 @@
 #include "EjrefToleranceProcessor.h"
 #include "../Config.h"
+#include "../FinalTextProcessor.h"
 #include "../TranslationDatabase.h"
 #include "../ProcessorUtils.h"
 #include <EventStringBase.h>
@@ -84,9 +85,14 @@ bool EjrefToleranceProcessor::TryProcessGevStatus(const FileProcessDef& fileDef,
 		return false;
 
 	auto& db = TranslationDatabase::Instance();
+	FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 	for (size_t i = 0; i < evsb.size(); ++i)
 	{
-		evsb[i] = db.GetTranslationFromReference(evsb[i], jpEvsb[i % jpEvsb.size()]);
+	   evsb[i] = finalTextProcessor.Process(
+			db.GetTranslationFromReference(evsb[i], jpEvsb[i % jpEvsb.size()]),
+			evsb[i],
+			static_cast<int64_t>(i + 1),
+			1);
 	}
 
 	evsb.path = outputPath;
@@ -113,12 +119,21 @@ bool EjrefToleranceProcessor::TryProcessGevAction(const FileProcessDef& fileDef,
 	jpEvsb.Read();
 
 	auto& db = TranslationDatabase::Instance();
+	FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 	for (size_t i = 0; i < evsb.size(); ++i)
 	{
 		if (i < jpEvsb.size())
-			evsb[i] = db.GetTranslationFromReference(evsb[i], jpEvsb[i]);
+		   evsb[i] = finalTextProcessor.Process(
+				db.GetTranslationFromReference(evsb[i], jpEvsb[i]),
+				evsb[i],
+				static_cast<int64_t>(i + 1),
+				1);
 		else
-			evsb[i] = db.GetTranslation(evsb[i]);
+		   evsb[i] = finalTextProcessor.Process(
+				db.GetTranslation(evsb[i]),
+				evsb[i],
+				static_cast<int64_t>(i + 1),
+				1);
 	}
 
 	evsb.path = outputPath;
@@ -165,6 +180,7 @@ bool EjrefToleranceProcessor::TryProcessAhtUrhganWhitegate(const FileProcessDef&
 	evsb.Read();
 
 	auto& db = TranslationDatabase::Instance();
+	FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 	for (size_t i = 0; i < evsb.size(); ++i)
 	{
 		std::u8string enText = evsb[i];
@@ -174,12 +190,20 @@ bool EjrefToleranceProcessor::TryProcessAhtUrhganWhitegate(const FileProcessDef&
 		{
 			std::u8string jpText = itr->second;
 			std::u8string translated = db.GetTranslationFromReference(enText, jpText);
-			evsb[i] = translated;
+		   evsb[i] = finalTextProcessor.Process(
+				translated,
+				enText,
+				static_cast<int64_t>(i + 1),
+				1);
 		}
 		else
 		{
 			// fallback to normal translation
-			evsb[i] = db.GetTranslation(enText);
+			evsb[i] = finalTextProcessor.Process(
+				db.GetTranslation(enText),
+				enText,
+				static_cast<int64_t>(i + 1),
+				1);
 		}
 	}
 
@@ -209,8 +233,12 @@ bool EjrefToleranceProcessor::TryProcessShorterReference(const FileProcessDef& f
 	size_t textIdx = 0;
 
 	auto& db = TranslationDatabase::Instance();
+  FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 	for (auto& row : dmsg)
 	{
+	 int rowId = 0;
+		if (!row.GetCellsConst().empty() && row.GetCellsConst()[0].GetType() == 1)
+			rowId = row.GetCellsConst()[0].Get<int>();
 		int colNum = 1;
 		for (auto& cell : row)
 		{
@@ -223,7 +251,11 @@ bool EjrefToleranceProcessor::TryProcessShorterReference(const FileProcessDef& f
 					std::u8string translated = textIdx < jpTexts.size()
 						? db.GetTranslationFromReference(text, jpTexts[textIdx])
 						: db.GetTranslation(text);
-					cell.Set(xybase::string::unescape(translated));
+				 cell.Set(xybase::string::unescape(finalTextProcessor.ProcessEscaped(
+						translated,
+						text,
+						rowId,
+						colNum)));
 					++textIdx;
 				}
 			}
@@ -255,9 +287,12 @@ bool EjrefToleranceProcessor::TryProcessSameRowCell0(const FileProcessDef& fileD
 	jpDmsg.Read();
 
 	auto& db = TranslationDatabase::Instance();
+ FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
+	int64_t rowIndex = 0;
 	auto jpRowItr = jpDmsg.begin();
 	for (auto& row : dmsg)
 	{
+	   ++rowIndex;
 		if (jpRowItr == jpDmsg.end())
 			break;
 
@@ -271,7 +306,11 @@ bool EjrefToleranceProcessor::TryProcessSameRowCell0(const FileProcessDef& fileD
 				if (cells[i].GetType() != 0)
 					continue;
 				std::u8string text = xybase::string::escape(cells[i].Get<std::u8string>());
-				cells[i].Set(xybase::string::unescape(db.GetTranslationFromReference(text, jpReference)));
+			  cells[i].Set(xybase::string::unescape(finalTextProcessor.ProcessEscaped(
+					db.GetTranslationFromReference(text, jpReference),
+					text,
+					rowIndex,
+					static_cast<int64_t>(i + 1))));
 			}
 		}
 		++jpRowItr;
@@ -326,6 +365,7 @@ bool EjrefToleranceProcessor::TryProcessKeyItem(const FileProcessDef& fileDef,
 
 	// Apply translations
 	auto& db = TranslationDatabase::Instance();
+  FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 	for (auto& row : dmsg)
 	{
 		auto& cells = row.GetCells();
@@ -339,17 +379,17 @@ bool EjrefToleranceProcessor::TryProcessKeyItem(const FileProcessDef& fileDef,
 			if (cells[4].GetType() == 0)
 			{
 				std::u8string text = xybase::string::escape(cells[4].Get<std::u8string>());
-				cells[4].Set(xybase::string::unescape(db.GetTranslation(text)));
+				cells[4].Set(xybase::string::unescape(finalTextProcessor.ProcessEscaped(db.GetTranslation(text), text, id, 5)));
 			}
 			if (cells[5].GetType() == 0)
 			{
 				std::u8string text = xybase::string::escape(cells[5].Get<std::u8string>());
-				cells[5].Set(xybase::string::unescape(db.GetTranslation(text)));
+				cells[5].Set(xybase::string::unescape(finalTextProcessor.ProcessEscaped(db.GetTranslation(text), text, id, 6)));
 			}
 			if (cells[6].GetType() == 0)
 			{
 				std::u8string text = xybase::string::escape(cells[6].Get<std::u8string>());
-				cells[6].Set(xybase::string::unescape(db.GetTranslation(text)));
+				cells[6].Set(xybase::string::unescape(finalTextProcessor.ProcessEscaped(db.GetTranslation(text), text, id, 7)));
 			}
 			continue;
 		}
@@ -376,12 +416,20 @@ bool EjrefToleranceProcessor::TryProcessKeyItem(const FileProcessDef& fileDef,
 			if (cells[4].GetType() == 0)
 			{
 				std::u8string text = xybase::string::escape(cells[4].Get<std::u8string>());
-				cells[4].Set(xybase::string::unescape(db.GetTranslationFromReference(text, xybase::string::escape(ref->name))));
+				cells[4].Set(xybase::string::unescape(finalTextProcessor.ProcessEscaped(
+					db.GetTranslationFromReference(text, xybase::string::escape(ref->name)),
+					text,
+					id,
+					5)));
 			}
 			if (cells[5].GetType() == 0)
 			{
 				std::u8string text = xybase::string::escape(cells[5].Get<std::u8string>());
-				cells[5].Set(xybase::string::unescape(db.GetTranslationFromReference(text, xybase::string::escape(ref->name))));
+				cells[5].Set(xybase::string::unescape(finalTextProcessor.ProcessEscaped(
+					db.GetTranslationFromReference(text, xybase::string::escape(ref->name)),
+					text,
+					id,
+					6)));
 			}
 		}
 
@@ -389,7 +437,11 @@ bool EjrefToleranceProcessor::TryProcessKeyItem(const FileProcessDef& fileDef,
 		if (!ref->description.empty() && cells[6].GetType() == 0)
 		{
 			std::u8string text = xybase::string::escape(cells[6].Get<std::u8string>());
-			std::u8string translated = xybase::string::unescape(db.GetTranslationFromReference(text, xybase::string::escape(ref->description)));
+			std::u8string translated = xybase::string::unescape(finalTextProcessor.ProcessEscaped(
+				db.GetTranslationFromReference(text, xybase::string::escape(ref->description)),
+				text,
+				id,
+				7));
 			translated = ProcessorUtils::PrependBabelText(translated, originalName, ref->name);
 			cells[6].Set(translated);
 		}
