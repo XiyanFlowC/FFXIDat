@@ -72,8 +72,8 @@ bool DMsgProcessor::ProcessQuestDMsg(
 
 	auto& db = TranslationDatabase::Instance();
 
-	// Special case for sys/mis/ad (section headers with negative IDs)
-	if (fileDef.comment == u8"sys/mis/ad")
+	// Special case for sys/mis/ad and sys/mis/rov (section headers with negative IDs)
+	if (fileDef.comment == u8"sys/mis/ad" || fileDef.comment == u8"sys/mis/rov")
 	{
 		for (auto& row : dmsg)
 		{
@@ -119,6 +119,12 @@ bool DMsgProcessor::ProcessQuestDMsg(
 						xybase::string::escape(mutableCells[2].Get<std::u8string>()),
 						sourceRowId,
 						3);
+					if (originalName.starts_with(u8"__")) // Section header, prepend babel text to description instead of name
+					{
+						auto pos = originalName.find_first_not_of(u8'_');
+						if (pos != std::u8string::npos)
+							originalName = originalName.substr();
+					}
 					translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
 					mutableCells[2].Set(translatedDesc);
 				}
@@ -157,6 +163,13 @@ bool DMsgProcessor::ProcessQuestDMsg(
 						xybase::string::escape(mutableCells[2].Get<std::u8string>()),
 						sourceRowId,
 						3);
+				// Some of the original name has indent prefix like __, which should be removed when prepending to description
+				if (originalName.starts_with(u8"__"))
+				{
+					auto pos = originalName.find_first_not_of(u8'_');
+					if (pos != std::u8string::npos)
+						originalName = originalName.substr(pos);
+				}
 				translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
 				mutableCells[2].Set(translatedDesc);
 			}

@@ -426,7 +426,7 @@ namespace
 			std::u8string title = cells[1].GetType() == 0 ? cells[1].Get<std::u8string>() : std::u8string{};
 			std::u8string description = cells[2].GetType() == 0 ? cells[2].Get<std::u8string>() : std::u8string{};
 
-			if (fileDef.comment == u8"sys/mis/ad" && !title.empty() && !title.starts_with(u8"__"))
+			if ((fileDef.comment == u8"sys/mis/ad" || fileDef.comment == u8"sys/mis/rov") && !title.empty() && !title.starts_with(u8"__"))
 			{
 				id = -id;
 			}

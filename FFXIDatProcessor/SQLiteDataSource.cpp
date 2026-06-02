@@ -827,13 +827,13 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 						description = xybase::string::escape(cells[2].Get<std::u8string>());
 					}
 
-					// Special handling for section (chapter) rows in sys/mis/sd where the
+					// Special handling for section (chapter) rows in sys/mis/ad and sys/mis/rov where the
 					// section header shares the same ID as the first quest. To avoid the
 					// section being overwritten by the quest, assign a deterministic
 					// special quest_id value for section rows by negating the original
 					// questId. This keeps the value unique and requires minimal changes
 					// elsewhere (FFXITrans will also emit negative IDs when exporting CSV).
-					if (fileComment == u8"sys/mis/ad") {
+					if (fileComment == u8"sys/mis/ad" || fileComment == u8"sys/mis/rov") {
 						// Heuristic: section headers do not start with "__" in the title cell.
 						if (!name.empty() && !name.starts_with(u8"__")) {
 							questId = -questId;
