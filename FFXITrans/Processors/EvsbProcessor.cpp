@@ -2,6 +2,7 @@
 #include "../FinalTextProcessor.h"
 #include "../TranslationDatabase.h"
 #include "../Config.h"
+#include "../Logger.h"
 #include "../ProcessorUtils.h"
 #include <EventStringBase.h>
 #include <xystring.h>

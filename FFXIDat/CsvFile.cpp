@@ -60,20 +60,32 @@ std::u8string CsvFile::NextCell()
 					throw std::runtime_error("bad csv format.");
 				}
 			}
-			else ret += ch;
+			else ret += static_cast<char8_t>(ch);
 
 			ch = m_stream.get();
 		}
 	}
-	else while (ch != ',' && ch != '\n' && ch != '\r')
+	else while (ch != std::char_traits<char>::eof() && ch != ',' && ch != '\n' && ch != '\r')
 	{
-		ret += ch;
+		ret += static_cast<char8_t>(ch);
 
 		ch = m_stream.get();
 	}
+
+	if (ch == std::char_traits<char>::eof())
+	{
+		m_eolFlag = true;
+		return ret;
+	}
+
 	if (ch == '\r')
 	{
 		ch = m_stream.get();
+		if (ch == std::char_traits<char>::eof())
+		{
+			m_eolFlag = true;
+			return ret;
+		}
 		if (ch != '\n')
 			throw std::runtime_error("bad eol.");
 	}
@@ -83,7 +95,7 @@ std::u8string CsvFile::NextCell()
 	return ret;
 }
 
-void CsvFile::NewCell(const std::u8string &p_str)
+void CsvFile::NewCell(const std::u8string& p_str)
 {
 	if (m_firstCellFlag)
 		m_firstCellFlag = false;
@@ -93,16 +105,16 @@ void CsvFile::NewCell(const std::u8string &p_str)
 	if (p_str.find_first_of(u8"\n\r\",") != std::u8string::npos)
 	{
 		m_stream.put((uint8_t)'"');
-		for (auto &&ch : p_str)
+		for (auto&& ch : p_str)
 		{
 			if (ch == '"') m_stream.write("\"\"", 2);
-			else m_stream.put((uint8_t) ch);
+			else m_stream.put((uint8_t)ch);
 		}
 		m_stream.put((uint8_t)'"');
 	}
 	else
 	{
-		m_stream.write((char *)p_str.c_str(), p_str.size());
+		m_stream.write((char*)p_str.c_str(), p_str.size());
 	}
 }
 
@@ -116,10 +128,20 @@ void CsvFile::NextLine()
 	if (!m_eolFlag)
 	{
 		int ch = m_stream.get();
-		while (ch != '\r' && ch != '\n') ch = m_stream.get();
+	    while (ch != std::char_traits<char>::eof() && ch != '\r' && ch != '\n') ch = m_stream.get();
+		if (ch == std::char_traits<char>::eof())
+		{
+			m_eolFlag = false;
+			return;
+		}
 		if (ch == '\r')
 		{
 			ch = m_stream.get();
+		 if (ch == std::char_traits<char>::eof())
+			{
+				m_eolFlag = false;
+				return;
+			}
 			if (ch != '\n')
 			{
 				m_stream.seekg(-1, std::ios::cur);
@@ -138,8 +160,24 @@ void CsvFile::NewLine()
 
 bool CsvFile::IsEof()
 {
-	if (m_size) return m_stream.tellg() >= m_size;
+  if (m_stream.eof())
+		return true;
+
+	if (m_size)
+	{
+		const auto pos = m_stream.tellg();
+		if (pos == std::streampos(-1))
+			return true;
+
+		return static_cast<size_t>(pos) >= m_size;
+	}
+
 	return m_stream.eof();
+}
+
+std::streampos CsvFile::Tell()
+{
+	return m_stream.tellg();
 }
 
 void CsvFile::Close()

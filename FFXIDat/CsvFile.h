@@ -26,6 +26,8 @@ public:
 
 	bool IsEof();
 
+	std::streampos Tell();
+
 	void Close();
 
 	void Rewind();

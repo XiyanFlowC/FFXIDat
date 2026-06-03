@@ -4,11 +4,75 @@
 #include "ChsToSJis.h"
 #include "Config.h"
 #include "Logger.h"
-#include <CsvFile.h>
+#include <fstream>
 #include <xystring.h>
 #include <iostream>
 #include <limits>
 #include <sstream>
+
+namespace
+{
+	std::u8string RawBytesToUtf8(const std::string& text)
+	{
+		return std::u8string(reinterpret_cast<const char8_t*>(text.data()), text.size());
+	}
+
+	bool TryParseRuleCsvLine(const std::string& line, std::vector<std::u8string>& cells, std::string& error)
+	{
+		cells.clear();
+		std::string current;
+		bool inQuotes = false;
+
+		for (size_t i = 0; i < line.size(); ++i)
+		{
+			const char ch = line[i];
+			if (inQuotes)
+			{
+				if (ch == '"')
+				{
+					if (i + 1 < line.size() && line[i + 1] == '"')
+					{
+						current.push_back('"');
+						++i;
+					}
+					else
+					{
+						inQuotes = false;
+					}
+				}
+				else
+				{
+					current.push_back(ch);
+				}
+			}
+			else
+			{
+				if (ch == ',')
+				{
+				  cells.push_back(RawBytesToUtf8(current));
+					current.clear();
+				}
+				else if (ch == '"')
+				{
+					inQuotes = true;
+				}
+				else
+				{
+					current.push_back(ch);
+				}
+			}
+		}
+
+		if (inQuotes)
+		{
+			error = "unexpected EOF inside quoted cell";
+			return false;
+		}
+
+	  cells.push_back(RawBytesToUtf8(current));
+		return true;
+	}
+}
 
 FinalTextProcessor::FinalTextProcessor(const std::u8string& comment, const std::u8string& type)
 	: comment(comment), type(type)
@@ -67,11 +131,13 @@ void FinalTextProcessor::LoadRules()
 	auto fileRulePath = rulesRoot / std::filesystem::path(comment);
 	fileRulePath += ".csv";
 	const size_t fileRuleCount = LoadRuleFile(fileRulePath);
-	Logger::Instance().Info(
-		"FinalTextProcessor initialized for comment='" + ToString(comment)
-		+ "', type='" + ToString(type)
-		+ "', commonRules=" + std::to_string(commonRuleCount)
-		+ ", fileRules=" + std::to_string(fileRuleCount));
+    if (commonRuleCount > 0 || fileRuleCount > 0)
+	{
+		Logger::Instance().Info(
+			"Loaded final text rules for comment='" + ToString(comment)
+			+ "': common=" + std::to_string(commonRuleCount)
+			+ ", file=" + std::to_string(fileRuleCount));
+	}
 }
 
 size_t FinalTextProcessor::LoadRuleFile(const std::filesystem::path& path)
@@ -81,13 +147,37 @@ size_t FinalTextProcessor::LoadRuleFile(const std::filesystem::path& path)
 	if (!fs::exists(path) || !fs::is_regular_file(path))
 		return 0;
 
-	CsvFile csv(path, std::ios::in | std::ios::binary);
+ std::ifstream input(path, std::ios::in | std::ios::binary);
+	if (!input.is_open())
+	{
+		throw std::runtime_error("failed to open rule file");
+	}
+
 	size_t lineNumber = 0;
 	size_t loadedCount = 0;
+	std::string line;
+	bool firstLine = true;
 
-	while (!csv.IsEof())
+	while (std::getline(input, line))
 	{
 		++lineNumber;
+
+		if (!line.empty() && line.back() == '\r')
+		{
+			line.pop_back();
+		}
+
+		if (firstLine)
+		{
+			firstLine = false;
+			if (line.size() >= 3
+				&& static_cast<unsigned char>(line[0]) == 0xEF
+				&& static_cast<unsigned char>(line[1]) == 0xBB
+				&& static_cast<unsigned char>(line[2]) == 0xBF)
+			{
+				line.erase(0, 3);
+			}
+		}
 
 		std::u8string commandText;
 		std::u8string translatedPattern;
@@ -95,14 +185,32 @@ size_t FinalTextProcessor::LoadRuleFile(const std::filesystem::path& path)
 		std::u8string originalPattern;
 		std::u8string originalExcludePattern;
 		std::u8string occurrenceText;
+		std::vector<std::u8string> cells;
 
-		if (!csv.IsEol()) commandText = csv.NextCell();
-		if (!csv.IsEol()) translatedPattern = csv.NextCell();
-		if (!csv.IsEol()) targetText = csv.NextCell();
-		if (!csv.IsEol()) originalPattern = csv.NextCell();
-		if (!csv.IsEol()) originalExcludePattern = csv.NextCell();
-		if (!csv.IsEol()) occurrenceText = csv.NextCell();
-		csv.NextLine();
+	 try
+		{
+		 std::string error;
+			if (!TryParseRuleCsvLine(line, cells, error))
+			{
+				throw std::runtime_error(error);
+			}
+
+			if (cells.size() > 0) commandText = cells[0];
+			if (cells.size() > 1) translatedPattern = cells[1];
+			if (cells.size() > 2) targetText = cells[2];
+			if (cells.size() > 3) originalPattern = cells[3];
+			if (cells.size() > 4) originalExcludePattern = cells[4];
+			if (cells.size() > 5) occurrenceText = cells[5];
+		}
+		catch (const std::exception& ex)
+		{
+			ReportRuleError(path, lineNumber, L"failed to parse csv row");
+			Logger::Instance().Error(
+				"FinalTextProcessor CSV parse error: file=" + Logger::ToUtf8(path)
+				+ ", line=" + std::to_string(lineNumber)
+				+ ", error=" + ex.what());
+				throw;
+		}
 
 		if (commandText.empty() || commandText[0] == u8'#')
 			continue;
