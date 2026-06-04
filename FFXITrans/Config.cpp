@@ -327,6 +327,28 @@ bool Config::LoadFromFile(const fs::path& configPath)
 		{
 			noname = IsTruthyValue(value);
 		}
+       else if (key == L"ctrl_seq_check")
+		{
+			const auto normalized = ToLowerAscii(value);
+			if (normalized == L"off")
+			{
+				ctrlSeqCheckMode = CtrlSeqCheckMode::Off;
+			}
+			else if (normalized == L"skip")
+			{
+				ctrlSeqCheckMode = CtrlSeqCheckMode::Skip;
+			}
+			else if (normalized == L"strict")
+			{
+				ctrlSeqCheckMode = CtrlSeqCheckMode::Strict;
+			}
+			else
+			{
+				std::wcerr << L"无法识别的 ctrl_seq_check 配置值：" << value << L"，将继续使用默认值 skip。" << std::endl;
+				Logger::Instance().Warning("Unknown config value for ctrl_seq_check. Falling back to skip mode.");
+				ctrlSeqCheckMode = CtrlSeqCheckMode::Skip;
+			}
+		}
 		else if (key == L"babel")
 		{
 			bool currentOriginalEnabled = babelCurrentOriginal;
@@ -444,6 +466,7 @@ std::string Config::DescribeStateForLog() const
 		<< ", ejrefTolerance=" << ejrefTolerance
 		<< ", verbose=" << verbose
 		<< ", noname=" << noname
+        << ", ctrlSeqCheckMode=" << (ctrlSeqCheckMode == CtrlSeqCheckMode::Off ? "off" : (ctrlSeqCheckMode == CtrlSeqCheckMode::Strict ? "strict" : "skip"))
 		<< ", babelCurrentOriginal=" << babelCurrentOriginal
 		<< ", babelAlternateOriginal=" << babelAlternateOriginal
 		<< ", samuraiJobTransNot=" << samuraiJobTransNot

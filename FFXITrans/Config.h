@@ -10,6 +10,13 @@ namespace fs = std::filesystem;
 class Config
 {
 public:
+  enum class CtrlSeqCheckMode
+	{
+		Off,
+		Skip,
+		Strict,
+	};
+
 	static Config& Instance();
 
 	bool Initialize();
@@ -33,6 +40,7 @@ public:
 	bool IsEjrefTolerance() const { return ejrefTolerance; }
 	bool IsVerbose() const { return verbose; }
 	bool IsNoName() const { return noname; }
+   CtrlSeqCheckMode GetCtrlSeqCheckMode() const { return ctrlSeqCheckMode; }
 	bool IsBilingual() const { return babelCurrentOriginal; }
 	bool IsBabelEnabled() const { return babelCurrentOriginal || babelAlternateOriginal; }
 	bool IsBabelCurrentOriginalEnabled() const { return babelCurrentOriginal; }
@@ -78,6 +86,7 @@ private:
 	bool ejrefTolerance = false;
 	bool verbose = false;
 	bool noname = false;
+  CtrlSeqCheckMode ctrlSeqCheckMode = CtrlSeqCheckMode::Skip;
 	bool babelCurrentOriginal = false;
 	bool babelAlternateOriginal = false;
 	bool samuraiJobTransNot = true;

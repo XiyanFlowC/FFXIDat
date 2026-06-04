@@ -13,6 +13,9 @@ class FinalTextProcessor
 public:
 	FinalTextProcessor(const std::u8string& comment, const std::u8string& type);
 
+	static void ResetValidationSummary();
+	static size_t GetSkippedValidationCount();
+
 	std::u8string Process(
 		const std::u8string& translatedText,
 		const std::u8string& originalText,
@@ -71,9 +74,19 @@ private:
 	bool MatchesOriginal(Rule& rule, const std::string& originalText);
 	bool IsOccurrenceEnabled(const Rule& rule) const;
 	std::u8string ApplyRule(const Rule& rule, const std::u8string& translatedText) const;
+  std::u8string ValidateResult(
+		const std::u8string& processedText,
+		const std::u8string& originalText,
+		std::optional<int64_t> rowOrId,
+		std::optional<int64_t> colOrColId) const;
+	bool TryValidateEvsbSwitchUsage(const std::u8string& processedText, const std::u8string& originalText, std::wstring& message) const;
+   bool TryValidateEvsbGenderUsage(const std::u8string& processedText, std::wstring& message) const;
+	std::wstring BuildValidationContext(std::optional<int64_t> rowOrId, std::optional<int64_t> colOrColId) const;
 	void ReportRuleError(const std::filesystem::path& path, size_t lineNumber, const std::wstring& message) const;
 	static std::string ToString(const std::u8string& text);
 	static std::u8string ReplaceAll(const std::u8string& text, const std::u8string& from, const std::u8string& to);
+
+  static size_t skippedValidationCount;
 
 	std::u8string comment;
 	std::u8string type;

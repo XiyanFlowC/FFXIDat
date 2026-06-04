@@ -5,6 +5,7 @@
 #include "Config.h"
 #include "Logger.h"
 #include <fstream>
+#include <regex>
 #include <xystring.h>
 #include <iostream>
 #include <limits>
@@ -72,12 +73,115 @@ namespace
 	  cells.push_back(RawBytesToUtf8(current));
 		return true;
 	}
+
+	struct SwitchUsageInfo
+	{
+		size_t optionCount = 0;
+	};
+
+	std::vector<SwitchUsageInfo> ParseSwitchUsageInfos(const std::string& text, bool& syntaxValid)
+	{
+		std::vector<SwitchUsageInfo> infos;
+		syntaxValid = true;
+
+		constexpr std::string_view tagPrefix = "<switch:";
+		size_t pos = 0;
+		while ((pos = text.find(tagPrefix, pos)) != std::string::npos)
+		{
+			const auto tagEnd = text.find('>', pos + tagPrefix.size());
+			if (tagEnd == std::string::npos)
+			{
+				syntaxValid = false;
+				return infos;
+			}
+
+			const size_t listStart = tagEnd + 1;
+			if (listStart >= text.size() || text[listStart] != '[')
+			{
+				syntaxValid = false;
+				return infos;
+			}
+
+			const auto listEnd = text.find(']', listStart + 1);
+			if (listEnd == std::string::npos)
+			{
+				syntaxValid = false;
+				return infos;
+			}
+
+			const auto optionsText = text.substr(listStart + 1, listEnd - listStart - 1);
+			size_t optionCount = 1;
+            for (char ch : optionsText)
+			{
+               if (ch == '/')
+				{
+                  ++optionCount;
+				}
+			}
+
+			infos.push_back(SwitchUsageInfo{ optionCount });
+			pos = listEnd + 1;
+		}
+
+		return infos;
+	}
+
+	bool ValidateGenderLists(const std::string& text)
+	{
+		constexpr std::string_view tag = "<gender>";
+		size_t pos = 0;
+		while ((pos = text.find(tag, pos)) != std::string::npos)
+		{
+			const size_t listStart = pos + tag.size();
+			if (listStart >= text.size() || text[listStart] != '[')
+			{
+				return false;
+			}
+
+			const auto listEnd = text.find(']', listStart + 1);
+			if (listEnd == std::string::npos)
+			{
+				return false;
+			}
+
+			const auto optionsText = text.substr(listStart + 1, listEnd - listStart - 1);
+			size_t separatorCount = 0;
+			for (char ch : optionsText)
+			{
+				if (ch == '/')
+				{
+					++separatorCount;
+				}
+			}
+
+			if (separatorCount != 1)
+			{
+				return false;
+			}
+
+			pos = listEnd + 1;
+		}
+
+		return true;
+	}
 }
+
+size_t FinalTextProcessor::skippedValidationCount = 0;
 
 FinalTextProcessor::FinalTextProcessor(const std::u8string& comment, const std::u8string& type)
 	: comment(comment), type(type)
 {
 	LoadRules();
+}
+
+void FinalTextProcessor::ResetValidationSummary()
+{
+	skippedValidationCount = 0;
+}
+
+size_t FinalTextProcessor::GetSkippedValidationCount()
+{
+	return skippedValidationCount;
 }
 
 std::u8string FinalTextProcessor::Process(
@@ -103,8 +207,8 @@ std::u8string FinalTextProcessor::Process(
 
 	// TODO: Invoke Lua script for arbitrary per-text processing.
 	result = ChsToSJis::Instance().ReplaceHanzi(result);
+	result = ValidateResult(result, originalText, rowOrId, colOrColId);
 
-	// TODO: Validate format by type. On failure, report with row/id and col/colId and block this translation only.
 	(void)rowOrId;
 	(void)colOrColId;
 
@@ -375,6 +479,126 @@ std::u8string FinalTextProcessor::ApplyRule(const Rule& rule, const std::u8strin
 		ToString(translatedText),
 		*rule.translatedRegex,
 		ToString(rule.targetText)));
+}
+
+std::u8string FinalTextProcessor::ValidateResult(
+	const std::u8string& processedText,
+	const std::u8string& originalText,
+	std::optional<int64_t> rowOrId,
+	std::optional<int64_t> colOrColId) const
+{
+	const auto mode = Config::Instance().GetCtrlSeqCheckMode();
+	if (mode == Config::CtrlSeqCheckMode::Off)
+		return processedText;
+
+	if (type != u8"evsb")
+		return processedText;
+
+	std::wstring message;
+   if (!TryValidateEvsbSwitchUsage(processedText, originalText, message))
+	{
+		const auto context = BuildValidationContext(rowOrId, colOrColId);
+		const auto originalTextWide = xybase::string::to_wstring(originalText);
+		const auto processedTextWide = xybase::string::to_wstring(processedText);
+		const auto fullMessage = L"Final Text Processor 控制序列校验失败：" + context + L"\n"
+			+ L"原因：" + message + L"\n"
+			+ L"原文：" + originalTextWide + L"\n"
+			+ L"译文：" + processedTextWide;
+
+		Logger::Instance().Warning(fullMessage);
+
+		if (mode == Config::CtrlSeqCheckMode::Strict)
+		{
+			throw std::runtime_error("control sequence validation failed; see log.txt for details");
+		}
+
+		++skippedValidationCount;
+		return originalText;
+	}
+
+	if (TryValidateEvsbGenderUsage(processedText, message))
+		return processedText;
+
+	const auto context = BuildValidationContext(rowOrId, colOrColId);
+	const auto originalTextWide = xybase::string::to_wstring(originalText);
+	const auto processedTextWide = xybase::string::to_wstring(processedText);
+	const auto fullMessage = L"Final Text Processor 控制序列校验失败：" + context + L"\n"
+		+ L"原因：" + message + L"\n"
+		+ L"原文：" + originalTextWide + L"\n"
+		+ L"译文：" + processedTextWide;
+
+	Logger::Instance().Warning(fullMessage);
+
+	if (mode == Config::CtrlSeqCheckMode::Strict)
+	{
+		throw std::runtime_error("control sequence validation failed; see log.txt for details");
+	}
+
+	++skippedValidationCount;
+	return originalText;
+}
+
+bool FinalTextProcessor::TryValidateEvsbSwitchUsage(
+	const std::u8string& processedText,
+	const std::u8string& originalText,
+	std::wstring& message) const
+{
+	const std::string processed(reinterpret_cast<const char*>(processedText.data()), processedText.size());
+	const std::string original(reinterpret_cast<const char*>(originalText.data()), originalText.size());
+ bool translatedSyntaxValid = true;
+	const auto translatedSwitchInfos = ParseSwitchUsageInfos(processed, translatedSyntaxValid);
+	if (!translatedSyntaxValid)
+	{
+		message = L"译文中的 <switch:...> 后未紧跟合法的分支列表。";
+		return false;
+	}
+
+   bool originalSyntaxValid = true;
+	const auto originalSwitchInfos = ParseSwitchUsageInfos(original, originalSyntaxValid);
+	if (!originalSyntaxValid)
+	{
+       message = L"原文中的 <switch:...> 结构无法解析，无法执行选项数校验。";
+		return false;
+	}
+
+ if (!originalSwitchInfos.empty() && originalSwitchInfos.size() == translatedSwitchInfos.size())
+	{
+       for (size_t i = 0; i < originalSwitchInfos.size(); ++i)
+		{
+			if (originalSwitchInfos[i].optionCount != translatedSwitchInfos[i].optionCount)
+			{
+				message = L"原文与译文对应 <switch:...> 的选项数量不一致。";
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+bool FinalTextProcessor::TryValidateEvsbGenderUsage(
+	const std::u8string& processedText,
+	std::wstring& message) const
+{
+	const std::string processed(reinterpret_cast<const char*>(processedText.data()), processedText.size());
+	if (!ValidateGenderLists(processed))
+	{
+		message = L"译文中的 <gender> 后必须紧跟 [A/B] 形式的两项分支列表。";
+		return false;
+	}
+
+	return true;
+}
+
+std::wstring FinalTextProcessor::BuildValidationContext(std::optional<int64_t> rowOrId, std::optional<int64_t> colOrColId) const
+{
+	std::wstringstream stream;
+	stream << L"comment=" << xybase::string::to_wstring(comment);
+	if (rowOrId.has_value())
+		stream << L", row/id=" << *rowOrId;
+	if (colOrColId.has_value())
+		stream << L", col=" << *colOrColId;
+	return stream.str();
 }
 
 void FinalTextProcessor::ReportRuleError(

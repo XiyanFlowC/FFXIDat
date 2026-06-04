@@ -5,6 +5,7 @@
 #include "ProcessorFactory.h"
 #include "ChsToSJis.h"
 #include "Logger.h"
+#include "FinalTextProcessor.h"
 #include "SetupWizard.h"
 #include "../FFXIDatProcessor/codepage.h"
 #include "SpecialProcessor.h"
@@ -687,6 +688,7 @@ bool Application::Initialize()
 
 	// Initialize mismatch log
 	TranslationDatabase::Instance().InitializeMismatchLog(progRoot / "text_mismatch.txt");
+   FinalTextProcessor::ResetValidationSummary();
 	Logger::Instance().Info("Application initialize completed.");
 
 	return true;
@@ -868,11 +870,24 @@ int Application::Run(int argc, char** argv)
 		std::wcout << L"处理完毕。" << std::endl;
 		std::wcout << L"共有 " << std::to_wstring(TranslationDatabase::Instance().GetMismatchCount())
 			<< L" 条文本失配。失配文本已经保存到 text_mismatch.txt 中。" << std::endl;
+		if (FinalTextProcessor::GetSkippedValidationCount() > 0)
+		{
+			std::wcerr << L"警告：有 " << std::to_wstring(FinalTextProcessor::GetSkippedValidationCount())
+				<< L" 条文本因控制序列校验失败而回退为原文。详情见 log.txt。" << std::endl;
+		}
 
-		ShowInfoMessage(
+        std::wstring finalMessage =
 			L"处理完毕。\n\n共有 "
 			+ std::to_wstring(TranslationDatabase::Instance().GetMismatchCount())
-			+ L" 条文本失配。失配文本已经保存到 text_mismatch.txt 中。");
+            + L" 条文本失配。失配文本已经保存到 text_mismatch.txt 中。";
+		if (FinalTextProcessor::GetSkippedValidationCount() > 0)
+		{
+			finalMessage += L"\n\n警告：有 "
+				+ std::to_wstring(FinalTextProcessor::GetSkippedValidationCount())
+				+ L" 条文本因控制序列校验失败而回退为原文。详情见 log.txt。";
+		}
+
+		ShowInfoMessage(finalMessage);
 		return ret;
 	}
 	catch (std::exception& ex)
