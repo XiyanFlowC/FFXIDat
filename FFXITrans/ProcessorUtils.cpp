@@ -68,7 +68,7 @@ namespace ProcessorUtils
     {
         return comment == u8"gev/status"
             || comment == u8"sys/key_item"
-			|| comment == u8"evx/Aht Urhgan Whitegate"
+			|| comment == u8"evx/Aht Urhgan Whitegate 2"
 			|| comment == u8"sys/job"
             || IsEjrefShorterReferenceComment(comment)
             || IsEjrefSameRowCell0Comment(comment);

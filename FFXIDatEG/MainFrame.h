@@ -3,6 +3,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <CommCtrl.h>
+#include <shellapi.h>
+
 #include <memory>
 #include <set>
 #include <string>
@@ -55,6 +57,8 @@ private:
 	void OnSaveAs();
 	void OnOpenFile();
 	void OnOpenFileById();
+	bool OpenArbitraryDatFile(const std::filesystem::path& filePath);
+	std::string GuessFileTypeFromPath(const std::filesystem::path& filePath) const;
 	bool CheckAndPromptSave();
 	void OnExportCsv();
 	void OnImportCsv();
@@ -63,8 +67,9 @@ private:
 	bool SelectDirectory(std::filesystem::path& outPath, const std::wstring& title);
 	
 	// Helper for custom dialogs
-	bool PromptForFileType(std::string& outType);
+	bool PromptForFileType(std::string& outType, const std::string& suggestedType = "");
 	bool PromptForFileId(int& outGlobalId, std::string& outRomFolder, int& outLocalId, std::string& outType, bool& isGlobal);
+	void OnDropFiles(HDROP hDrop);
 
 	HWND m_hwnd = nullptr;
 	HWND m_hTreeView = nullptr;

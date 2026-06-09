@@ -298,6 +298,10 @@ bool Config::LoadFromFile(const fs::path& configPath)
 		{
 			englishMode = (value == L"1" || value == L"true" || value == L"yes");
 			std::wcout << L"使用配置文件中的语言模式：" << (englishMode ? L"英文" : L"日文") << std::endl;
+			if (englishMode) {
+				ctrlSeqCheckMode = CtrlSeqCheckMode::Off;
+				Logger::Instance().Info(L"English mode active, ctrlSeqCheck set to off.");
+			}
 		}
 		else if (key == L"output_path")
 		{

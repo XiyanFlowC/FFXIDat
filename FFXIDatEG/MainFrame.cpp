@@ -5,14 +5,17 @@
 #include <windowsx.h>
 #include <shobjidl.h>
 #include <commdlg.h>
+#include <shellapi.h>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <xystring.h>
 #include <CsvFile.h>
 #include <sstream>
 
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "comdlg32.lib")
+#pragma comment(lib, "shell32.lib")
 
 // Helper macro to convert localized string to LPCWSTR
 #define LOCS(key) LOC(key).c_str()
@@ -323,7 +326,7 @@ namespace {
 		HWND m_hProgress = nullptr;
 	};
 }
-bool MainFrame::PromptForFileType(std::string& outType)
+bool MainFrame::PromptForFileType(std::string& outType, const std::string& suggestedType)
 {
 	PromptState state;
 	HINSTANCE instance = FFXIDatEGApp::Instance().GetInstance();
@@ -367,11 +370,16 @@ bool MainFrame::PromptForFileType(std::string& outType)
 		L"iab", L"iwb", L"iub", L"inb", L"ipb", L"isb", L"icb", L"iib",
 		L"mbd", L"erq", L"erc"
 	};
-	for (const auto& type : types)
+	int selectedIndex = 0;
+	for (size_t i = 0; i < types.size(); ++i)
 	{
-		SendMessageW(state.comboType, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(type.c_str()));
+		SendMessageW(state.comboType, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(types[i].c_str()));
+		if (!suggestedType.empty() && types[i] == xybase::string::to_wstring(suggestedType))
+		{
+			selectedIndex = static_cast<int>(i);
+		}
 	}
-	SendMessageW(state.comboType, CB_SETCURSEL, 0, 0);
+	SendMessageW(state.comboType, CB_SETCURSEL, selectedIndex, 0);
 
 	std::wstring okText = LocalizedOrDefault(L"dialog_ok", L"OK");
 	std::wstring cancelText = LocalizedOrDefault(L"dialog_cancel", L"Cancel");
@@ -844,26 +852,27 @@ void MainFrame::OnOpenFile()
 				if (SUCCEEDED(hr))
 				{
 					std::filesystem::path filePath(pszPath);
-					std::string fileType;
-					if (PromptForFileType(fileType))
-					{
-						std::wstring statusText = LOC(L"Status.Loading");
-						statusText += L" " + filePath.filename().wstring() + L"...";
-						SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
-
-						if (m_fileManager->LoadArbitraryFile(filePath, fileType, m_contentView.get()))
+						std::string suggestedType = GuessFileTypeFromPath(filePath);
+						std::string fileType;
+						if (PromptForFileType(fileType, suggestedType))
 						{
-							statusText = LOC(L"Status.Loaded");
-							statusText += L": " + filePath.wstring();
+							std::wstring statusText = LOC(L"Status.Loading");
+							statusText += L" " + filePath.filename().wstring() + L"...";
 							SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
-							m_currentFilePath = filePath;
+
+							if (m_fileManager->LoadArbitraryFile(filePath, fileType, m_contentView.get()))
+							{
+								statusText = LOC(L"Status.Loaded");
+								statusText += L": " + filePath.wstring();
+								SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
+								m_currentFilePath = filePath;
+							}
+							else
+							{
+								SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"Status.LoadFailed").c_str()));
+								m_currentFilePath.clear();
+							}
 						}
-						else
-						{
-							SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"Status.LoadFailed").c_str()));
-							m_currentFilePath.clear();
-						}
-					}
 					CoTaskMemFree(pszPath);
 				}
 				pItem->Release();
@@ -1385,6 +1394,110 @@ void MainFrame::OnOpenFileById()
 		m_currentFilePath.clear();
 	}
 }
+
+std::string MainFrame::GuessFileTypeFromPath(const std::filesystem::path& filePath) const
+{
+	std::wstring filename = filePath.filename().wstring();
+	std::transform(filename.begin(), filename.end(), filename.begin(), ::towlower);
+
+	if (filename.find(L"dmsg") != std::wstring::npos)
+		return "dmsg";
+	if (filename.find(L"item_") != std::wstring::npos)
+	{
+		if (filename.find(L"_armor") != std::wstring::npos) return "iab";
+		if (filename.find(L"_weapon") != std::wstring::npos) return "iwb";
+		if (filename.find(L"_usable") != std::wstring::npos) return "iub";
+		if (filename.find(L"_ninja") != std::wstring::npos) return "inb";
+		if (filename.find(L"_puppet") != std::wstring::npos) return "ipb";
+		if (filename.find(L"_slip") != std::wstring::npos) return "isb";
+		if (filename.find(L"_currency") != std::wstring::npos) return "icb";
+		if (filename.find(L"_instinct") != std::wstring::npos) return "iib";
+		return "iab";
+	}
+	if (filename.find(L"xistring") != std::wstring::npos || filename.find(L"xis") != std::wstring::npos)
+		return "xis";
+	if (filename.find(L"eventsb") != std::wstring::npos || filename.find(L"evsb") != std::wstring::npos)
+		return "evsb";
+	if (filename.find(L"status") != std::wstring::npos)
+		return "sd";
+	if (filename.find(L"fixedphrase") != std::wstring::npos || filename.find(L"fixed") != std::wstring::npos)
+		return "fp";
+	if (filename.find(L"monbridge") != std::wstring::npos || filename.find(L"mbd") != std::wstring::npos)
+		return "mbd";
+	if (filename.find(L"eminence") != std::wstring::npos)
+	{
+		if (filename.find(L"quest") != std::wstring::npos || filename.find(L"erq") != std::wstring::npos)
+			return "erq";
+		if (filename.find(L"category") != std::wstring::npos || filename.find(L"erc") != std::wstring::npos)
+			return "erc";
+		return "erq";
+	}
+
+	return "dmsg";
+}
+
+void MainFrame::OnDropFiles(HDROP hDrop)
+{
+	if (!m_fileManager || !m_contentView)
+	{
+		DragFinish(hDrop);
+		return;
+	}
+
+	if (m_contentView->IsModified() && !CheckAndPromptSave())
+	{
+		DragFinish(hDrop);
+		return;
+	}
+
+	wchar_t filePath[MAX_PATH];
+	UINT fileCount = DragQueryFileW(hDrop, 0xFFFFFFFF, nullptr, 0);
+
+	if (fileCount > 0)
+	{
+		if (DragQueryFileW(hDrop, 0, filePath, MAX_PATH) > 0)
+		{
+			std::filesystem::path path(filePath);
+
+			std::wstring ext = path.extension().wstring();
+			std::transform(ext.begin(), ext.end(), ext.begin(), ::towlower);
+
+			if (ext == L".dat")
+			{
+				std::string suggestedType = GuessFileTypeFromPath(path);
+				std::string fileType;
+
+				if (PromptForFileType(fileType, suggestedType))
+				{
+					std::wstring statusText = LOC(L"Status.Loading");
+					statusText += L" " + path.filename().wstring() + L"...";
+					SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
+
+					if (m_fileManager->LoadArbitraryFile(path, fileType, m_contentView.get()))
+					{
+						statusText = LOC(L"Status.Loaded");
+						statusText += L": " + path.wstring();
+						SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(statusText.c_str()));
+						m_currentFilePath = path;
+					}
+					else
+					{
+						SendMessageW(m_hStatusBar, SB_SETTEXTW, 0, reinterpret_cast<LPARAM>(LOC(L"Status.LoadFailed").c_str()));
+						m_currentFilePath.clear();
+					}
+				}
+			}
+			else
+			{
+				std::wstring msg = LocalizedOrDefault(L"error_not_dat_file", L"Please drop a .DAT file.");
+				MessageBoxW(m_hwnd, msg.c_str(), LocalizedOrDefault(L"error_msg_title", L"Error").c_str(), MB_OK | MB_ICONWARNING);
+			}
+		}
+	}
+
+	DragFinish(hDrop);
+}
+
 MainFrame::MainFrame()
 {
 }
@@ -1412,7 +1525,7 @@ bool MainFrame::Create(HINSTANCE hInstance)
 	
 	// Create main window
 	m_hwnd = CreateWindowExW(
-		0,
+		WS_EX_ACCEPTFILES,
 		L"FFXIDatEGMainFrame",
 		L"FFXI DAT Viewer",
 		WS_OVERLAPPEDWINDOW,
@@ -1504,7 +1617,7 @@ LRESULT CALLBACK MainFrame::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 				return 0;
 			}
 			break;
-		
+
 		case WM_CHAR:
 			if (wParam == 6 && GetKeyState(VK_CONTROL) < 0)  // Ctrl+F
 			{
@@ -1512,7 +1625,11 @@ LRESULT CALLBACK MainFrame::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 				return 0;
 			}
 			break;
-		
+
+		case WM_DROPFILES:
+			pThis->OnDropFiles(reinterpret_cast<HDROP>(wParam));
+			return 0;
+
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			return 0;

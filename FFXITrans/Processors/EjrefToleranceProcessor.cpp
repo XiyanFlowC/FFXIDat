@@ -38,7 +38,7 @@ bool EjrefToleranceProcessor::Process(const FileProcessDef& fileDef,
 		{
 			return TryProcessGevAction(fileDef, inputPath, outputPath, jpDefsByComment);
 		}
-		else if (fileDef.comment == u8"evx/Aht Urhgan Whitegate")
+		else if (fileDef.comment == u8"evx/Aht Urhgan Whitegate 2")
 		{
 			return TryProcessAhtUrhganWhitegate(fileDef, inputPath, outputPath, jpDefsByComment);
 		}
