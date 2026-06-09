@@ -111,11 +111,11 @@ namespace
 
 			const auto optionsText = text.substr(listStart + 1, listEnd - listStart - 1);
 			size_t optionCount = 1;
-            for (char ch : optionsText)
+			for (char ch : optionsText)
 			{
-               if (ch == '/')
+			   if (ch == '/')
 				{
-                  ++optionCount;
+				  ++optionCount;
 				}
 			}
 
@@ -191,6 +191,17 @@ std::u8string FinalTextProcessor::Process(
 	std::optional<int64_t> colOrColId)
 {
 	std::u8string result = translatedText;
+
+	// Check if there's a pending override from previous SETNXT
+	if (!pendingNextTextOverride.empty())
+	{
+		result = pendingNextTextOverride;
+		pendingNextTextOverride.clear();
+		result = ChsToSJis::Instance().ReplaceHanzi(result);
+		result = ValidateResult(result, originalText, rowOrId, colOrColId);
+		return result;
+	}
+
 	const std::string originalTextStr = ToString(originalText);
 
 	for (auto& rule : rules)
@@ -201,6 +212,20 @@ std::u8string FinalTextProcessor::Process(
 		++rule.occurrence;
 		if (!IsOccurrenceEnabled(rule))
 			continue;
+
+		// Handle SETNXT command
+		if (rule.command == RuleCommand::SetNxt)
+		{
+			pendingNextTextOverride = rule.targetText;
+			continue;
+		}
+
+		// Handle SET command
+		if (rule.command == RuleCommand::Set)
+		{
+			result = rule.targetText;
+			break; // SET directly replaces the entire text, no further processing
+		}
 
 		result = ApplyRule(rule, result);
 	}
@@ -235,7 +260,7 @@ void FinalTextProcessor::LoadRules()
 	auto fileRulePath = rulesRoot / std::filesystem::path(comment);
 	fileRulePath += ".csv";
 	const size_t fileRuleCount = LoadRuleFile(fileRulePath);
-    if (commonRuleCount > 0 || fileRuleCount > 0)
+	if (commonRuleCount > 0 || fileRuleCount > 0)
 	{
 		Logger::Instance().Info(
 			"Loaded final text rules for comment='" + ToString(comment)
@@ -300,11 +325,23 @@ size_t FinalTextProcessor::LoadRuleFile(const std::filesystem::path& path)
 			}
 
 			if (cells.size() > 0) commandText = cells[0];
-			if (cells.size() > 1) translatedPattern = cells[1];
-			if (cells.size() > 2) targetText = cells[2];
-			if (cells.size() > 3) originalPattern = cells[3];
-			if (cells.size() > 4) originalExcludePattern = cells[4];
-			if (cells.size() > 5) occurrenceText = cells[5];
+
+			if (commandText == u8"REP" || commandText == u8"REPRE")
+			{
+				if (cells.size() > 1) translatedPattern = cells[1];
+				if (cells.size() > 2) targetText = cells[2];
+				if (cells.size() > 3) originalPattern = cells[3];
+				if (cells.size() > 4) originalExcludePattern = cells[4];
+				if (cells.size() > 5) occurrenceText = cells[5];
+			}
+			else
+			{
+				translatedPattern = u8""; // Not used for non-regex commands, but set to empty to avoid confusion
+				if (cells.size() > 1) targetText = cells[1];
+				if (cells.size() > 2) originalPattern = cells[2];
+				if (cells.size() > 3) originalExcludePattern = cells[3];
+				if (cells.size() > 4) occurrenceText = cells[4];
+			}
 		}
 		catch (const std::exception& ex)
 		{
@@ -366,6 +403,14 @@ bool FinalTextProcessor::TryBuildRule(
 	else if (command == "REPRE")
 	{
 		rule.command = RuleCommand::RepRe;
+	}
+	else if (command == "SET")
+	{
+		rule.command = RuleCommand::Set;
+	}
+	else if (command == "SETNXT")
+	{
+		rule.command = RuleCommand::SetNxt;
 	}
 	else
 	{
@@ -469,6 +514,10 @@ bool FinalTextProcessor::IsOccurrenceEnabled(const Rule& rule) const
 
 std::u8string FinalTextProcessor::ApplyRule(const Rule& rule, const std::u8string& translatedText) const
 {
+	// SET and SETNXT are handled in Process(), not here
+	if (rule.command == RuleCommand::Set || rule.command == RuleCommand::SetNxt)
+		return translatedText;
+
 	if (rule.translatedPattern.empty())
 		return rule.targetText;
 
@@ -557,13 +606,13 @@ bool FinalTextProcessor::TryValidateEvsbSwitchUsage(
 	const auto originalSwitchInfos = ParseSwitchUsageInfos(original, originalSyntaxValid);
 	if (!originalSyntaxValid)
 	{
-       message = L"原文中的 <switch:...> 结构无法解析，无法执行选项数校验。";
+	   message = L"原文中的 <switch:...> 结构无法解析，无法执行选项数校验。";
 		return false;
 	}
 
  if (!originalSwitchInfos.empty() && originalSwitchInfos.size() == translatedSwitchInfos.size())
 	{
-       for (size_t i = 0; i < originalSwitchInfos.size(); ++i)
+	   for (size_t i = 0; i < originalSwitchInfos.size(); ++i)
 		{
 			if (originalSwitchInfos[i].optionCount != translatedSwitchInfos[i].optionCount)
 			{

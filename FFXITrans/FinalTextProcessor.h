@@ -33,6 +33,8 @@ private:
 	{
 		Rep,
 		RepRe,
+		Set,
+		SetNxt,
 	};
 
 	struct OccurrenceRange
@@ -56,6 +58,7 @@ private:
 		std::filesystem::path sourcePath;
 		size_t sourceLine = 0;
 		bool valid = true;
+		std::u8string nextTextOverride;
 	};
 
 	void LoadRules();
@@ -91,4 +94,5 @@ private:
 	std::u8string comment;
 	std::u8string type;
 	std::vector<Rule> rules;
+	std::u8string pendingNextTextOverride;
 };

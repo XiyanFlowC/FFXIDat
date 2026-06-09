@@ -6,6 +6,7 @@
 #include "../ProcessorUtils.h"
 #include <EventStringBase.h>
 #include <xystring.h>
+#include <format>
 
 bool EvsbProcessor::Process(
 	const FileProcessDef& fileDef,
@@ -22,6 +23,7 @@ bool EvsbProcessor::Process(
 	bool useJaReference = TryGetJapaneseReference(fileDef, jpDefsByComment, referenceTexts);
 
 	auto& db = TranslationDatabase::Instance();
+	auto& logger = Logger::Instance();
 	size_t textIdx = 0;
 
 	for (auto& s : evsb)
@@ -38,6 +40,10 @@ bool EvsbProcessor::Process(
 			}
 			else
 			{
+				if (Config::Instance().IsVerbose())
+				{
+					logger.Info(std::format(L"Failed to get reference translation for EVSB text #{}: '{}', reference: '{}'", textIdx + 1, xybase::string::to_wstring(s), xybase::string::to_wstring(referenceTexts[textIdx])));
+				}
 				translated = db.GetTranslation(s);
 			}
 		}
