@@ -25,7 +25,7 @@ bool SpecialProcessor::TryProcessJobName(const FileProcessDef& fileDef, const st
 {
 	if (fileDef.lang == u8"en") return true; // 英语JobName用于UI显示，修改会导致UI无法正确显示职业名称，若不慎传入，忽略
 
-	if (fileDef.lang != u8"jp") return false;
+	if (fileDef.lang != u8"ja") return false;
 
 	DMsg jobDmsg(inputPath);
 	jobDmsg.Read();

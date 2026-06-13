@@ -76,12 +76,12 @@ namespace ProcessorUtils
 
     std::u8string GetCurrentLanguageCode()
     {
-        return Config::Instance().IsEnglishMode() ? u8"en" : u8"jp";
+        return Config::Instance().IsEnglishMode() ? u8"en" : u8"ja";
     }
 
     std::u8string GetAlternateLanguageCode()
     {
-        return Config::Instance().IsEnglishMode() ? u8"jp" : u8"en";
+        return Config::Instance().IsEnglishMode() ? u8"ja" : u8"en";
     }
 
     bool TryGetFileDef(const std::u8string& comment, const std::u8string& type, const std::u8string& lang, FileProcessDef& fileDef)

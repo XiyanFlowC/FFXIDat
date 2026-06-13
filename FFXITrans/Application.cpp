@@ -911,7 +911,7 @@ int Application::ProcessTranslations()
 	// Build JP definition mapping
 	for (const auto& def : fileDefs)
 	{
-		if (def.lang == u8"jp")
+		if (def.lang == u8"ja")
 			jpDefsByComment[def.comment] = def;
 	}
 
@@ -932,7 +932,7 @@ int Application::ProcessTranslations()
 		}
 		else
 		{
-			if (def.lang == u8"jp") totalFiles++;
+			if (def.lang == u8"ja") totalFiles++;
 		}
 	}
 
@@ -952,7 +952,7 @@ int Application::ProcessTranslations()
 			}
 			else
 			{
-				if (fileDef.lang != u8"jp")
+				if (fileDef.lang != u8"ja")
 					continue;
 			}
 
@@ -974,7 +974,7 @@ int Application::ProcessTranslations()
 		}
 		else
 		{
-			if (fileDef.lang != u8"jp")
+			if (fileDef.lang != u8"ja")
 				continue;
 		}
 
@@ -1112,7 +1112,7 @@ int Application::PrepareSourceData()
 		std::vector<FileProcessDef> remainingDefs;
 		for (const auto& fileDef : fileDefs)
 		{
-			if (fileDef.lang != u8"jp")
+			if (fileDef.lang != u8"ja")
 				continue;
 
 			const auto datPath = BuildDatPath(fileDef);
@@ -1126,7 +1126,7 @@ int Application::PrepareSourceData()
 			remainingDefs.push_back(fileDef);
 		}
 
-		std::wcout << L"已加载 " << remainingDefs.size() << L" 个 JP 文件定义。" << std::endl;
+		std::wcout << L"已加载 " << remainingDefs.size() << L" 个 JA 文件定义。" << std::endl;
 
 		const int totalFiles = static_cast<int>(remainingDefs.size());
 		int processedCount = 0;
