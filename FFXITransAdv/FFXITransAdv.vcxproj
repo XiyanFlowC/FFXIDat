@@ -1,0 +1,151 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{8A4B2C3D-1E2F-4A5B-9C8D-7E6F5A4B3C2D}</ProjectGuid>
+    <RootNamespace>FFXITransAdv</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(SolutionDir)xybase\;$(SolutionDir)FFXIDat\;$(SolutionDir)FFXIDatAdv\;$(SolutionDir)FFXITrans\;$(SolutionDir)FFXIDatAdv\;$(SolutionDir)FFXIDatProcessor\;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(SolutionDir)xybase\;$(SolutionDir)FFXIDat\;$(SolutionDir)FFXIDatAdv\;$(SolutionDir)FFXITrans\;$(SolutionDir)FFXIDatAdv\;$(SolutionDir)FFXIDatProcessor\;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/J %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xybase.lib;FFXIDat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/J %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xybase.lib;FFXIDat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="FFXITransAdv.cpp" />
+    <ClCompile Include="EventTextOut.cpp" />
+    <ClCompile Include="EventTextIn.cpp" />
+    <ClCompile Include="EventFileProcessor.cpp" />
+    <ClCompile Include="ApplicationAdv.cpp" />
+    <ClCompile Include="..\FFXITrans\FileProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\ProcessorFactory.cpp" />
+    <ClCompile Include="..\FFXITrans\ProcessorUtils.cpp" />
+    <ClCompile Include="..\FFXITrans\TranslationDatabase.cpp" />
+    <ClCompile Include="..\FFXITrans\FinalTextProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Config.cpp" />
+    <ClCompile Include="..\FFXITrans\Logger.cpp" />
+    <ClCompile Include="..\FFXITrans\ChsToSJis.cpp" />
+    <ClCompile Include="..\FFXITrans\CsvTranslationLoader.cpp" />
+    <ClCompile Include="..\FFXITrans\BackupManager.cpp" />
+    <ClCompile Include="..\FFXITrans\SetupWizard.cpp" />
+    <ClCompile Include="..\FFXITrans\SpecialProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\XisProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\EvsbProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\DMsgProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\ItemProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\StatusDataProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\FixedPhraseProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\MonBridgeProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\RoeProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\EjrefToleranceProcessor.cpp" />
+    <ClCompile Include="..\FFXIDat\CsvFile.cpp" />
+    <ClCompile Include="..\FFXIDatAdv\EventDump\ZoneConfig.cpp" />
+    <ClCompile Include="..\FFXIDatAdv\EventDump\EntityDat.cpp" />
+    <ClCompile Include="..\FFXIDatAdv\EventDump\EventBinaryDat.cpp" />
+    <ClCompile Include="..\FFXIDatAdv\EventDump\BytecodeAnalyzer.cpp" />
+    <ClCompile Include="..\FFXIDatAdv\EventDump\EventLinker.cpp" />
+    <ClCompile Include="..\FFXIDatAdv\EventDump\GamePathResolver.cpp" />
+    <ClCompile Include="..\FFXIDatAdv\EventDump\OpCode\OpCodeRegistry.cpp" />
+    <ClCompile Include="..\FFXIDatAdv\EventDump\OpCode\OpcodesImpl.cpp" />
+    <ClCompile Include="..\FFXIDatProcessor\codepage.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="EventTextOut.h" />
+    <ClInclude Include="EventTextIn.h" />
+    <ClInclude Include="EventFileProcessor.h" />
+    <ClInclude Include="EventDefs.h" />
+    <ClInclude Include="..\FFXIDatAdv\EventDump\Models.h" />
+    <ClInclude Include="..\FFXIDatAdv\EventDump\ZoneConfig.h" />
+    <ClInclude Include="..\FFXIDatAdv\EventDump\EntityDat.h" />
+    <ClInclude Include="..\FFXIDatAdv\EventDump\EventBinaryDat.h" />
+    <ClInclude Include="..\FFXIDatAdv\EventDump\BytecodeAnalyzer.h" />
+    <ClInclude Include="..\FFXIDatAdv\EventDump\EventLinker.h" />
+    <ClInclude Include="..\FFXIDatAdv\EventDump\GamePathResolver.h" />
+    <ClInclude Include="..\FFXIDatAdv\EventDump\OpCode\OpCode.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

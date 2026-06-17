@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件" />
+    <Filter Include="EventDump" />
+    <Filter Include="EventDump\OpCode" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="FFXITransAdv.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="EventTextOut.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="EventTextIn.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="EventFileProcessor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FFXIDatAdv\EventDump\ZoneConfig.cpp">
+      <Filter>EventDump</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FFXIDatAdv\EventDump\EntityDat.cpp">
+      <Filter>EventDump</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FFXIDatAdv\EventDump\EventBinaryDat.cpp">
+      <Filter>EventDump</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FFXIDatAdv\EventDump\BytecodeAnalyzer.cpp">
+      <Filter>EventDump</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FFXIDatAdv\EventDump\EventLinker.cpp">
+      <Filter>EventDump</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FFXIDatAdv\EventDump\GamePathResolver.cpp">
+      <Filter>EventDump</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FFXIDatAdv\EventDump\OpCode\OpCodeRegistry.cpp">
+      <Filter>EventDump\OpCode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FFXIDatAdv\EventDump\OpCode\OpcodesImpl.cpp">
+      <Filter>EventDump\OpCode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FFXIDatProcessor\codepage.cpp">
+      <Filter>EventDump</Filter>
+    </ClCompile>
+    <ClCompile Include="ApplicationAdv.cpp" />
+    <ClCompile Include="..\FFXITrans\FileProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\ProcessorFactory.cpp" />
+    <ClCompile Include="..\FFXITrans\ProcessorUtils.cpp" />
+    <ClCompile Include="..\FFXITrans\TranslationDatabase.cpp" />
+    <ClCompile Include="..\FFXITrans\FinalTextProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Config.cpp" />
+    <ClCompile Include="..\FFXITrans\Logger.cpp" />
+    <ClCompile Include="..\FFXITrans\ChsToSJis.cpp" />
+    <ClCompile Include="..\FFXITrans\CsvTranslationLoader.cpp" />
+    <ClCompile Include="..\FFXITrans\SpecialProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\XisProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\EvsbProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\DMsgProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\ItemProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\StatusDataProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\FixedPhraseProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\MonBridgeProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\RoeProcessor.cpp" />
+    <ClCompile Include="..\FFXITrans\Processors\EjrefToleranceProcessor.cpp" />
+    <ClCompile Include="..\FFXIDat\CsvFile.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="EventTextOut.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EventTextIn.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EventDefs.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EventFileProcessor.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FFXIDatAdv\EventDump\Models.h">
+      <Filter>EventDump</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FFXIDatAdv\EventDump\ZoneConfig.h">
+      <Filter>EventDump</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FFXIDatAdv\EventDump\EntityDat.h">
+      <Filter>EventDump</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FFXIDatAdv\EventDump\EventBinaryDat.h">
+      <Filter>EventDump</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FFXIDatAdv\EventDump\BytecodeAnalyzer.h">
+      <Filter>EventDump</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FFXIDatAdv\EventDump\EventLinker.h">
+      <Filter>EventDump</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FFXIDatAdv\EventDump\GamePathResolver.h">
+      <Filter>EventDump</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FFXIDatAdv\EventDump\OpCode\OpCode.h">
+      <Filter>EventDump\OpCode</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

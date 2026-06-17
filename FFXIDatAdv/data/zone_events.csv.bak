@@ -1,0 +1,1190 @@
+# Format: ROM<vol>/<cat>/<file>,type,,zone_name
+# Auto-generated from zones.yaml
+# evev = event binary, evac = actor data, evsb = string base
+ROM3/0/66,evev,,Beta
+ROM3/2/110,evac,,Beta
+ROM3/2/10,evsb,na,Beta
+ROM3/1/38,evsb,jp,Beta
+ROM3/0/67,evev,,Phanauet Channel
+ROM3/2/111,evac,,Phanauet Channel
+ROM3/2/11,evsb,na,Phanauet Channel
+ROM3/1/39,evsb,jp,Phanauet Channel
+ROM3/0/68,evev,,Carpenters' Landing
+ROM3/2/112,evac,,Carpenters' Landing
+ROM3/2/12,evsb,na,Carpenters' Landing
+ROM3/1/40,evsb,jp,Carpenters' Landing
+ROM3/0/69,evev,,Manaclipper
+ROM3/2/113,evac,,Manaclipper
+ROM3/2/13,evsb,na,Manaclipper
+ROM3/1/41,evsb,jp,Manaclipper
+ROM3/0/70,evev,,Bibiki Bay
+ROM3/2/114,evac,,Bibiki Bay
+ROM3/2/14,evsb,na,Bibiki Bay
+ROM3/1/42,evsb,jp,Bibiki Bay
+ROM3/0/71,evev,,Uleguerand Range
+ROM3/2/115,evac,,Uleguerand Range
+ROM3/2/15,evsb,na,Uleguerand Range
+ROM3/1/43,evsb,jp,Uleguerand Range
+ROM3/0/72,evev,,Bearclaw Pinnacle
+ROM3/2/116,evac,,Bearclaw Pinnacle
+ROM3/2/16,evsb,na,Bearclaw Pinnacle
+ROM3/1/44,evsb,jp,Bearclaw Pinnacle
+ROM3/0/73,evev,,Attohwa Chasm
+ROM3/2/117,evac,,Attohwa Chasm
+ROM3/2/17,evsb,na,Attohwa Chasm
+ROM3/1/45,evsb,jp,Attohwa Chasm
+ROM3/0/74,evev,,Boneyard Gully
+ROM3/2/118,evac,,Boneyard Gully
+ROM3/2/18,evsb,na,Boneyard Gully
+ROM3/1/46,evsb,jp,Boneyard Gully
+ROM3/0/75,evev,,Pso'Xja
+ROM3/2/119,evac,,Pso'Xja
+ROM3/2/19,evsb,na,Pso'Xja
+ROM3/1/47,evsb,jp,Pso'Xja
+ROM3/0/76,evev,,The Shrouded Maw
+ROM3/2/120,evac,,The Shrouded Maw
+ROM3/2/20,evsb,na,The Shrouded Maw
+ROM3/1/48,evsb,jp,The Shrouded Maw
+ROM3/0/77,evev,,Oldton Movalpolos
+ROM3/2/121,evac,,Oldton Movalpolos
+ROM3/2/21,evsb,na,Oldton Movalpolos
+ROM3/1/49,evsb,jp,Oldton Movalpolos
+ROM3/0/78,evev,,Newton Movalpolos
+ROM3/2/122,evac,,Newton Movalpolos
+ROM3/2/22,evsb,na,Newton Movalpolos
+ROM3/1/50,evsb,jp,Newton Movalpolos
+ROM3/0/79,evev,,Mine Shaft #2716
+ROM3/2/123,evac,,Mine Shaft #2716
+ROM3/2/23,evsb,na,Mine Shaft #2716
+ROM3/1/51,evsb,jp,Mine Shaft #2716
+ROM3/0/80,evev,,Hall of Transference
+ROM3/2/124,evac,,Hall of Transference
+ROM3/2/24,evsb,na,Hall of Transference
+ROM3/1/52,evsb,jp,Hall of Transference
+ROM/19/80,evev,,Abyssea - Konschtat
+ROM/25/80,evac,,Abyssea - Konschtat
+ROM/23/80,evsb,na,Abyssea - Konschtat
+ROM/21/80,evsb,jp,Abyssea - Konschtat
+ROM3/0/82,evev,,Promyvion - Holla
+ROM3/2/126,evac,,Promyvion - Holla
+ROM3/2/26,evsb,na,Promyvion - Holla
+ROM3/1/54,evsb,jp,Promyvion - Holla
+ROM3/0/83,evev,,Spire of Holla
+ROM3/2/127,evac,,Spire of Holla
+ROM3/2/27,evsb,na,Spire of Holla
+ROM3/1/55,evsb,jp,Spire of Holla
+ROM3/0/84,evev,,Promyvion - Dem
+ROM3/3/0,evac,,Promyvion - Dem
+ROM3/2/28,evsb,na,Promyvion - Dem
+ROM3/1/56,evsb,jp,Promyvion - Dem
+ROM3/0/85,evev,,Spire of Dem
+ROM3/3/1,evac,,Spire of Dem
+ROM3/2/29,evsb,na,Spire of Dem
+ROM3/1/57,evsb,jp,Spire of Dem
+ROM3/0/86,evev,,Promyvion - Mea
+ROM3/3/2,evac,,Promyvion - Mea
+ROM3/2/30,evsb,na,Promyvion - Mea
+ROM3/1/58,evsb,jp,Promyvion - Mea
+ROM3/0/87,evev,,Spire of Mea
+ROM3/3/3,evac,,Spire of Mea
+ROM3/2/31,evsb,na,Spire of Mea
+ROM3/1/59,evsb,jp,Spire of Mea
+ROM3/0/88,evev,,Promyvion - Vahzl
+ROM3/3/4,evac,,Promyvion - Vahzl
+ROM3/2/32,evsb,na,Promyvion - Vahzl
+ROM3/1/60,evsb,jp,Promyvion - Vahzl
+ROM3/0/89,evev,,Spire of Vahzl
+ROM3/3/5,evac,,Spire of Vahzl
+ROM3/2/33,evsb,na,Spire of Vahzl
+ROM3/1/61,evsb,jp,Spire of Vahzl
+ROM3/0/90,evev,,Lufaise Meadows
+ROM3/3/6,evac,,Lufaise Meadows
+ROM3/2/34,evsb,na,Lufaise Meadows
+ROM3/1/62,evsb,jp,Lufaise Meadows
+ROM3/0/91,evev,,Misareaux Coast
+ROM3/3/7,evac,,Misareaux Coast
+ROM3/2/35,evsb,na,Misareaux Coast
+ROM3/1/63,evsb,jp,Misareaux Coast
+ROM3/0/92,evev,,Tavnazian Safehold
+ROM3/3/8,evac,,Tavnazian Safehold
+ROM3/2/36,evsb,na,Tavnazian Safehold
+ROM3/1/64,evsb,jp,Tavnazian Safehold
+ROM3/0/93,evev,,Phomiuna Aqueducts
+ROM3/3/9,evac,,Phomiuna Aqueducts
+ROM3/2/37,evsb,na,Phomiuna Aqueducts
+ROM3/1/65,evsb,jp,Phomiuna Aqueducts
+ROM3/0/94,evev,,Sacrarium
+ROM3/3/10,evac,,Sacrarium
+ROM3/2/38,evsb,na,Sacrarium
+ROM3/1/66,evsb,jp,Sacrarium
+ROM3/0/95,evev,,Riverne - Site #B01
+ROM3/3/11,evac,,Riverne - Site #B01
+ROM3/2/39,evsb,na,Riverne - Site #B01
+ROM3/1/67,evsb,jp,Riverne - Site #B01
+ROM3/0/96,evev,,Riverne - Site #A01
+ROM3/3/12,evac,,Riverne - Site #A01
+ROM3/2/40,evsb,na,Riverne - Site #A01
+ROM3/1/68,evsb,jp,Riverne - Site #A01
+ROM3/0/97,evev,,Monarch Linn
+ROM3/3/13,evac,,Monarch Linn
+ROM3/2/41,evsb,na,Monarch Linn
+ROM3/1/69,evsb,jp,Monarch Linn
+ROM3/0/98,evev,,Sealion's Den
+ROM3/3/14,evac,,Sealion's Den
+ROM3/2/42,evsb,na,Sealion's Den
+ROM3/1/70,evsb,jp,Sealion's Den
+ROM3/0/99,evev,,Al'Taieu
+ROM3/3/15,evac,,Al'Taieu
+ROM3/2/43,evsb,na,Al'Taieu
+ROM3/1/71,evsb,jp,Al'Taieu
+ROM3/0/100,evev,,Grand Palace of Hu'Xzoi
+ROM3/3/16,evac,,Grand Palace of Hu'Xzoi
+ROM3/2/44,evsb,na,Grand Palace of Hu'Xzoi
+ROM3/1/72,evsb,jp,Grand Palace of Hu'Xzoi
+ROM3/0/101,evev,,The Garden of Ru'Hmet
+ROM3/3/17,evac,,The Garden of Ru'Hmet
+ROM3/2/45,evsb,na,The Garden of Ru'Hmet
+ROM3/1/73,evsb,jp,The Garden of Ru'Hmet
+ROM3/0/102,evev,,Empyreal Paradox
+ROM3/3/18,evac,,Empyreal Paradox
+ROM3/2/46,evsb,na,Empyreal Paradox
+ROM3/1/74,evsb,jp,Empyreal Paradox
+ROM3/0/103,evev,,Temenos
+ROM3/3/19,evac,,Temenos
+ROM3/2/47,evsb,na,Temenos
+ROM3/1/75,evsb,jp,Temenos
+ROM3/0/104,evev,,Apollyon
+ROM3/3/20,evac,,Apollyon
+ROM3/2/48,evsb,na,Apollyon
+ROM3/1/76,evsb,jp,Apollyon
+ROM3/0/105,evev,,Dynamis - Valkurm
+ROM3/3/21,evac,,Dynamis - Valkurm
+ROM3/2/49,evsb,na,Dynamis - Valkurm
+ROM3/1/77,evsb,jp,Dynamis - Valkurm
+ROM3/0/106,evev,,Dynamis - Buburimu
+ROM3/3/22,evac,,Dynamis - Buburimu
+ROM3/2/50,evsb,na,Dynamis - Buburimu
+ROM3/1/78,evsb,jp,Dynamis - Buburimu
+ROM3/0/107,evev,,Dynamis - Qufim
+ROM3/3/23,evac,,Dynamis - Qufim
+ROM3/2/51,evsb,na,Dynamis - Qufim
+ROM3/1/79,evsb,jp,Dynamis - Qufim
+ROM3/0/108,evev,,Dynamis - Tavnazia
+ROM3/3/24,evac,,Dynamis - Tavnazia
+ROM3/2/52,evsb,na,Dynamis - Tavnazia
+ROM3/1/80,evsb,jp,Dynamis - Tavnazia
+ROM3/0/109,evev,,Diorama Abdhaljs-Ghelsba
+ROM3/3/25,evac,,Diorama Abdhaljs-Ghelsba
+ROM3/2/53,evsb,na,Diorama Abdhaljs-Ghelsba
+ROM3/1/81,evsb,jp,Diorama Abdhaljs-Ghelsba
+ROM3/0/110,evev,,Abdhaljs Isle-Purgonorgo
+ROM3/3/26,evac,,Abdhaljs Isle-Purgonorgo
+ROM3/2/54,evsb,na,Abdhaljs Isle-Purgonorgo
+ROM3/1/82,evsb,jp,Abdhaljs Isle-Purgonorgo
+ROM/19/110,evev,,Abyssea - Tahrongi
+ROM/25/110,evac,,Abyssea - Tahrongi
+ROM/23/110,evsb,na,Abyssea - Tahrongi
+ROM/21/110,evsb,jp,Abyssea - Tahrongi
+ROM4/0/51,evev,,Open sea route to Al Zahbi
+ROM4/1/45,evac,,Open sea route to Al Zahbi
+ROM4/0/119,evsb,na,Open sea route to Al Zahbi
+ROM4/0/85,evsb,jp,Open sea route to Al Zahbi
+ROM4/0/52,evev,,Open sea route to Mhaura
+ROM4/1/46,evac,,Open sea route to Mhaura
+ROM4/0/120,evsb,na,Open sea route to Mhaura
+ROM4/0/86,evsb,jp,Open sea route to Mhaura
+ROM4/0/53,evev,,Al Zahbi
+ROM4/1/47,evac,,Al Zahbi
+ROM4/0/121,evsb,na,Al Zahbi
+ROM4/0/87,evsb,jp,Al Zahbi
+ROM4/0/54,evev,,Test Grid
+ROM4/1/48,evac,,Test Grid
+ROM4/0/122,evsb,na,Test Grid
+ROM4/0/88,evsb,jp,Test Grid
+ROM4/0/55,evev,,Aht Urhgan Whitegate
+ROM4/1/49,evac,,Aht Urhgan Whitegate
+ROM4/0/123,evsb,na,Aht Urhgan Whitegate
+ROM4/0/89,evsb,jp,Aht Urhgan Whitegate
+ROM/186/95,evev,,Aht Urhgan Whitegate2
+ROM4/1/49,evac,,Aht Urhgan Whitegate2
+ROM/186/97,evsb,na,Aht Urhgan Whitegate2
+ROM4/0/56,evev,,Wajaom Woodlands
+ROM4/1/50,evac,,Wajaom Woodlands
+ROM4/0/124,evsb,na,Wajaom Woodlands
+ROM4/0/90,evsb,jp,Wajaom Woodlands
+ROM4/0/57,evev,,Bhaflau Thickets
+ROM4/1/51,evac,,Bhaflau Thickets
+ROM4/0/125,evsb,na,Bhaflau Thickets
+ROM4/0/91,evsb,jp,Bhaflau Thickets
+ROM4/0/58,evev,,Nashmau
+ROM4/1/52,evac,,Nashmau
+ROM4/0/126,evsb,na,Nashmau
+ROM4/0/92,evsb,jp,Nashmau
+ROM4/0/59,evev,,Arrapago Reef
+ROM4/1/53,evac,,Arrapago Reef
+ROM4/0/127,evsb,na,Arrapago Reef
+ROM4/0/93,evsb,jp,Arrapago Reef
+ROM4/0/60,evev,,Ilrusi Atoll
+ROM4/1/54,evac,,Ilrusi Atoll
+ROM4/1/0,evsb,na,Ilrusi Atoll
+ROM4/0/94,evsb,jp,Ilrusi Atoll
+ROM4/0/61,evev,,Periqia
+ROM4/1/55,evac,,Periqia
+ROM4/1/1,evsb,na,Periqia
+ROM4/0/95,evsb,jp,Periqia
+ROM4/0/62,evev,,Talacca Cove
+ROM4/1/56,evac,,Talacca Cove
+ROM4/1/2,evsb,na,Talacca Cove
+ROM4/0/96,evsb,jp,Talacca Cove
+ROM4/0/63,evev,,Silver Sea route to Nashmau
+ROM4/1/57,evac,,Silver Sea route to Nashmau
+ROM4/1/3,evsb,na,Silver Sea route to Nashmau
+ROM4/0/97,evsb,jp,Silver Sea route to Nashmau
+ROM4/0/64,evev,,Silver Sea route to Al Zahbi
+ROM4/1/58,evac,,Silver Sea route to Al Zahbi
+ROM4/1/4,evsb,na,Silver Sea route to Al Zahbi
+ROM4/0/98,evsb,jp,Silver Sea route to Al Zahbi
+ROM4/0/65,evev,,The Ashu Talif
+ROM4/1/59,evac,,The Ashu Talif
+ROM4/1/5,evsb,na,The Ashu Talif
+ROM4/0/99,evsb,jp,The Ashu Talif
+ROM4/0/66,evev,,Mount Zhayolm
+ROM4/1/60,evac,,Mount Zhayolm
+ROM4/1/6,evsb,na,Mount Zhayolm
+ROM4/0/100,evsb,jp,Mount Zhayolm
+ROM4/0/67,evev,,Halvung
+ROM4/1/61,evac,,Halvung
+ROM4/1/7,evsb,na,Halvung
+ROM4/0/101,evsb,jp,Halvung
+ROM4/0/68,evev,,Lebros Cavern
+ROM4/1/62,evac,,Lebros Cavern
+ROM4/1/8,evsb,na,Lebros Cavern
+ROM4/0/102,evsb,jp,Lebros Cavern
+ROM4/0/69,evev,,Navukgo Execution Chamber
+ROM4/1/63,evac,,Navukgo Execution Chamber
+ROM4/1/9,evsb,na,Navukgo Execution Chamber
+ROM4/0/103,evsb,jp,Navukgo Execution Chamber
+ROM4/0/70,evev,,Mamook
+ROM4/1/64,evac,,Mamook
+ROM4/1/10,evsb,na,Mamook
+ROM4/0/104,evsb,jp,Mamook
+ROM4/0/71,evev,,Mamool Ja Training Grounds
+ROM4/1/65,evac,,Mamool Ja Training Grounds
+ROM4/1/11,evsb,na,Mamool Ja Training Grounds
+ROM4/0/105,evsb,jp,Mamool Ja Training Grounds
+ROM4/0/72,evev,,Jade Sepulcher
+ROM4/1/66,evac,,Jade Sepulcher
+ROM4/1/12,evsb,na,Jade Sepulcher
+ROM4/0/106,evsb,jp,Jade Sepulcher
+ROM4/0/73,evev,,Aydeewa Subterrane
+ROM4/1/67,evac,,Aydeewa Subterrane
+ROM4/1/13,evsb,na,Aydeewa Subterrane
+ROM4/0/107,evsb,jp,Aydeewa Subterrane
+ROM4/0/74,evev,,Leujaoam Sanctum
+ROM4/1/68,evac,,Leujaoam Sanctum
+ROM4/1/14,evsb,na,Leujaoam Sanctum
+ROM4/0/108,evsb,jp,Leujaoam Sanctum
+ROM4/0/75,evev,,Chocobo Circuit
+ROM4/1/69,evac,,Chocobo Circuit
+ROM4/1/15,evsb,na,Chocobo Circuit
+ROM4/0/109,evsb,jp,Chocobo Circuit
+ROM4/0/76,evev,,The Colosseum
+ROM4/1/70,evac,,The Colosseum
+ROM4/1/16,evsb,na,The Colosseum
+ROM4/0/110,evsb,jp,The Colosseum
+ROM4/0/77,evev,,Alzadaal Undersea Ruins
+ROM4/1/71,evac,,Alzadaal Undersea Ruins
+ROM4/1/17,evsb,na,Alzadaal Undersea Ruins
+ROM4/0/111,evsb,jp,Alzadaal Undersea Ruins
+ROM4/0/78,evev,,Zhayolm Remnants
+ROM4/1/72,evac,,Zhayolm Remnants
+ROM4/1/18,evsb,na,Zhayolm Remnants
+ROM4/0/112,evsb,jp,Zhayolm Remnants
+ROM4/0/79,evev,,Arrapago Remnants
+ROM4/1/73,evac,,Arrapago Remnants
+ROM4/1/19,evsb,na,Arrapago Remnants
+ROM4/0/113,evsb,jp,Arrapago Remnants
+ROM4/0/80,evev,,Bhaflau Remnants
+ROM4/1/74,evac,,Bhaflau Remnants
+ROM4/1/20,evsb,na,Bhaflau Remnants
+ROM4/0/114,evsb,jp,Bhaflau Remnants
+ROM4/0/81,evev,,Silver Sea Remnants
+ROM4/1/75,evac,,Silver Sea Remnants
+ROM4/1/21,evsb,na,Silver Sea Remnants
+ROM4/0/115,evsb,jp,Silver Sea Remnants
+ROM4/0/82,evev,,Nyzul Isle
+ROM4/1/76,evac,,Nyzul Isle
+ROM4/1/22,evsb,na,Nyzul Isle
+ROM4/0/116,evsb,jp,Nyzul Isle
+ROM4/0/83,evev,,Hazhalm Testing Grounds
+ROM4/1/77,evac,,Hazhalm Testing Grounds
+ROM4/1/23,evsb,na,Hazhalm Testing Grounds
+ROM4/0/117,evsb,jp,Hazhalm Testing Grounds
+ROM4/0/84,evev,,Caedarva Mire
+ROM4/1/78,evac,,Caedarva Mire
+ROM4/1/24,evsb,na,Caedarva Mire
+ROM4/0/118,evsb,jp,Caedarva Mire
+ROM/20/17,evev,,Southern San d'Oria [S]
+ROM/26/17,evac,,Southern San d'Oria [S]
+ROM/24/17,evsb,na,Southern San d'Oria [S]
+ROM/22/17,evsb,jp,Southern San d'Oria [S]
+ROM/20/18,evev,,East Ronfaure [S]
+ROM/26/18,evac,,East Ronfaure [S]
+ROM/24/18,evsb,na,East Ronfaure [S]
+ROM/22/18,evsb,jp,East Ronfaure [S]
+ROM/20/19,evev,,Jugner Forest [S]
+ROM/26/19,evac,,Jugner Forest [S]
+ROM/24/19,evsb,na,Jugner Forest [S]
+ROM/22/19,evsb,jp,Jugner Forest [S]
+ROM/20/20,evev,,Vunkerl Inlet [S]
+ROM/26/20,evac,,Vunkerl Inlet [S]
+ROM/24/20,evsb,na,Vunkerl Inlet [S]
+ROM/22/20,evsb,jp,Vunkerl Inlet [S]
+ROM/20/21,evev,,Batallia Downs [S]
+ROM/26/21,evac,,Batallia Downs [S]
+ROM/24/21,evsb,na,Batallia Downs [S]
+ROM/22/21,evsb,jp,Batallia Downs [S]
+ROM/20/22,evev,,La Vaule [S]
+ROM/26/22,evac,,La Vaule [S]
+ROM/24/22,evsb,na,La Vaule [S]
+ROM/22/22,evsb,jp,La Vaule [S]
+ROM/20/23,evev,,Everbloom Hollow
+ROM/26/23,evac,,Everbloom Hollow
+ROM/24/23,evsb,na,Everbloom Hollow
+ROM/22/23,evsb,jp,Everbloom Hollow
+ROM/20/24,evev,,Bastok Markets [S]
+ROM/26/24,evac,,Bastok Markets [S]
+ROM/24/24,evsb,na,Bastok Markets [S]
+ROM/22/24,evsb,jp,Bastok Markets [S]
+ROM/20/25,evev,,North Gustaberg [S]
+ROM/26/25,evac,,North Gustaberg [S]
+ROM/24/25,evsb,na,North Gustaberg [S]
+ROM/22/25,evsb,jp,North Gustaberg [S]
+ROM/20/26,evev,,Grauberg [S]
+ROM/26/26,evac,,Grauberg [S]
+ROM/24/26,evsb,na,Grauberg [S]
+ROM/22/26,evsb,jp,Grauberg [S]
+ROM/20/27,evev,,Pashhow Marshlands [S]
+ROM/26/27,evac,,Pashhow Marshlands [S]
+ROM/24/27,evsb,na,Pashhow Marshlands [S]
+ROM/22/27,evsb,jp,Pashhow Marshlands [S]
+ROM/20/28,evev,,Rolanberry Fields [S]
+ROM/26/28,evac,,Rolanberry Fields [S]
+ROM/24/28,evsb,na,Rolanberry Fields [S]
+ROM/22/28,evsb,jp,Rolanberry Fields [S]
+ROM/20/29,evev,,Beadeaux [S]
+ROM/26/29,evac,,Beadeaux [S]
+ROM/24/29,evsb,na,Beadeaux [S]
+ROM/22/29,evsb,jp,Beadeaux [S]
+ROM/20/30,evev,,Ruhotz Silvermines
+ROM/26/30,evac,,Ruhotz Silvermines
+ROM/24/30,evsb,na,Ruhotz Silvermines
+ROM/22/30,evsb,jp,Ruhotz Silvermines
+ROM/20/31,evev,,Windurst Waters [S]
+ROM/26/31,evac,,Windurst Waters [S]
+ROM/24/31,evsb,na,Windurst Waters [S]
+ROM/22/31,evsb,jp,Windurst Waters [S]
+ROM/20/32,evev,,West Sarutabaruta [S]
+ROM/26/32,evac,,West Sarutabaruta [S]
+ROM/24/32,evsb,na,West Sarutabaruta [S]
+ROM/22/32,evsb,jp,West Sarutabaruta [S]
+ROM/20/33,evev,,Fort Karugo-Narugo [S]
+ROM/26/33,evac,,Fort Karugo-Narugo [S]
+ROM/24/33,evsb,na,Fort Karugo-Narugo [S]
+ROM/22/33,evsb,jp,Fort Karugo-Narugo [S]
+ROM/20/34,evev,,Meriphataud Mountains [S]
+ROM/26/34,evac,,Meriphataud Mountains [S]
+ROM/24/34,evsb,na,Meriphataud Mountains [S]
+ROM/22/34,evsb,jp,Meriphataud Mountains [S]
+ROM/20/35,evev,,Sauromugue Champaign [S]
+ROM/26/35,evac,,Sauromugue Champaign [S]
+ROM/24/35,evsb,na,Sauromugue Champaign [S]
+ROM/22/35,evsb,jp,Sauromugue Champaign [S]
+ROM/20/36,evev,,Castle Oztroja [S]
+ROM/26/36,evac,,Castle Oztroja [S]
+ROM/24/36,evsb,na,Castle Oztroja [S]
+ROM/22/36,evsb,jp,Castle Oztroja [S]
+ROM/20/37,evev,,West Ronfaure
+ROM/26/37,evac,,West Ronfaure
+ROM/24/37,evsb,na,West Ronfaure
+ROM/22/37,evsb,jp,West Ronfaure
+ROM/20/38,evev,,East Ronfaure
+ROM/26/38,evac,,East Ronfaure
+ROM/24/38,evsb,na,East Ronfaure
+ROM/22/38,evsb,jp,East Ronfaure
+ROM/20/39,evev,,La Theine Plateau
+ROM/26/39,evac,,La Theine Plateau
+ROM/24/39,evsb,na,La Theine Plateau
+ROM/22/39,evsb,jp,La Theine Plateau
+ROM/20/40,evev,,Valkurm Dunes
+ROM/26/40,evac,,Valkurm Dunes
+ROM/24/40,evsb,na,Valkurm Dunes
+ROM/22/40,evsb,jp,Valkurm Dunes
+ROM/20/41,evev,,Jugner Forest
+ROM/26/41,evac,,Jugner Forest
+ROM/24/41,evsb,na,Jugner Forest
+ROM/22/41,evsb,jp,Jugner Forest
+ROM/20/42,evev,,Batallia Downs
+ROM/26/42,evac,,Batallia Downs
+ROM/24/42,evsb,na,Batallia Downs
+ROM/22/42,evsb,jp,Batallia Downs
+ROM/20/43,evev,,North Gustaberg
+ROM/26/43,evac,,North Gustaberg
+ROM/24/43,evsb,na,North Gustaberg
+ROM/22/43,evsb,jp,North Gustaberg
+ROM/20/44,evev,,South Gustaberg
+ROM/26/44,evac,,South Gustaberg
+ROM/24/44,evsb,na,South Gustaberg
+ROM/22/44,evsb,jp,South Gustaberg
+ROM/20/45,evev,,Konschtat Highlands
+ROM/26/45,evac,,Konschtat Highlands
+ROM/24/45,evsb,na,Konschtat Highlands
+ROM/22/45,evsb,jp,Konschtat Highlands
+ROM/20/46,evev,,Pashhow Marshlands
+ROM/26/46,evac,,Pashhow Marshlands
+ROM/24/46,evsb,na,Pashhow Marshlands
+ROM/22/46,evsb,jp,Pashhow Marshlands
+ROM/20/47,evev,,Rolanberry Fields
+ROM/26/47,evac,,Rolanberry Fields
+ROM/24/47,evsb,na,Rolanberry Fields
+ROM/22/47,evsb,jp,Rolanberry Fields
+ROM/20/48,evev,,Beaucedine Glacier
+ROM/26/48,evac,,Beaucedine Glacier
+ROM/24/48,evsb,na,Beaucedine Glacier
+ROM/22/48,evsb,jp,Beaucedine Glacier
+ROM/20/49,evev,,Xarcabard
+ROM/26/49,evac,,Xarcabard
+ROM/24/49,evsb,na,Xarcabard
+ROM/22/49,evsb,jp,Xarcabard
+ROM2/13/5,evev,,Cape Teriggan
+ROM2/13/95,evac,,Cape Teriggan
+ROM2/17/46,evsb,na,Cape Teriggan
+ROM2/13/50,evsb,jp,Cape Teriggan
+ROM2/13/6,evev,,Eastern Altepa Desert
+ROM2/13/96,evac,,Eastern Altepa Desert
+ROM2/17/47,evsb,na,Eastern Altepa Desert
+ROM2/13/51,evsb,jp,Eastern Altepa Desert
+ROM/20/52,evev,,West Sarutabaruta
+ROM/26/52,evac,,West Sarutabaruta
+ROM/24/52,evsb,na,West Sarutabaruta
+ROM/22/52,evsb,jp,West Sarutabaruta
+ROM/20/53,evev,,East Sarutabaruta
+ROM/26/53,evac,,East Sarutabaruta
+ROM/24/53,evsb,na,East Sarutabaruta
+ROM/22/53,evsb,jp,East Sarutabaruta
+ROM/20/54,evev,,Tahrongi Canyon
+ROM/26/54,evac,,Tahrongi Canyon
+ROM/24/54,evsb,na,Tahrongi Canyon
+ROM/22/54,evsb,jp,Tahrongi Canyon
+ROM/20/55,evev,,Buburimu Peninsula
+ROM/26/55,evac,,Buburimu Peninsula
+ROM/24/55,evsb,na,Buburimu Peninsula
+ROM/22/55,evsb,jp,Buburimu Peninsula
+ROM/20/56,evev,,Meriphataud Mountains
+ROM/26/56,evac,,Meriphataud Mountains
+ROM/24/56,evsb,na,Meriphataud Mountains
+ROM/22/56,evsb,jp,Meriphataud Mountains
+ROM/20/57,evev,,Sauromugue Champaign
+ROM/26/57,evac,,Sauromugue Champaign
+ROM/24/57,evsb,na,Sauromugue Champaign
+ROM/22/57,evsb,jp,Sauromugue Champaign
+ROM2/13/7,evev,,The Sanctuary of Zi'Tah
+ROM2/13/97,evac,,The Sanctuary of Zi'Tah
+ROM2/17/54,evsb,na,The Sanctuary of Zi'Tah
+ROM2/13/52,evsb,jp,The Sanctuary of Zi'Tah
+ROM2/13/8,evev,,Ro'Maeve
+ROM2/13/98,evac,,Ro'Maeve
+ROM2/17/55,evsb,na,Ro'Maeve
+ROM2/13/53,evsb,jp,Ro'Maeve
+ROM2/13/9,evev,,Yuhtunga Jungle
+ROM2/13/99,evac,,Yuhtunga Jungle
+ROM2/17/56,evsb,na,Yuhtunga Jungle
+ROM2/13/54,evsb,jp,Yuhtunga Jungle
+ROM2/13/10,evev,,Yhoator Jungle
+ROM2/13/100,evac,,Yhoator Jungle
+ROM2/17/57,evsb,na,Yhoator Jungle
+ROM2/13/55,evsb,jp,Yhoator Jungle
+ROM2/13/11,evev,,Western Altepa Desert
+ROM2/13/101,evac,,Western Altepa Desert
+ROM2/17/58,evsb,na,Western Altepa Desert
+ROM2/13/56,evsb,jp,Western Altepa Desert
+ROM/20/63,evev,,Qufim Island
+ROM/26/63,evac,,Qufim Island
+ROM/24/63,evsb,na,Qufim Island
+ROM/22/63,evsb,jp,Qufim Island
+ROM/20/64,evev,,Behemoth's Dominion
+ROM/26/64,evac,,Behemoth's Dominion
+ROM/24/64,evsb,na,Behemoth's Dominion
+ROM/22/64,evsb,jp,Behemoth's Dominion
+ROM2/13/12,evev,,Valley of Sorrows
+ROM2/13/102,evac,,Valley of Sorrows
+ROM2/17/61,evsb,na,Valley of Sorrows
+ROM2/13/57,evsb,jp,Valley of Sorrows
+ROM/20/66,evev,,Ghoyu's Reverie
+ROM/26/66,evac,,Ghoyu's Reverie
+ROM/24/66,evsb,na,Ghoyu's Reverie
+ROM/22/66,evsb,jp,Ghoyu's Reverie
+ROM2/13/13,evev,,Ru'Aun Gardens
+ROM2/13/103,evac,,Ru'Aun Gardens
+ROM2/17/63,evsb,na,Ru'Aun Gardens
+ROM2/13/58,evsb,jp,Ru'Aun Gardens
+ROM/20/68,evev,,Mordion Gaol
+ROM/26/68,evac,,Mordion Gaol
+ROM/24/68,evsb,na,Mordion Gaol
+ROM/22/68,evsb,jp,Mordion Gaol
+ROM/20/69,evev,,Abyssea - La Theine
+ROM/26/69,evac,,Abyssea - La Theine
+ROM/24/69,evsb,na,Abyssea - La Theine
+ROM/22/69,evsb,jp,Abyssea - La Theine
+ROM9/8/68,evev,,Outer Ra'Kaznar [U2]
+ROM9/8/71,evac,,Outer Ra'Kaznar [U2]
+ROM9/8/70,evsb,na,Outer Ra'Kaznar [U2]
+ROM9/8/69,evsb,jp,Outer Ra'Kaznar [U2]
+ROM2/13/14,evev,,Dynamis - Beaucedine
+ROM2/13/104,evac,,Dynamis - Beaucedine
+ROM2/17/67,evsb,na,Dynamis - Beaucedine
+ROM2/13/59,evsb,jp,Dynamis - Beaucedine
+ROM2/13/15,evev,,Dynamis - Xarcabard
+ROM2/13/105,evac,,Dynamis - Xarcabard
+ROM2/17/68,evsb,na,Dynamis - Xarcabard
+ROM2/13/60,evsb,jp,Dynamis - Xarcabard
+ROM/20/73,evev,,Beaucedine Glacier [S]
+ROM/26/73,evac,,Beaucedine Glacier [S]
+ROM/24/73,evsb,na,Beaucedine Glacier [S]
+ROM/22/73,evsb,jp,Beaucedine Glacier [S]
+ROM/20/74,evev,,Xarcabard [S]
+ROM/26/74,evac,,Xarcabard [S]
+ROM/24/74,evsb,na,Xarcabard [S]
+ROM/22/74,evsb,jp,Xarcabard [S]
+ROM/20/75,evev,,Castle Zvahl Baileys [S]
+ROM/26/75,evac,,Castle Zvahl Baileys [S]
+ROM/24/75,evsb,na,Castle Zvahl Baileys [S]
+ROM/22/75,evsb,jp,Castle Zvahl Baileys [S]
+ROM/20/76,evev,,Horlais Peak
+ROM/26/76,evac,,Horlais Peak
+ROM/24/76,evsb,na,Horlais Peak
+ROM/22/76,evsb,jp,Horlais Peak
+ROM/20/77,evev,,Ghelsba Outpost
+ROM/26/77,evac,,Ghelsba Outpost
+ROM/24/77,evsb,na,Ghelsba Outpost
+ROM/22/77,evsb,jp,Ghelsba Outpost
+ROM/20/78,evev,,Fort Ghelsba
+ROM/26/78,evac,,Fort Ghelsba
+ROM/24/78,evsb,na,Fort Ghelsba
+ROM/22/78,evsb,jp,Fort Ghelsba
+ROM/20/79,evev,,Yughott Grotto
+ROM/26/79,evac,,Yughott Grotto
+ROM/24/79,evsb,na,Yughott Grotto
+ROM/22/79,evsb,jp,Yughott Grotto
+ROM/20/80,evev,,Palborough Mines
+ROM/26/80,evac,,Palborough Mines
+ROM/24/80,evsb,na,Palborough Mines
+ROM/22/80,evsb,jp,Palborough Mines
+ROM/20/81,evev,,Waughroon Shrine
+ROM/26/81,evac,,Waughroon Shrine
+ROM/24/81,evsb,na,Waughroon Shrine
+ROM/22/81,evsb,jp,Waughroon Shrine
+ROM/20/82,evev,,Giddeus
+ROM/26/82,evac,,Giddeus
+ROM/24/82,evsb,na,Giddeus
+ROM/22/82,evsb,jp,Giddeus
+ROM/20/83,evev,,Balga's Dais
+ROM/26/83,evac,,Balga's Dais
+ROM/24/83,evsb,na,Balga's Dais
+ROM/22/83,evsb,jp,Balga's Dais
+ROM/20/84,evev,,Beadeaux
+ROM/26/84,evac,,Beadeaux
+ROM/24/84,evsb,na,Beadeaux
+ROM/22/84,evsb,jp,Beadeaux
+ROM/20/85,evev,,Qulun Dome
+ROM/26/85,evac,,Qulun Dome
+ROM/24/85,evsb,na,Qulun Dome
+ROM/22/85,evsb,jp,Qulun Dome
+ROM/20/86,evev,,Davoi
+ROM/26/86,evac,,Davoi
+ROM/24/86,evsb,na,Davoi
+ROM/22/86,evsb,jp,Davoi
+ROM/20/87,evev,,Monastic Cavern
+ROM/26/87,evac,,Monastic Cavern
+ROM/24/87,evsb,na,Monastic Cavern
+ROM/22/87,evsb,jp,Monastic Cavern
+ROM/20/88,evev,,Castle Oztroja
+ROM/26/88,evac,,Castle Oztroja
+ROM/24/88,evsb,na,Castle Oztroja
+ROM/22/88,evsb,jp,Castle Oztroja
+ROM/20/89,evev,,Altar Room
+ROM/26/89,evac,,Altar Room
+ROM/24/89,evsb,na,Altar Room
+ROM/22/89,evsb,jp,Altar Room
+ROM2/13/16,evev,,The Boyahda Tree
+ROM2/13/106,evac,,The Boyahda Tree
+ROM2/17/86,evsb,na,The Boyahda Tree
+ROM2/13/61,evsb,jp,The Boyahda Tree
+ROM2/13/17,evev,,Dragon's Aery
+ROM2/13/107,evac,,Dragon's Aery
+ROM2/17/87,evsb,na,Dragon's Aery
+ROM2/13/62,evsb,jp,Dragon's Aery
+ROM/20/92,evev,,Castle Zvahl Keep [S]
+ROM/26/92,evac,,Castle Zvahl Keep [S]
+ROM/24/92,evsb,na,Castle Zvahl Keep [S]
+ROM/22/92,evsb,jp,Castle Zvahl Keep [S]
+ROM/20/93,evev,,Throne Room [S]
+ROM/26/93,evac,,Throne Room [S]
+ROM/24/93,evsb,na,Throne Room [S]
+ROM/22/93,evsb,jp,Throne Room [S]
+ROM/20/94,evev,,Middle Delkfutt's Tower
+ROM/26/94,evac,,Middle Delkfutt's Tower
+ROM/24/94,evsb,na,Middle Delkfutt's Tower
+ROM/22/94,evsb,jp,Middle Delkfutt's Tower
+ROM/20/95,evev,,Upper Delkfutt's Tower
+ROM/26/95,evac,,Upper Delkfutt's Tower
+ROM/24/95,evsb,na,Upper Delkfutt's Tower
+ROM/22/95,evsb,jp,Upper Delkfutt's Tower
+ROM2/13/18,evev,,Temple of Uggalepih
+ROM2/13/108,evac,,Temple of Uggalepih
+ROM2/17/92,evsb,na,Temple of Uggalepih
+ROM2/13/63,evsb,jp,Temple of Uggalepih
+ROM2/13/19,evev,,Den of Rancor
+ROM2/13/109,evac,,Den of Rancor
+ROM2/17/93,evsb,na,Den of Rancor
+ROM2/13/64,evsb,jp,Den of Rancor
+ROM/20/98,evev,,Castle Zvahl Baileys
+ROM/26/98,evac,,Castle Zvahl Baileys
+ROM/24/98,evsb,na,Castle Zvahl Baileys
+ROM/22/98,evsb,jp,Castle Zvahl Baileys
+ROM/20/99,evev,,Castle Zvahl Keep
+ROM/26/99,evac,,Castle Zvahl Keep
+ROM/24/99,evsb,na,Castle Zvahl Keep
+ROM/22/99,evsb,jp,Castle Zvahl Keep
+ROM2/13/20,evev,,Sacrificial Chamber
+ROM2/13/110,evac,,Sacrificial Chamber
+ROM2/17/96,evsb,na,Sacrificial Chamber
+ROM2/13/65,evsb,jp,Sacrificial Chamber
+ROM/20/101,evev,,Garlaige Citadel [S]
+ROM/26/101,evac,,Garlaige Citadel [S]
+ROM/24/101,evsb,na,Garlaige Citadel [S]
+ROM/22/101,evsb,jp,Garlaige Citadel [S]
+ROM/20/102,evev,,Throne Room
+ROM/26/102,evac,,Throne Room
+ROM/24/102,evsb,na,Throne Room
+ROM/22/102,evsb,jp,Throne Room
+ROM/20/103,evev,,Ranguemont Pass
+ROM/26/103,evac,,Ranguemont Pass
+ROM/24/103,evsb,na,Ranguemont Pass
+ROM/22/103,evsb,jp,Ranguemont Pass
+ROM/20/104,evev,,Bostaunieux Oubliette
+ROM/26/104,evac,,Bostaunieux Oubliette
+ROM/24/104,evsb,na,Bostaunieux Oubliette
+ROM/22/104,evsb,jp,Bostaunieux Oubliette
+ROM2/13/21,evev,,Chamber of Oracles
+ROM2/13/111,evac,,Chamber of Oracles
+ROM2/17/101,evsb,na,Chamber of Oracles
+ROM2/13/66,evsb,jp,Chamber of Oracles
+ROM/20/106,evev,,Toraimarai Canal
+ROM/26/106,evac,,Toraimarai Canal
+ROM/24/106,evsb,na,Toraimarai Canal
+ROM/22/106,evsb,jp,Toraimarai Canal
+ROM2/13/22,evev,,Full Moon Fountain
+ROM2/13/112,evac,,Full Moon Fountain
+ROM2/17/103,evsb,na,Full Moon Fountain
+ROM2/13/67,evsb,jp,Full Moon Fountain
+ROM/20/108,evev,,Crawlers' Nest [S]
+ROM/26/108,evac,,Crawlers' Nest [S]
+ROM/24/108,evsb,na,Crawlers' Nest [S]
+ROM/22/108,evsb,jp,Crawlers' Nest [S]
+ROM/20/109,evev,,Zeruhn Mines
+ROM/26/109,evac,,Zeruhn Mines
+ROM/24/109,evsb,na,Zeruhn Mines
+ROM/22/109,evsb,jp,Zeruhn Mines
+ROM2/13/23,evev,,Korroloka Tunnel
+ROM2/13/113,evac,,Korroloka Tunnel
+ROM2/17/106,evsb,na,Korroloka Tunnel
+ROM2/13/68,evsb,jp,Korroloka Tunnel
+ROM2/13/24,evev,,Kuftal Tunnel
+ROM2/13/114,evac,,Kuftal Tunnel
+ROM2/17/107,evsb,na,Kuftal Tunnel
+ROM2/13/69,evsb,jp,Kuftal Tunnel
+ROM/20/112,evev,,The Eldieme Necropolis [S]
+ROM/26/112,evac,,The Eldieme Necropolis [S]
+ROM/24/112,evsb,na,The Eldieme Necropolis [S]
+ROM/22/112,evsb,jp,The Eldieme Necropolis [S]
+ROM2/13/25,evev,,Sea Serpent Grotto
+ROM2/13/115,evac,,Sea Serpent Grotto
+ROM2/17/109,evsb,na,Sea Serpent Grotto
+ROM2/13/70,evsb,jp,Sea Serpent Grotto
+ROM2/13/26,evev,,Ve'Lugannon Palace
+ROM2/13/116,evac,,Ve'Lugannon Palace
+ROM2/17/110,evsb,na,Ve'Lugannon Palace
+ROM2/13/71,evsb,jp,Ve'Lugannon Palace
+ROM2/13/27,evev,,The Shrine of Ru'Avitau
+ROM2/13/117,evac,,The Shrine of Ru'Avitau
+ROM2/17/111,evsb,na,The Shrine of Ru'Avitau
+ROM2/13/72,evsb,jp,The Shrine of Ru'Avitau
+ROM2/13/28,evev,,Stellar Fulcrum
+ROM2/13/118,evac,,Stellar Fulcrum
+ROM2/17/112,evsb,na,Stellar Fulcrum
+ROM2/13/73,evsb,jp,Stellar Fulcrum
+ROM2/13/29,evev,,La'Loff Amphitheater
+ROM2/13/119,evac,,La'Loff Amphitheater
+ROM2/17/113,evsb,na,La'Loff Amphitheater
+ROM2/13/74,evsb,jp,La'Loff Amphitheater
+ROM2/13/30,evev,,The Celestial Nexus
+ROM2/13/120,evac,,The Celestial Nexus
+ROM2/17/114,evsb,na,The Celestial Nexus
+ROM2/13/75,evsb,jp,The Celestial Nexus
+ROM/20/119,evev,,Walk of Echoes
+ROM/26/119,evac,,Walk of Echoes
+ROM/24/119,evsb,na,Walk of Echoes
+ROM/22/119,evsb,jp,Walk of Echoes
+ROM/20/120,evev,,Maquette Abdhaljs-LegionA
+ROM/26/120,evac,,Maquette Abdhaljs-LegionA
+ROM/24/120,evsb,na,Maquette Abdhaljs-LegionA
+ROM/22/120,evsb,jp,Maquette Abdhaljs-LegionA
+ROM/20/121,evev,,Lower Delkfutt's Tower
+ROM/26/121,evac,,Lower Delkfutt's Tower
+ROM/24/121,evsb,na,Lower Delkfutt's Tower
+ROM/22/121,evsb,jp,Lower Delkfutt's Tower
+ROM2/13/31,evev,,Dynamis - San d'Oria
+ROM2/13/121,evac,,Dynamis - San d'Oria
+ROM2/17/118,evsb,na,Dynamis - San d'Oria
+ROM2/13/76,evsb,jp,Dynamis - San d'Oria
+ROM2/13/32,evev,,Dynamis - Bastok
+ROM2/13/122,evac,,Dynamis - Bastok
+ROM2/17/119,evsb,na,Dynamis - Bastok
+ROM2/13/77,evsb,jp,Dynamis - Bastok
+ROM2/13/33,evev,,Dynamis - Windurst
+ROM2/13/123,evac,,Dynamis - Windurst
+ROM2/17/120,evsb,na,Dynamis - Windurst
+ROM2/13/78,evsb,jp,Dynamis - Windurst
+ROM2/13/34,evev,,Dynamis - Jeuno
+ROM2/13/124,evac,,Dynamis - Jeuno
+ROM2/17/121,evsb,na,Dynamis - Jeuno
+ROM2/13/79,evsb,jp,Dynamis - Jeuno
+ROM/20/126,evev,,Outer Ra'Kaznar [U3]
+ROM/26/126,evac,,Outer Ra'Kaznar [U3]
+ROM/24/126,evsb,na,Outer Ra'Kaznar [U3]
+ROM/22/126,evsb,jp,Outer Ra'Kaznar [U3]
+ROM/20/127,evev,,King Ranperre's Tomb
+ROM/26/127,evac,,King Ranperre's Tomb
+ROM/24/127,evsb,na,King Ranperre's Tomb
+ROM/22/127,evsb,jp,King Ranperre's Tomb
+ROM/21/0,evev,,Dangruf Wadi
+ROM/27/0,evac,,Dangruf Wadi
+ROM/25/0,evsb,na,Dangruf Wadi
+ROM/23/0,evsb,jp,Dangruf Wadi
+ROM/21/1,evev,,Inner Horutoto Ruins
+ROM/27/1,evac,,Inner Horutoto Ruins
+ROM/25/1,evsb,na,Inner Horutoto Ruins
+ROM/23/1,evsb,jp,Inner Horutoto Ruins
+ROM/21/2,evev,,Ordelle's Caves
+ROM/27/2,evac,,Ordelle's Caves
+ROM/25/2,evsb,na,Ordelle's Caves
+ROM/23/2,evsb,jp,Ordelle's Caves
+ROM/21/3,evev,,Outer Horutoto Ruins
+ROM/27/3,evac,,Outer Horutoto Ruins
+ROM/25/3,evsb,na,Outer Horutoto Ruins
+ROM/23/3,evsb,jp,Outer Horutoto Ruins
+ROM/21/4,evev,,The Eldieme Necropolis
+ROM/27/4,evac,,The Eldieme Necropolis
+ROM/25/4,evsb,na,The Eldieme Necropolis
+ROM/23/4,evsb,jp,The Eldieme Necropolis
+ROM/21/5,evev,,Gusgen Mines
+ROM/27/5,evac,,Gusgen Mines
+ROM/25/5,evsb,na,Gusgen Mines
+ROM/23/5,evsb,jp,Gusgen Mines
+ROM/21/6,evev,,Crawlers' Nest
+ROM/27/6,evac,,Crawlers' Nest
+ROM/25/6,evsb,na,Crawlers' Nest
+ROM/23/6,evsb,jp,Crawlers' Nest
+ROM/21/7,evev,,Maze of Shakhrami
+ROM/27/7,evac,,Maze of Shakhrami
+ROM/25/7,evsb,na,Maze of Shakhrami
+ROM/23/7,evsb,jp,Maze of Shakhrami
+ROM/21/9,evev,,Garlaige Citadel
+ROM/27/9,evac,,Garlaige Citadel
+ROM/25/9,evsb,na,Garlaige Citadel
+ROM/23/9,evsb,jp,Garlaige Citadel
+ROM2/13/35,evev,,Cloister of Gales
+ROM2/13/125,evac,,Cloister of Gales
+ROM2/18/6,evsb,na,Cloister of Gales
+ROM2/13/80,evsb,jp,Cloister of Gales
+ROM2/13/36,evev,,Cloister of Storms
+ROM2/13/126,evac,,Cloister of Storms
+ROM2/18/7,evsb,na,Cloister of Storms
+ROM2/13/81,evsb,jp,Cloister of Storms
+ROM2/13/37,evev,,Cloister of Frost
+ROM2/13/127,evac,,Cloister of Frost
+ROM2/18/8,evsb,na,Cloister of Frost
+ROM2/13/82,evsb,jp,Cloister of Frost
+ROM/21/13,evev,,Fei'Yin
+ROM/27/13,evac,,Fei'Yin
+ROM/25/13,evsb,na,Fei'Yin
+ROM/23/13,evsb,jp,Fei'Yin
+ROM2/13/38,evev,,Ifrit's Cauldron
+ROM2/14/0,evac,,Ifrit's Cauldron
+ROM2/18/10,evsb,na,Ifrit's Cauldron
+ROM2/13/83,evsb,jp,Ifrit's Cauldron
+ROM/21/15,evev,,Qu'Bia Arena
+ROM/27/15,evac,,Qu'Bia Arena
+ROM/25/15,evsb,na,Qu'Bia Arena
+ROM/23/15,evsb,jp,Qu'Bia Arena
+ROM2/13/39,evev,,Cloister of Flames
+ROM2/14/1,evac,,Cloister of Flames
+ROM2/18/12,evsb,na,Cloister of Flames
+ROM2/13/84,evsb,jp,Cloister of Flames
+ROM2/13/40,evev,,Quicksand Caves
+ROM2/14/2,evac,,Quicksand Caves
+ROM2/18/13,evsb,na,Quicksand Caves
+ROM2/13/85,evsb,jp,Quicksand Caves
+ROM2/13/41,evev,,Cloister of Tremors
+ROM2/14/3,evac,,Cloister of Tremors
+ROM2/18/14,evsb,na,Cloister of Tremors
+ROM2/13/86,evsb,jp,Cloister of Tremors
+ROM/21/19,evev,,GM_Home
+ROM/27/19,evac,,GM_Home
+ROM/25/19,evsb,na,GM_Home
+ROM/23/19,evsb,jp,GM_Home
+ROM2/13/42,evev,,Cloister of Tides
+ROM2/14/4,evac,,Cloister of Tides
+ROM2/18/16,evsb,na,Cloister of Tides
+ROM2/13/87,evsb,jp,Cloister of Tides
+ROM2/13/43,evev,,Gustav Tunnel
+ROM2/14/5,evac,,Gustav Tunnel
+ROM2/18/17,evsb,na,Gustav Tunnel
+ROM2/13/88,evsb,jp,Gustav Tunnel
+ROM2/13/44,evev,,Labyrinth of Onzozo
+ROM2/14/6,evac,,Labyrinth of Onzozo
+ROM2/18/18,evsb,na,Labyrinth of Onzozo
+ROM2/13/89,evsb,jp,Labyrinth of Onzozo
+ROM/21/24,evev,,Abyssea - Attohwa
+ROM/27/24,evac,,Abyssea - Attohwa
+ROM/25/24,evsb,na,Abyssea - Attohwa
+ROM/23/24,evsb,jp,Abyssea - Attohwa
+ROM/21/25,evev,,Abyssea - Misareaux
+ROM/27/25,evac,,Abyssea - Misareaux
+ROM/25/25,evsb,na,Abyssea - Misareaux
+ROM/23/25,evsb,jp,Abyssea - Misareaux
+ROM/21/26,evev,,Abyssea - Vunkerl
+ROM/27/26,evac,,Abyssea - Vunkerl
+ROM/25/26,evsb,na,Abyssea - Vunkerl
+ROM/23/26,evsb,jp,Abyssea - Vunkerl
+ROM/21/27,evev,,Abyssea - Altepa
+ROM/27/27,evac,,Abyssea - Altepa
+ROM/25/27,evsb,na,Abyssea - Altepa
+ROM/23/27,evsb,jp,Abyssea - Altepa
+ROM/21/29,evev,,Ship bound for Selbina
+ROM/27/29,evac,,Ship bound for Selbina
+ROM/25/29,evsb,na,Ship bound for Selbina
+ROM/23/29,evsb,jp,Ship bound for Selbina
+ROM/21/30,evev,,Ship bound for Mhaura
+ROM/27/30,evac,,Ship bound for Mhaura
+ROM/25/30,evsb,na,Ship bound for Mhaura
+ROM/23/30,evsb,jp,Ship bound for Mhaura
+ROM/21/31,evev,,Provenance
+ROM/27/31,evac,,Provenance
+ROM/25/31,evsb,na,Provenance
+ROM/23/31,evsb,jp,Provenance
+ROM/21/32,evev,,San d'Oria-Jeuno Airship
+ROM/27/32,evac,,San d'Oria-Jeuno Airship
+ROM/25/32,evsb,na,San d'Oria-Jeuno Airship
+ROM/23/32,evsb,jp,San d'Oria-Jeuno Airship
+ROM/21/33,evev,,Bastok-Jeuno Airship
+ROM/27/33,evac,,Bastok-Jeuno Airship
+ROM/25/33,evsb,na,Bastok-Jeuno Airship
+ROM/23/33,evsb,jp,Bastok-Jeuno Airship
+ROM/21/34,evev,,Windurst-Jeuno Airship
+ROM/27/34,evac,,Windurst-Jeuno Airship
+ROM/25/34,evsb,na,Windurst-Jeuno Airship
+ROM/23/34,evsb,jp,Windurst-Jeuno Airship
+ROM2/13/45,evev,,Kazham-Jeuno Airship
+ROM2/14/7,evac,,Kazham-Jeuno Airship
+ROM2/18/31,evsb,na,Kazham-Jeuno Airship
+ROM2/13/90,evsb,jp,Kazham-Jeuno Airship
+ROM/21/36,evev,,Ship bound for Selbina
+ROM/27/36,evac,,Ship bound for Selbina
+ROM/25/36,evsb,na,Ship bound for Selbina
+ROM/23/36,evsb,jp,Ship bound for Selbina
+ROM/21/37,evev,,Ship bound for Mhaura
+ROM/27/37,evac,,Ship bound for Mhaura
+ROM/25/37,evsb,na,Ship bound for Mhaura
+ROM/23/37,evsb,jp,Ship bound for Mhaura
+ROM/21/38,evev,,Throne Room [V]
+ROM/27/38,evac,,Throne Room [V]
+ROM/25/38,evsb,na,Throne Room [V]
+ROM/23/38,evsb,jp,Throne Room [V]
+ROM/21/39,evev,,Southern San d'Oria
+ROM/27/39,evac,,Southern San d'Oria
+ROM/25/39,evsb,na,Southern San d'Oria
+ROM/23/39,evsb,jp,Southern San d'Oria
+ROM/21/40,evev,,Northern San d'Oria
+ROM/27/40,evac,,Northern San d'Oria
+ROM/25/40,evsb,na,Northern San d'Oria
+ROM/23/40,evsb,jp,Northern San d'Oria
+ROM/21/41,evev,,Port San d'Oria
+ROM/27/41,evac,,Port San d'Oria
+ROM/25/41,evsb,na,Port San d'Oria
+ROM/23/41,evsb,jp,Port San d'Oria
+ROM/21/42,evev,,Chateau d'Oraguille
+ROM/27/42,evac,,Chateau d'Oraguille
+ROM/25/42,evsb,na,Chateau d'Oraguille
+ROM/23/42,evsb,jp,Chateau d'Oraguille
+ROM/21/43,evev,,Bastok Mines
+ROM/27/43,evac,,Bastok Mines
+ROM/25/43,evsb,na,Bastok Mines
+ROM/23/43,evsb,jp,Bastok Mines
+ROM/21/44,evev,,Bastok Markets
+ROM/27/44,evac,,Bastok Markets
+ROM/25/44,evsb,na,Bastok Markets
+ROM/23/44,evsb,jp,Bastok Markets
+ROM/21/45,evev,,Port Bastok
+ROM/27/45,evac,,Port Bastok
+ROM/25/45,evsb,na,Port Bastok
+ROM/23/45,evsb,jp,Port Bastok
+ROM/21/46,evev,,Metalworks
+ROM/27/46,evac,,Metalworks
+ROM/25/46,evsb,na,Metalworks
+ROM/23/46,evsb,jp,Metalworks
+ROM/21/47,evev,,Windurst Waters
+ROM/27/47,evac,,Windurst Waters
+ROM/25/47,evsb,na,Windurst Waters
+ROM/23/47,evsb,jp,Windurst Waters
+ROM/21/48,evev,,Windurst Walls
+ROM/27/48,evac,,Windurst Walls
+ROM/25/48,evsb,na,Windurst Walls
+ROM/23/48,evsb,jp,Windurst Walls
+ROM/21/49,evev,,Port Windurst
+ROM/27/49,evac,,Port Windurst
+ROM/25/49,evsb,na,Port Windurst
+ROM/23/49,evsb,jp,Port Windurst
+ROM/21/50,evev,,Windurst Woods
+ROM/27/50,evac,,Windurst Woods
+ROM/25/50,evsb,na,Windurst Woods
+ROM/23/50,evsb,jp,Windurst Woods
+ROM/21/51,evev,,Heavens Tower
+ROM/27/51,evac,,Heavens Tower
+ROM/25/51,evsb,na,Heavens Tower
+ROM/23/51,evsb,jp,Heavens Tower
+ROM/21/52,evev,,Ru'Lude Gardens
+ROM/27/52,evac,,Ru'Lude Gardens
+ROM/25/52,evsb,na,Ru'Lude Gardens
+ROM/23/52,evsb,jp,Ru'Lude Gardens
+ROM/21/53,evev,,Upper Jeuno
+ROM/27/53,evac,,Upper Jeuno
+ROM/25/53,evsb,na,Upper Jeuno
+ROM/23/53,evsb,jp,Upper Jeuno
+ROM/21/54,evev,,Lower Jeuno
+ROM/27/54,evac,,Lower Jeuno
+ROM/25/54,evsb,na,Lower Jeuno
+ROM/23/54,evsb,jp,Lower Jeuno
+ROM/21/55,evev,,Port Jeuno
+ROM/27/55,evac,,Port Jeuno
+ROM/25/55,evsb,na,Port Jeuno
+ROM/23/55,evsb,jp,Port Jeuno
+ROM2/13/46,evev,,Rabao
+ROM2/14/8,evac,,Rabao
+ROM2/18/52,evsb,na,Rabao
+ROM2/13/91,evsb,jp,Rabao
+ROM/21/57,evev,,Selbina
+ROM/27/57,evac,,Selbina
+ROM/25/57,evsb,na,Selbina
+ROM/23/57,evsb,jp,Selbina
+ROM/21/58,evev,,Mhaura
+ROM/27/58,evac,,Mhaura
+ROM/25/58,evsb,na,Mhaura
+ROM/23/58,evsb,jp,Mhaura
+ROM2/13/47,evev,,Kazham
+ROM2/14/9,evac,,Kazham
+ROM2/18/55,evsb,na,Kazham
+ROM2/13/92,evsb,jp,Kazham
+ROM2/13/48,evev,,Hall of the Gods
+ROM2/14/10,evac,,Hall of the Gods
+ROM2/18/56,evsb,na,Hall of the Gods
+ROM2/13/93,evsb,jp,Hall of the Gods
+ROM2/13/49,evev,,Norg
+ROM2/14/11,evac,,Norg
+ROM2/18/57,evsb,na,Norg
+ROM2/13/94,evsb,jp,Norg
+ROM/21/62,evev,,Abyssea - Uleguerand
+ROM/27/62,evac,,Abyssea - Uleguerand
+ROM/25/62,evsb,na,Abyssea - Uleguerand
+ROM/23/62,evsb,jp,Abyssea - Uleguerand
+ROM/21/63,evev,,Abyssea - Grauberg
+ROM/27/63,evac,,Abyssea - Grauberg
+ROM/25/63,evsb,na,Abyssea - Grauberg
+ROM/23/63,evsb,jp,Abyssea - Grauberg
+ROM/21/64,evev,,Abyssea - Empyreal Paradox
+ROM/27/64,evac,,Abyssea - Empyreal Paradox
+ROM/25/64,evsb,na,Abyssea - Empyreal Paradox
+ROM/23/64,evsb,jp,Abyssea - Empyreal Paradox
+ROM9/5/53,evev,,Western Adoulin
+ROM9/6/45,evac,,Western Adoulin
+ROM9/5/101,evsb,na,Western Adoulin
+ROM9/5/77,evsb,jp,Western Adoulin
+ROM9/5/54,evev,,Eastern Adoulin
+ROM9/6/46,evac,,Eastern Adoulin
+ROM9/5/102,evsb,na,Eastern Adoulin
+ROM9/5/78,evsb,jp,Eastern Adoulin
+ROM9/5/55,evev,,Rala Waterways
+ROM9/6/47,evac,,Rala Waterways
+ROM9/5/103,evsb,na,Rala Waterways
+ROM9/5/79,evsb,jp,Rala Waterways
+ROM9/5/56,evev,,Rala Waterways [U]
+ROM9/6/48,evac,,Rala Waterways [U]
+ROM9/5/104,evsb,na,Rala Waterways [U]
+ROM9/5/80,evsb,jp,Rala Waterways [U]
+ROM9/5/57,evev,,Yahse Hunting Grounds
+ROM9/6/49,evac,,Yahse Hunting Grounds
+ROM9/5/105,evsb,na,Yahse Hunting Grounds
+ROM9/5/81,evsb,jp,Yahse Hunting Grounds
+ROM9/5/58,evev,,Ceizak Battlegrounds
+ROM9/6/50,evac,,Ceizak Battlegrounds
+ROM9/5/106,evsb,na,Ceizak Battlegrounds
+ROM9/5/82,evsb,jp,Ceizak Battlegrounds
+ROM9/5/59,evev,,Foret de Hennetiel
+ROM9/6/51,evac,,Foret de Hennetiel
+ROM9/5/107,evsb,na,Foret de Hennetiel
+ROM9/5/83,evsb,jp,Foret de Hennetiel
+ROM9/5/60,evev,,Yorcia Weald
+ROM9/6/52,evac,,Yorcia Weald
+ROM9/5/108,evsb,na,Yorcia Weald
+ROM9/5/84,evsb,jp,Yorcia Weald
+ROM9/5/61,evev,,Yorcia Weald [U]
+ROM9/6/53,evac,,Yorcia Weald [U]
+ROM9/5/109,evsb,na,Yorcia Weald [U]
+ROM9/5/85,evsb,jp,Yorcia Weald [U]
+ROM9/5/62,evev,,Morimar Basalt Fields
+ROM9/6/54,evac,,Morimar Basalt Fields
+ROM9/5/110,evsb,na,Morimar Basalt Fields
+ROM9/5/86,evsb,jp,Morimar Basalt Fields
+ROM9/5/63,evev,,Marjami Ravine
+ROM9/6/55,evac,,Marjami Ravine
+ROM9/5/111,evsb,na,Marjami Ravine
+ROM9/5/87,evsb,jp,Marjami Ravine
+ROM9/5/64,evev,,Kamihr Drifts
+ROM9/6/56,evac,,Kamihr Drifts
+ROM9/5/112,evsb,na,Kamihr Drifts
+ROM9/5/88,evsb,jp,Kamihr Drifts
+ROM9/5/65,evev,,Sih Gates
+ROM9/6/57,evac,,Sih Gates
+ROM9/5/113,evsb,na,Sih Gates
+ROM9/5/89,evsb,jp,Sih Gates
+ROM9/5/66,evev,,Moh Gates
+ROM9/6/58,evac,,Moh Gates
+ROM9/5/114,evsb,na,Moh Gates
+ROM9/5/90,evsb,jp,Moh Gates
+ROM9/5/67,evev,,Cirdas Caverns
+ROM9/6/59,evac,,Cirdas Caverns
+ROM9/5/115,evsb,na,Cirdas Caverns
+ROM9/5/91,evsb,jp,Cirdas Caverns
+ROM9/5/68,evev,,Cirdas Caverns [U]
+ROM9/6/60,evac,,Cirdas Caverns [U]
+ROM9/5/116,evsb,na,Cirdas Caverns [U]
+ROM9/5/92,evsb,jp,Cirdas Caverns [U]
+ROM9/5/69,evev,,Dho Gates
+ROM9/6/61,evac,,Dho Gates
+ROM9/5/117,evsb,na,Dho Gates
+ROM9/5/93,evsb,jp,Dho Gates
+ROM9/5/70,evev,,Woh Gates
+ROM9/6/62,evac,,Woh Gates
+ROM9/5/118,evsb,na,Woh Gates
+ROM9/5/94,evsb,jp,Woh Gates
+ROM9/5/71,evev,,Outer Ra'Kaznar
+ROM9/6/63,evac,,Outer Ra'Kaznar
+ROM9/5/119,evsb,na,Outer Ra'Kaznar
+ROM9/5/95,evsb,jp,Outer Ra'Kaznar
+ROM9/5/72,evev,,Outer Ra'Kaznar [U1]
+ROM9/6/64,evac,,Outer Ra'Kaznar [U1]
+ROM9/5/120,evsb,na,Outer Ra'Kaznar [U1]
+ROM9/5/96,evsb,jp,Outer Ra'Kaznar [U1]
+ROM9/5/73,evev,,Ra'Kaznar Inner Court
+ROM9/6/65,evac,,Ra'Kaznar Inner Court
+ROM9/5/121,evsb,na,Ra'Kaznar Inner Court
+ROM9/5/97,evsb,jp,Ra'Kaznar Inner Court
+ROM9/5/74,evev,,Ra'Kaznar Turris
+ROM9/6/66,evac,,Ra'Kaznar Turris
+ROM9/5/122,evsb,na,Ra'Kaznar Turris
+ROM9/5/98,evsb,jp,Ra'Kaznar Turris
+ROM/375/125,evev,,Gwora - Corridor
+ROM/376/2,evac,,Gwora - Corridor
+ROM/375/127,evsb,na,Gwora - Corridor
+ROM/375/126,evsb,jp,Gwora - Corridor
+ROM9/5/76,evev,,Walk of Echoes [P2]
+ROM9/6/68,evac,,Walk of Echoes [P2]
+ROM9/5/124,evsb,na,Walk of Echoes [P2]
+ROM9/5/100,evsb,jp,Walk of Echoes [P2]
+ROM/303/28,evev,,Mog Garden
+ROM/303/36,evac,,Mog Garden
+ROM/303/32,evsb,na,Mog Garden
+ROM/303/30,evsb,jp,Mog Garden
+ROM/315/104,evev,,Leafallia
+ROM/315/114,evac,,Leafallia
+ROM/315/108,evsb,na,Leafallia
+ROM/315/106,evsb,jp,Leafallia
+ROM/315/105,evev,,Mount Kamihr
+ROM/315/115,evac,,Mount Kamihr
+ROM/315/109,evsb,na,Mount Kamihr
+ROM/315/107,evsb,jp,Mount Kamihr
+ROM/374/96,evev,,Silver Knife
+ROM/374/101,evac,,Silver Knife
+ROM/374/98,evsb,na,Silver Knife
+ROM/374/97,evsb,jp,Silver Knife
+ROM/303/29,evev,,Celennia Memorial Library
+ROM/303/37,evac,,Celennia Memorial Library
+ROM/303/33,evsb,na,Celennia Memorial Library
+ROM/303/31,evsb,jp,Celennia Memorial Library
+ROM/306/56,evev,,Feretory
+ROM/306/61,evac,,Feretory
+ROM/306/58,evsb,na,Feretory
+ROM/306/57,evsb,jp,Feretory
+ROM/362/20,evev,,Maquette Abdhaljs-LegionB
+ROM/362/25,evac,,Maquette Abdhaljs-LegionB
+ROM/362/22,evsb,na,Maquette Abdhaljs-LegionB
+ROM/362/21,evsb,jp,Maquette Abdhaljs-LegionB
+ROM/332/104,evev,,Escha - Zi'Tah
+ROM/332/109,evac,,Escha - Zi'Tah
+ROM/332/106,evsb,na,Escha - Zi'Tah
+ROM/332/105,evsb,jp,Escha - Zi'Tah
+ROM/337/61,evev,,Escha - Ru'Aun
+ROM/337/66,evac,,Escha - Ru'Aun
+ROM/337/63,evsb,na,Escha - Ru'Aun
+ROM/337/62,evsb,jp,Escha - Ru'Aun
+ROM/342/78,evev,,Desuetia - Empyreal Paradox
+ROM/342/93,evac,,Desuetia - Empyreal Paradox
+ROM/342/84,evsb,na,Desuetia - Empyreal Paradox
+ROM/342/81,evsb,jp,Desuetia - Empyreal Paradox
+ROM/342/79,evev,,Reisenjima
+ROM/342/94,evac,,Reisenjima
+ROM/342/85,evsb,na,Reisenjima
+ROM/342/82,evsb,jp,Reisenjima
+ROM/353/56,evev,,Reisenjima Henge
+ROM/353/61,evac,,Reisenjima Henge
+ROM/353/58,evsb,na,Reisenjima Henge
+ROM/353/57,evsb,jp,Reisenjima Henge
+ROM/342/80,evev,,Reisenjima Sanctorium
+ROM/342/95,evac,,Reisenjima Sanctorium
+ROM/342/86,evsb,na,Reisenjima Sanctorium
+ROM/342/83,evsb,jp,Reisenjima Sanctorium
+ROM/354/111,evev,,Dynamis - San d'Oria [D]
+ROM/354/116,evac,,Dynamis - San d'Oria [D]
+ROM/354/113,evsb,na,Dynamis - San d'Oria [D]
+ROM/354/112,evsb,jp,Dynamis - San d'Oria [D]
+ROM/355/6,evev,,Dynamis - Bastok [D]
+ROM/355/5,evac,,Dynamis - Bastok [D]
+ROM/355/8,evsb,na,Dynamis - Bastok [D]
+ROM/355/7,evsb,jp,Dynamis - Bastok [D]
+ROM/355/34,evev,,Dynamis - Windurst [D]
+ROM/355/39,evac,,Dynamis - Windurst [D]
+ROM/355/36,evsb,na,Dynamis - Windurst [D]
+ROM/355/35,evsb,jp,Dynamis - Windurst [D]
+ROM/355/49,evev,,Dynamis - Jeuno [D]
+ROM/355/54,evac,,Dynamis - Jeuno [D]
+ROM/355/51,evsb,na,Dynamis - Jeuno [D]
+ROM/355/50,evsb,jp,Dynamis - Jeuno [D]
+ROM/361/87,evev,,Walk of Echoes [P1]
+ROM/361/92,evac,,Walk of Echoes [P1]
+ROM/361/89,evsb,na,Walk of Echoes [P1]
+ROM/361/88,evsb,jp,Walk of Echoes [P1]
+ROM/378/101,evev,,Gwora - Throne Room
+ROM/378/106,evac,,Gwora - Throne Room
+ROM/378/103,evsb,na,Gwora - Throne Room
+ROM/378/102,evsb,jp,Gwora - Throne Room

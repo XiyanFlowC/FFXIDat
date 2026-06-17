@@ -1,12 +1,13 @@
 #pragma once
 
-#ifndef XY_EXCEPTION_H__
-#define XY_EXCEPTION_H__
-
 #include <exception>
 #include <string>
 
 #include "../xyapi.h"
+
+// Prevent Windows GetMessage macro from mangling this method name
+#pragma push_macro("GetMessage")
+#undef GetMessage
 
 namespace xybase
 {
@@ -30,4 +31,4 @@ namespace xybase
 	};
 }
 
-#endif
+#pragma pop_macro("GetMessage")

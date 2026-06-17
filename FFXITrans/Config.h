@@ -38,6 +38,7 @@ public:
 	bool IsNoMismatchLog() const { return noMismatchLog; }
 	bool IsEnAsJa() const { return enAsJa; }
 	bool IsEjrefTolerance() const { return ejrefTolerance; }
+	bool IsSrcValidation() const { return srcValidation; }
 	bool IsVerbose() const { return verbose; }
 	bool IsNoName() const { return noname; }
    CtrlSeqCheckMode GetCtrlSeqCheckMode() const { return ctrlSeqCheckMode; }
@@ -62,6 +63,7 @@ public:
 	void SetVerbose(bool value) { verbose = value; }
 	void SetNoName(bool value) { noname = value; }
 	void SetGameRoot(const fs::path& path) { gameRoot = path; }
+	void SetSrcValidation(bool value) { srcValidation = value; }
 
 private:
 	Config() = default;
@@ -84,6 +86,7 @@ private:
 	bool noMismatchLog = false;
 	bool enAsJa = false;
 	bool ejrefTolerance = false;
+	bool srcValidation = true;
 	bool verbose = false;
 	bool noname = false;
   CtrlSeqCheckMode ctrlSeqCheckMode = CtrlSeqCheckMode::Skip;

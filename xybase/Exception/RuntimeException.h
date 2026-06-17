@@ -1,12 +1,12 @@
 #pragma once
 
-#ifndef XY_RUNTIME_EXCEPTION_H__
-#define XY_RUNTIME_EXCEPTION_H__
-
 #include <exception>
 #include <string>
 
 #include "../xyapi.h"
+
+#pragma push_macro("GetMessage")
+#undef GetMessage
 
 namespace xybase
 {
@@ -32,4 +32,4 @@ namespace xybase
 	};
 }
 
-#endif
+#pragma pop_macro("GetMessage")

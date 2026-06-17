@@ -1,3 +1,16 @@
+
+
+Note: The FFXIDatEG subproject is licensed under the MIT License. 
+See FFXIDatEG/LICENSE for details. 
+
+The FFXIDatAdv subproject is licensed under the AGPL-3.0 License.
+See FFXIDatAdv/LICENSE for details.
+
+The other subprojects of FFXITrans, including the core translation
+processing library, are released under the Unlicense, which is a
+public domain dedication.
+================================================================================
+
 This is free and unencumbered software released into the public domain.
 
 Anyone is free to copy, modify, publish, use, compile, sell, or
@@ -23,8 +36,3 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 For more information, please refer to <https://unlicense.org>
 
-================================================================================
-
-Note: The FFXIDatEG subproject is licensed under the MIT License. 
-See FFXIDatEG/LICENSE for details. This does not affect the public domain
-status of the core FFXIDat library and other components.
