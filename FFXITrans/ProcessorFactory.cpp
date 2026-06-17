@@ -1,6 +1,7 @@
 #include "ProcessorFactory.h"
 #include "Processors/XisProcessor.h"
 #include "Processors/EvsbProcessor.h"
+#include "Processors/EventProcessor.h"
 #include "Processors/DMsgProcessor.h"
 #include "Processors/ItemProcessor.h"
 #include "Processors/StatusDataProcessor.h"
@@ -25,7 +26,7 @@ void ProcessorFactory::RegisterDefaultProcessors()
     // Register XisProcessor
     RegisterProcessor(u8"xis", std::make_shared<XisProcessor>());
 
-    // Register EvsbProcessor
+    // Register EvsbProcessor - used as fallback when EventProcessor lacks evev
     RegisterProcessor(u8"evsb", std::make_shared<EvsbProcessor>());
 
     // Register DMsgProcessor

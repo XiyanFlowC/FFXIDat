@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <map>
 #include <string>
 #include <unordered_set>
@@ -19,6 +19,10 @@ public:
 	std::u8string GetTranslation(const std::u8string& text);
 	std::u8string GetTranslationFromReference(const std::u8string& sourceText, const std::u8string& referenceText);
 	bool TryGetTranslationFromReference(const std::u8string& sourceText, const std::u8string& referenceText, std::u8string& translation);
+
+	// Local scope -- per-file translation priority (comment-keyed src/tgt pairs)
+	void LoadLocalScope(const std::filesystem::path& srcPath, const std::filesystem::path& tgtPath);
+	void ClearLocalScope();
 
 	// Mismatch tracking
 	void InitializeMismatchLog(const std::filesystem::path& logPath);
@@ -44,6 +48,7 @@ private:
 		bool translationEndedEarly);
 
 	std::map<std::u8string, std::u8string> textMapping;
+	std::map<std::u8string, std::u8string> localMapping;
 	std::unordered_set<std::u8string> mismatchSet;
 	int mismatchCount = 0;
 	std::ofstream mismatchFile;

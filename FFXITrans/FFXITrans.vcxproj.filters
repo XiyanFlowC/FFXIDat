@@ -87,6 +87,9 @@
     <ClCompile Include="Logger.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Processors\EventProcessor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FFXIDatProcessor\codepage.h">
@@ -159,6 +162,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Processors\EventProcessor.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -9,6 +9,7 @@
 #include "SetupWizard.h"
 #include "../FFXIDatProcessor/codepage.h"
 #include "SpecialProcessor.h"
+#include "Processors/EventProcessor.h"
 #include <Windows.h>
 #include <CommCtrl.h>
 #include <EventStringBase.h>
@@ -1039,6 +1040,14 @@ int Application::ProcessTranslations()
 			processed = specProc.Process(fileDef, datPath, outputPath, jpDefsByComment);
 			if (processed)
 				Logger::Instance().Info("Completed file via special processor. comment='" + Logger::ToUtf8(fileDef.comment) + "'.");
+		}
+
+		if (!processed)
+		{
+			auto evProc = EventProcessor();
+			processed = evProc.Process(fileDef, datPath, outputPath, jpDefsByComment);
+			if (processed)
+				Logger::Instance().Info("Completed file via event processor. comment='" + Logger::ToUtf8(fileDef.comment) + "'.");
 		}
 
 		// If not processed by ejref, use regular processor

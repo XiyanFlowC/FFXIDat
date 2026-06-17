@@ -1,5 +1,4 @@
-#include "TranslationDatabase.h"
-#include "TranslationDatabase.h"
+ï»¿#include "TranslationDatabase.h"
 #include "Config.h"
 #include "Logger.h"
 #include <Windows.h>
@@ -16,7 +15,7 @@ void TranslationDatabase::InitializeMismatchLog(const std::filesystem::path& log
 {
 	if (Config::Instance().IsNoMismatchLog())
 	{
-		std::wcout << L"ÅäÖÃÎª²»Êä³öÊ§ÅäÎÄ±¾¡£\n";
+		std::wcout << L"é…ç½®ä¸ºä¸è¾“å‡ºå¤±é…æ–‡æœ¬ã€‚\n";
 		Logger::Instance().Info("Mismatch text output is disabled by config.");
 		return;
 	}
@@ -24,7 +23,7 @@ void TranslationDatabase::InitializeMismatchLog(const std::filesystem::path& log
 	mismatchFile.open(logPath, std::ios::out | std::ios::binary);
 	if (!mismatchFile.is_open())
 	{
-		std::wcerr << L"ÎÞ·¨´´½¨Ê§ÅäÎÄ±¾ÎÄ¼þ£º" << logPath << std::endl;
+		std::wcerr << L"æ— æ³•åˆ›å»ºå¤±é…æ–‡æœ¬æ–‡ä»¶ï¼š" << logPath << std::endl;
 		Logger::Instance().Error("Failed to open mismatch output file: " + Logger::ToUtf8(logPath));
 		return;
 	}
@@ -63,12 +62,12 @@ bool TranslationDatabase::PrepareTextStream(std::ifstream& eye)
 	}
 	if (bytesRead >= 2 && bom[0] == char(0xFF) && bom[1] == char(0xFE))
 	{
-		std::wcerr << L"²»Ö§³ÖµÄ±àÂë¸ñÊ½£¨UTF-16 LE£©£¬Çë×ª»»ÎªUTF-8±àÂë¡£\n";
+		std::wcerr << L"ä¸æ”¯æŒçš„ç¼–ç æ ¼å¼ï¼ˆUTF-16 LEï¼‰ï¼Œè¯·è½¬æ¢ä¸ºUTF-8ç¼–ç ã€‚\n";
 		return false;
 	}
 	if (bytesRead >= 2 && bom[0] == char(0xFE) && bom[1] == char(0xFF))
 	{
-		std::wcerr << L"²»Ö§³ÖµÄ±àÂë¸ñÊ½£¨UTF-16 BE£©£¬Çë×ª»»ÎªUTF-8±àÂë¡£\n";
+		std::wcerr << L"ä¸æ”¯æŒçš„ç¼–ç æ ¼å¼ï¼ˆUTF-16 BEï¼‰ï¼Œè¯·è½¬æ¢ä¸ºUTF-8ç¼–ç ã€‚\n";
 		return false;
 	}
 
@@ -84,21 +83,21 @@ bool TranslationDatabase::ConfirmContinueOnLineCountMismatch(
 	bool translationEndedEarly)
 {
 	const std::wstring sideText = translationEndedEarly
-		? L"ÒëÎÄÎÄ¼þÐÐÊýÉÙÓÚÔ­ÎÄÎÄ¼þ¡£"
-		: L"ÒëÎÄÎÄ¼þÐÐÊý¶àÓÚÔ­ÎÄÎÄ¼þ¡£";
+		? L"è¯‘æ–‡æ–‡ä»¶è¡Œæ•°å°‘äºŽåŽŸæ–‡æ–‡ä»¶ã€‚"
+		: L"è¯‘æ–‡æ–‡ä»¶è¡Œæ•°å¤šäºŽåŽŸæ–‡æ–‡ä»¶ã€‚";
 
 	const std::wstring message =
-		L"Æ½ÐÐÎÄ±¾¿âÐÐÊý²»Ò»ÖÂ¡£\n\n"
+		L"å¹³è¡Œæ–‡æœ¬åº“è¡Œæ•°ä¸ä¸€è‡´ã€‚\n\n"
 		+ sideText + L"\n\n"
-		+ L"Ô­ÎÄÎÄ¼þ£º\n" + textPath.wstring() + L"\n\n"
-		+ L"ÒëÎÄÎÄ¼þ£º\n" + transPath.wstring() + L"\n\n"
-		+ L"ÒÑ¼ÓÔØÐÐÊý£º" + std::to_wstring(loadedLineCount) + L"\n\n"
-		+ L"ÊÇ·ñ¼ÌÐø£¿";
+		+ L"åŽŸæ–‡æ–‡ä»¶ï¼š\n" + textPath.wstring() + L"\n\n"
+		+ L"è¯‘æ–‡æ–‡ä»¶ï¼š\n" + transPath.wstring() + L"\n\n"
+		+ L"å·²åŠ è½½è¡Œæ•°ï¼š" + std::to_wstring(loadedLineCount) + L"\n\n"
+		+ L"æ˜¯å¦ç»§ç»­ï¼Ÿ";
 
-	std::wcerr << L"Æ½ÐÐÎÄ±¾¿âÐÐÊý²»Ò»ÖÂ£º\n"
-		<< L"  Ô­ÎÄÎÄ¼þ: " << textPath << L"\n"
-		<< L"  ÒëÎÄÎÄ¼þ: " << transPath << L"\n"
-		<< L"  ÒÑ¼ÓÔØÐÐÊý: " << loadedLineCount << std::endl;
+	std::wcerr << L"å¹³è¡Œæ–‡æœ¬åº“è¡Œæ•°ä¸ä¸€è‡´ï¼š\n"
+		<< L"  åŽŸæ–‡æ–‡ä»¶: " << textPath << L"\n"
+		<< L"  è¯‘æ–‡æ–‡ä»¶: " << transPath << L"\n"
+		<< L"  å·²åŠ è½½è¡Œæ•°: " << loadedLineCount << std::endl;
 	Logger::Instance().Warning(
 		"Parallel text line count mismatch detected. source=" + Logger::ToUtf8(textPath)
 		+ ", target=" + Logger::ToUtf8(transPath)
@@ -108,7 +107,7 @@ bool TranslationDatabase::ConfirmContinueOnLineCountMismatch(
 	const int result = MessageBoxW(
 		nullptr,
 		message.c_str(),
-		L"FFXI·­Òë¹¤¾ß",
+		L"FFXIç¿»è¯‘å·¥å…·",
 		MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2 | MB_SETFOREGROUND | MB_TOPMOST);
 
 	const bool shouldContinue = result == IDYES;
@@ -127,7 +126,7 @@ void TranslationDatabase::RecordMismatch(const std::u8string& text)
 
 	if (Config::Instance().IsVerbose())
 	{
-		std::wcout << L"\nÊ§Åä£º" << xybase::string::to_wstring(text) << std::endl;
+		std::wcout << L"\nå¤±é…ï¼š" << xybase::string::to_wstring(text) << std::endl;
 	}
 
 	if (mismatchFile.is_open())
@@ -141,6 +140,10 @@ void TranslationDatabase::RecordMismatch(const std::u8string& text)
 
 std::u8string TranslationDatabase::GetTranslation(const std::u8string& text)
 {
+	auto lit = localMapping.find(text);
+	if (lit != localMapping.end())
+		return lit->second;
+
 	auto itr = textMapping.find(text);
 	if (itr == textMapping.end())
 	{
@@ -149,6 +152,34 @@ std::u8string TranslationDatabase::GetTranslation(const std::u8string& text)
 	}
 
 	return itr->second;
+}
+
+void TranslationDatabase::LoadLocalScope(const std::filesystem::path& srcPath, const std::filesystem::path& tgtPath)
+{
+	localMapping.clear();
+
+	if (!std::filesystem::exists(srcPath) || !std::filesystem::exists(tgtPath))
+		return;
+
+	std::ifstream src(srcPath, std::ios::in | std::ios::binary);
+	std::ifstream tgt(tgtPath, std::ios::in | std::ios::binary);
+	if (!src || !tgt) return;
+
+	src.seekg(0); tgt.seekg(0);
+	std::string s, t;
+	while (std::getline(src, s))
+	{
+		if (!s.empty() && s.back() == '\r') s.pop_back();
+		if (!std::getline(tgt, t)) break;
+		if (!t.empty() && t.back() == '\r') t.pop_back();
+		localMapping[reinterpret_cast<const char8_t*>(s.c_str())] =
+			reinterpret_cast<const char8_t*>(t.c_str());
+	}
+}
+
+void TranslationDatabase::ClearLocalScope()
+{
+	localMapping.clear();
 }
 
 std::u8string TranslationDatabase::GetTranslationFromReference(const std::u8string& sourceText, const std::u8string& referenceText)
@@ -163,7 +194,7 @@ std::u8string TranslationDatabase::GetTranslationFromReference(const std::u8stri
 
 			if (Config::Instance().IsVerbose())
 			{
-				std::wcout << L"\n²Î¿¼Ê§Åä£º" << xybase::string::to_wstring(referenceText) << std::endl;
+				std::wcout << L"\nå‚è€ƒå¤±é…ï¼š" << xybase::string::to_wstring(referenceText) << std::endl;
 			}
 
 			if (mismatchFile.is_open())
@@ -190,7 +221,7 @@ bool TranslationDatabase::TryGetTranslationFromReference(const std::u8string& so
 
 			if (Config::Instance().IsVerbose())
 			{
-				std::wcout << L"\n²Î¿¼Ê§Åä£º" << xybase::string::to_wstring(referenceText) << std::endl;
+				std::wcout << L"\nå‚è€ƒå¤±é…ï¼š" << xybase::string::to_wstring(referenceText) << std::endl;
 			}
 
 			if (mismatchFile.is_open())
@@ -219,7 +250,7 @@ int TranslationDatabase::LoadTextPair(const std::filesystem::path& textPath, con
 
 	if (textExists != transExists)
 	{
-		std::wcerr << L"Ô­ÎÄÎÄ¼þºÍ·­ÒëÎÄ¼þÎ´³É¶Ô³öÏÖ£º" << textPath << L" / " << transPath << std::endl;
+		std::wcerr << L"åŽŸæ–‡æ–‡ä»¶å’Œç¿»è¯‘æ–‡ä»¶æœªæˆå¯¹å‡ºçŽ°ï¼š" << textPath << L" / " << transPath << std::endl;
 		Logger::Instance().Error("Parallel text pair is incomplete. source=" + Logger::ToUtf8(textPath) + ", target=" + Logger::ToUtf8(transPath));
 		return -1;
 	}

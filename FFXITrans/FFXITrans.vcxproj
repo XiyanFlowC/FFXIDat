@@ -150,6 +150,7 @@
     <ClCompile Include="ProcessorFactory.cpp" />
     <ClCompile Include="Processors\DMsgProcessor.cpp" />
     <ClCompile Include="Processors\EjrefToleranceProcessor.cpp" />
+    <ClCompile Include="Processors\EventProcessor.cpp" />
     <ClCompile Include="Processors\EvsbProcessor.cpp" />
     <ClCompile Include="Processors\FixedPhraseProcessor.cpp" />
     <ClCompile Include="Processors\ItemProcessor.cpp" />
@@ -176,6 +177,7 @@
     <ClInclude Include="ProcessorFactory.h" />
     <ClInclude Include="Processors\DMsgProcessor.h" />
     <ClInclude Include="Processors\EjrefToleranceProcessor.h" />
+    <ClInclude Include="Processors\EventProcessor.h" />
     <ClInclude Include="Processors\EvsbProcessor.h" />
     <ClInclude Include="Processors\FixedPhraseProcessor.h" />
     <ClInclude Include="Processors\ItemProcessor.h" />
