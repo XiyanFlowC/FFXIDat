@@ -63,6 +63,12 @@
     <ClInclude Include="RecordFormat.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ZoneEventImage.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZoneActor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -105,6 +111,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="RecordsOfEminence.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ZoneActor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ZoneEventImage.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

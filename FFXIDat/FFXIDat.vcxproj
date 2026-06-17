@@ -161,6 +161,8 @@
     <ClInclude Include="RecordsOfEminence.h" />
     <ClInclude Include="StatusData.h" />
     <ClInclude Include="XiString.h" />
+    <ClInclude Include="ZoneActor.h" />
+    <ClInclude Include="ZoneEventImage.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BlockFile.cpp" />
@@ -182,6 +184,8 @@
     <ClCompile Include="RecordsOfEminence.cpp" />
     <ClCompile Include="StatusData.cpp" />
     <ClCompile Include="XiString.cpp" />
+    <ClCompile Include="ZoneActor.cpp" />
+    <ClCompile Include="ZoneEventImage.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
