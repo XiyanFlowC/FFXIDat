@@ -1,6 +1,8 @@
 #include "SQLiteDataSource.h"
 
 #include <stdexcept>
+#include <set>
+#include <map>
 #include "xystring.h"
 #include <iostream>
 #include "DataManager.h"
@@ -402,6 +404,51 @@ void SQLiteDataSource::Initialise()
 	Execute("CREATE INDEX IF NOT EXISTS idx_roe_category_children_child ON roe_category_children(child_id, quest_flag);");
 
 	Execute(R"(
+		CREATE TABLE IF NOT EXISTS event_zone (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			zone_name TEXT NOT NULL UNIQUE
+		);
+	)");
+	Execute(R"(
+		CREATE TABLE IF NOT EXISTS event_actor (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			zone_id INTEGER NOT NULL,
+			actor_no INTEGER NOT NULL,
+			actor_name TEXT NOT NULL,
+			FOREIGN KEY (zone_id) REFERENCES event_zone(id) ON DELETE CASCADE,
+			UNIQUE(zone_id, actor_no)
+		);
+	)");
+	Execute(R"(
+		CREATE TABLE IF NOT EXISTS event_event (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			actor_id INTEGER NOT NULL,
+			event_no INTEGER NOT NULL,
+			event_index INTEGER NOT NULL,
+			FOREIGN KEY (actor_id) REFERENCES event_actor(id) ON DELETE CASCADE,
+			UNIQUE(actor_id, event_no, event_index)
+		);
+	)");
+	Execute(R"(
+		CREATE TABLE IF NOT EXISTS event_msg (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			event_id INTEGER NOT NULL,
+			evsb_index INTEGER NOT NULL,
+			text_ja_id INTEGER,
+			text_en_id INTEGER,
+			text_fr_id INTEGER,
+			text_de_id INTEGER,
+			status INTEGER NOT NULL DEFAULT 0,
+			FOREIGN KEY (event_id) REFERENCES event_event(id) ON DELETE CASCADE,
+			FOREIGN KEY (text_ja_id) REFERENCES text(id),
+			FOREIGN KEY (text_en_id) REFERENCES text(id),
+			FOREIGN KEY (text_fr_id) REFERENCES text(id),
+			FOREIGN KEY (text_de_id) REFERENCES text(id),
+			UNIQUE(event_id, evsb_index)
+		);
+	)");
+
+	Execute(R"(
 		CREATE TABLE IF NOT EXISTS key_item(
 			id INTEGER PRIMARY KEY,
 			name_jp_text_id INTEGER,
@@ -553,7 +600,7 @@ void SQLiteDataSource::ImportTranslation()
 			sqlite3_bind_text(qryStmt, 1, text.c_str(), -1, SQLITE_TRANSIENT);
 
 			if (sqlite3_step(qryStmt) != SQLITE_ROW) {
-				std::wcerr << L"ÎÄ±¾Î´ÕÒµ½£¬Ìø¹ý: " << xybase::string::to_wstring((char8_t*)text.c_str()) << std::endl;
+				std::wcerr << L"ï¿½Ä±ï¿½Î´ï¿½Òµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: " << xybase::string::to_wstring((char8_t*)text.c_str()) << std::endl;
 				sqlite3_reset(qryStmt);
 				continue;
 				// throw SQLException(std::string("failed to query index for ") + xybase::string::to_string((char8_t *)text.c_str()));
@@ -702,6 +749,8 @@ void SQLiteDataSource::DatToDatabase(const char *lang, const char *type, const c
 #include "EventStringBase.h"
 #include "DataManager.h"
 #include "ItemData.h"
+
+static std::string BuildDatPath(const std::string& romPath, const std::string& gameRoot);
 
 void SQLiteDataSource::ImportDat(const std::string &path, const std::string &type)
 {
@@ -949,6 +998,31 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 			for (auto &str : evsb)
 			{
 				InsertText(reinterpret_cast<const char *>(str.c_str()), file_id, rowNum++, 1);
+			}
+
+			if (fileLang == u8"ja")
+			{
+				std::vector<std::u8string> jaStrs;
+				for (auto& s : evsb) jaStrs.push_back(s);
+
+				std::vector<std::u8string> enStrs;
+				sqlite3_stmt* stmt2 = nullptr;
+				if (sqlite3_prepare_v2(db, "SELECT path FROM file WHERE comment = ? AND type = 'evsb' AND lang = 'en'", -1, &stmt2, nullptr) == SQLITE_OK)
+				{
+					sqlite3_bind_text(stmt2, 1, reinterpret_cast<const char*>(fileComment.c_str()), -1, SQLITE_TRANSIENT);
+					if (sqlite3_step(stmt2) == SQLITE_ROW)
+					{
+						std::string enPath = reinterpret_cast<const char*>(sqlite3_column_text(stmt2, 0));
+						std::string gameRoot(reinterpret_cast<const char*>(xybase::string::to_utf8(PathUtil::gameRootPath).c_str()));
+						std::string resolvedEn = BuildDatPath(enPath, gameRoot);
+						EventStringBase evsbEn(resolvedEn);
+						evsbEn.Read();
+						for (auto& s : evsbEn) enStrs.push_back(s);
+					}
+					sqlite3_finalize(stmt2);
+				}
+
+				EventDbUpdate(fileComment, jaStrs, enStrs);
 			}
 		}
 		else if (type == "sd")
@@ -1775,8 +1849,229 @@ int SQLiteDataSource::InsertOrGetQuestDMsgRecord(const std::u8string &category, 
 		}
 		sqlite3_finalize(stmt);
 	}
-
+	
 	return record_id;
+}
+
+#include "../FFXIDat/ZoneEventImage.h"
+#include "../FFXIDat/ZoneActor.h"
+
+static std::string BuildDatPath(const std::string& romPath, const std::string& gameRoot)
+{
+	if (romPath.ends_with(".DAT"))
+	{
+		return gameRoot + "/" + romPath;
+	}
+	else
+	{
+		return gameRoot + "/" + romPath + ".DAT";
+	}
+}
+
+void SQLiteDataSource::EventDbUpdate(const std::u8string& comment,
+	const std::vector<std::u8string>& evsbJa,
+	const std::vector<std::u8string>& evsbEn)
+{
+	if (evsbJa.empty() && evsbEn.empty()) return;
+
+	std::string gameRoot(reinterpret_cast<const char*>(xybase::string::to_utf8(PathUtil::gameRootPath).c_str()));
+
+	std::string commentStr(reinterpret_cast<const char*>(comment.c_str()));
+
+	sqlite3_stmt* stmt = nullptr;
+	std::string evevPath, evacPath;
+
+	if (sqlite3_prepare_v2(db, "SELECT path FROM file WHERE comment = ? AND type = 'evev'", -1, &stmt, nullptr) == SQLITE_OK)
+	{
+		sqlite3_bind_text(stmt, 1, commentStr.c_str(), -1, SQLITE_TRANSIENT);
+		if (sqlite3_step(stmt) == SQLITE_ROW)
+			evevPath = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+		sqlite3_finalize(stmt);
+	}
+
+	if (evevPath.empty()) return;
+
+	if (sqlite3_prepare_v2(db, "SELECT path FROM file WHERE comment = ? AND type = 'evac'", -1, &stmt, nullptr) == SQLITE_OK)
+	{
+		sqlite3_bind_text(stmt, 1, commentStr.c_str(), -1, SQLITE_TRANSIENT);
+		if (sqlite3_step(stmt) == SQLITE_ROW)
+			evacPath = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+		sqlite3_finalize(stmt);
+	}
+
+	std::string resolvedEvev = BuildDatPath(evevPath, gameRoot);
+
+	ZoneEventImage evev;
+	if (!evev.Load(resolvedEvev)) return;
+
+	std::unordered_map<uint32_t, std::string> actorNames;
+	if (!evacPath.empty())
+	{
+		std::string resolvedEvac = BuildDatPath(evacPath, gameRoot);
+		ZoneActor evac;
+		if (evac.Load(resolvedEvac))
+			actorNames = evac.GetIdToNameMap();
+	}
+
+	int zoneId = -1;
+	if (sqlite3_prepare_v2(db, "INSERT INTO event_zone(zone_name) VALUES(?) ON CONFLICT(zone_name) DO UPDATE SET zone_name=zone_name RETURNING id", -1, &stmt, nullptr) == SQLITE_OK)
+	{
+		sqlite3_bind_text(stmt, 1, commentStr.c_str(), -1, SQLITE_TRANSIENT);
+		if (sqlite3_step(stmt) == SQLITE_ROW)
+			zoneId = sqlite3_column_int(stmt, 0);
+		sqlite3_finalize(stmt);
+	}
+	if (zoneId < 0) return;
+
+	for (const auto& actor : evev.GetActors())
+	{
+		std::string actorName = "_";
+		auto nit = actorNames.find(actor.actor_id);
+		if (nit != actorNames.end() && !nit->second.empty())
+			actorName = nit->second;
+
+		int actorId = -1;
+		if (sqlite3_prepare_v2(db, "INSERT INTO event_actor(zone_id, actor_no, actor_name) VALUES(?,?,?) ON CONFLICT(zone_id, actor_no) DO UPDATE SET actor_name=excluded.actor_name RETURNING id", -1, &stmt, nullptr) == SQLITE_OK)
+		{
+			sqlite3_bind_int(stmt, 1, zoneId);
+			sqlite3_bind_int(stmt, 2, (int)actor.actor_id);
+			sqlite3_bind_text(stmt, 3, actorName.c_str(), -1, SQLITE_TRANSIENT);
+			if (sqlite3_step(stmt) == SQLITE_ROW)
+				actorId = sqlite3_column_int(stmt, 0);
+			sqlite3_finalize(stmt);
+		}
+		if (actorId < 0) continue;
+
+		std::vector<uint32_t> sortedConsts = actor.constants;
+		std::sort(sortedConsts.begin(), sortedConsts.end());
+
+		size_t evsbSize = (std::max)(evsbJa.size(), evsbEn.size());
+
+		for (const auto& evt : actor.events)
+		{
+			int eventId = -1;
+			if (sqlite3_prepare_v2(db, "INSERT INTO event_event(actor_id, event_no, event_index) VALUES(?,?,?) ON CONFLICT(actor_id, event_no, event_index) DO UPDATE SET event_index=event_index RETURNING id", -1, &stmt, nullptr) == SQLITE_OK)
+			{
+				sqlite3_bind_int(stmt, 1, actorId);
+				sqlite3_bind_int(stmt, 2, (int)evt.event_id);
+				sqlite3_bind_int(stmt, 3, (int)evt.event_index);
+				if (sqlite3_step(stmt) == SQLITE_ROW)
+					eventId = sqlite3_column_int(stmt, 0);
+				sqlite3_finalize(stmt);
+			}
+			if (eventId < 0) continue;
+
+			std::set<uint32_t> validIndices;
+			for (uint32_t idx : sortedConsts)
+			{
+				if (idx < evsbSize)
+					validIndices.insert(idx);
+			}
+
+			std::set<uint32_t> existingIndices;
+			std::map<uint32_t, std::pair<int, int>> existingMeta;
+			if (sqlite3_prepare_v2(db, "SELECT id, evsb_index, status FROM event_msg WHERE event_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+			{
+				sqlite3_bind_int(stmt, 1, eventId);
+				while (sqlite3_step(stmt) == SQLITE_ROW)
+				{
+					int msgId = sqlite3_column_int(stmt, 0);
+					uint32_t idx = (uint32_t)sqlite3_column_int(stmt, 1);
+					int st = sqlite3_column_int(stmt, 2);
+					existingIndices.insert(idx);
+					existingMeta[idx] = {msgId, st};
+				}
+				sqlite3_finalize(stmt);
+			}
+
+			for (uint32_t idx : existingIndices)
+			{
+				if (validIndices.count(idx) == 0 && existingMeta[idx].second != 3)
+				{
+					if (sqlite3_prepare_v2(db, "DELETE FROM event_msg WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+					{
+						sqlite3_bind_int(stmt, 1, existingMeta[idx].first);
+						sqlite3_step(stmt);
+						sqlite3_finalize(stmt);
+					}
+				}
+			}
+
+			for (uint32_t idx : validIndices)
+			{
+				bool hasJa = idx < evsbJa.size();
+				bool hasEn = idx < evsbEn.size();
+
+				std::string textJa, textEn;
+				if (hasJa) textJa = reinterpret_cast<const char*>(evsbJa[idx].c_str());
+				if (hasEn) textEn = reinterpret_cast<const char*>(evsbEn[idx].c_str());
+
+				int textJaId = -1, textEnId = -1;
+				if (hasJa && !textJa.empty())
+				{
+					if (sqlite3_prepare_v2(db, "INSERT OR IGNORE INTO text(text) VALUES(?)", -1, &stmt, nullptr) == SQLITE_OK)
+					{
+						sqlite3_bind_text(stmt, 1, textJa.c_str(), -1, SQLITE_TRANSIENT);
+						sqlite3_step(stmt);
+						sqlite3_finalize(stmt);
+					}
+					if (sqlite3_prepare_v2(db, "SELECT id FROM text WHERE text = ?", -1, &stmt, nullptr) == SQLITE_OK)
+					{
+						sqlite3_bind_text(stmt, 1, textJa.c_str(), -1, SQLITE_TRANSIENT);
+						if (sqlite3_step(stmt) == SQLITE_ROW)
+							textJaId = sqlite3_column_int(stmt, 0);
+						sqlite3_finalize(stmt);
+					}
+				}
+				if (hasEn && !textEn.empty())
+				{
+					if (sqlite3_prepare_v2(db, "INSERT OR IGNORE INTO text(text) VALUES(?)", -1, &stmt, nullptr) == SQLITE_OK)
+					{
+						sqlite3_bind_text(stmt, 1, textEn.c_str(), -1, SQLITE_TRANSIENT);
+						sqlite3_step(stmt);
+						sqlite3_finalize(stmt);
+					}
+					if (sqlite3_prepare_v2(db, "SELECT id FROM text WHERE text = ?", -1, &stmt, nullptr) == SQLITE_OK)
+					{
+						sqlite3_bind_text(stmt, 1, textEn.c_str(), -1, SQLITE_TRANSIENT);
+						if (sqlite3_step(stmt) == SQLITE_ROW)
+							textEnId = sqlite3_column_int(stmt, 0);
+						sqlite3_finalize(stmt);
+					}
+				}
+
+				auto eit = existingMeta.find(idx);
+				if (eit != existingMeta.end())
+				{
+					int msgId = eit->second.first;
+					if (sqlite3_prepare_v2(db,
+						"UPDATE event_msg SET text_ja_id=COALESCE(?,text_ja_id), text_en_id=COALESCE(?,text_en_id) WHERE id=?",
+						-1, &stmt, nullptr) == SQLITE_OK)
+					{
+						if (textJaId >= 0) sqlite3_bind_int(stmt, 1, textJaId); else sqlite3_bind_null(stmt, 1);
+						if (textEnId >= 0) sqlite3_bind_int(stmt, 2, textEnId); else sqlite3_bind_null(stmt, 2);
+						sqlite3_bind_int(stmt, 3, msgId);
+						sqlite3_step(stmt);
+						sqlite3_finalize(stmt);
+					}
+				}
+				else
+				{
+					if (sqlite3_prepare_v2(db,
+						"INSERT INTO event_msg(event_id, evsb_index, text_ja_id, text_en_id, status) VALUES(?,?,?,?,0)",
+						-1, &stmt, nullptr) == SQLITE_OK)
+					{
+						sqlite3_bind_int(stmt, 1, eventId);
+						sqlite3_bind_int(stmt, 2, (int)idx);
+						if (textJaId >= 0) sqlite3_bind_int(stmt, 3, textJaId); else sqlite3_bind_null(stmt, 3);
+						if (textEnId >= 0) sqlite3_bind_int(stmt, 4, textEnId); else sqlite3_bind_null(stmt, 4);
+						sqlite3_step(stmt);
+						sqlite3_finalize(stmt);
+					}
+				}
+			}
+		}
+	}
 }
 
 int SQLiteDataSource::InsertOrGetItemRecord(int file_id, uint32_t item_id, const std::wstring &type)

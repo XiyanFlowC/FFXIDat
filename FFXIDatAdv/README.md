@@ -1,55 +1,106 @@
 ﻿# FFXIDatAdv
 
-FFXI 事件对话导出工具。以 **Actor**（NPC/实体）为单位，从 FFXI 的事件二进制文件（evev/evac/evsb）中提取对话数据，输出结构化 JSON。
+FFXI event dialogue extraction tool. Extracts dialogue data from FFXI event binary files (evev/evac/evsb), organized by Actor (NPC/entity), outputting structured JSON and TXT.
 
-阿你问我为什么不用Python吗因为C++更快啊（逃
-
-## 数据流
+## Data Flow
 
 ```
-zone_events.csv → ZoneConfig
-      ↓
-GamePathResolver → 解析 FFXI 安装路径中的 .DAT 文件
-      ↓
-EventBinaryDat::Parse(evev)   → ActorBlock[] (原始字节码)
-EntityDat::Parse(evac)        → EntityEntry[] (实体名称)
-EventStringBase::Read(evsb)   → string[] (本地化文本)
-      ↓
-EventLinker::LinkZone
-      ↓
-BytecodeAnalyzer::ExtractDialogues → 反汇编字节码，提取 DialogueLine
-      ↓
-EventWriter → JSON (zone/{id}/*.json + common/*.json)
+defs.csv → ZoneConfig (zone definitions)
+    ↓
+GamePathResolver → resolve ROM/X/Y paths to filesystem
+    ↓
+ZoneEventImage (evev) → ActorBlock[] (actor_id, constants, events) — FFXIDat, clean-room
+ZoneActor (evac)       → name map (actor_id → name)          — FFXIDat, clean-room
+EventStringBase (evsb) → string[] (localized text)
+    ↓
+EventLinker / BytecodeAnalyzer → extract DialogueLine from bytecode
+    ↓
+EventAnalyzer → dedup dialogues per event, build textLines
+    ↓
+DataDumper::Flush → JSON + TXT output
 ```
 
-## 输出结构
+## CLI Usage
 
 ```
-event/
-  index.json                  ← 全量索引
-  common/
-    index.json                ← 公共 Actor 清单
-    Survival Guide.json       ← 跨区域通用的 Actor
-    Home Point.json
-    ...
-  zone/{zone_id}/
-    index.json                ← 该区域 Actor 索引
-    ActorName.json            ← 私有 Actor 对话数据
+FFXIDatAdv.exe [--help]                    Show help
+FFXIDatAdv.exe [zone]                      Process a single zone
+FFXIDatAdv.exe                             Process all zones
+FFXIDatAdv.exe --dump-db --lang jp|na      Export event database (TXT + JSON)
+FFXIDatAdv.exe --dump-event-json           Export event database (dual-language JSON)
+  --out <dir>                              Output directory
+  --list-zones                             List all available zones
+  --dump-opcodes <zone>                    Dump bytecode opcodes for a zone
+  --split-text                             Split text output by language
+  --pretty                                 Pretty-print JSON output
+  --ffxi-path <path>                       Set FFXI installation path
 ```
 
-## 公共 Actor 去重
+## Output Structure
 
-同名 Actor 出现在多个区域时，验证字节码完全一致，则提升为 "common"（公共 Actor），输出到 `common/` 目录。
+### `--dump-db` (TXT + JSON)
+```
+<outDir>/
+  event/
+    text/
+      {zoneName or "common"}/
+        {actorDir}/
+          {aidx}.txt              ← deduped dialogue lines
+    {zoneName or "common"}/
+      {actorDir}.json             ← Actor metadata + dialogue index
+    ref.csv
+  evsb_msgs.txt                   ← evsb strings not referenced by any dialogue
+  ev/, gev/                       ← orphan evsb files (zones without evev)
+  etc/, sys/, itm/, ...           ← system data (CSV/TXT)
+```
 
-## 构建
+### `--dump-event-json` (JSON, dual-language)
+```
+<outDir>/event/
+  txt/
+    ja/                           ← Japanese text JSON arrays
+      {zoneName or "common"}/{actorDir}/{aidx}.json
+    en/                           ← English text JSON arrays (same structure)
+  {zoneName or "common"}/         ← Actor JSONs
+    {actorDir}.json
+  ref.csv
+```
 
-- Visual Studio 2022 (v143)
-- C++20
-- 依赖：FFXIDat.lib, xybase.lib（workspace 中的姊妹项目）
+### Actor JSON format
+```json
+{
+  "actor": "Zone Events",
+  "actor_number": 2147483632,        // or "actor_numbers": [...] for common actors
+  "speakers": ["???", "Zone Events"],
+  "events": [{
+    "event_id": 47,
+    "array_index": 13,
+    "txt": "ev/Inner Horutoto Ruins/Zone Events/13.json",
+    "evsb_refs": [7],
+    "dialogues": [{"speaker": 1, "line": 0}]
+  }]
+}
+```
 
-## 参考
+## Common Actor Deduplication
 
-- [XiEvents](https://github.com/atom0s/XiEvents) — FFXI 事件系统逆向文档
-- [FFXI-EventsDump](https://github.com/sruon/FFXI-EventsDump/) — Python 版事件导出工具
+Actors with identical `actor_name` and `bytecode_hash` appearing in 2+ zones are promoted to `common/`. Text content is additionally deduplicated per-event via content hash, sharing JSON files across zones.
 
-## 工具
+## Clean-Room Parsers (FFXIDat)
+
+`ZoneEventImage` and `ZoneActor` are independent, clean-room implementations in FFXIDat. They parse evev (actor IDs, constants/imed, events) and evac (actor name catalog) without any opcode analysis. No AGPL-licensed code was used.
+
+## Build
+
+- Visual Studio 2022 (v143), C++20
+- Dependencies: FFXIDat.lib, xybase.lib (sibling projects in workspace)
+
+## References
+
+- [POLUtils](https://github.com/Windower/POLUtils) — POL/FFXI Data utilities
+- [XiEvents](https://github.com/atom0s/XiEvents) — FFXI event system reverse-engineering docs
+- [FFXI-EventsDump](https://github.com/sruon/FFXI-EventsDump/) — Python event extraction tool
+
+## License
+
+See repository LICENSE.

@@ -6,66 +6,58 @@ A comprehensive toolset for extracting, editing, and rebuilding DAT files used i
 
 This project provides tools to work with FFXI's game data files, including text strings, item data, status effects, menu textures, and more. It consists of multiple components:
 
-- **FFXIDat**: Core library for reading and writing DAT file formats
-- **FFXIDatProcessor**: Command-line tool for batch extraction and database management
-- **FFXITrans**: Translation injection tool for localization projects
+- **FFXIDat**: Core library — file format parsers (DMsg, ItemData, EventStringBase, ZoneEventImage, ZoneActor)
+- **FFXIDatProcessor**: CLI tool with SQLite database for batch extraction, CSV conversion, text import/export, and event index management
+- **FFXIDatAdv**: Event dialogue extraction tool — structured JSON/TXT output from evev/evac/evsb
+- **FFXITrans**: Translation injection tool with interactive prompts and multi-language support
+- **FFXITransAdv**: Event-aware translation processor using FFXIDatAdv analysis engine
 - **FFXIMenu**: GUI editor for menu textures and UI elements
 - **xybase**: Utility library for string conversion and data handling
 
 ## Supported File Formats
 
 ### Text and String Data
-- **XISTRING** (magic: `XISTRING`) - System messages
-	- All observed control sequence is handled, but not fully documented yet.
-- **DMsg** (magic: `d_msg`) - System messages and menu text
-- **Event Strings** - Per-area dialogue and event text (e.g., ROM/22/17.DAT)
-	- Basic string handling is done, the control sequences are not fully documented yet
-- **Fixed Phrase** - Auto-translate dictionary entries
+- **XISTRING** (magic: `XISTRING`) — System messages
+- **DMsg** (magic: `d_msg`) — Dialog messages and menu text
+- **EventStringBase** (evsb) — Per-area event text strings
+- **Fixed Phrase** — Auto-translate dictionary entries
+
+### Event Data (FFXIDat, clean-room)
+- **ZoneEventImage** (evev) — Actor blocks, constants (imed), event descriptors. Does NOT parse opcodes.
+- **ZoneActor** (evac) — Entity catalog: actor_id → name, with write-back support.
 
 ### Game Data
-- **Item Data** - Equipment, weapons, usables, currency, etc.
-- **Status Data** - Status effects and buffs
-- **Records of Eminence** - Quest and category data
-- **Monster Bridge** - Monster name data
+- **Item Data** — Equipment, weapons, usables, currency, etc.
+- **Status Data** — Status effects and buffs
+- **Records of Eminence** — Quest and category data
+- **Monster Bridge** — Monster name data
 
 ### Menu and UI
-- **Block Files** (magic: `menu`) - Menu layouts and textures
-  - Image blocks (DXT1, DXT3 texture compression)
-  - Image set blocks (texture clipping and tiling)
-  - Menu layout blocks
+- **Block Files** (magic: `menu`) — Menu layouts and textures (DXT1/DXT3 compression)
 
 ## Quick Start
 
 ### Extraction
 
-Extract all known text files from game directory:
 ```bash
-FFXIDatProcessor.exe --scan-extract
-```
+# Initialize SQLite database and import game DAT texts
+FFXIDatProcessor.exe --sql-init
+FFXIDatProcessor.exe --sql-cond-type evsb --sql-cond-lang jp --sql-dat-read
 
-Extract specific file types:
-```bash
-FFXIDatProcessor.exe --dmsg-to-csv path/to/file.DAT
-FFXIDatProcessor.exe --xis-to-csv path/to/file.DAT
-```
-
-### Editing
-
-Most files can be converted to CSV for editing, then converted back:
-```bash
-# Edit the CSV file with your changes
-FFXIDatProcessor.exe --csv-to-dmsg edited_file.csv
+# Export event dialogue database
+FFXIDatAdv.exe --dump-db --lang jp
+FFXIDatAdv.exe --dump-event-json --out ./event_json
 ```
 
 ### Translation Workflow
 
-FFXITrans provides automated translation injection:
 ```bash
-# Interactive mode
+# FFXITrans — interactive mode with InSitu prompts
 FFXITrans.exe
 
-# In-place modification
-FFXITrans.exe insitu
+# FFXITransAdv — advanced event-aware processing
+FFXITransAdv.exe extract [zone]
+FFXITransAdv.exe apply [zone]
 ```
 
 ## Building
@@ -73,24 +65,18 @@ FFXITrans.exe insitu
 Requires:
 - Visual Studio 2022 or later
 - C++20 support
-- SQLite 3.48.0
+- SQLite 3.48.0 (embedded as amalgamation)
 
 Open `FFXIDat.sln` and build the solution.
 
-## Documentation
-
-- [File Format Specifications](docs/FILE_FORMATS.md)
-- [Tool Usage Guide](docs/TOOLS.md)
-
-## Notes
-
-- FFXI uses extended Shift-JIS encoding to represent French and German characters
-- Some file formats are partially documented
-- Always backup original files before modification
-
 ## Dependencies
 
-- SQLite 3.48.0
+- SQLite 3.48.0 (amalgamation, compiled directly)
+
+## References
+
+- [POLUtils](https://github.com/Windower/POLUtils) — Apache 2.0 licensed FFXI DAT utilities
+- [XiEvents](https://github.com/atom0s/XiEvents) — FFXI event system reverse-engineering docs
 
 ## License
 

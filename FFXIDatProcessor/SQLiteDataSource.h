@@ -50,6 +50,8 @@ public:
 
 	void ImportDat(const std::string &path, const std::string &type);
 
+	void EventDbUpdate(const std::u8string& comment, const std::vector<std::u8string>& evsbJa, const std::vector<std::u8string>& evsbEn);
+
 	void TransAndOut();
 
     std::u8string GetTranslation(const std::u8string &text);

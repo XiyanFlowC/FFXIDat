@@ -29,38 +29,14 @@ static std::string SafeName(const std::string& s)
 	return r;
 }
 
-static std::string ResolveRomPath(const std::string& romPath)
+static std::string BuildDatPath(const std::string& romPath)
 {
-	std::string p = romPath;
 	auto root = Config::Instance().GetGameRoot();
 
-	if (p.size() > 4 && p.substr(p.size() - 4) == ".DAT")
-		p = p.substr(0, p.size() - 4);
-
-	size_t romStart = p.find("ROM");
-	if (romStart == std::string::npos)
-		return (root / (p + ".DAT")).string();
-
-	size_t vEnd = p.find('/', romStart);
-	if (vEnd == std::string::npos)
-		return (root / (p + ".DAT")).string();
-
-	std::string volStr = p.substr(romStart + 3, vEnd - romStart - 3);
-	int rom = volStr.empty() ? 1 : std::stoi(volStr);
-
-	size_t cEnd = p.find('/', vEnd + 1);
-	if (cEnd == std::string::npos)
-		return (root / (p + ".DAT")).string();
-
-	std::string cat = p.substr(vEnd + 1, cEnd - vEnd - 1);
-	std::string file = p.substr(cEnd + 1);
-
-	std::string result;
-	if (rom == 1)
-		result = (root / "ROM" / cat / (file + ".DAT")).string();
+	if (romPath.ends_with(".DAT"))
+		return (root / romPath).string();
 	else
-		result = (root / ("ROM" + std::to_string(rom)) / cat / (file + ".DAT")).string();
-	return result;
+		return (root / (romPath + ".DAT")).string();
 }
 
 static std::vector<std::string> ReadTextLines(const fs::path& filePath)
@@ -198,7 +174,7 @@ bool EventProcessor::Process(
 		return true;
 	}
 
-	std::string evevPath = ResolveRomPath(zone->evev_path);
+	std::string evevPath = BuildDatPath(zone->evev_path);
 
 	ZoneEventImage evev;
 	if (!evev.Load(evevPath))
@@ -211,7 +187,7 @@ bool EventProcessor::Process(
 	std::unordered_map<uint32_t, std::string> actorNameMap;
 	if (!zone->evac_path.empty())
 	{
-		std::string evacPath = ResolveRomPath(zone->evac_path);
+		std::string evacPath = BuildDatPath(zone->evac_path);
 		ZoneActor evac;
 		if (evac.Load(evacPath))
 			actorNameMap = evac.GetIdToNameMap();
