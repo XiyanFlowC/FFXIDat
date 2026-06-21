@@ -102,9 +102,9 @@ public:
 			auto& zp = zones_[name];
 			if (type == "evev") zp.evev_path = path;
 			else if (type == "evac") zp.evac_path = path;
-			else if (type == "evsb" && (lang == "ja" || lang == "jp"))
+			else if (type == "evsb" && lang == "ja")
 				zp.evsb_ja_path = path;
-			else if (type == "evsb" && (lang == "en" || lang == "na"))
+			else if (type == "evsb" && lang == "en")
 				zp.evsb_en_path = path;
 		}
 	}

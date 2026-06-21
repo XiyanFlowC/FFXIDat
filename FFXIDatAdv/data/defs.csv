@@ -876,8 +876,8 @@ ROM/355/36,evsb,en,ev/Dynamis - Windurst [D]
 ROM/355/51,evsb,en,ev/Dynamis - Jeuno [D]
 ROM/361/89,evsb,en,ev/Walk of Echoes [P1]
 ROM/378/103,evsb,en,ev/Gwora - Throne Room
-#ROM/168/24,fp,ja,fixed_phrase,
-#ROM/168/25,fp,en,fixed_phrase,
+ROM/168/24,fp,ja,fixed_phrase,
+ROM/168/25,fp,en,fixed_phrase,
 ROM/337/67,evsb,ja,gev/Unity Concord
 ROM/337/68,evsb,en,gev/Unity Concord
 ROM/0/4,inb,ja,itm/normal,1|2
@@ -932,10 +932,10 @@ ROM/281/96,evsb,fr,evx/id/ukn1
 ROM/281/97,evsb,fr,evx/id/ukn2
 ROM/281/98,evsb,fr,evx/id/ukn3
 ROM/281/99,evsb,fr,evx/id/ukn4
-ROM/287/16,evsb,ja,evx/id2/ukn
-ROM/287/17,evsb,de,evx/id2/ukn
-ROM/287/18,evsb,fr,evx/id2/ukn
-ROM/288/0,evsb,en,evx/id2/ukn
+ROM/287/16,evsb,ja,evx/id2
+ROM/287/17,evsb,de,evx/id2
+ROM/287/18,evsb,fr,evx/id2
+ROM/288/0,evsb,en,evx/id2
 ROM/288/46,evsb,ja,evx/id3/ukn1
 ROM/288/47,evsb,ja,evx/id3/ukn2
 ROM/288/48,evsb,ja,evx/id3/ukn3
@@ -1026,8 +1026,8 @@ ROM/186/95,evev,,evx/Aht Urhgan Whitegate,
 ROM4/1/49,evac,,evx/Aht Urhgan Whitegate,
 ROM/186/96,evev,,evx/Aht Urhgan Whitegate 2,
 ROM4/1/49,evac,,evx/Aht Urhgan Whitegate 2,
-ROM/286/101,evev,,evx/id2/ukn,
-ROM/286/102,evac,,evx/id2/ukn,
+ROM/286/101,evev,,evx/id2,
+ROM/286/102,evac,,evx/id2,
 ROM/281/76,evev,,evx/id/ukn1,
 ROM/281/80,evac,,evx/id/ukn1,
 ROM/281/77,evev,,evx/id/ukn2,
@@ -1642,3 +1642,7 @@ ROM/20/109,evev,,ev/Zeruhn Mines,
 ROM/26/109,evac,,ev/Zeruhn Mines,
 ROM4/0/78,evev,,ev/Zhayolm Remnants,
 ROM4/1/72,evac,,ev/Zhayolm Remnants,
+ROM/118/104,xis,,etc/job_abbr,
+ROM/118/105,xis,,etc/race_gender_enum,
+ROM/165/84,dmsg,,sys/area,
+ROM/165/85,dmsg,,sys/area_s,

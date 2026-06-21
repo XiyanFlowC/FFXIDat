@@ -1716,7 +1716,7 @@ void MainFrame::OnCreate()
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_ALL,
 		m_languageFilters.empty() ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_JP,
-		m_languageFilters.contains("jp") ? MF_CHECKED : MF_UNCHECKED);
+		m_languageFilters.contains("ja") ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_EN,
 		m_languageFilters.contains("en") ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_FR,
@@ -1948,7 +1948,7 @@ void MainFrame::OnCommand(WPARAM wParam)
 		OnFilterLanguage("");
 		break;
 	case IDM_VIEW_FILTER_JP:
-		OnFilterLanguage("jp");
+		OnFilterLanguage("ja");
 		break;
 	case IDM_VIEW_FILTER_EN:
 		OnFilterLanguage("en");
@@ -2547,7 +2547,7 @@ void MainFrame::OnFilterLanguage(const std::string& language)
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_ALL,
 		m_languageFilters.empty() ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_JP,
-		m_languageFilters.contains("jp") ? MF_CHECKED : MF_UNCHECKED);
+		m_languageFilters.contains("ja") ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_EN,
 		m_languageFilters.contains("en") ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_FR,
@@ -2595,7 +2595,7 @@ void MainFrame::BuildUILanguageMenu(HMENU parentMenu)
 	{
 		const LanguageInfo& langInfo = m_availableUILanguages[i];
 		
-		// Create menu text (e.g., "English" or "ÖÐÎÄ")
+		// Create menu text (e.g., "English" or "ï¿½ï¿½ï¿½ï¿½")
 		std::wstring menuText = langInfo.name;
 		
 		// Add menu item with dynamic ID
@@ -2709,7 +2709,7 @@ void MainFrame::RefreshUIText()
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_ALL,
 		m_languageFilters.empty() ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_JP,
-		m_languageFilters.contains("jp") ? MF_CHECKED : MF_UNCHECKED);
+		m_languageFilters.contains("ja") ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_EN,
 		m_languageFilters.contains("en") ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(m_hLanguageFilterMenu, IDM_VIEW_FILTER_FR,

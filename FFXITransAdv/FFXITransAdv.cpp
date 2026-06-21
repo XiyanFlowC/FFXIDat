@@ -143,7 +143,6 @@ int main(int argc, char** argv)
 			{
 				std::string a = argv[i];
 				if (a == "--lang" && i + 1 < argc) { lang = argv[++i]; if (lang == "jp") lang = "ja"; }
-				else lang = a;
 			}
 			return ApplicationAdv::Instance().PrepareSourceData(lang);
 		}

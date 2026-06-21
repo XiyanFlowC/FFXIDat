@@ -20,12 +20,12 @@ namespace
 
 	bool IsQuestDMsgLang(const std::u8string &lang)
 	{
-		return lang == u8"jp" || lang == u8"en" || lang == u8"de" || lang == u8"fr";
+		return lang == u8"ja" || lang == u8"en" || lang == u8"de" || lang == u8"fr";
 	}
 
 	const char *GetQuestDMsgNameColumn(const std::u8string &lang)
 	{
-		if (lang == u8"jp") return "name_jp_text_id";
+		if (lang == u8"ja") return "name_jp_text_id";
 		if (lang == u8"en") return "name_en_text_id";
 		if (lang == u8"de") return "name_de_text_id";
 		if (lang == u8"fr") return "name_fr_text_id";
@@ -34,7 +34,7 @@ namespace
 
 	const char *GetQuestDMsgDescriptionColumn(const std::u8string &lang)
 	{
-		if (lang == u8"jp") return "description_jp_text_id";
+		if (lang == u8"ja") return "description_jp_text_id";
 		if (lang == u8"en") return "description_en_text_id";
 		if (lang == u8"de") return "description_de_text_id";
 		if (lang == u8"fr") return "description_fr_text_id";
@@ -747,8 +747,6 @@ void SQLiteDataSource::DatToDatabase(const char *lang, const char *type, const c
 #include "DMsg.h"
 #include "XiString.h"
 #include "EventStringBase.h"
-#include "DataManager.h"
-#include "ItemData.h"
 
 static std::string BuildDatPath(const std::string& romPath, const std::string& gameRoot);
 
@@ -780,6 +778,12 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 		}
 		sqlite3_finalize(stmt);
 
+		//if (fileLang.empty())
+		//{
+		//	//Ring((std::u8string(u8"[SKIP] no lang for ") + reinterpret_cast<const char8_t*>(path.c_str())).c_str());
+		//	return;
+		//}
+
 		if (sqlite3_prepare_v2(db, "DELETE FROM rela WHERE file_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
 		{
 			sqlite3_bind_int(stmt, 1, file_id);
@@ -810,15 +814,15 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 			sqlite3_finalize(stmt);
 		}
 		
-		if (type == "erq" && (fileLang == u8"jp" || fileLang == u8"en")) {
-			std::string questNameColumn = fileLang == u8"jp" ? "quest_name_jp_text_id" : "quest_name_en_text_id";
-			std::string descriptionColumn = fileLang == u8"jp" ? "description_jp_text_id" : "description_en_text_id";
+		if (type == "erq" && (fileLang == u8"ja" || fileLang == u8"en")) {
+			std::string questNameColumn = fileLang == u8"ja" ? "quest_name_jp_text_id" : "quest_name_en_text_id";
+			std::string descriptionColumn = fileLang == u8"ja" ? "description_jp_text_id" : "description_en_text_id";
 			std::string sql = "UPDATE roe_quest SET " + questNameColumn + " = NULL, " + descriptionColumn + " = NULL";
 			Execute(sql);
 		}
 		
-		if (type == "erc" && (fileLang == u8"jp" || fileLang == u8"en")) {
-			std::string categoryNameColumn = fileLang == u8"jp" ? "category_name_jp_text_id" : "category_name_en_text_id";
+		if (type == "erc" && (fileLang == u8"ja" || fileLang == u8"en")) {
+			std::string categoryNameColumn = fileLang == u8"ja" ? "category_name_jp_text_id" : "category_name_en_text_id";
 			std::string sql = "UPDATE roe_category SET " + categoryNameColumn + " = NULL";
 			Execute(sql);
 		}
@@ -847,8 +851,20 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 		throw;
 	}
 
-	auto datPath = PathUtil::GetPath(xybase::string::sys_mbs_to_wcs(path + ".DAT"));
+		auto datPath = PathUtil::GetPath(xybase::string::sys_mbs_to_wcs(path + ".DAT"));
 	Ring(xybase::string::to_utf8(datPath).c_str());
+
+	// Skip processing for files that are empty
+	if (type == "evsb")
+	{
+		std::error_code ec;
+		uint64_t fs = std::filesystem::file_size(datPath, ec);
+		if (ec || fs < 8)
+		{
+			// Ring((std::u8string(u8"[SKIP] evsb too small: ") + reinterpret_cast<const char8_t*>(path.c_str())).c_str());
+			return;
+		}
+	}
 
 	Execute("BEGIN;");
 	try
@@ -898,7 +914,7 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 					if (keyItemId) {
 						std::u8string name;
 						std::u8string description;
-						if (fileLang == u8"jp") {
+						if (fileLang == u8"ja") {
 							if (cells[1].GetType() == 0)
 							{
 								name = xybase::string::escape(cells[1].Get<std::u8string>());

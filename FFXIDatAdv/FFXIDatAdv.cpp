@@ -432,7 +432,7 @@ static int RunAllZones(
 
 		// Load strings: zone_strings is primary, zone_strings_jp is secondary (--lang all)
 		std::vector<std::u8string> zoneStrings, zoneStringsJp;
-		if (lang == "jp" || lang == "ja")
+		if (lang == "ja")
 		{
 			if (!evsbJp.empty()) zoneStrings = LoadEvsbStrings(evsbJp);
 		}
@@ -572,7 +572,7 @@ static int RunAllZones(
 								{
 									ResolvedEvent jpRe;
 									jpRe.dialogues = std::move(jpDlgs);
-									handleSplitText(jpRe, evt, block, scan, actorName, true, dedupMapJp, "jp");
+									handleSplitText(jpRe, evt, block, scan, actorName, true, dedupMapJp, "ja");
 								}
 							}
 						}
@@ -651,7 +651,7 @@ static int RunAllZones(
 							{
 								ResolvedEvent jpRe;
 								jpRe.dialogues = std::move(jpDlgs);
-								handleSplitText(jpRe, evt, block, scan, actorName, false, dedupMapJp, "jp");
+								handleSplitText(jpRe, evt, block, scan, actorName, false, dedupMapJp, "ja");
 							}
 						}
 					}
@@ -1159,7 +1159,7 @@ static int DumpDatabase(
 			auto ci = f.size() > 4 ? f[4] : "";
 
 			if (t == "evev" || t == "evac" || t == "evsb") continue;
-			if (!l.empty() && l != "ja" && l != "jp") continue;
+			if (!l.empty() && l != "ja") continue;
 			if (!seen.insert(c + "@" + t).second) continue;
 
 			auto dp = GamePathResolver::ResolvePath(p);
@@ -1413,7 +1413,7 @@ int main(int argc, char** argv)
 		else if (arg == "--lang" && i + 1 < argc)
 		{
 			lang = argv[++i];
-			if (lang == "ja") lang = "jp";
+			if (lang == "ja") lang = "ja";
 		}
 		else
 			singleTarget = arg;
@@ -1463,7 +1463,7 @@ int main(int argc, char** argv)
 
 	if (dumpOpcodes && !singleTarget.empty())
 	{
-		return DumpZoneOpcodes(singleTarget, config, outputDir, lang == "jp");
+		return DumpZoneOpcodes(singleTarget, config, outputDir, lang == "ja");
 	}
 
 	if (dumpDb)
@@ -1478,9 +1478,9 @@ int main(int argc, char** argv)
 			}
 			std::unordered_map<std::string, ZoneDef> single;
 			single[singleTarget] = it->second;
-			return DumpDatabase(single, csvPath, outputDir, false, lang == "jp");
+			return DumpDatabase(single, csvPath, outputDir, false, lang == "ja");
 		}
-		return DumpDatabase(config, csvPath, outputDir, true, lang == "jp");
+		return DumpDatabase(config, csvPath, outputDir, true, lang == "ja");
 	}
 
 	if (dumpEventJson)

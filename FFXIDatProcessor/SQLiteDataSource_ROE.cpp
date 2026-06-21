@@ -7,27 +7,27 @@ namespace
 {
 	bool IsRoeLang(const std::u8string &lang)
 	{
-		return lang == u8"jp" || lang == u8"en";
+		return lang == u8"ja" || lang == u8"en";
 	}
 
 	const char *GetRoeQuestNameColumn(const std::u8string &lang)
 	{
-		return lang == u8"jp" ? "quest_name_jp_text_id" : "quest_name_en_text_id";
+		return lang == u8"ja" ? "quest_name_jp_text_id" : "quest_name_en_text_id";
 	}
 
 	const char *GetRoeQuestDescriptionColumn(const std::u8string &lang)
 	{
-		return lang == u8"jp" ? "description_jp_text_id" : "description_en_text_id";
+		return lang == u8"ja" ? "description_jp_text_id" : "description_en_text_id";
 	}
 
 	const char* GetRoeQuestNoteColumn(const std::u8string& lang)
 	{
-		return lang == u8"jp" ? "note_jp_text_id" : "note_en_text_id";
+		return lang == u8"ja" ? "note_jp_text_id" : "note_en_text_id";
 	}
 
 	const char *GetRoeCategoryNameColumn(const std::u8string &lang)
 	{
-		return lang == u8"jp" ? "category_name_jp_text_id" : "category_name_en_text_id";
+		return lang == u8"ja" ? "category_name_jp_text_id" : "category_name_en_text_id";
 	}
 }
 

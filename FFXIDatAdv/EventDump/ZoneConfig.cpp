@@ -69,7 +69,7 @@ std::vector<ZoneDef> ZoneConfig::LoadFromString(const std::string& content)
 		{
 			if (lang == "na" || lang.empty())
 				it->evsb_path = path;
-			else if (lang == "jp" || lang == "ja")
+			else if (lang == "ja")
 				it->evsb_jp_path = path;
 		}
 
