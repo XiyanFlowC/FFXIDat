@@ -36,6 +36,29 @@ void PathUtil::Init()
         }
         RegCloseKey(hKey);
     }
+    subKey = L"SOFTWARE\\WOW6432Node\\PlayOnlineEU\\InstallFolder";
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, subKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        // 查询键值
+        if (RegQueryValueExW(hKey, valueName, nullptr, &valueType, reinterpret_cast<LPBYTE>(valueData), &bufferSize) == ERROR_SUCCESS) {
+            // 检查值的类型是否为字符串
+            if (valueType == REG_SZ) {
+                gameRootPath = valueData;
+            }
+        }
+        RegCloseKey(hKey);
+	}
+	subKey = L"SOFTWARE\\WOW6432Node\\PlayOnlineUS\\InstallFolder";
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, subKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        // 查询键值
+        if (RegQueryValueExW(hKey, valueName, nullptr, &valueType, reinterpret_cast<LPBYTE>(valueData), &bufferSize) == ERROR_SUCCESS) {
+            // 检查值的类型是否为字符串
+            if (valueType == REG_SZ) {
+                gameRootPath = valueData;
+            }
+        }
+        RegCloseKey(hKey);
+    }
+
 
     wchar_t module_path[MAX_PATH];
     if (GetModuleFileNameW(NULL, module_path, MAX_PATH))

@@ -20,6 +20,9 @@
 #include "../FFXIDat/MonBridge.h"
 #include "../FFXIDat/ItemData.h"
 #include "../FFXIDat/BlockFile.h"
+#include "../FFXIDat/StatusData.h"
+#include "../FFXIDat/ZoneEventImage.h"
+#include "../FFXIDat/ZoneActor.h"
 
 #include "liteopt.h"
 
@@ -91,6 +94,246 @@ int help(const char *para)
 }
 
 const char *cfg_type = nullptr, *cfg_lang = nullptr, *cfg_path = nullptr;
+
+static int DetectFileType(const char *path)
+{
+	std::filesystem::path p = xybase::string::sys_mbs_to_wcs(path);
+	if (!std::filesystem::exists(p))
+	{
+		std::cerr << "File not found: " << path << std::endl;
+		return 1;
+	}
+
+	auto size = std::filesystem::file_size(p);
+	if (size < 4)
+	{
+		std::cout << "File too small (< 4 bytes)" << std::endl;
+		return 0;
+	}
+
+	std::ifstream eye(p, std::ios::binary);
+	char m[16]{};
+	eye.read(m, 16);
+
+	int32_t first4 = *reinterpret_cast<int32_t *>(m);
+	int64_t first8 = *reinterpret_cast<int64_t *>(m);
+
+	std::vector<std::string> results;
+
+	// --- DMsg ---
+	if (memcmp(m, "d_msg\0\0\0", 8) == 0)
+		results.push_back("dmsg");
+
+	// --- XiString ---
+	if (memcmp(m, "XISTRING", 8) == 0)
+		results.push_back("xis");
+
+	// --- FixedPhrase ---
+	if (memcmp(m, "\x02\x01\x01", 4) == 0 || memcmp(m, "\x02\x02\x01", 4) == 0 ||
+		memcmp(m, "\x02\x03\x01", 4) == 0 || memcmp(m, "\x02\x04\x01", 4) == 0)
+		results.push_back("fp");
+
+	// --- evsb (EventStringBase) ---
+	if (size >= 8 && static_cast<uint32_t>(first4 & 0xFFFFFF) == static_cast<uint32_t>(size) - 4)
+	{
+		try {
+			EventStringBase esb(p);
+			esb.Read();
+			if (esb.Size() > 0 || size >= 8)
+				results.push_back("evsb");
+		}
+		catch (...) {}
+	}
+
+	// --- BlockFile ---
+	if (!m[6] && !m[7] && m[0] && m[1] && m[2] && m[3])
+	{
+		try {
+			BlockFile bf(p);
+			bf.Read();
+			results.push_back("block(" + std::string(m, 4) + ")");
+		}
+		catch (...) {}
+	}
+
+	// --- StatusData ---
+	// has periodic 0xFF at sizeof(StatusEntry) intervals
+	// We can try parsing instead of size heuristics
+	try {
+		StatusData sd;
+		sd.Read(p.wstring());
+		if (!sd.data.empty())
+			results.push_back("sd");
+	}
+	catch (...) {}
+
+	// --- ItemData (ROR5 + periodic 0xFF) ---
+	{
+		bool itemPeriodic = (sizeof(ItemEntry) > 0 && (size_t)size >= sizeof(ItemEntry));
+		if (itemPeriodic)
+		{
+			uint64_t count = (size_t)size / sizeof(ItemEntry);
+			if (count >= 1)
+			{
+				std::ifstream f(p, std::ios::binary);
+				for (uint64_t i = 1; i <= count; ++i)
+				{
+					f.seekg(static_cast<std::streamoff>(i * sizeof(ItemEntry) - 1), std::ios::beg);
+					char marker = 0;
+					f.read(&marker, 1);
+					if (f.gcount() != 1 || static_cast<uint8_t>(marker) != 0xFF)
+					{ itemPeriodic = false; break; }
+				}
+			}
+		}
+		if (itemPeriodic)
+		{
+			const std::pair<ItemSpecType, const char *> specs[] = {
+				{ItemSpecType::NORMAL, "inb"}, {ItemSpecType::USABLE, "iub"},
+				{ItemSpecType::WEAPON, "iwb"}, {ItemSpecType::ARMOUR, "iab"},
+				{ItemSpecType::PUPPET, "ipb"}, {ItemSpecType::SLIP, "isb"},
+				{ItemSpecType::CURRENCY, "icb"}, {ItemSpecType::INSTINCT, "iib"},
+			};
+			for (auto &[spec, name] : specs)
+			{
+				try {
+					ItemData item;
+					item.Read(p.wstring(), spec);
+					if (!item.data.empty() && item.data.begin()->cellCount() > 0)
+						results.push_back(std::string("item.") + name);
+				}
+				catch (...) {}
+			}
+		}
+	}
+
+	// --- ROE Quest ---
+	{
+		bool periodic = (sizeof(RoeQuestEntry) > 0 && (size_t)size >= sizeof(RoeQuestEntry));
+		if (periodic)
+		{
+			uint64_t count = (size_t)size / sizeof(RoeQuestEntry);
+			std::ifstream f(p, std::ios::binary);
+			for (uint64_t i = 1; i <= count; ++i)
+			{
+				f.seekg(static_cast<std::streamoff>(i * sizeof(RoeQuestEntry) - 1), std::ios::beg);
+				char marker = 0;
+				f.read(&marker, 1);
+				if (f.gcount() != 1 || static_cast<uint8_t>(marker) != 0xFF)
+				{ periodic = false; break; }
+			}
+		}
+		if (periodic)
+		{
+			try {
+				RecordsOfEminence roe;
+				roe.ReadQuest(p.wstring());
+				if (!roe.questData.empty())
+					results.push_back("roe.quest");
+			}
+			catch (...) {}
+		}
+	}
+
+	// --- ROE Category ---
+	{
+		bool periodic = (sizeof(RoeCategoryEntry) > 0 && (size_t)size >= sizeof(RoeCategoryEntry));
+		if (periodic)
+		{
+			uint64_t count = (size_t)size / sizeof(RoeCategoryEntry);
+			std::ifstream f(p, std::ios::binary);
+			for (uint64_t i = 1; i <= count; ++i)
+			{
+				f.seekg(static_cast<std::streamoff>(i * sizeof(RoeCategoryEntry) - 1), std::ios::beg);
+				char marker = 0;
+				f.read(&marker, 1);
+				if (f.gcount() != 1 || static_cast<uint8_t>(marker) != 0xFF)
+				{ periodic = false; break; }
+			}
+		}
+		if (periodic)
+		{
+			try {
+				RecordsOfEminence roe;
+				roe.ReadCategory(p.wstring());
+				if (!roe.categoryData.empty())
+					results.push_back("roe.category");
+			}
+			catch (...) {}
+		}
+	}
+
+	// --- MonBridge ---
+	{
+		bool periodic = (sizeof(MBRecord) > 0 && (size_t)size >= sizeof(MBRecord));
+		if (periodic)
+		{
+			uint64_t count = (size_t)size / sizeof(MBRecord);
+			std::ifstream f(p, std::ios::binary);
+			for (uint64_t i = 1; i <= count; ++i)
+			{
+				f.seekg(static_cast<std::streamoff>(i * sizeof(MBRecord) - 1), std::ios::beg);
+				char marker = 0;
+				f.read(&marker, 1);
+				if (f.gcount() != 1 || static_cast<uint8_t>(marker) != 0xFF)
+				{ periodic = false; break; }
+			}
+		}
+		if (periodic)
+		{
+			try {
+				MonBridge mb;
+				mb.Read(p.wstring());
+				results.push_back("mbd");
+			}
+			catch (...) {}
+		}
+	}
+
+	// --- evev (ZoneEventImage) ---
+	if (size >= 12)
+	{
+		uint32_t blockCount = static_cast<uint32_t>(first4);
+		if (blockCount > 0 && blockCount <= 1024)
+		{
+			uint32_t minSize = 4 + blockCount * 4 + 8; // header + block offsets + first block header
+			if (static_cast<uint64_t>(size) >= minSize)
+			{
+				try {
+					ZoneEventImage zei;
+					if (zei.Load(p.string()))
+						results.push_back("evev");
+				}
+				catch (...) {}
+			}
+		}
+	}
+
+	// --- evac (ZoneActor) ---
+	if (size >= 32 && (size % 32) == 0)
+	{
+		try {
+			ZoneActor za;
+			if (za.Load(p.string()))
+				results.push_back("evac");
+		}
+		catch (...) {}
+	}
+
+	// Output results
+	if (results.empty())
+	{
+		std::cout << "No known file type detected." << std::endl;
+	}
+	else
+	{
+		std::cout << "Detected type(s):" << std::endl;
+		for (const auto &r : results)
+			std::cout << "  " << r << std::endl;
+	}
+
+	return 0;
+}
 
 int main(int argc, const char **argv)
 {
@@ -280,6 +523,9 @@ int main(int argc, const char **argv)
 		return 0;
 		}, L"导出游戏中的物品数据。");
 	lopt_regopt("help", '?', 0, help, L"显示本信息。");
+	lopt_regopt("detect", 0, LOPT_FLG_VAL_NEED, [](const char *str)->int {
+		return DetectFileType(str);
+		}, L"检测指定文件的类型。");
 	if (argc == 1) help(nullptr);
 
 	if (argv[1][0] != '-')
