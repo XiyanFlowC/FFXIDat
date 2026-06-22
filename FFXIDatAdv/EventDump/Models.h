@@ -55,8 +55,8 @@ struct RefInfo
 struct DialogueLine
 {
 	std::string speaker;
-	std::string text;
-	uint32_t message_id = 0;
+	std::u8string text;
+	uint32_t message_id = 0; // wtf is this even used?
 	uint32_t evsb_index = 0;
 	std::vector<RefInfo> refs;
 };

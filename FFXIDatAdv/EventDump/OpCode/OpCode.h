@@ -181,13 +181,13 @@ struct StringResolveError : std::runtime_error {
 		: std::runtime_error("string resolve OOB: id=" + std::to_string(id) + " size=" + std::to_string(size)) {}
 };
 
-inline std::string resolve_string(const OpCodeContext& ctx, uint32_t id) {
+inline std::u8string resolve_string(const OpCodeContext& ctx, uint32_t id) {
 	if (!ctx.zone_strings)
 		throw StringResolveError(id, 0);
 	if (id >= ctx.zone_strings->size())
 		throw StringResolveError(id, ctx.zone_strings->size());
 	const auto& u = (*ctx.zone_strings)[id];
-	return std::string(u.begin(), u.end());
+	return u;
 }
 
 // --- Unknown ---

@@ -41,16 +41,16 @@ private:
 	bool useRefFiles_ = false;
 	std::string evsbLang_ = "ja";
 	std::filesystem::path refCsvPath_;
-	std::vector<std::pair<std::string, std::string>> refEntries_;
+	std::vector<std::pair<std::u8string, std::u8string>> refEntries_;
 
 	std::filesystem::path CommonDir() const;
 	std::filesystem::path ZoneDir(const std::string& zoneName) const;
 	std::string SafeFilename(const std::string& name) const;
 
-	static size_t TextSetHash(const std::vector<std::string>& texts);
+	static size_t TextSetHash(const std::vector<std::u8string>& texts);
 	void WriteRefCsv();
 	void WriteTxtFile(const std::filesystem::path& path,
-		const std::vector<std::string>& texts,
-		std::unordered_map<size_t, std::string>& textCache);
-	void WriteTxtFileSimple(const std::filesystem::path& path, const std::vector<std::string>& texts);
+		const std::vector<std::u8string>& texts,
+		std::unordered_map<size_t, std::u8string>& textCache);
+	void WriteTxtFileSimple(const std::filesystem::path& path, const std::vector<std::u8string>& texts);
 };

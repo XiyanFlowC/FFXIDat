@@ -409,7 +409,7 @@ static std::unordered_set<std::string> BuildPairedEvsbSet()
 
 // --- Phase 1: Extract text from all evev files ---
 // Returns all unique text lines exported (for dedup)
-static std::unordered_set<std::string> ExtractEvevText(const std::vector<FileProcessDef>& evDefs, const std::string& lang)
+static std::unordered_set<std::u8string> ExtractEvevText(const std::vector<FileProcessDef>& evDefs, const std::string& lang)
 {
 	(void)evDefs;
 	Logger::Instance().Info("Phase 1: Evev extraction start");
@@ -424,7 +424,7 @@ static std::unordered_set<std::string> ExtractEvevText(const std::vector<FilePro
 	extractor.RunAllZones(zones);
 
 	// Collect all unique text lines from event data
-	std::unordered_set<std::string> allLines;
+	std::unordered_set<std::u8string> allLines;
 	for (const auto& [name, zf] : zones)
 	{
 		if (zf.evev_path.empty()) continue;
@@ -479,7 +479,7 @@ static std::unordered_set<std::string> ExtractEvevText(const std::vector<FilePro
 // --- Phase 2: Export orphan evsb files, filtered by event dedup set ---
 static void ExportOrphanEvsb(
 	const std::vector<FileProcessDef>& evsbDefs,
-	const std::unordered_set<std::string>& eventLines,
+	const std::unordered_set<std::u8string>& eventLines,
 	const std::filesystem::path& outputDir)
 {
 	Logger::Instance().Info("Phase 2: Orphan evsb export start");
@@ -490,7 +490,7 @@ static void ExportOrphanEvsb(
 	// Also track lines already exported by evev as u8string set for ExportEventStringBase
 	std::set<std::u8string> dedupSet;
 	for (const auto& line : eventLines)
-		dedupSet.insert(std::u8string(line.begin(), line.end()));
+		dedupSet.insert(line);
 
 	int exported = 0;
 	for (const auto& def : evsbDefs)

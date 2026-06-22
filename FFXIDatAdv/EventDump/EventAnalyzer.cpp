@@ -87,7 +87,7 @@ void EventAnalyzer::Load(
 			if (dialogues.empty()) continue;
 
 			std::map<uint32_t, size_t> idxToLine;
-			std::vector<std::string> textLines;
+			std::vector<std::u8string> textLines;
 			std::vector<std::string> speakers;
 			std::vector<uint32_t> lineIndices;
 			std::set<uint32_t> evsbRefs;

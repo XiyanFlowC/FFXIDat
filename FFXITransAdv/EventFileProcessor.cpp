@@ -189,7 +189,7 @@ static std::unordered_map<std::string, std::string> LoadRefCsv(const std::filesy
 }
 
 // Try reading a TXT file, following ref.csv chain
-static std::vector<std::string> ReadTxtWithRef(
+static std::vector<std::u8string> ReadTxtWithRef(
 	const std::filesystem::path& filePath,
 	const std::unordered_map<std::string, std::string>& refs)
 {
@@ -198,13 +198,13 @@ static std::vector<std::string> ReadTxtWithRef(
 		std::ifstream f(filePath);
 		if (f.is_open())
 		{
-			std::vector<std::string> lines;
+			std::vector<std::u8string> lines;
 			std::string line;
 			while (std::getline(f, line))
-				lines.push_back(line);
+				lines.push_back(reinterpret_cast<const char8_t*>(line.c_str()));
 			// Check for @ref in first line (backward compat)
 			if (!lines.empty() && lines[0].size() > 5 &&
-				lines[0].substr(0, 5) == "@ref ")
+				lines[0].substr(0, 5) == u8"@ref ")
 			{
 				auto canonPath = filePath.parent_path() / lines[0].substr(5);
 				return ReadTxtWithRef(canonPath, refs);
@@ -324,7 +324,7 @@ bool EventFileProcessor::Process(
 	BytecodeAnalyzer analyzer;
 
 	// Build patches: evsb index → translated text
-	std::map<size_t, std::string> patches;
+	std::map<size_t, std::u8string> patches;
 	size_t patchedEvents = 0;
 	size_t skippedEvents = 0;
 

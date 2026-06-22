@@ -191,7 +191,7 @@ void DataDumper::Flush()
 							std::istreambuf_iterator<char>());
 						std::string newContent;
 						for (const auto& line : evt.textLines)
-							newContent += line + "\n";
+							newContent += std::string(line.begin(), line.end()) + "\n";
 						if (existing == newContent)
 						{
 							contentCache_[evt.textHash] = relPath;
@@ -230,7 +230,7 @@ void DataDumper::Flush()
 					{
 						std::ofstream out(txtPath);
 						for (const auto& line : evt.textLines)
-							out << line << "\n";
+							out << std::string(line.begin(), line.end()) << "\n";
 					}
 					contentCache_[evt.textHash] = relPath;
 					(*ap)[evt.event_id] = relPath;

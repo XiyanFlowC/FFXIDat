@@ -27,9 +27,6 @@
     <ClCompile Include="EventDump\EventWriter.cpp">
       <Filter>EventDump</Filter>
     </ClCompile>
-    <ClCompile Include="EventDump\CommonVerifier.cpp">
-      <Filter>EventDump</Filter>
-    </ClCompile>
     <ClCompile Include="EventDump\GamePathResolver.cpp">
       <Filter>EventDump</Filter>
     </ClCompile>
@@ -42,6 +39,8 @@
     <ClCompile Include="..\FFXIDatProcessor\codepage.cpp">
       <Filter>EventDump</Filter>
     </ClCompile>
+    <ClCompile Include="EventDump\EventAnalyzer.cpp" />
+    <ClCompile Include="EventDump\DataDumper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EventDump\Models.h">
@@ -63,9 +62,6 @@
       <Filter>EventDump</Filter>
     </ClInclude>
     <ClInclude Include="EventDump\EventWriter.h">
-      <Filter>EventDump</Filter>
-    </ClInclude>
-    <ClInclude Include="EventDump\CommonVerifier.h">
       <Filter>EventDump</Filter>
     </ClInclude>
     <ClInclude Include="EventDump\GamePathResolver.h">

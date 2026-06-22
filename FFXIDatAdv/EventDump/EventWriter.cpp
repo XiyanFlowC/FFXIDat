@@ -194,7 +194,7 @@ bool EventWriter::WriteTextFile(const std::string& textRef, const std::string& l
 		const auto& dl = dialogues[j];
 		json << Indent(2) << "{\n";
 		json << Indent(3) << "\"speaker\": \"" << EscapeJson(dl.speaker) << "\",\n";
-		json << Indent(3) << "\"text\": \"" << EscapeJson(dl.text) << "\"\n";
+		json << Indent(3) << "\"text\": \"" << EscapeJson(std::string(dl.text.begin(), dl.text.end())) << "\"\n";
 		json << Indent(2) << "}";
 		if (j + 1 < dialogues.size())
 			json << ",";
@@ -250,7 +250,7 @@ bool EventWriter::WriteActorFile(const ResolvedActor& actor, const std::string& 
 				const auto& dl = evt.dialogues[j];
 				json << Indent(4) << "{\n";
 				json << Indent(5) << "\"speaker\": \"" << EscapeJson(dl.speaker) << "\",\n";
-				json << Indent(5) << "\"text\": \"" << EscapeJson(dl.text) << "\"\n";
+				json << Indent(5) << "\"text\": \"" << EscapeJson(std::string(dl.text.begin(), dl.text.end())) << "\"\n";
 				json << Indent(4) << "}";
 				if (j + 1 < evt.dialogues.size())
 					json << ",";
@@ -328,7 +328,7 @@ bool EventWriter::WriteCommonActorFile(const CommonActorData& actor)
 				const auto& dl = evt.dialogues[j];
 				json << Indent(4) << "{\n";
 				json << Indent(5) << "\"speaker\": \"" << EscapeJson(dl.speaker) << "\",\n";
-				json << Indent(5) << "\"text\": \"" << EscapeJson(dl.text) << "\"\n";
+				json << Indent(5) << "\"text\": \"" << EscapeJson(std::string(dl.text.begin(), dl.text.end())) << "\"\n";
 				json << Indent(4) << "}";
 				if (j + 1 < evt.dialogues.size())
 					json << ",";

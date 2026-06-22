@@ -10,7 +10,7 @@ struct AnalyzedEvent
 {
 	uint16_t event_id;
 	uint16_t array_index;
-	std::vector<std::string> textLines;       // deduped dialogue lines (txt content)
+	std::vector<std::u8string> textLines;       // deduped dialogue lines (txt content)
 	std::vector<std::string> speakers;         // speaker name per raw dialogue entry
 	std::vector<uint32_t> lineIndices;         // line index into textLines per raw dialogue
 	std::vector<uint32_t> evsbRefs;            // sorted, unique evsb indices referenced

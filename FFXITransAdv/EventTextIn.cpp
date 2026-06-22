@@ -20,9 +20,9 @@ EventTextIn::EventTextIn(const std::filesystem::path& textsDir)
 }
 
 // --- Read all lines from a TXT file, resolving @ref references ---
-static std::vector<std::string> ReadTxtLines(const std::filesystem::path& path)
+static std::vector<std::u8string> ReadTxtLines(const std::filesystem::path& path)
 {
-	std::vector<std::string> lines;
+	std::vector<std::u8string> lines;
 	std::ifstream file(path);
 	if (!file.is_open()) return lines;
 
@@ -37,12 +37,12 @@ static std::vector<std::string> ReadTxtLines(const std::filesystem::path& path)
 			file.close();
 			return ReadTxtLines(canonPath);
 		}
-		lines.push_back(firstLine);
+		lines.push_back({firstLine.begin(), firstLine.end()});
 	}
 
 	std::string line;
 	while (std::getline(file, line))
-		lines.push_back(line);
+		lines.push_back({line.begin(), line.end()});
 	return lines;
 }
 
@@ -74,7 +74,7 @@ static std::string EventFile(uint16_t event_id, uint16_t array_index)
 struct TextRef
 {
 	uint32_t message_id;
-	std::string text;
+	std::u8string text;
 };
 
 static std::vector<TextRef> GetTextRefs(const EventEntry& evt,
@@ -99,13 +99,13 @@ struct PatchInfo
 {
 	bool verified = false;
 	std::vector<uint32_t> ids;      // message_ids to patch
-	std::vector<std::string> texts; // translated texts
+	std::vector<std::u8string> texts; // translated texts
 	int errors = 0;
 };
 
 static PatchInfo MatchAndVerify(
-	const std::vector<std::string>& srcTxt,    // original text (from src/)
-	const std::vector<std::string>& dstTxt,    // translation (from dst/)
+	const std::vector<std::u8string>& srcTxt,    // original text (from src/)
+	const std::vector<std::u8string>& dstTxt,    // translation (from dst/)
 	const std::vector<TextRef>& refs)          // current evsb content
 {
 	PatchInfo pi;
@@ -113,7 +113,7 @@ static PatchInfo MatchAndVerify(
 	if (refs.empty()) { pi.errors = 1; return pi; }
 
 	// Extract current evsb texts
-	std::vector<std::string> current;
+	std::vector<std::u8string> current;
 	for (const auto& r : refs) current.push_back(r.text);
 
 	// Verify: current evsb == TXT src
@@ -151,7 +151,7 @@ static PatchInfo MatchAndVerify(
 		}
 		if (!found)
 		{
-			Logger::Instance().Warning("No match for: " + srcTxt[i]);
+			Logger::Instance().Warning("No match for: " + Logger::ToUtf8(srcTxt[i]));
 			pi.errors++;
 		}
 	}
@@ -161,7 +161,7 @@ static PatchInfo MatchAndVerify(
 // --- Apply patches to evsb ---
 static bool ApplyPatches(const std::string& evsbPath,
 	const std::vector<uint32_t>& ids,
-	const std::vector<std::string>& texts)
+	const std::vector<std::u8string>& texts)
 {
 	if (ids.empty() || ids.size() != texts.size()) return false;
 	try
@@ -172,8 +172,7 @@ static bool ApplyPatches(const std::string& evsbPath,
 		{
 			if (ids[i] < esb.Size())
 			{
-				auto& u8str = esb[ids[i]];
-				u8str = std::u8string(texts[i].begin(), texts[i].end());
+				esb[ids[i]] = texts[i];
 			}
 		}
 		esb.Write();
@@ -285,7 +284,7 @@ EventTextInResult EventTextIn::RunZone(const std::string& zoneName)
 			if (!std::filesystem::exists(dstPath))
 				dstPath = commonDst / SafeName(actorName) / fileName;
 
-			std::vector<std::string> dstLines;
+			std::vector<std::u8string> dstLines;
 			if (std::filesystem::exists(dstPath))
 				dstLines = ReadTxtLines(dstPath);
 			else

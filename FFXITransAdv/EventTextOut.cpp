@@ -143,7 +143,7 @@ struct EventTexts
 {
 	uint32_t event_id;
 	uint16_t array_index;
-	std::vector<std::string> texts; // resolved evsb strings
+	std::vector<std::u8string> texts; // resolved evsb strings
 };
 
 static std::vector<EventTexts> ExtractEventTexts(const ActorBlock& block,
@@ -167,15 +167,15 @@ static std::vector<EventTexts> ExtractEventTexts(const ActorBlock& block,
 	return result;
 }
 
-static bool LinesMatch(const std::vector<std::string>& a, const std::vector<std::string>& b)
+static bool LinesMatch(const std::vector<std::u8string>& a, const std::vector<std::u8string>& b)
 {
 	if (a.size() != b.size()) return false;
 	for (size_t i = 0; i < a.size(); ++i)
 	{
 		// If either side is an unresolved reference (e.g. "7751*"), treat as match
-		auto isUnresolved = [](const std::string& s) {
+		auto isUnresolved = [](const std::u8string& s) {
 			return !s.empty() && s.back() == '*'
-				&& s.find_first_not_of("0123456789*") == std::string::npos;
+				&& s.find_first_not_of(u8"0123456789*") == std::string::npos;
 		};
 		if (isUnresolved(a[i]) || isUnresolved(b[i]))
 			continue;
@@ -186,7 +186,7 @@ static bool LinesMatch(const std::vector<std::string>& a, const std::vector<std:
 
 static bool TextMatches(const std::vector<EventTexts>& a, const std::vector<EventTexts>& b)
 {
-	std::unordered_map<uint16_t, std::vector<std::string>> m_a, m_b;
+	std::unordered_map<uint16_t, std::vector<std::u8string>> m_a, m_b;
 	for (const auto& e : a) m_a[e.event_id] = e.texts;
 	for (const auto& e : b) m_b[e.event_id] = e.texts;
 
@@ -205,11 +205,11 @@ static bool TextMatches(const std::vector<EventTexts>& a, const std::vector<Even
 }
 
 // --- Compute a stable hash for a text set ---
-size_t EventTextOut::TextSetHash(const std::vector<std::string>& texts)
+size_t EventTextOut::TextSetHash(const std::vector<std::u8string>& texts)
 {
 	size_t h = 0;
 	for (const auto& t : texts)
-		h ^= std::hash<std::string>{}(t) + 0x9e3779b9 + (h << 6) + (h >> 2);
+		h ^= std::hash<std::u8string>{}(t) + 0x9e3779b9 + (h << 6) + (h >> 2);
 	return h;
 }
 
@@ -219,14 +219,14 @@ void EventTextOut::WriteRefCsv()
 	std::ofstream csv(refCsvPath_);
 	if (!csv.is_open()) return;
 	for (const auto& [canon, ref] : refEntries_)
-		csv << canon << "," << ref << "\n";
+		csv << Logger::ToUtf8(canon) << "," << Logger::ToUtf8(ref) << "\n";
 }
 
 // --- Write a TXT file with global dedup ---
 // If the same text set was already written elsewhere, write a reference instead.
 void EventTextOut::WriteTxtFile(const std::filesystem::path& path,
-	const std::vector<std::string>& texts,
-	std::unordered_map<size_t, std::string>& textCache)
+	const std::vector<std::u8string>& texts,
+	std::unordered_map<size_t, std::u8string>& textCache)
 {
 	if (texts.empty()) return;
 
@@ -237,10 +237,10 @@ void EventTextOut::WriteTxtFile(const std::filesystem::path& path,
 	{
 		// Skip self-reference (same file content already written)
 		auto canon = it->second;
-		auto pStr = path.lexically_normal().string();
+		auto pStr = path.lexically_normal().u8string();
 		// Extract relative key for comparison if stored as relative
-		auto pos = pStr.find("event");
-		if (pos != std::string::npos)
+		auto pos = pStr.find(u8"event");
+		if (pos != std::u8string::npos)
 			pStr = pStr.substr(pos);
 		// Normalize separators for comparison
 		for (auto& c : canon) if (c == '\\') c = '/';
@@ -254,7 +254,7 @@ void EventTextOut::WriteTxtFile(const std::filesystem::path& path,
 			std::filesystem::create_directories(path.parent_path());
 			std::ofstream file(path);
 			if (file.is_open())
-				file << "@ref " << canon << "\n";
+				file << "@ref " << Logger::ToUtf8(canon) << "\n";
 		}
 		else
 		{
@@ -274,27 +274,27 @@ void EventTextOut::WriteTxtFile(const std::filesystem::path& path,
 		return;
 	}
 	for (const auto& t : texts)
-		file << t << "\n";
+		file << Logger::ToUtf8(t) << "\n";
 	// Store path relative to event output base for portable references
 	// Normalize to forward slashes
-	auto pStr = path.lexically_normal().string();
+	auto pStr = path.lexically_normal().u8string();
 	// Find "event/" boundary (after output root)
-	auto pos = pStr.find("event\\");
-	if (pos == std::string::npos) pos = pStr.find("event/");
-	if (pos != std::string::npos)
+	auto pos = pStr.find(u8"event\\");
+	if (pos == std::u8string::npos) pos = pStr.find(u8"event/");
+	if (pos != std::u8string::npos)
 	{
 		auto rel = pStr.substr(pos);
 		for (auto& c : rel) if (c == '\\') c = '/';
 		textCache[h] = rel;
 	}
 	else
-		textCache[h] = path.filename().string();
+		textCache[h] = path.filename().u8string();
 }
 
 // Overload without dedup (for backward compat)
-void EventTextOut::WriteTxtFileSimple(const std::filesystem::path& path, const std::vector<std::string>& texts)
+void EventTextOut::WriteTxtFileSimple(const std::filesystem::path& path, const std::vector<std::u8string>& texts)
 {
-	std::unordered_map<size_t, std::string> dummy;
+	std::unordered_map<size_t, std::u8string> dummy;
 	WriteTxtFile(path, texts, dummy);
 }
 
@@ -549,7 +549,7 @@ EventTextOutResult EventTextOut::RunAllZones(const std::unordered_map<std::strin
 	std::cout << "\n=== Phase 3: Writing TXT ===" << std::endl;
 
 	// Global text dedup: text_hash → canonical file path
-	std::unordered_map<size_t, std::string> globalTextCache;
+	std::unordered_map<size_t, std::u8string> globalTextCache;
 
 	for (const auto& scan : scans)
 	{
@@ -576,7 +576,7 @@ EventTextOutResult EventTextOut::RunAllZones(const std::unordered_map<std::strin
 			{
 				uint16_t event_id;
 				uint16_t array_index;
-				std::vector<std::string> texts;
+				std::vector<std::u8string> texts;
 			};
 
 			std::vector<EventFile> events;
@@ -740,7 +740,7 @@ EventTextOutResult EventTextOut::RunZone(const std::string& zoneName)
 			}
 
 			BytecodeAnalyzer analyzer;
-			std::unordered_map<size_t, std::string> localTextCache;
+			std::unordered_map<size_t, std::u8string> localTextCache;
 
 			for (const auto& block : actors)
 			{
@@ -763,7 +763,7 @@ EventTextOutResult EventTextOut::RunZone(const std::string& zoneName)
 						continue;
 					}
 
-					std::vector<std::string> texts;
+					std::vector<std::u8string> texts;
 					for (const auto& dl : dls)
 						texts.push_back(dl.text);
 
@@ -856,7 +856,7 @@ EventTextOutResult EventTextOut::RunZone(const std::string& zoneName, const Zone
 	}
 
 	BytecodeAnalyzer analyzer;
-	std::unordered_map<size_t, std::string> localTextCache;
+	std::unordered_map<size_t, std::u8string> localTextCache;
 
 	for (const auto& block : actors)
 	{
@@ -874,7 +874,7 @@ EventTextOutResult EventTextOut::RunZone(const std::string& zoneName, const Zone
 				continue;
 			}
 
-			std::vector<std::string> texts;
+			std::vector<std::u8string> texts;
 			for (const auto& dl : dls)
 				texts.push_back(dl.text);
 

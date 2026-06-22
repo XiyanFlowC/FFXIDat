@@ -27,6 +27,10 @@
 #include <EventString.h>
 #include <xystring.h>
 
+// text.db integration (FFXIDatProcessor — PD, no AGPL propagation)
+#include "../FFXIDatProcessor/SQLiteDataSource.h"
+#include "../FFXIDatProcessor/DataManager.h"
+
 // System data export helpers
 #include "../FFXIDat/ItemData.h"
 #include "../FFXIDat/DMsg.h"
@@ -171,6 +175,10 @@ static void PrintHelp(const char* prog)
 	std::cout << "  " << prog << " --lang <na|jp|all>        语言: na=英语, jp=日语, all=双语 (需要 --split-text)" << std::endl;
 	std::cout << "  " << prog << " --dump-opcodes            在 JSON 中包含 opcode 反汇编" << std::endl;
 	std::cout << "  " << prog << " --split-text              文本分离：文本与指令分别存储" << std::endl;
+	std::cout << "  " << prog << " --event-db-update         解析完成后将事件数据写入 text.db" << std::endl;
+	std::cout << "  " << prog << " --event-db-dump           从 text.db 还原 JSON 导出（不解析 DAT）" << std::endl;
+	std::cout << "  " << prog << " --db <path>               指定数据库路径 (默认: text.db)" << std::endl;
+	std::cout << "  " << prog << " --dump-lang <ja|en>       dump 时使用的语言列 (默认: ja)" << std::endl;
 	std::cout << "  " << prog << " --help                    显示此帮助" << std::endl;
 }
 
@@ -369,9 +377,23 @@ static size_t HashDialogues(const std::vector<DialogueLine>& dls)
 	for (const auto& dl : dls)
 	{
 		h ^= std::hash<std::string>{}(dl.speaker) + 0x9e3779b9 + (h << 6) + (h >> 2);
-		h ^= std::hash<std::string>{}(dl.text) + 0x9e3779b9 + (h << 6) + (h >> 2);
+		h ^= std::hash<std::u8string>{}(dl.text) + 0x9e3779b9 + (h << 6) + (h >> 2);
 	}
 	return h;
+}
+
+// FNV-1a hex hash of actor's full event_data (same algorithm as EventAnalyzer).
+static std::string ActorBytecodeHash(const ActorBlock& blk)
+{
+	uint64_t h = 14695981039346656037ull;
+	for (uint8_t b : blk.event_data)
+	{
+		h ^= b;
+		h *= 1099511628211ull;
+	}
+	char buf[32];
+	snprintf(buf, sizeof(buf), "%016llX", (unsigned long long)h);
+	return buf;
 }
 
 static int RunAllZones(
@@ -380,7 +402,8 @@ static int RunAllZones(
 	bool pretty,
 	const std::string& lang = "na",
 	bool splitText = false,
-	bool dumpOpcodes = false)
+	bool dumpOpcodes = false,
+	std::vector<SQLiteDataSource::Actor>* advActorsOut = nullptr)
 {
 	std::filesystem::path outPath(outputDir);
 	EventWriter writer(outPath, pretty);
@@ -598,14 +621,57 @@ static int RunAllZones(
 						cad.events.push_back(std::move(re));
 					}
 					commonActors.push_back(cad);
-					writer.WriteCommonActorFile(cad);
+						writer.WriteCommonActorFile(cad);
+
+						// Build AdvActor for DB import (common).
+						if (advActorsOut)
+						{
+							SQLiteDataSource::Actor aa;
+							aa.actor_name     = actorName;
+							aa.bytecode_hash  = ActorBytecodeHash(block);
+							// zone_name empty => common; alias_zones filled later per-scan
+							for (const auto& e : ra.events)
+							{
+								SQLiteDataSource::Event ae;
+								ae.event_no    = e.event_id;
+								ae.event_index = e.array_index;
+								for (const auto& dl : e.dialogues)
+								{
+									SQLiteDataSource::Dialogue ad;
+									ad.evsb_index = dl.evsb_index;
+									ad.speaker    = dl.speaker;
+									// text_ja / text_en filled below when we know the lang
+									if (lang == "ja")
+										ad.text_ja = dl.text;
+									else
+										ad.text_en = dl.text;
+									ae.dialogues.push_back(std::move(ad));
+								}
+								aa.events.push_back(std::move(ae));
+							}
+							advActorsOut->push_back(std::move(aa));
+						}
 				}
 
 				ZoneIndexEntry entry;
-				entry.actor_number = block.actor_number;
-				entry.actor_name = actorName;
-				entry.category = ActorCategory::common;
-				zi.entries.push_back(entry);
+					entry.actor_number = block.actor_number;
+					entry.actor_name = actorName;
+					entry.category = ActorCategory::common;
+					zi.entries.push_back(entry);
+
+					// Record this zone as an alias for DB import.
+					if (advActorsOut)
+					{
+						for (auto& aa : *advActorsOut)
+						{
+							if (aa.actor_name == actorName && aa.zone_name.empty())
+							{
+								aa.alias_zones.push_back(scan.zone_name);
+								aa.alias_actor_nos.push_back(block.actor_number);
+								break;
+							}
+						}
+					}
 			}
 			else
 			{
@@ -701,9 +767,38 @@ static int RunAllZones(
 			ZoneIndexEntry entry;
 			entry.actor_number = info.block->actor_number;
 			entry.actor_name = info.name;
-			entry.local_ref = fit->second; // explicit ref for dedup filename
+			entry.local_ref = fit->second;
 			entry.category = ActorCategory::private_;
 			zi.entries.push_back(entry);
+
+			// Build AdvActor for DB import (private).
+			if (advActorsOut)
+			{
+				SQLiteDataSource::Actor aa;
+				aa.zone_name     = scan.zone_name;
+				aa.actor_no      = info.block->actor_number;
+				aa.actor_name    = info.name;
+				aa.bytecode_hash = ActorBytecodeHash(*info.block);
+				for (const auto& e : info.resolved.events)
+				{
+					SQLiteDataSource::Event ae;
+					ae.event_no    = e.event_id;
+					ae.event_index = e.array_index;
+					for (const auto& dl : e.dialogues)
+					{
+						SQLiteDataSource::Dialogue ad;
+						ad.evsb_index = dl.evsb_index;
+						ad.speaker    = dl.speaker;
+						if (lang == "ja")
+							ad.text_ja = dl.text;
+						else
+							ad.text_en = dl.text;
+						ae.dialogues.push_back(std::move(ad));
+					}
+					aa.events.push_back(std::move(ae));
+				}
+				advActorsOut->push_back(std::move(aa));
+			}
 		}
 
 		writer.WriteZoneIndex(zi, scan.zone_name);
@@ -722,7 +817,7 @@ static int RunAllZones(
 }
 
 // --- Dump Event JSON (--dump-event-json) ---
-static void WriteTextJsonFile(const std::filesystem::path& path, const std::vector<std::string>& lines)
+static void WriteTextJsonFile(const std::filesystem::path& path, const std::vector<std::u8string>& lines)
 {
 	std::filesystem::create_directories(path.parent_path());
 	std::ofstream out(path, std::ios::binary);
@@ -1196,7 +1291,8 @@ static int RunSingleZone(
 	bool pretty,
 	const std::string& lang = "na",
 	bool splitText = false,
-	bool dumpOpcodes = false)
+	bool dumpOpcodes = false,
+	std::vector<SQLiteDataSource::Actor>* advActorsOut = nullptr)
 {
 	for (const auto& [name, def] : config)
 	{
@@ -1204,7 +1300,7 @@ static int RunSingleZone(
 		{
 			std::unordered_map<std::string, ZoneDef> single;
 			single[name] = def;
-			return RunAllZones(single, outputDir, pretty, lang, splitText, dumpOpcodes);
+			return RunAllZones(single, outputDir, pretty, lang, splitText, dumpOpcodes, advActorsOut);
 		}
 	}
 	std::cout << "[ERROR] Zone not found: " << zoneNameOrId << std::endl;
@@ -1376,11 +1472,15 @@ int main(int argc, char** argv)
 	std::string outputDir = "event";
 	bool pretty = false;
 	bool listOnly = false;
-	std::string lang = "na"; // "na", "jp", or "all"
+	std::string lang = "na"; // "na", "ja", or "all"
 	bool dumpOpcodes = false;
 	bool splitText = false;
 	bool dumpDb = false;
 	bool dumpEventJson = false;
+	bool eventDbUpdate = false;
+	bool eventDbDump = false;
+	std::string dbPath = "text.db";
+	std::string dumpLang = "ja"; // language column used when dumping from DB
 	std::string singleTarget;
 
 	for (int i = 1; i < argc; ++i)
@@ -1399,22 +1499,27 @@ int main(int argc, char** argv)
 		else if (arg == "--out" && i + 1 < argc)
 			outputDir = argv[++i];
 		else if (arg == "--pretty")
-			{ pretty = true; continue; }
+			pretty = true;
 		else if (arg == "--dump-opcodes")
-			{ dumpOpcodes = true; continue; }
+			dumpOpcodes = true;
 		else if (arg == "--dump-db")
-			{ dumpDb = true; continue; }
+			dumpDb = true;
 		else if (arg == "--dump-event-json")
-			{ dumpEventJson = true; continue; }
+			dumpEventJson = true;
+		else if (arg == "--event-db-update")
+			eventDbUpdate = true;
+		else if (arg == "--event-db-dump")
+			eventDbDump = true;
+		else if (arg == "--db" && i + 1 < argc)
+			dbPath = argv[++i];
+		else if (arg == "--dump-lang" && i + 1 < argc)
+			dumpLang = argv[++i];
 		else if (arg == "--split-text")
 			splitText = true;
 		else if (arg == "--list-zones")
-			{ listOnly = true; continue; }
+			listOnly = true;
 		else if (arg == "--lang" && i + 1 < argc)
-		{
 			lang = argv[++i];
-			if (lang == "ja") lang = "ja";
-		}
 		else
 			singleTarget = arg;
 	}
@@ -1483,14 +1588,50 @@ int main(int argc, char** argv)
 		return DumpDatabase(config, csvPath, outputDir, true, lang == "ja");
 	}
 
+	if (eventDbDump)
+	{
+		try
+		{
+			PathUtil::progRootPath = std::filesystem::current_path();
+			SQLiteDataSource db;
+			db.EventDbDump(outputDir, dumpLang);
+			return 0;
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "[ERROR] DB dump failed: " << e.what() << std::endl;
+			return 1;
+		}
+	}
+
 	if (dumpEventJson)
 	{
 		return DumpEventJson(config, csvPath, outputDir);
 	}
 
+	// Helper: run DB import after a successful parse.
+	auto doDbUpdate = [&](const std::vector<SQLiteDataSource::Actor>& advActors) {
+		try
+		{
+			PathUtil::progRootPath = std::filesystem::current_path();
+			SQLiteDataSource db;
+			db.EventAdvImport(advActors);
+			std::cout << "[DB] Imported " << advActors.size() << " actors into text.db" << std::endl;
+		}
+		catch (const std::exception& e)
+		{
+			std::cerr << "[ERROR] DB update failed: " << e.what() << std::endl;
+		}
+	};
+
 	if (!singleTarget.empty())
 	{
-		return RunSingleZone(singleTarget, config, outputDir, pretty, lang, splitText, dumpOpcodes);
+		std::vector<SQLiteDataSource::Actor> advActors;
+		int rc = RunSingleZone(singleTarget, config, outputDir, pretty, lang, splitText, dumpOpcodes,
+			eventDbUpdate ? &advActors : nullptr);
+		if (rc == 0 && eventDbUpdate)
+			doDbUpdate(advActors);
+		return rc;
 	}
 
 	if (lang == "all" && !splitText)
@@ -1499,5 +1640,12 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	return RunAllZones(config, outputDir, pretty, lang, splitText, dumpOpcodes);
+	{
+		std::vector<SQLiteDataSource::Actor> advActors;
+		int rc = RunAllZones(config, outputDir, pretty, lang, splitText, dumpOpcodes,
+			eventDbUpdate ? &advActors : nullptr);
+		if (rc == 0 && eventDbUpdate)
+			doDbUpdate(advActors);
+		return rc;
+	}
 }
