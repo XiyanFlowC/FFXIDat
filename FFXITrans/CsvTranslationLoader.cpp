@@ -24,6 +24,20 @@ std::filesystem::path CsvTranslationLoader::GetTranslatedCsvPath(const std::u8st
     return progRoot / L"text" / L"tgt" / xybase::string::to_wstring(comment + u8".csv");
 }
 
+bool CsvTranslationLoader::HasSrcCsv(const std::u8string& comment) const
+{
+    namespace fs = std::filesystem;
+    const auto& progRoot = Config::Instance().GetProgRoot();
+    fs::path csvPath = progRoot / L"text" / L"src" / xybase::string::to_wstring(comment + u8".csv");
+    return fs::exists(csvPath) && fs::is_regular_file(csvPath);
+}
+
+std::filesystem::path CsvTranslationLoader::GetSrcCsvPath(const std::u8string& comment) const
+{
+    const auto& progRoot = Config::Instance().GetProgRoot();
+    return progRoot / L"text" / L"src" / xybase::string::to_wstring(comment + u8".csv");
+}
+
 void CsvTranslationLoader::ValidateCsvHeader(CsvFile& csv, const std::vector<std::u8string>& expectedHeader, const std::filesystem::path& csvPath)
 {
     if (csv.IsEof())

@@ -413,10 +413,21 @@ void SQLiteDataSource::Initialise()
 	Execute(R"(
 		CREATE TABLE IF NOT EXISTS event_actor (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			zone_id INTEGER NOT NULL,
+			zone_id INTEGER,
 			actor_no INTEGER NOT NULL,
 			actor_name TEXT NOT NULL,
 			FOREIGN KEY (zone_id) REFERENCES event_zone(id) ON DELETE CASCADE,
+			UNIQUE(zone_id, actor_no)
+		);
+	)");
+	// For given zone_id and actor_no, there can be redirected to another actor_id to save space in event_event table.
+	Execute(R"(
+		CREATE TABLE IF NOT EXISTS event_actor_alias (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			actor_id INTEGER NOT NULL,
+			zone_id INTEGER NOT NULL,
+			actor_no INTEGER NOT NULL,
+			FOREIGN KEY (actor_id) REFERENCES event_actor(id) ON DELETE CASCADE,
 			UNIQUE(zone_id, actor_no)
 		);
 	)");
@@ -435,6 +446,7 @@ void SQLiteDataSource::Initialise()
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			event_id INTEGER NOT NULL,
 			evsb_index INTEGER NOT NULL,
+			speaker CHAR(24),
 			text_ja_id INTEGER,
 			text_en_id INTEGER,
 			text_fr_id INTEGER,
@@ -855,6 +867,7 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 			}
 		}
 		sqlite3_finalize(stmt);
+		stmt = nullptr;
 
 		//if (fileLang.empty())
 		//{
@@ -871,6 +884,7 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 			}
 		}
 		sqlite3_finalize(stmt);
+		stmt = nullptr;
 
 		// Also clean up items data for this file
 		if (type.starts_with("i")) {
@@ -880,6 +894,7 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 				sqlite3_step(stmt);
 			}
 			sqlite3_finalize(stmt);
+			stmt = nullptr;
 		}
 		
 		// Also clean up monbridge data for this file
@@ -890,6 +905,7 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 				sqlite3_step(stmt);
 			}
 			sqlite3_finalize(stmt);
+			stmt = nullptr;
 		}
 		
 		if (type == "erq" && (fileLang == u8"ja" || fileLang == u8"en")) {
@@ -915,6 +931,7 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 				sqlite3_step(stmt);
 			}
 			sqlite3_finalize(stmt);
+			stmt = nullptr;
 		}
 
 		if (type == "dmsg" && fileComment == u8"sys/key_item") {
@@ -1403,8 +1420,9 @@ void SQLiteDataSource::Execute(const std::string &qry)
 {
 	char *errorMessage = nullptr;
 	if (sqlite3_exec(db, qry.c_str(), nullptr, nullptr, &errorMessage) != SQLITE_OK) {
-		throw SQLException(errorMessage);
+		std::string msg(errorMessage);
 		sqlite3_free(errorMessage);
+		throw SQLException(msg);
 	}
 }
 

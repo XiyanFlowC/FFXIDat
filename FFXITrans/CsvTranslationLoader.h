@@ -32,6 +32,10 @@ public:
     bool HasTranslatedCsv(const std::u8string& comment) const;
     std::filesystem::path GetTranslatedCsvPath(const std::u8string& comment) const;
 
+    // SRC CSV for validation
+    bool HasSrcCsv(const std::u8string& comment) const;
+    std::filesystem::path GetSrcCsvPath(const std::u8string& comment) const;
+
     // Load various CSV types
     std::map<uint32_t, ItemCsvTranslation> LoadItemCsvTranslations(const std::filesystem::path& csvPath);
     std::map<uint32_t, RoeQuestCsvTranslation> LoadRoeQuestCsvTranslations(const std::filesystem::path& csvPath);

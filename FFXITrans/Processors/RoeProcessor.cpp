@@ -2,6 +2,7 @@
 #include "../FinalTextProcessor.h"
 #include "../TranslationDatabase.h"
 #include "../Config.h"
+#include "../Logger.h"
 #include "../CsvTranslationLoader.h"
 #include "../ProcessorUtils.h"
 #include "../ChsToSJis.h"
@@ -72,8 +73,66 @@ bool RoeProcessor::ProcessQuestData(
 		auto csvTranslations = csvLoader.LoadRoeQuestCsvTranslations(
 			csvLoader.GetTranslatedCsvPath(fileDef.comment));
 
+		// Source validation
+		bool srcValidationEnabled = Config::Instance().IsSrcValidationEnabled();
+		std::map<uint32_t, RoeQuestCsvTranslation> srcCsvTranslations;
+		if (srcValidationEnabled && csvLoader.HasSrcCsv(fileDef.comment))
+		{
+			srcCsvTranslations = csvLoader.LoadRoeQuestCsvTranslations(
+				csvLoader.GetSrcCsvPath(fileDef.comment));
+		}
+
 		for (auto& datum : roe.questData)
 		{
+			bool skipCsv = false;
+			if (srcValidationEnabled && !srcCsvTranslations.empty())
+			{
+				auto itrSrc = srcCsvTranslations.find(datum.id);
+				if (itrSrc != srcCsvTranslations.end())
+				{
+					if (xybase::string::escape(datum.questName()) != itrSrc->second.questName ||
+						xybase::string::escape(datum.description()) != itrSrc->second.description ||
+						xybase::string::escape(datum.note()) != itrSrc->second.note)
+					{
+						Logger::Instance().Warning(
+							"RoeProcessor src validation failed for quest id=" + std::to_string(datum.id)
+							+ " — falling back to TransDB");
+						skipCsv = true;
+					}
+				}
+			}
+
+			if (skipCsv)
+			{
+				auto& config = Config::Instance();
+				std::u8string originalName = datum.questName();
+				std::u8string alternateOriginalName;
+				if (const auto altItr = alternateNamesById.find(datum.id); altItr != alternateNamesById.end())
+					alternateOriginalName = altItr->second;
+
+				if (!config.IsNoName())
+					datum.setQuestName(processEscaped(
+						TranslationDatabase::Instance().GetTranslation(xybase::string::escape(originalName)),
+						xybase::string::escape(originalName),
+						datum.id,
+						1));
+
+				std::u8string translatedDesc = processEscaped(
+					TranslationDatabase::Instance().GetTranslation(xybase::string::escape(datum.description())),
+					xybase::string::escape(datum.description()),
+					datum.id,
+					2);
+				translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
+				datum.setDescription(translatedDesc);
+
+				datum.setNote(processEscaped(
+					TranslationDatabase::Instance().GetTranslation(xybase::string::escape(datum.note())),
+					xybase::string::escape(datum.note()),
+					datum.id,
+					3));
+				continue;
+			}
+
 			auto itrCsv = csvTranslations.find(datum.id);
 			if (itrCsv == csvTranslations.end())
 			{
@@ -228,8 +287,43 @@ bool RoeProcessor::ProcessCategoryData(
 		auto csvTranslations = csvLoader.LoadRoeCategoryCsvTranslations(
 			csvLoader.GetTranslatedCsvPath(fileDef.comment));
 
+		// Source validation
+		bool srcValidationEnabled = Config::Instance().IsSrcValidationEnabled();
+		std::map<uint32_t, std::u8string> srcCsvTranslations;
+		if (srcValidationEnabled && csvLoader.HasSrcCsv(fileDef.comment))
+		{
+			srcCsvTranslations = csvLoader.LoadRoeCategoryCsvTranslations(
+				csvLoader.GetSrcCsvPath(fileDef.comment));
+		}
+
 		for (auto& datum : roe.categoryData)
 		{
+			bool skipCsv = false;
+			if (srcValidationEnabled && !srcCsvTranslations.empty())
+			{
+				auto itrSrc = srcCsvTranslations.find(datum.id);
+				if (itrSrc != srcCsvTranslations.end())
+				{
+					if (xybase::string::escape(datum.categoryName()) != itrSrc->second)
+					{
+						Logger::Instance().Warning(
+							"RoeProcessor src validation failed for category id=" + std::to_string(datum.id)
+							+ " — falling back to TransDB");
+						skipCsv = true;
+					}
+				}
+			}
+
+			if (skipCsv)
+			{
+				datum.setCategoryName(processEscaped(
+					TranslationDatabase::Instance().GetTranslation(xybase::string::escape(datum.categoryName())),
+					xybase::string::escape(datum.categoryName()),
+					datum.id,
+					1));
+				continue;
+			}
+
 			auto itrCsv = csvTranslations.find(datum.id);
 			if (itrCsv == csvTranslations.end())
 			{
