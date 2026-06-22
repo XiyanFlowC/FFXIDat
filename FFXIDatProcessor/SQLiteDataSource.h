@@ -36,6 +36,8 @@ public:
 
 	void InitialiseFileDefinition(CsvFile &csv);
 
+	void UpdateFileDefinition(CsvFile &csv);
+
 	void DumpTranslationData();
 
 	void ExportNoTranslation();

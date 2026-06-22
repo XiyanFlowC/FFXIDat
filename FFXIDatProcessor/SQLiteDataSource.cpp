@@ -25,7 +25,7 @@ namespace
 
 	const char *GetQuestDMsgNameColumn(const std::u8string &lang)
 	{
-		if (lang == u8"ja") return "name_jp_text_id";
+		if (lang == u8"ja") return "name_ja_text_id";
 		if (lang == u8"en") return "name_en_text_id";
 		if (lang == u8"de") return "name_de_text_id";
 		if (lang == u8"fr") return "name_fr_text_id";
@@ -34,7 +34,7 @@ namespace
 
 	const char *GetQuestDMsgDescriptionColumn(const std::u8string &lang)
 	{
-		if (lang == u8"ja") return "description_jp_text_id";
+		if (lang == u8"ja") return "description_ja_text_id";
 		if (lang == u8"en") return "description_en_text_id";
 		if (lang == u8"de") return "description_de_text_id";
 		if (lang == u8"fr") return "description_fr_text_id";
@@ -68,11 +68,12 @@ void SQLiteDataSource::Initialise()
 	Execute(R"(
 		CREATE TABLE IF NOT EXISTS file (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			path TEXT NOT NULL UNIQUE,
+			path TEXT NOT NULL,
 			type TEXT NOT NULL,
 			lang TEXT NOT NULL,
 			comment TEXT,
-			cols TEXT
+			cols TEXT,
+			UNIQUE(path, comment)
 		);
 	)");
 	Execute(R"(
@@ -105,8 +106,8 @@ void SQLiteDataSource::Initialise()
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			category TEXT NOT NULL,
 			quest_id INTEGER NOT NULL,
-			name_jp_text_id INTEGER,
-			description_jp_text_id INTEGER,
+			name_ja_text_id INTEGER,
+			description_ja_text_id INTEGER,
 			name_en_text_id INTEGER,
 			description_en_text_id INTEGER,
 			name_de_text_id INTEGER,
@@ -114,8 +115,8 @@ void SQLiteDataSource::Initialise()
 			name_fr_text_id INTEGER,
 			description_fr_text_id INTEGER,
 
-			FOREIGN KEY (name_jp_text_id) REFERENCES text(id),
-			FOREIGN KEY (description_jp_text_id) REFERENCES text(id),
+			FOREIGN KEY (name_ja_text_id) REFERENCES text(id),
+			FOREIGN KEY (description_ja_text_id) REFERENCES text(id),
 			FOREIGN KEY (name_en_text_id) REFERENCES text(id),
 			FOREIGN KEY (description_en_text_id) REFERENCES text(id),
 			FOREIGN KEY (name_de_text_id) REFERENCES text(id),
@@ -345,9 +346,9 @@ void SQLiteDataSource::Initialise()
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			roe_id INTEGER NOT NULL UNIQUE,
 			roe_release_date INTEGER NOT NULL,
-			quest_name_jp_text_id INTEGER,
-			description_jp_text_id INTEGER,
-			note_jp_text_id INTEGER,
+			quest_name_ja_text_id INTEGER,
+			description_ja_text_id INTEGER,
+			note_ja_text_id INTEGER,
 			quest_name_en_text_id INTEGER,
 			description_en_text_id INTEGER,
 			note_en_text_id INTEGER,
@@ -360,9 +361,9 @@ void SQLiteDataSource::Initialise()
 			cap_reward INTEGER NOT NULL DEFAULT 0,
 			uni_reward INTEGER NOT NULL DEFAULT 0,
 			
-			FOREIGN KEY (quest_name_jp_text_id) REFERENCES text(id),
-			FOREIGN KEY (description_jp_text_id) REFERENCES text(id),
-			FOREIGN KEY (note_jp_text_id) REFERENCES text(id),
+			FOREIGN KEY (quest_name_ja_text_id) REFERENCES text(id),
+			FOREIGN KEY (description_ja_text_id) REFERENCES text(id),
+			FOREIGN KEY (note_ja_text_id) REFERENCES text(id),
 			FOREIGN KEY (quest_name_en_text_id) REFERENCES text(id),
 			FOREIGN KEY (description_en_text_id) REFERENCES text(id),
 			FOREIGN KEY (note_en_text_id) REFERENCES text(id)
@@ -374,10 +375,10 @@ void SQLiteDataSource::Initialise()
 		CREATE TABLE IF NOT EXISTS roe_category (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			roe_id INTEGER NOT NULL UNIQUE,
-			category_name_jp_text_id INTEGER,
+			category_name_ja_text_id INTEGER,
 			category_name_en_text_id INTEGER,
 			
-			FOREIGN KEY (category_name_jp_text_id) REFERENCES text(id),
+			FOREIGN KEY (category_name_ja_text_id) REFERENCES text(id),
 			FOREIGN KEY (category_name_en_text_id) REFERENCES text(id)
 		);
 	)");
@@ -451,20 +452,20 @@ void SQLiteDataSource::Initialise()
 	Execute(R"(
 		CREATE TABLE IF NOT EXISTS key_item(
 			id INTEGER PRIMARY KEY,
-			name_jp_text_id INTEGER,
+			name_ja_text_id INTEGER,
 			name_en_text_id INTEGER,
 			name_de_text_id INTEGER,
 			name_fr_text_id INTEGER,
-			description_jp_text_id INTEGER,
+			description_ja_text_id INTEGER,
 			description_en_text_id INTEGER,
 			description_de_text_id INTEGER,
 			description_fr_text_id INTEGER,	
 
-			FOREIGN KEY (name_jp_text_id) REFERENCES text(id),
+			FOREIGN KEY (name_ja_text_id) REFERENCES text(id),
 			FOREIGN KEY (name_en_text_id) REFERENCES text(id),
 			FOREIGN KEY (name_de_text_id) REFERENCES text(id),
 			FOREIGN KEY (name_fr_text_id) REFERENCES text(id),
-			FOREIGN KEY (description_jp_text_id) REFERENCES text(id),
+			FOREIGN KEY (description_ja_text_id) REFERENCES text(id),
 			FOREIGN KEY (description_en_text_id) REFERENCES text(id),
 			FOREIGN KEY (description_de_text_id) REFERENCES text(id),
 			FOREIGN KEY (description_fr_text_id) REFERENCES text(id)
@@ -489,6 +490,12 @@ void SQLiteDataSource::InitialiseFileDefinition(CsvFile &csv)
 		auto lang = csv.NextCell();
 		auto comment = csv.NextCell();
 
+		if (path.starts_with(u8"#") || path.empty())
+		{
+			csv.NextLine();
+			continue;
+		}
+
 		sqlite3_bind_text(stmt, 1, reinterpret_cast<const char *>(path.c_str()), -1, SQLITE_TRANSIENT);
 		sqlite3_bind_text(stmt, 2, reinterpret_cast<const char *>(type.c_str()), -1, SQLITE_TRANSIENT);
 		sqlite3_bind_text(stmt, 3, reinterpret_cast<const char *>(lang.c_str()), -1, SQLITE_TRANSIENT);
@@ -509,6 +516,77 @@ void SQLiteDataSource::InitialiseFileDefinition(CsvFile &csv)
 		sqlite3_reset(stmt);
 	}
 	sqlite3_finalize(stmt);
+}
+
+void SQLiteDataSource::UpdateFileDefinition(CsvFile &csv)
+{
+	const char *qry = "INSERT INTO file (path, type, lang, comment, cols) VALUES (?, ?, ?, ?, ?) ON CONFLICT(path, comment) DO UPDATE SET type = excluded.type, lang = excluded.lang, cols = excluded.cols;";
+
+	sqlite3_stmt *stmt;
+	if (sqlite3_prepare_v2(db, qry, -1, &stmt, nullptr) != SQLITE_OK)
+	{
+		throw SQLException(sqlite3_errmsg(db));
+	}
+
+	std::set<std::u8string> seen;
+	int inserted = 0, updated = 0, errors = 0;
+
+	while (!csv.IsEof())
+	{
+		auto path = csv.NextCell();
+		auto type = csv.NextCell();
+		auto lang = csv.NextCell();
+		auto comment = csv.NextCell();
+
+		if (path.starts_with(u8"#") || path.empty())
+		{
+			csv.NextLine();
+			continue;
+		}
+
+		std::u8string key = path + u8"|" + comment;
+		if (!seen.insert(key).second)
+		{
+			std::u8string err = u8"Duplicate definition (path|comment): " + path + u8"|" + comment;
+			Ring(err.c_str());
+			errors++;
+			csv.NextLine();
+			continue;
+		}
+
+		sqlite3_bind_text(stmt, 1, reinterpret_cast<const char *>(path.c_str()), -1, SQLITE_TRANSIENT);
+		sqlite3_bind_text(stmt, 2, reinterpret_cast<const char *>(type.c_str()), -1, SQLITE_TRANSIENT);
+		sqlite3_bind_text(stmt, 3, reinterpret_cast<const char *>(lang.c_str()), -1, SQLITE_TRANSIENT);
+		sqlite3_bind_text(stmt, 4, reinterpret_cast<const char *>(comment.c_str()), -1, SQLITE_TRANSIENT);
+
+		if (!csv.IsEol())
+		{
+			auto cols = csv.NextCell();
+			sqlite3_bind_text(stmt, 5, reinterpret_cast<const char *>(cols.c_str()), -1, SQLITE_TRANSIENT);
+		}
+		csv.NextLine();
+
+		int rc = sqlite3_step(stmt);
+		if (rc == SQLITE_DONE)
+		{
+			if (sqlite3_changes(db) > 0)
+				updated++;
+			else
+				inserted++;
+		}
+		else
+		{
+			std::u8string err = u8"UPSERT failed for " + path + u8": " + (char8_t *)sqlite3_errmsg(db);
+			Ring(err.c_str());
+			errors++;
+		}
+		sqlite3_reset(stmt);
+	}
+	sqlite3_finalize(stmt);
+
+	char buf[256];
+	snprintf(buf, sizeof(buf), "Definition update complete: %d inserted, %d updated, %d errors.", inserted, updated, errors);
+	Ring((const char8_t *)buf);
 }
 
 void SQLiteDataSource::DumpTranslationData()
@@ -815,14 +893,14 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 		}
 		
 		if (type == "erq" && (fileLang == u8"ja" || fileLang == u8"en")) {
-			std::string questNameColumn = fileLang == u8"ja" ? "quest_name_jp_text_id" : "quest_name_en_text_id";
-			std::string descriptionColumn = fileLang == u8"ja" ? "description_jp_text_id" : "description_en_text_id";
+			std::string questNameColumn = fileLang == u8"ja" ? "quest_name_ja_text_id" : "quest_name_en_text_id";
+			std::string descriptionColumn = fileLang == u8"ja" ? "description_ja_text_id" : "description_en_text_id";
 			std::string sql = "UPDATE roe_quest SET " + questNameColumn + " = NULL, " + descriptionColumn + " = NULL";
 			Execute(sql);
 		}
 		
 		if (type == "erc" && (fileLang == u8"ja" || fileLang == u8"en")) {
-			std::string categoryNameColumn = fileLang == u8"ja" ? "category_name_jp_text_id" : "category_name_en_text_id";
+			std::string categoryNameColumn = fileLang == u8"ja" ? "category_name_ja_text_id" : "category_name_en_text_id";
 			std::string sql = "UPDATE roe_category SET " + categoryNameColumn + " = NULL";
 			Execute(sql);
 		}
@@ -1075,7 +1153,7 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 		{
 			if (sqlite3_prepare_v2(db,
 				"DELETE FROM quest_dmsg WHERE category = ? AND "
-				"name_jp_text_id IS NULL AND description_jp_text_id IS NULL AND "
+				"name_ja_text_id IS NULL AND description_ja_text_id IS NULL AND "
 				"name_en_text_id IS NULL AND description_en_text_id IS NULL AND "
 				"name_de_text_id IS NULL AND description_de_text_id IS NULL AND "
 				"name_fr_text_id IS NULL AND description_fr_text_id IS NULL",
@@ -1088,11 +1166,11 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 		}
 		else if (type == "erq")
 		{
-			Execute("DELETE FROM roe_quest WHERE quest_name_jp_text_id IS NULL AND description_jp_text_id IS NULL AND quest_name_en_text_id IS NULL AND description_en_text_id IS NULL");
+			Execute("DELETE FROM roe_quest WHERE quest_name_ja_text_id IS NULL AND description_ja_text_id IS NULL AND quest_name_en_text_id IS NULL AND description_en_text_id IS NULL");
 		}
 		else if (type == "erc")
 		{
-			Execute("DELETE FROM roe_category WHERE category_name_jp_text_id IS NULL AND category_name_en_text_id IS NULL");
+			Execute("DELETE FROM roe_category WHERE category_name_ja_text_id IS NULL AND category_name_en_text_id IS NULL");
 		}
 	}
 	catch (std::exception &ex)

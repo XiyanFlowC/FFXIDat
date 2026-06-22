@@ -425,6 +425,10 @@ bool Config::LoadFromFile(const fs::path& configPath)
 			if (value == L"samurai_special")
 				samuraiJobSpecial = true, samuraiJobTransNot = false;
 		}
+		else if (key == L"check_src")
+		{
+			checkSrc = IsTruthyValue(value);
+		}
 	}
 
 	configFile.close();
@@ -476,6 +480,7 @@ std::string Config::DescribeStateForLog() const
 		<< ", samuraiJobTransNot=" << samuraiJobTransNot
 		<< ", monkJobAbbreviated=" << monkJobAbbreviated
 		<< ", samuraiJobSpecial=" << samuraiJobSpecial
+		<< ", checkSrc=" << checkSrc
 		<< ", excludes=[";
 
 	bool first = true;

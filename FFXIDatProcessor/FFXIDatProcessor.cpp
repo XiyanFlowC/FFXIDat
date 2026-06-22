@@ -380,6 +380,12 @@ int main(int argc, const char **argv)
 		ds.InitialiseFileDefinition(def);
 		return 0;
 		}, L"用指定的定义更新SQLite数据库。");
+	lopt_regopt("sql-def-update", 0, LOPT_FLG_VAL_NEED, [](const char *str)->int {
+		SQLiteDataSource ds;
+		CsvFile def(str, std::ios_base::in | std::ios_base::binary);
+		ds.UpdateFileDefinition(def);
+		return 0;
+		}, L"以UPSERT方式更新file定义表，path匹配，保持id不变，重复path报错。");
 	lopt_regopt("sql-purge", 0, 0, [](const char *str)->int {
 		SQLiteDataSource ds;
 		ds.Purge();

@@ -49,6 +49,7 @@ public:
 	bool IsSamuraiJobTransNot() const { return samuraiJobTransNot; }
 	bool IsMonkJobAbbreviated() const { return monkJobAbbreviated; }
 	bool IsSamuraiJobSpecial() const { return samuraiJobSpecial; }
+	bool IsSrcValidationEnabled() const { return checkSrc; }
 
 	// Excludes
 	bool IsExcluded(const std::u8string& comment) const;
@@ -95,6 +96,7 @@ private:
 	bool samuraiJobTransNot = true;
 	bool monkJobAbbreviated = false;
 	bool samuraiJobSpecial = false;
+	bool checkSrc = true;
 
 	std::set<std::u8string> excludes;
 };
