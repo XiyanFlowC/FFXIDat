@@ -15,6 +15,7 @@ struct ActorBlock
 	uint32_t actor_id;
 	std::vector<uint32_t> constants;
 	std::vector<EventDescriptor> events;
+  std::string bytecode_hash;
 };
 
 class ZoneEventImage

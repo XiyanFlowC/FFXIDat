@@ -29,6 +29,19 @@ inline uint16_t ExtractU16(const uint8_t*& p)
 constexpr uint32_t MAX_BLOCKS = 1024;
 constexpr uint32_t MAX_EVENTS = 4096;
 
+std::string HashBytesHex(const uint8_t* data, size_t size)
+{
+	uint64_t h = 14695981039346656037ull;
+	for (size_t i = 0; i < size; ++i)
+	{
+		h ^= data[i];
+		h *= 1099511628211ull;
+	}
+	char buf[32];
+	snprintf(buf, sizeof(buf), "%016llX", (unsigned long long)h);
+	return buf;
+}
+
 } // namespace
 
 bool ZoneEventImage::Load(const std::string& path)
@@ -106,6 +119,7 @@ bool ZoneEventImage::Load(const std::string& path)
 
 		if (!CanRead(rd, finish, code_image_size))
 			break;
+      actor.bytecode_hash = HashBytesHex(rd, code_image_size);
 		rd += code_image_size;
 
 		ptrdiff_t pos = rd - buf.data();
