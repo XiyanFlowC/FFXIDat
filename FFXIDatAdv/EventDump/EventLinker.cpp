@@ -31,7 +31,7 @@ ZoneData EventLinker::LinkZone(
 		else if (block.actor_number == 0x7FFFFFFF)
 			actor.actor_name = "Zone/Player Events";
 		else
-			actor.actor_name = "_";
+			actor.actor_name = "";
 
 		for (const auto& evt : block.events)
 		{

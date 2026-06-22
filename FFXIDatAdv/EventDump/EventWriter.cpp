@@ -108,7 +108,7 @@ std::string EventWriter::MakeTextRefZone(const std::string& zoneName, const std:
 
 std::string EventWriter::MakeActorFilename(const std::string& actorName, uint32_t actorNumber) const
 {
-	if (actorName.empty() || actorName == "_")
+	if (actorName.empty() || actorName == "")
 		return std::to_string(actorNumber) + ".json";
 
 	std::string safe = SafeFilename(actorName);

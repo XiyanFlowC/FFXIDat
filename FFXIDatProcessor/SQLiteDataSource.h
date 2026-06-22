@@ -29,6 +29,39 @@ class SQLiteDataSource
 
 	void Ring(const char8_t *msg);
 public:
+
+	class Dialogue
+	{
+	public:
+		std::string speaker; // ASCII always
+		std::u8string text_ja;
+		std::u8string text_en;
+		std::u8string text_de;
+		std::u8string text_fr;
+	};
+
+	class Event
+	{
+	public:
+		int event_index;
+		int16_t event_no; // 16-bit unsigned integer
+
+		std::u8string comment; // ASCII always
+		std::vector<Dialogue> dialogues;
+	};
+
+	class Actor
+	{
+	public:
+		int32_t actor_no; // 32-bit unsigned integer
+		std::string actor_name; // ASCII always
+		std::string zone_name; // ASCII always, empty for common actors
+		std::string bytecode_hash; // hex string, empty if not provided
+		std::vector<std::string> alias_zones; // paired with alias_actor_nos
+		std::vector<int32_t> alias_actor_nos; // paired with alias_zones
+		std::vector<Event> events;
+	};
+
 	SQLiteDataSource();
 	~SQLiteDataSource();
 	
@@ -54,9 +87,13 @@ public:
 
 	void EventDbUpdate(const std::u8string& comment, const std::vector<std::u8string>& evsbJa, const std::vector<std::u8string>& evsbEn);
 
+	void EventAdvImport(const std::vector<Actor>& actors);
+
+	void EventDbDump(const std::string& outputDir, const std::string& lang);
+
 	void TransAndOut();
 
-    std::u8string GetTranslation(const std::u8string &text);
+	std::u8string GetTranslation(const std::u8string &text);
 
 	void Execute(const std::string &qry);
 

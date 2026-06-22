@@ -148,7 +148,12 @@
     <ClCompile Include="EventDump\GamePathResolver.cpp" />
     <ClCompile Include="EventDump\OpCode\OpCodeRegistry.cpp" />
     <ClCompile Include="EventDump\OpCode\OpcodesImpl.cpp" />
+    <ClCompile Include="..\FFXIDatProcessor\DataManager.cpp" />
     <ClCompile Include="..\FFXIDatProcessor\codepage.cpp" />
+    <ClCompile Include="..\FFXIDatProcessor\SQLiteDataSource.cpp" />
+    <ClCompile Include="..\FFXIDatProcessor\SQLiteDataSource_Event.cpp" />
+    <ClCompile Include="..\FFXIDatProcessor\SQLiteDataSource_ROE.cpp" />
+    <ClCompile Include="..\FFXIDatProcessor\sqlite3\sqlite3.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EventDump\Models.h" />

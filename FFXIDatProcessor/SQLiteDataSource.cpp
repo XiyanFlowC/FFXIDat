@@ -410,22 +410,30 @@ void SQLiteDataSource::Initialise()
 			zone_name TEXT NOT NULL UNIQUE
 		);
 	)");
+	// zone_id NULL  => common (canonical) actor row
+	// actor_no NULL => common actor (each zone's number lives in event_actor_alias)
+	// bytecode_hash => hex string of full event_data hash; used for common-actor dedup
 	Execute(R"(
 		CREATE TABLE IF NOT EXISTS event_actor (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			zone_id INTEGER,
-			actor_no INTEGER NOT NULL,
-			actor_name TEXT NOT NULL,
-			FOREIGN KEY (zone_id) REFERENCES event_zone(id) ON DELETE CASCADE,
-			UNIQUE(zone_id, actor_no)
+			id            INTEGER PRIMARY KEY AUTOINCREMENT,
+			zone_id       INTEGER,
+			actor_no      INTEGER,
+			actor_name    TEXT NOT NULL,
+			bytecode_hash TEXT,
+			FOREIGN KEY (zone_id) REFERENCES event_zone(id) ON DELETE CASCADE
 		);
 	)");
-	// For given zone_id and actor_no, there can be redirected to another actor_id to save space in event_event table.
+	// Private actor: (zone_id, actor_no) unique
+	Execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_event_actor_private ON event_actor(zone_id, actor_no) WHERE zone_id IS NOT NULL;");
+	// Common actor canonical row: actor_name unique among zone_id IS NULL rows
+	Execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_event_actor_common ON event_actor(actor_name) WHERE zone_id IS NULL;");
+
+	// For a given zone_id+actor_no, redirects to a common actor_id to avoid duplicating event_event rows.
 	Execute(R"(
 		CREATE TABLE IF NOT EXISTS event_actor_alias (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			id       INTEGER PRIMARY KEY AUTOINCREMENT,
 			actor_id INTEGER NOT NULL,
-			zone_id INTEGER NOT NULL,
+			zone_id  INTEGER NOT NULL,
 			actor_no INTEGER NOT NULL,
 			FOREIGN KEY (actor_id) REFERENCES event_actor(id) ON DELETE CASCADE,
 			UNIQUE(zone_id, actor_no)
@@ -433,31 +441,32 @@ void SQLiteDataSource::Initialise()
 	)");
 	Execute(R"(
 		CREATE TABLE IF NOT EXISTS event_event (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			actor_id INTEGER NOT NULL,
-			event_no INTEGER NOT NULL,
+			id          INTEGER PRIMARY KEY AUTOINCREMENT,
+			actor_id    INTEGER NOT NULL,
+			event_no    INTEGER NOT NULL,
 			event_index INTEGER NOT NULL,
 			FOREIGN KEY (actor_id) REFERENCES event_actor(id) ON DELETE CASCADE,
 			UNIQUE(actor_id, event_no, event_index)
 		);
 	)");
+	// status: 0=raw/guessed (imed-based), 2=confirmed (opcode-parsed), 3=user-verified (never overwrite)
 	Execute(R"(
 		CREATE TABLE IF NOT EXISTS event_msg (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			event_id INTEGER NOT NULL,
-			evsb_index INTEGER NOT NULL,
-			speaker CHAR(24),
+			id         INTEGER PRIMARY KEY AUTOINCREMENT,
+			event_id   INTEGER NOT NULL,
+			msg_index  INTEGER NOT NULL,
+			speaker    CHAR(24),
 			text_ja_id INTEGER,
 			text_en_id INTEGER,
 			text_fr_id INTEGER,
 			text_de_id INTEGER,
-			status INTEGER NOT NULL DEFAULT 0,
-			FOREIGN KEY (event_id) REFERENCES event_event(id) ON DELETE CASCADE,
+			status     INTEGER NOT NULL DEFAULT 0,
+			FOREIGN KEY (event_id)   REFERENCES event_event(id) ON DELETE CASCADE,
 			FOREIGN KEY (text_ja_id) REFERENCES text(id),
 			FOREIGN KEY (text_en_id) REFERENCES text(id),
 			FOREIGN KEY (text_fr_id) REFERENCES text(id),
 			FOREIGN KEY (text_de_id) REFERENCES text(id),
-			UNIQUE(event_id, evsb_index)
+			UNIQUE(event_id, msg_index)
 		);
 	)");
 
@@ -1980,6 +1989,67 @@ static std::string BuildDatPath(const std::string& romPath, const std::string& g
 	}
 }
 
+// Compute a simple hex hash of raw bytes — used for actor bytecode dedup.
+static std::string BytecodeHashHex(const uint8_t* data, size_t size)
+{
+	uint64_t h = 14695981039346656037ull;
+	for (size_t i = 0; i < size; ++i)
+	{
+		h ^= data[i];
+		h *= 1099511628211ull;
+	}
+	char buf[32];
+	snprintf(buf, sizeof(buf), "%016llX", (unsigned long long)h);
+	return buf;
+}
+
+// Insert text into text table (ignore if duplicate) and return its id.
+static int UpsertText(sqlite3* db, const std::string& text)
+{
+	sqlite3_stmt* stmt = nullptr;
+	int id = -1;
+	if (sqlite3_prepare_v2(db, "INSERT OR IGNORE INTO text(text) VALUES(?)", -1, &stmt, nullptr) == SQLITE_OK)
+	{
+		sqlite3_bind_text(stmt, 1, text.c_str(), -1, SQLITE_TRANSIENT);
+		sqlite3_step(stmt);
+		sqlite3_finalize(stmt);
+	}
+	if (sqlite3_prepare_v2(db, "SELECT id FROM text WHERE text = ?", -1, &stmt, nullptr) == SQLITE_OK)
+	{
+		sqlite3_bind_text(stmt, 1, text.c_str(), -1, SQLITE_TRANSIENT);
+		if (sqlite3_step(stmt) == SQLITE_ROW)
+			id = sqlite3_column_int(stmt, 0);
+		sqlite3_finalize(stmt);
+	}
+	return id;
+}
+
+// UPSERT a single event_msg row.
+// status_new is the status to write; rows with status=3 (user-verified) are never overwritten.
+static void UpsertEventMsg(sqlite3* db, int eventId, uint32_t msgIndex,
+	int textJaId, int textEnId, int statusNew)
+{
+	sqlite3_stmt* stmt = nullptr;
+	const char* sql = R"(
+	 INSERT INTO event_msg(event_id, msg_index, text_ja_id, text_en_id, status)
+		VALUES (?, ?, ?, ?, ?)
+	 ON CONFLICT(event_id, msg_index) DO UPDATE SET
+			text_ja_id = CASE WHEN status = 3 THEN text_ja_id ELSE COALESCE(excluded.text_ja_id, text_ja_id) END,
+			text_en_id = CASE WHEN status = 3 THEN text_en_id ELSE COALESCE(excluded.text_en_id, text_en_id) END,
+			status     = CASE WHEN status = 3 THEN 3           ELSE excluded.status END
+	)";
+	if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+	{
+		sqlite3_bind_int(stmt, 1, eventId);
+		sqlite3_bind_int(stmt, 2, (int)msgIndex);
+		if (textJaId >= 0) sqlite3_bind_int(stmt, 3, textJaId); else sqlite3_bind_null(stmt, 3);
+		if (textEnId >= 0) sqlite3_bind_int(stmt, 4, textEnId); else sqlite3_bind_null(stmt, 4);
+		sqlite3_bind_int(stmt, 5, statusNew);
+		sqlite3_step(stmt);
+		sqlite3_finalize(stmt);
+	}
+}
+
 void SQLiteDataSource::EventDbUpdate(const std::u8string& comment,
 	const std::vector<std::u8string>& evsbJa,
 	const std::vector<std::u8string>& evsbEn)
@@ -1987,7 +2057,6 @@ void SQLiteDataSource::EventDbUpdate(const std::u8string& comment,
 	if (evsbJa.empty() && evsbEn.empty()) return;
 
 	std::string gameRoot(reinterpret_cast<const char*>(xybase::string::to_utf8(PathUtil::gameRootPath).c_str()));
-
 	std::string commentStr(reinterpret_cast<const char*>(comment.c_str()));
 
 	sqlite3_stmt* stmt = nullptr;
@@ -2000,7 +2069,6 @@ void SQLiteDataSource::EventDbUpdate(const std::u8string& comment,
 			evevPath = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
 		sqlite3_finalize(stmt);
 	}
-
 	if (evevPath.empty()) return;
 
 	if (sqlite3_prepare_v2(db, "SELECT path FROM file WHERE comment = ? AND type = 'evac'", -1, &stmt, nullptr) == SQLITE_OK)
@@ -2011,22 +2079,23 @@ void SQLiteDataSource::EventDbUpdate(const std::u8string& comment,
 		sqlite3_finalize(stmt);
 	}
 
-	std::string resolvedEvev = BuildDatPath(evevPath, gameRoot);
-
 	ZoneEventImage evev;
-	if (!evev.Load(resolvedEvev)) return;
+	if (!evev.Load(BuildDatPath(evevPath, gameRoot))) return;
 
 	std::unordered_map<uint32_t, std::string> actorNames;
 	if (!evacPath.empty())
 	{
-		std::string resolvedEvac = BuildDatPath(evacPath, gameRoot);
 		ZoneActor evac;
-		if (evac.Load(resolvedEvac))
+		if (evac.Load(BuildDatPath(evacPath, gameRoot)))
 			actorNames = evac.GetIdToNameMap();
 	}
 
+	// UPSERT zone row
 	int zoneId = -1;
-	if (sqlite3_prepare_v2(db, "INSERT INTO event_zone(zone_name) VALUES(?) ON CONFLICT(zone_name) DO UPDATE SET zone_name=zone_name RETURNING id", -1, &stmt, nullptr) == SQLITE_OK)
+	if (sqlite3_prepare_v2(db,
+		"INSERT INTO event_zone(zone_name) VALUES(?)"
+		" ON CONFLICT(zone_name) DO UPDATE SET zone_name=zone_name RETURNING id",
+		-1, &stmt, nullptr) == SQLITE_OK)
 	{
 		sqlite3_bind_text(stmt, 1, commentStr.c_str(), -1, SQLITE_TRANSIENT);
 		if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -2035,34 +2104,54 @@ void SQLiteDataSource::EventDbUpdate(const std::u8string& comment,
 	}
 	if (zoneId < 0) return;
 
+	size_t evsbSize = std::max(evsbJa.size(), evsbEn.size());
+
 	for (const auto& actor : evev.GetActors())
 	{
-		std::string actorName = "_";
+		std::string actorName;
 		auto nit = actorNames.find(actor.actor_id);
 		if (nit != actorNames.end() && !nit->second.empty())
 			actorName = nit->second;
+		if (actorName.empty()) continue; // unnamed actors carry no text
 
+		// FFXIDatProcessor has no bytecode — it cannot compute hash here.
+		// Insert as private actor (zone_id set); EventAdvImport from FFXIDatAdv
+		// will later promote it to common and add an alias if appropriate.
 		int actorId = -1;
-		if (sqlite3_prepare_v2(db, "INSERT INTO event_actor(zone_id, actor_no, actor_name) VALUES(?,?,?) ON CONFLICT(zone_id, actor_no) DO UPDATE SET actor_name=excluded.actor_name RETURNING id", -1, &stmt, nullptr) == SQLITE_OK)
+		if (sqlite3_prepare_v2(db,
+		  "INSERT INTO event_actor(zone_id, actor_no, actor_name, bytecode_hash) VALUES(?,?,?,?)"
+			" ON CONFLICT(zone_id, actor_no) DO UPDATE SET actor_name=excluded.actor_name, bytecode_hash=excluded.bytecode_hash"
+			" RETURNING id",
+			-1, &stmt, nullptr) == SQLITE_OK)
 		{
 			sqlite3_bind_int(stmt, 1, zoneId);
 			sqlite3_bind_int(stmt, 2, (int)actor.actor_id);
 			sqlite3_bind_text(stmt, 3, actorName.c_str(), -1, SQLITE_TRANSIENT);
+		   sqlite3_bind_text(stmt, 4, actor.bytecode_hash.c_str(), -1, SQLITE_TRANSIENT);
 			if (sqlite3_step(stmt) == SQLITE_ROW)
 				actorId = sqlite3_column_int(stmt, 0);
 			sqlite3_finalize(stmt);
 		}
 		if (actorId < 0) continue;
 
+	  // Build a coarse ordered text list from imed constants that are valid string indices.
+		// The DB stores only dialogue order (msg_index), not evsb slots.
 		std::vector<uint32_t> sortedConsts = actor.constants;
 		std::sort(sortedConsts.begin(), sortedConsts.end());
-
-		size_t evsbSize = (std::max)(evsbJa.size(), evsbEn.size());
+		std::vector<uint32_t> validIndices;
+		for (uint32_t idx : sortedConsts)
+			if (idx < evsbSize)
+			   if (validIndices.empty() || validIndices.back() != idx)
+					validIndices.push_back(idx);
 
 		for (const auto& evt : actor.events)
 		{
 			int eventId = -1;
-			if (sqlite3_prepare_v2(db, "INSERT INTO event_event(actor_id, event_no, event_index) VALUES(?,?,?) ON CONFLICT(actor_id, event_no, event_index) DO UPDATE SET event_index=event_index RETURNING id", -1, &stmt, nullptr) == SQLITE_OK)
+			if (sqlite3_prepare_v2(db,
+				"INSERT INTO event_event(actor_id, event_no, event_index) VALUES(?,?,?)"
+				" ON CONFLICT(actor_id, event_no, event_index) DO UPDATE SET event_index=event_index"
+				" RETURNING id",
+				-1, &stmt, nullptr) == SQLITE_OK)
 			{
 				sqlite3_bind_int(stmt, 1, actorId);
 				sqlite3_bind_int(stmt, 2, (int)evt.event_id);
@@ -2073,114 +2162,28 @@ void SQLiteDataSource::EventDbUpdate(const std::u8string& comment,
 			}
 			if (eventId < 0) continue;
 
-			std::set<uint32_t> validIndices;
-			for (uint32_t idx : sortedConsts)
-			{
-				if (idx < evsbSize)
-					validIndices.insert(idx);
-			}
-
-			std::set<uint32_t> existingIndices;
-			std::map<uint32_t, std::pair<int, int>> existingMeta;
-			if (sqlite3_prepare_v2(db, "SELECT id, evsb_index, status FROM event_msg WHERE event_id = ?", -1, &stmt, nullptr) == SQLITE_OK)
+			// Remove stale raw entries (status < 3) that are no longer in validIndices.
+			// Confirmed (status=2) or user-verified (status=3) entries are never removed.
+		  if (sqlite3_prepare_v2(db,
+				"DELETE FROM event_msg WHERE event_id = ? AND msg_index >= ? AND status = 0",
+				-1, &stmt, nullptr) == SQLITE_OK)
 			{
 				sqlite3_bind_int(stmt, 1, eventId);
-				while (sqlite3_step(stmt) == SQLITE_ROW)
-				{
-					int msgId = sqlite3_column_int(stmt, 0);
-					uint32_t idx = (uint32_t)sqlite3_column_int(stmt, 1);
-					int st = sqlite3_column_int(stmt, 2);
-					existingIndices.insert(idx);
-					existingMeta[idx] = {msgId, st};
-				}
+			  sqlite3_bind_int(stmt, 2, static_cast<int>(validIndices.size()));
+				sqlite3_step(stmt);
 				sqlite3_finalize(stmt);
 			}
 
-			for (uint32_t idx : existingIndices)
+		   for (size_t msgIndex = 0; msgIndex < validIndices.size(); ++msgIndex)
 			{
-				if (validIndices.count(idx) == 0 && existingMeta[idx].second != 3)
-				{
-					if (sqlite3_prepare_v2(db, "DELETE FROM event_msg WHERE id = ?", -1, &stmt, nullptr) == SQLITE_OK)
-					{
-						sqlite3_bind_int(stmt, 1, existingMeta[idx].first);
-						sqlite3_step(stmt);
-						sqlite3_finalize(stmt);
-					}
-				}
-			}
-
-			for (uint32_t idx : validIndices)
-			{
-				bool hasJa = idx < evsbJa.size();
-				bool hasEn = idx < evsbEn.size();
-
-				std::string textJa, textEn;
-				if (hasJa) textJa = reinterpret_cast<const char*>(evsbJa[idx].c_str());
-				if (hasEn) textEn = reinterpret_cast<const char*>(evsbEn[idx].c_str());
-
+			   uint32_t idx = validIndices[msgIndex];
 				int textJaId = -1, textEnId = -1;
-				if (hasJa && !textJa.empty())
-				{
-					if (sqlite3_prepare_v2(db, "INSERT OR IGNORE INTO text(text) VALUES(?)", -1, &stmt, nullptr) == SQLITE_OK)
-					{
-						sqlite3_bind_text(stmt, 1, textJa.c_str(), -1, SQLITE_TRANSIENT);
-						sqlite3_step(stmt);
-						sqlite3_finalize(stmt);
-					}
-					if (sqlite3_prepare_v2(db, "SELECT id FROM text WHERE text = ?", -1, &stmt, nullptr) == SQLITE_OK)
-					{
-						sqlite3_bind_text(stmt, 1, textJa.c_str(), -1, SQLITE_TRANSIENT);
-						if (sqlite3_step(stmt) == SQLITE_ROW)
-							textJaId = sqlite3_column_int(stmt, 0);
-						sqlite3_finalize(stmt);
-					}
-				}
-				if (hasEn && !textEn.empty())
-				{
-					if (sqlite3_prepare_v2(db, "INSERT OR IGNORE INTO text(text) VALUES(?)", -1, &stmt, nullptr) == SQLITE_OK)
-					{
-						sqlite3_bind_text(stmt, 1, textEn.c_str(), -1, SQLITE_TRANSIENT);
-						sqlite3_step(stmt);
-						sqlite3_finalize(stmt);
-					}
-					if (sqlite3_prepare_v2(db, "SELECT id FROM text WHERE text = ?", -1, &stmt, nullptr) == SQLITE_OK)
-					{
-						sqlite3_bind_text(stmt, 1, textEn.c_str(), -1, SQLITE_TRANSIENT);
-						if (sqlite3_step(stmt) == SQLITE_ROW)
-							textEnId = sqlite3_column_int(stmt, 0);
-						sqlite3_finalize(stmt);
-					}
-				}
+				if (idx < evsbJa.size() && !evsbJa[idx].empty())
+					textJaId = UpsertText(db, reinterpret_cast<const char*>(evsbJa[idx].c_str()));
+				if (idx < evsbEn.size() && !evsbEn[idx].empty())
+					textEnId = UpsertText(db, reinterpret_cast<const char*>(evsbEn[idx].c_str()));
 
-				auto eit = existingMeta.find(idx);
-				if (eit != existingMeta.end())
-				{
-					int msgId = eit->second.first;
-					if (sqlite3_prepare_v2(db,
-						"UPDATE event_msg SET text_ja_id=COALESCE(?,text_ja_id), text_en_id=COALESCE(?,text_en_id) WHERE id=?",
-						-1, &stmt, nullptr) == SQLITE_OK)
-					{
-						if (textJaId >= 0) sqlite3_bind_int(stmt, 1, textJaId); else sqlite3_bind_null(stmt, 1);
-						if (textEnId >= 0) sqlite3_bind_int(stmt, 2, textEnId); else sqlite3_bind_null(stmt, 2);
-						sqlite3_bind_int(stmt, 3, msgId);
-						sqlite3_step(stmt);
-						sqlite3_finalize(stmt);
-					}
-				}
-				else
-				{
-					if (sqlite3_prepare_v2(db,
-						"INSERT INTO event_msg(event_id, evsb_index, text_ja_id, text_en_id, status) VALUES(?,?,?,?,0)",
-						-1, &stmt, nullptr) == SQLITE_OK)
-					{
-						sqlite3_bind_int(stmt, 1, eventId);
-						sqlite3_bind_int(stmt, 2, (int)idx);
-						if (textJaId >= 0) sqlite3_bind_int(stmt, 3, textJaId); else sqlite3_bind_null(stmt, 3);
-						if (textEnId >= 0) sqlite3_bind_int(stmt, 4, textEnId); else sqlite3_bind_null(stmt, 4);
-						sqlite3_step(stmt);
-						sqlite3_finalize(stmt);
-					}
-				}
+			  UpsertEventMsg(db, eventId, static_cast<uint32_t>(msgIndex), textJaId, textEnId, 0 /* raw/guessed */);
 			}
 		}
 	}

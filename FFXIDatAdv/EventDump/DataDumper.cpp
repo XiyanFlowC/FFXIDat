@@ -38,7 +38,7 @@ static std::string SanitizeFilename(const std::string& s)
 		else
 			r += c;
 	}
-	if (r.empty()) r = "_";
+	if (r.empty()) r = "";
 	return r;
 }
 
@@ -86,7 +86,7 @@ void DataDumper::Flush()
 	{
 		for (auto& actor : const_cast<std::vector<AnalyzedActor>&>(zone->GetActors()))
 		{
-			if (actor.actor_name == "_") continue;
+			if (actor.actor_name == "") continue;
 			std::string key = actor.actor_name + "@" + actor.bytecode_hash;
 			commonCandidates[key].push_back({zone->GetName(), &actor});
 		}

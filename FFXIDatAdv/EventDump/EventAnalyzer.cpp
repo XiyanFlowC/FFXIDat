@@ -59,7 +59,7 @@ void EventAnalyzer::Load(
 			if (it != entityMap.end() && !it->second.name.empty())
 				actorName = it->second.name;
 			else
-				actorName = "_";
+				actorName = "";
 		}
 		if (actorName.empty()) continue;
 

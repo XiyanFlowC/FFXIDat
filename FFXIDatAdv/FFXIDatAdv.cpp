@@ -232,6 +232,7 @@ struct ActorCandidate
 	std::string actor_name;
 	uint32_t zone_id;
 	std::string zone_name;
+    const ZoneScan* scan;
 	const ActorBlock* block;
 };
 
@@ -258,7 +259,7 @@ static std::unordered_map<std::string, std::vector<ActorCandidate>> GroupCandida
 			if (name.empty())
 				continue;
 
-			groups[name].push_back({name, scan.zone_id, scan.zone_name, &block});
+           groups[name].push_back({name, scan.zone_id, scan.zone_name, &scan, &block});
 		}
 	}
 	return groups;
@@ -287,6 +288,64 @@ struct VerifyResult
 	std::vector<std::string> zone_names;
 	const ActorBlock* reference_block;
 };
+
+static bool DialogueOutputsMatch(const ActorCandidate& a, const ActorCandidate& b)
+{
+	if (a.block->events.size() != b.block->events.size())
+		return false;
+
+	EventLinker linker;
+ auto extract = [&](const ActorCandidate& c,
+		const std::vector<std::u8string>& strings,
+		std::vector<std::vector<std::pair<std::string, std::u8string>>>& out) -> bool
+	{
+		out.clear();
+		out.reserve(c.block->events.size());
+		for (const auto& evt : c.block->events)
+		{
+			std::vector<DialogueLine> dialogues;
+			linker.ExtractDialoguesFromEvent(
+				evt,
+				c.block->actor_number,
+				c.block->imed_data,
+				c.scan->entity_map,
+				strings,
+				dialogues);
+
+            std::vector<std::pair<std::string, std::u8string>> normalized;
+			normalized.reserve(dialogues.size());
+			for (const auto& dl : dialogues)
+				normalized.emplace_back(dl.speaker, dl.text);
+			out.push_back(std::move(normalized));
+		}
+		return true;
+	};
+
+   std::vector<std::vector<std::pair<std::string, std::u8string>>> aPrimary, bPrimary;
+	extract(a, a.scan->zone_strings, aPrimary);
+	extract(b, b.scan->zone_strings, bPrimary);
+	if (aPrimary != bPrimary)
+		return false;
+
+	const bool hasSecondary = !a.scan->zone_strings_jp.empty() || !b.scan->zone_strings_jp.empty();
+	if (hasSecondary)
+	{
+       std::vector<std::vector<std::pair<std::string, std::u8string>>> aSecondary, bSecondary;
+		extract(a, a.scan->zone_strings_jp.empty() ? a.scan->zone_strings : a.scan->zone_strings_jp, aSecondary);
+		extract(b, b.scan->zone_strings_jp.empty() ? b.scan->zone_strings : b.scan->zone_strings_jp, bSecondary);
+		if (aSecondary != bSecondary)
+			return false;
+	}
+
+	for (size_t i = 0; i < a.block->events.size(); ++i)
+	{
+		if (a.block->events[i].event_id != b.block->events[i].event_id ||
+			a.block->events[i].array_index != b.block->events[i].array_index)
+			return false;
+	}
+
+	return true;
+}
 
 static std::vector<VerifyResult> VerifyCandidates(
 	const std::unordered_map<std::string, std::vector<ActorCandidate>>& groups)
@@ -321,11 +380,11 @@ static std::vector<VerifyResult> VerifyCandidates(
 		{
 			if (std::find(vr.zone_names.begin(), vr.zone_names.end(), c.zone_name) == vr.zone_names.end())
 				vr.zone_names.push_back(c.zone_name);
-			if (!BytecodeMatches(first, *c.block))
+          if (!BytecodeMatches(first, *c.block) || !DialogueOutputsMatch(candidates[0], c))
 			{
 				all_match = false;
 				std::cerr << "[VERIFY] WARNING: Actor \"" << name
-					<< "\" differs between zone " << candidates[0].zone_name
+                    << "\" differs in resolved output between zone " << candidates[0].zone_name
 					<< " and zone " << c.zone_name << std::endl;
 			}
 		}
@@ -352,7 +411,7 @@ static std::string ResolveActorName(const ActorBlock& block,
 		return "Zone Events";
 	if (block.actor_number == 0x7FFFFFFF)
 		return "Zone/Player Events";
-	return "_";
+	return "";
 }
 
 // --- Main ----------------------------------------------
@@ -546,8 +605,6 @@ static int RunAllZones(
 		for (const auto& block : scan.actors)
 		{
 			std::string actorName = ResolveActorName(block, scan.entity_map);
-			if (actorName == "_")
-				continue;
 
 			auto it = resultLookup.find(actorName);
 			bool isCommon = (it != resultLookup.end() && it->second->is_common);
@@ -638,13 +695,12 @@ static int RunAllZones(
 								for (const auto& dl : e.dialogues)
 								{
 									SQLiteDataSource::Dialogue ad;
-									ad.evsb_index = dl.evsb_index;
 									ad.speaker    = dl.speaker;
 									// text_ja / text_en filled below when we know the lang
 									if (lang == "ja")
-										ad.text_ja = dl.text;
+                                   ad.text_ja = std::u8string(reinterpret_cast<const char8_t*>(dl.text.c_str()));
 									else
-										ad.text_en = dl.text;
+                                   ad.text_en = std::u8string(reinterpret_cast<const char8_t*>(dl.text.c_str()));
 									ae.dialogues.push_back(std::move(ad));
 								}
 								aa.events.push_back(std::move(ae));
@@ -731,7 +787,7 @@ static int RunAllZones(
 		// === Dedup and write private actors ===
 		// SafeFilename for disambiguated filenames (mirrors EventWriter.cpp static fn)
 		auto safeName = [](const std::string& s) {
-			if (s.empty()) return std::string("_");
+			if (s.empty()) return std::string("");
 			std::string r; r.reserve(s.size());
 			for (char c : s) {
 				if (static_cast<unsigned char>(c) < 0x20 || c == '\\' || c == '/' || c == ':' ||
@@ -787,12 +843,11 @@ static int RunAllZones(
 					for (const auto& dl : e.dialogues)
 					{
 						SQLiteDataSource::Dialogue ad;
-						ad.evsb_index = dl.evsb_index;
 						ad.speaker    = dl.speaker;
 						if (lang == "ja")
-							ad.text_ja = dl.text;
+                           ad.text_ja = std::u8string(reinterpret_cast<const char8_t*>(dl.text.c_str()));
 						else
-							ad.text_en = dl.text;
+                           ad.text_en = std::u8string(reinterpret_cast<const char8_t*>(dl.text.c_str()));
 						ae.dialogues.push_back(std::move(ad));
 					}
 					aa.events.push_back(std::move(ae));
@@ -873,7 +928,7 @@ static std::string Sanitize(const std::string& s)
 		else
 			r += c;
 	}
-	if (r.empty()) r = "_";
+	if (r.empty()) r = "";
 	return r;
 }
 
@@ -956,7 +1011,7 @@ static int DumpEventJson(
 	{
 		for (auto& aa : zones[zi].actorsJa)
 		{
-			if (aa.actor_name == "_") continue;
+			if (aa.actor_name == "") continue;
 			std::string key = aa.actor_name + "@" + aa.bytecode_hash;
 			commonCandidates[key].push_back({zi, &aa});
 		}
@@ -1592,7 +1647,7 @@ int main(int argc, char** argv)
 	{
 		try
 		{
-			PathUtil::progRootPath = std::filesystem::current_path();
+           PathUtil::progRootPath = xybase::string::sys_mbs_to_wcs(dbPath);
 			SQLiteDataSource db;
 			db.EventDbDump(outputDir, dumpLang);
 			return 0;
@@ -1613,7 +1668,7 @@ int main(int argc, char** argv)
 	auto doDbUpdate = [&](const std::vector<SQLiteDataSource::Actor>& advActors) {
 		try
 		{
-			PathUtil::progRootPath = std::filesystem::current_path();
+           PathUtil::progRootPath = xybase::string::sys_mbs_to_wcs(dbPath);
 			SQLiteDataSource db;
 			db.EventAdvImport(advActors);
 			std::cout << "[DB] Imported " << advActors.size() << " actors into text.db" << std::endl;
