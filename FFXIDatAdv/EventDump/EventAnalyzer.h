@@ -23,7 +23,6 @@ struct AnalyzedActor
 	uint32_t actor_number;
 	std::vector<uint32_t> imed_data;
 	std::vector<AnalyzedEvent> events;
-	std::string bytecode_hash;
 };
 
 class EventAnalyzer

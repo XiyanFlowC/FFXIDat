@@ -35,6 +35,8 @@ std::vector<ActorBlock> EventBinaryDat::ParseBytes(const std::vector<uint8_t>& d
 		return result;
 
 	// Read block sizes
+	if (offset + block_count * 4 > data.size())
+		return result;
 	std::vector<uint32_t> block_sizes(block_count);
 	memcpy(block_sizes.data(), data.data() + offset, block_count * 4);
 	offset += block_count * 4;
@@ -120,19 +122,21 @@ std::vector<ActorBlock> EventBinaryDat::ParseBytes(const std::vector<uint8_t>& d
 		// Build events from tag_offsets and event_exec_nums
 		for (uint32_t i = 0; i < tag_count; ++i)
 		{
+			uint32_t byte_offset = tag_offsets[i];
+			if (byte_offset >= event_data_size)
+				continue;
+
 			EventEntry entry;
 			entry.event_id = event_exec_nums[i];
 			entry.array_index = static_cast<uint16_t>(i);
-			entry.byte_offset = tag_offsets[i];
+			entry.byte_offset = byte_offset;
 
 			// Size until next event's offset or end of data
-			uint32_t next_offset;
-			if (i + 1 < tag_count)
+			uint32_t next_offset = event_data_size;
+			if (i + 1 < tag_count && tag_offsets[i + 1] > byte_offset && tag_offsets[i + 1] <= event_data_size)
 				next_offset = tag_offsets[i + 1];
-			else
-				next_offset = event_data_size;
 
-			entry.byte_size = next_offset - entry.byte_offset;
+			entry.byte_size = next_offset - byte_offset;
 
 			// Use full event_data as bytecode mirror (VM can jump anywhere)
 			entry.bytecode = block.event_data;

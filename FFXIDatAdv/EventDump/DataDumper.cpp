@@ -80,15 +80,14 @@ std::string DataDumper::MakeTextPath(const std::string& zoneName, const std::str
 
 void DataDumper::Flush()
 {
-	// 1. Detect common actors (same name + bytecode_hash across zones)
+	// 1. Detect common actors (same name across zones) -- bytecode_hash removed
 	std::map<std::string, std::vector<std::pair<std::string, AnalyzedActor*>>> commonCandidates;
 	for (const auto& zone : zones_)
 	{
 		for (auto& actor : const_cast<std::vector<AnalyzedActor>&>(zone->GetActors()))
 		{
 			if (actor.actor_name == "") continue;
-			std::string key = actor.actor_name + "@" + actor.bytecode_hash;
-			commonCandidates[key].push_back({zone->GetName(), &actor});
+			commonCandidates[actor.actor_name].push_back({zone->GetName(), &actor});
 		}
 	}
 

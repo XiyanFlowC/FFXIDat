@@ -349,8 +349,8 @@ static bool TryResolveMessage(uint16_t raw, const OpCodeContext& ctx, uint32_t& 
 		// Work area address (WorkLocal, Work_Zone, etc.) — runtime dynamic, can't resolve
 		return false;
 	}
-	// Direct string index
-	resolvedMsg = raw;
+	// An invalid value (not a work address, not a reference) -- game treats it as zero.
+	resolvedMsg = 0;
 	return true;
 }
 
@@ -1777,7 +1777,7 @@ class OpC4 : public OpCode {
 public:
 	uint8_t code() const override { return 0xC4; }
 	const char* name() const override { return "HELPER_CALL_ALT"; }
-	size_t length(std::span<const uint8_t>, size_t) const override { return 11; }
+	size_t length(std::span<const uint8_t>, size_t) const override { return 12; }
 	std::vector<ArgDef> args() const override { return {{"sub", ArgType::Byte}}; }
 	std::vector<ArgValue> parse(std::span<const uint8_t> d, size_t o, const OpCodeContext&) const override {
 		return {{"sub", std::to_string(ru8(d, o+1)), ru8(d, o+1)}};

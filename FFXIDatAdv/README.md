@@ -84,7 +84,7 @@ FFXIDatAdv.exe --dump-event-json           Export event database (dual-language 
 
 ## Common Actor Deduplication
 
-Actors with identical `actor_name` and `bytecode_hash` appearing in 2+ zones are promoted to `common/`. Text content is additionally deduplicated per-event via content hash, sharing JSON files across zones.
+Actors with identical `(actor_name, message_sequence)` appearing in 2+ zones (when the name has only one such sequence) are promoted to `common/`. Text content is additionally deduplicated per-event.
 
 ## Clean-Room Parsers (FFXIDat)
 

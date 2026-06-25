@@ -68,16 +68,6 @@ void EventAnalyzer::Load(
 		aa.actor_number = block.actor_number;
 		aa.imed_data = block.imed_data;
 
-		{
-			const auto& data = block.event_data;
-			uint64_t h = 0;
-			for (size_t i = 0; i < data.size(); ++i)
-				h = h * 131 + data[i] + (h >> 31);
-			char buf[32];
-			snprintf(buf, sizeof(buf), "%016llX", (unsigned long long)h);
-			aa.bytecode_hash = buf;
-		}
-
 		for (const auto& evt : block.events)
 		{
 			std::vector<DialogueLine> dialogues;

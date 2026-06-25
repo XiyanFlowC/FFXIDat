@@ -5,6 +5,7 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
+#include <algorithm>
 #include <filesystem>
 #include <format>
 #include <memory>
@@ -64,7 +65,8 @@ static void ExportItemCsv(const std::string& datPath, const std::string& type, c
 			csv.NewCell(datum.name());
 			csv.NewCell(datum.description());
 			csv.NewLine();
-		} catch (...) {}
+		}
+		catch (...) {}
 	}
 }
 
@@ -84,9 +86,12 @@ static void ExportRoeQuestCsv(const std::string& datPath, const std::filesystem:
 	for (const auto& e : roe.questData)
 	{
 		csv.NewCell(xybase::string::itos<char8_t>(e.id));
-		try { csv.NewCell(e.questName()); } catch (...) { csv.NewCell(u8""); }
-		try { csv.NewCell(e.description()); } catch (...) { csv.NewCell(u8""); }
-		try { csv.NewCell(e.note()); } catch (...) { csv.NewCell(u8""); }
+		try { csv.NewCell(e.questName()); }
+		catch (...) { csv.NewCell(u8""); }
+		try { csv.NewCell(e.description()); }
+		catch (...) { csv.NewCell(u8""); }
+		try { csv.NewCell(e.note()); }
+		catch (...) { csv.NewCell(u8""); }
 		csv.NewLine();
 	}
 }
@@ -100,7 +105,8 @@ static void ExportRoeCategoryCsv(const std::string& datPath, const std::filesyst
 	for (const auto& e : roe.categoryData)
 	{
 		csv.NewCell(xybase::string::itos<char8_t>(e.id));
-		try { csv.NewCell(e.categoryName()); } catch (...) { csv.NewCell(u8""); }
+		try { csv.NewCell(e.categoryName()); }
+		catch (...) { csv.NewCell(u8""); }
 		csv.NewLine();
 	}
 }
@@ -176,6 +182,7 @@ static void PrintHelp(const char* prog)
 	std::cout << "  " << prog << " --dump-opcodes            在 JSON 中包含 opcode 反汇编" << std::endl;
 	std::cout << "  " << prog << " --split-text              文本分离：文本与指令分别存储" << std::endl;
 	std::cout << "  " << prog << " --event-db-update         解析完成后将事件数据写入 text.db" << std::endl;
+	std::cout << "  " << prog << " --event-db-only           仅 upsert 事件数据到 text.db，不产生其他文件产物（用于填补 FFXIDatProcessor 留空）" << std::endl;
 	std::cout << "  " << prog << " --event-db-dump           从 text.db 还原 JSON 导出（不解析 DAT）" << std::endl;
 	std::cout << "  " << prog << " --db <path>               指定数据库路径 (默认: text.db)" << std::endl;
 	std::cout << "  " << prog << " --dump-lang <ja|en>       dump 时使用的语言列 (默认: ja)" << std::endl;
@@ -204,8 +211,9 @@ struct ZoneScan
 	std::string zone_name;
 	std::vector<ActorBlock> actors;
 	std::unordered_map<uint32_t, EntityEntry> entity_map;
-	std::vector<std::u8string> zone_strings;     // NA
-	std::vector<std::u8string> zone_strings_jp;  // JP (only for --lang all)
+	std::vector<std::u8string> zone_strings;      // primary for this run's --lang (used for main extraction + file output)
+	std::vector<std::u8string> zone_strings_en;   // always English/NA when available
+	std::vector<std::u8string> zone_strings_ja;   // always Japanese when available
 };
 
 static std::vector<std::u8string> LoadEvsbStrings(const std::string& path)
@@ -232,7 +240,7 @@ struct ActorCandidate
 	std::string actor_name;
 	uint32_t zone_id;
 	std::string zone_name;
-    const ZoneScan* scan;
+	const ZoneScan* scan;
 	const ActorBlock* block;
 };
 
@@ -259,7 +267,7 @@ static std::unordered_map<std::string, std::vector<ActorCandidate>> GroupCandida
 			if (name.empty())
 				continue;
 
-           groups[name].push_back({name, scan.zone_id, scan.zone_name, &scan, &block});
+			groups[name].push_back({ name, scan.zone_id, scan.zone_name, &scan, &block });
 		}
 	}
 	return groups;
@@ -295,44 +303,46 @@ static bool DialogueOutputsMatch(const ActorCandidate& a, const ActorCandidate& 
 		return false;
 
 	EventLinker linker;
- auto extract = [&](const ActorCandidate& c,
+	auto extract = [&](const ActorCandidate& c,
 		const std::vector<std::u8string>& strings,
 		std::vector<std::vector<std::pair<std::string, std::u8string>>>& out) -> bool
-	{
-		out.clear();
-		out.reserve(c.block->events.size());
-		for (const auto& evt : c.block->events)
 		{
-			std::vector<DialogueLine> dialogues;
-			linker.ExtractDialoguesFromEvent(
-				evt,
-				c.block->actor_number,
-				c.block->imed_data,
-				c.scan->entity_map,
-				strings,
-				dialogues);
+			out.clear();
+			out.reserve(c.block->events.size());
+			for (const auto& evt : c.block->events)
+			{
+				std::vector<DialogueLine> dialogues;
+				linker.ExtractDialoguesFromEvent(
+					evt,
+					c.block->actor_number,
+					c.block->imed_data,
+					c.scan->entity_map,
+					strings,
+					dialogues);
 
-            std::vector<std::pair<std::string, std::u8string>> normalized;
-			normalized.reserve(dialogues.size());
-			for (const auto& dl : dialogues)
-				normalized.emplace_back(dl.speaker, dl.text);
-			out.push_back(std::move(normalized));
-		}
-		return true;
-	};
+				std::vector<std::pair<std::string, std::u8string>> normalized;
+				normalized.reserve(dialogues.size());
+				for (const auto& dl : dialogues)
+					normalized.emplace_back(dl.speaker, dl.text);
+				out.push_back(std::move(normalized));
+			}
+			return true;
+		};
 
-   std::vector<std::vector<std::pair<std::string, std::u8string>>> aPrimary, bPrimary;
+	std::vector<std::vector<std::pair<std::string, std::u8string>>> aPrimary, bPrimary;
 	extract(a, a.scan->zone_strings, aPrimary);
 	extract(b, b.scan->zone_strings, bPrimary);
 	if (aPrimary != bPrimary)
 		return false;
 
-	const bool hasSecondary = !a.scan->zone_strings_jp.empty() || !b.scan->zone_strings_jp.empty();
+	const bool hasSecondary = !a.scan->zone_strings_ja.empty() || !b.scan->zone_strings_ja.empty();
 	if (hasSecondary)
 	{
-       std::vector<std::vector<std::pair<std::string, std::u8string>>> aSecondary, bSecondary;
-		extract(a, a.scan->zone_strings_jp.empty() ? a.scan->zone_strings : a.scan->zone_strings_jp, aSecondary);
-		extract(b, b.scan->zone_strings_jp.empty() ? b.scan->zone_strings : b.scan->zone_strings_jp, bSecondary);
+		std::vector<std::vector<std::pair<std::string, std::u8string>>> aSecondary, bSecondary;
+		const auto& aSec = !a.scan->zone_strings_ja.empty() ? a.scan->zone_strings_ja : a.scan->zone_strings;
+		const auto& bSec = !b.scan->zone_strings_ja.empty() ? b.scan->zone_strings_ja : b.scan->zone_strings;
+		extract(a, aSec, aSecondary);
+		extract(b, bSec, bSecondary);
 		if (aSecondary != bSecondary)
 			return false;
 	}
@@ -372,28 +382,41 @@ static std::vector<VerifyResult> VerifyCandidates(
 			continue;
 		}
 
-		// Compare bytecode across all instances
+		// Compare across all instances.
+		// Verify (name-based bytecode) is for file outputs only.
+		// DB dedup (advActorsOut) uses finer (name + dialogue seq) grouping below.
 		const auto& first = *candidates[0].block;
 		vr.reference_block = &first;
-		bool all_match = true;
+
+		bool all_bytecode_match = true;
+		bool all_dialogue_match = true;
+
 		for (const auto& c : candidates)
 		{
 			if (std::find(vr.zone_names.begin(), vr.zone_names.end(), c.zone_name) == vr.zone_names.end())
 				vr.zone_names.push_back(c.zone_name);
-          if (!BytecodeMatches(first, *c.block) || !DialogueOutputsMatch(candidates[0], c))
-			{
-				all_match = false;
-				std::cerr << "[VERIFY] WARNING: Actor \"" << name
-                    << "\" differs in resolved output between zone " << candidates[0].zone_name
-					<< " and zone " << c.zone_name << std::endl;
-			}
+
+			if (!BytecodeMatches(first, *c.block))
+				all_bytecode_match = false;
+
+			if (!DialogueOutputsMatch(candidates[0], c))
+				all_dialogue_match = false;
 		}
 
-		vr.is_common = all_match;
+		// Core rule for commonality: same name + same bytecode (verified via BytecodeMatches).
+		// We force common + aliases if bytecode matches, even if DialogueOutputsMatch fails.
+		// This covers "Home Point #1" and similar cases that are conceptually the same actor
+		// across zones but have minor special differences (different strings, entities, or extraction)
+		// that would otherwise result in duplicate private actor rows instead of one canonical + aliases.
+		vr.is_common = (unique_zones.size() >= 2) /*&& all_bytecode_match*/ && all_dialogue_match;
+
 		if (vr.is_common)
 		{
-			std::cout << "[VERIFY] OK: Actor \"" << name << "\" ("
-				<< unique_zones.size() << " zones) bytecode match." << std::endl;
+			if (all_dialogue_match)
+			{
+				std::cout << "[VERIFY] OK: Actor \"" << name << "\" ("
+					<< unique_zones.size() << " zones) full match (bytecode + dialogues)." << std::endl;
+			}
 		}
 		results.push_back(vr);
 	}
@@ -441,18 +464,21 @@ static size_t HashDialogues(const std::vector<DialogueLine>& dls)
 	return h;
 }
 
-// FNV-1a hex hash of actor's full event_data (same algorithm as EventAnalyzer).
-static std::string ActorBytecodeHash(const ActorBlock& blk)
-{
-	uint64_t h = 14695981039346656037ull;
-	for (uint8_t b : blk.event_data)
-	{
-		h ^= b;
-		h *= 1099511628211ull;
+// Used for (name, msgseq) dedup: compares event structure + full extracted dialogues (ja/en).
+static bool ActorDialoguesEqual(const SQLiteDataSource::Actor& a, const SQLiteDataSource::Actor& b) {
+	if (a.events.size() != b.events.size()) return false;
+	for (size_t ei = 0; ei < a.events.size(); ++ei) {
+		const auto& ea = a.events[ei];
+		const auto& eb = b.events[ei];
+		if (ea.event_no != eb.event_no || ea.event_index != eb.event_index) return false;
+		if (ea.dialogues.size() != eb.dialogues.size()) return false;
+		for (size_t di = 0; di < ea.dialogues.size(); ++di) {
+			const auto& da = ea.dialogues[di];
+			const auto& db = eb.dialogues[di];
+			if (da.speaker != db.speaker || da.text_ja != db.text_ja || da.text_en != db.text_en) return false;
+		}
 	}
-	char buf[32];
-	snprintf(buf, sizeof(buf), "%016llX", (unsigned long long)h);
-	return buf;
+	return true;
 }
 
 static int RunAllZones(
@@ -462,10 +488,15 @@ static int RunAllZones(
 	const std::string& lang = "na",
 	bool splitText = false,
 	bool dumpOpcodes = false,
-	std::vector<SQLiteDataSource::Actor>* advActorsOut = nullptr)
+	std::vector<SQLiteDataSource::Actor>* advActorsOut = nullptr,
+	bool dbOnly = false)
 {
 	std::filesystem::path outPath(outputDir);
-	EventWriter writer(outPath, pretty);
+	std::unique_ptr<EventWriter> writerPtr;
+	if (!dbOnly)
+	{
+		writerPtr = std::make_unique<EventWriter>(outPath, pretty);
+	}
 	EventLinker linker;
 
 	std::vector<ZoneScan> scans;
@@ -512,27 +543,274 @@ static int RunAllZones(
 				entityMap[e.entity_id] = std::move(e);
 		}
 
-		// Load strings: zone_strings is primary, zone_strings_jp is secondary (--lang all)
-		std::vector<std::u8string> zoneStrings, zoneStringsJp;
-		if (lang == "ja")
-		{
-			if (!evsbJp.empty()) zoneStrings = LoadEvsbStrings(evsbJp);
-		}
-		else
-		{
-			if (!evsbNa.empty()) zoneStrings = LoadEvsbStrings(evsbNa);
-			if (lang == "all" && !evsbJp.empty())
-				zoneStringsJp = LoadEvsbStrings(evsbJp);
-		}
+		// Always load both languages when available. This enables a single run
+		// (especially --event-db-only) to populate BOTH text_ja and text_en.
+		std::vector<std::u8string> zoneStringsEn, zoneStringsJa;
+		if (!evsbNa.empty())
+			zoneStringsEn = LoadEvsbStrings(evsbNa);
+		if (!evsbJp.empty())
+			zoneStringsJa = LoadEvsbStrings(evsbJp);
+
+		// Choose primary for file extraction / Resolved dialogs based on --lang
+		std::vector<std::u8string> primaryStrings = zoneStringsEn;
+		if (lang == "ja" && !zoneStringsJa.empty())
+			primaryStrings = zoneStringsJa;
+		else if (lang == "all" && zoneStringsEn.empty() && !zoneStringsJa.empty())
+			primaryStrings = zoneStringsJa;
+		else if (primaryStrings.empty() && !zoneStringsJa.empty())
+			primaryStrings = zoneStringsJa;
 
 		ZoneScan scan;
 		scan.zone_id = static_cast<uint32_t>(processedCount);
 		scan.zone_name = zoneName;
 		scan.actors = std::move(actors);
 		scan.entity_map = std::move(entityMap);
-		scan.zone_strings = std::move(zoneStrings);
-		scan.zone_strings_jp = std::move(zoneStringsJp);
+		scan.zone_strings = std::move(primaryStrings);
+		scan.zone_strings_en = std::move(zoneStringsEn);
+		scan.zone_strings_ja = std::move(zoneStringsJa);
 		scans.push_back(std::move(scan));
+	}
+
+	// === Seq-based common decision (shared between file output and DB) ===
+	// Only names that have *exactly one* message sequence spanning 2+ zones
+	// are treated as "common" for file layout (common/ dir + common_ref in indexes).
+	// This matches the logic used for event_actor (zone_id=NULL).
+	std::unordered_set<std::string> seqBasedCommonNames;
+	std::unordered_map<std::string, std::vector<std::string>> commonNameToZones;
+	{
+		struct LightOcc { std::string zone; };
+		struct LightGroup {
+			size_t sig;
+			std::vector<LightOcc> occs;
+		};
+		std::unordered_map<std::string, std::vector<LightGroup>> lightGroups;
+
+		auto getSig = [&](const ActorBlock& block, const ZoneScan& scn) -> size_t {
+			size_t h = 0;
+			for (const auto& evt : block.events) {
+				h ^= std::hash<uint32_t>{}(evt.event_id) + 0x9e3779b9 + (h << 6) + (h >> 2);
+				h ^= std::hash<uint32_t>{}(evt.array_index) + 0x9e3779b9 + (h << 6) + (h >> 2);
+				std::vector<DialogueLine> dlgs;
+				linker.ExtractDialoguesFromEvent(evt, block.actor_number, block.imed_data,
+					scn.entity_map, scn.zone_strings, dlgs);
+				for (const auto& d : dlgs) {
+					h ^= std::hash<std::string>{}(d.speaker) + 0x9e3779b9 + (h << 6) + (h >> 2);
+					for (unsigned char c : d.text)
+						h = h * 31 + c;
+				}
+			}
+			return h;
+		};
+
+		// evev actors
+		for (const auto& scn : scans) {
+			for (const auto& block : scn.actors) {
+				std::string nm = ResolveActorName(block, scn.entity_map);
+				if (nm.empty()) continue;
+				size_t sig = getSig(block, scn);
+				auto& v = lightGroups[nm];
+				bool found = false;
+				for (auto& g : v) if (g.sig == sig) { g.occs.push_back({scn.zone_name}); found = true; break; }
+				if (!found) v.push_back({sig, {{scn.zone_name}}});
+			}
+		}
+
+		// evac-only (empty sig = 0)
+		for (const auto& scn : scans) {
+			std::unordered_set<uint32_t> evevNos;
+			for (const auto& b : scn.actors) evevNos.insert(b.actor_number);
+			for (const auto& kv : scn.entity_map) {
+				uint32_t no = kv.first;
+				const std::string& nm = kv.second.name;
+				if (evevNos.count(no) || nm.empty()) continue;
+				size_t sig = 0;
+				auto& v = lightGroups[nm];
+				bool found = false;
+				for (auto& g : v) if (g.sig == sig) { g.occs.push_back({scn.zone_name}); found = true; break; }
+				if (!found) v.push_back({sig, {{scn.zone_name}}});
+			}
+		}
+
+		for (const auto& [nm, v] : lightGroups) {
+			bool nameHasMultiSeq = (v.size() > 1);
+			for (const auto& g : v) {
+				std::unordered_set<std::string> zs;
+				for (auto& o : g.occs) zs.insert(o.zone);
+				if (zs.size() >= 2 && !nameHasMultiSeq) {
+					seqBasedCommonNames.insert(nm);
+					std::vector<std::string> zones(zs.begin(), zs.end());
+					std::sort(zones.begin(), zones.end());
+					commonNameToZones[nm] = std::move(zones);
+					break;
+				}
+			}
+		}
+	}
+
+	// === Dedicated DB actor population (seq/msg based dedup for event_actor + aliases) ===
+	// Groups by (actor_name + message sequence/dialogues), not just name.
+	// - (name,seq) spanning multiple zones + name has only this one seq variant -> common (zone_id=NULL)
+	// - within one zone duplicates of (name,seq) -> one canonical (zone+one actor_no), aliases for rest
+	// - (name,seq) spanning some zones, when name has multiple seq variants -> zone-scoped canonical + (cross) aliases
+	if (advActorsOut)
+	{
+		advActorsOut->clear();
+
+		struct Occ { std::string zone; int32_t no; };
+		struct SeqGroup {
+			SQLiteDataSource::Actor prototype; // name + events (dialogues)
+			std::vector<Occ> occs;
+		};
+		std::unordered_map<std::string, std::vector<SeqGroup>> nameSeqGroups;
+
+		auto buildPrototype = [&](const ActorBlock& block, const ZoneScan& scn, const std::string& nm) -> SQLiteDataSource::Actor {
+			SQLiteDataSource::Actor aa;
+			aa.actor_name = nm;
+			aa.actor_no = 0;
+			aa.zone_name = "";
+			for (const auto& evt : block.events)
+			{
+				SQLiteDataSource::Event ae;
+				ae.event_no = evt.event_id;
+				ae.event_index = evt.array_index;
+				// EN / JA: use language-specific strings only; do not cross-fallback for DB
+				std::vector<DialogueLine> enD;
+				if (!scn.zone_strings_en.empty())
+					linker.ExtractDialoguesFromEvent(evt, block.actor_number, block.imed_data, scn.entity_map, scn.zone_strings_en, enD);
+				std::vector<DialogueLine> jaD;
+				if (!scn.zone_strings_ja.empty())
+					linker.ExtractDialoguesFromEvent(evt, block.actor_number, block.imed_data, scn.entity_map, scn.zone_strings_ja, jaD);
+				size_t n = (std::max)(enD.size(), jaD.size());
+				for (size_t i = 0; i < n; ++i)
+				{
+					SQLiteDataSource::Dialogue ad;
+					if (i < enD.size())
+					{
+						ad.speaker = enD[i].speaker;
+						ad.text_en = std::u8string(reinterpret_cast<const char8_t*>(enD[i].text.c_str()));
+					}
+					else if (i < jaD.size())
+					{
+						ad.speaker = jaD[i].speaker;
+					}
+					if (i < jaD.size())
+					{
+						if (ad.speaker.empty()) ad.speaker = jaD[i].speaker;
+						ad.text_ja = std::u8string(reinterpret_cast<const char8_t*>(jaD[i].text.c_str()));
+					}
+					ae.dialogues.push_back(std::move(ad));
+				}
+				aa.events.push_back(std::move(ae));
+			}
+			return aa;
+		};
+
+		// Collect evev actors
+		for (const auto& scn : scans)
+		{
+			for (const auto& block : scn.actors)
+			{
+				std::string nm = ResolveActorName(block, scn.entity_map);
+				if (nm.empty()) continue;
+				SQLiteDataSource::Actor proto = buildPrototype(block, scn, nm);
+				auto& vec = nameSeqGroups[nm];
+				bool matched = false;
+				for (auto& sg : vec)
+				{
+					if (ActorDialoguesEqual(sg.prototype, proto))
+					{
+						sg.occs.push_back({ scn.zone_name, static_cast<int32_t>(block.actor_number) });
+						matched = true;
+						break;
+					}
+				}
+				if (!matched)
+				{
+					SeqGroup sg;
+					sg.prototype = std::move(proto);
+					sg.occs.push_back({ scn.zone_name, static_cast<int32_t>(block.actor_number) });
+					vec.push_back(std::move(sg));
+				}
+			}
+		}
+
+		// Collect evac-only (empty events seq)
+		for (const auto& scn : scans)
+		{
+			std::unordered_set<uint32_t> evevNos;
+			for (const auto& b : scn.actors) evevNos.insert(b.actor_number);
+			for (const auto& kv : scn.entity_map)
+			{
+				uint32_t no = kv.first;
+				const std::string& nm = kv.second.name;
+				if (evevNos.count(no) || nm.empty()) continue;
+				SQLiteDataSource::Actor proto;
+				proto.actor_name = nm;
+				proto.actor_no = static_cast<int32_t>(no);
+				proto.zone_name = "";
+				// events remain empty -> identifies empty-seq
+				auto& vec = nameSeqGroups[nm];
+				bool matched = false;
+				for (auto& sg : vec)
+				{
+					if (sg.prototype.events.empty())
+					{
+						sg.occs.push_back({ scn.zone_name, static_cast<int32_t>(no) });
+						matched = true;
+						break;
+					}
+				}
+				if (!matched)
+				{
+					SeqGroup sg;
+					sg.prototype = std::move(proto);
+					sg.occs.push_back({ scn.zone_name, static_cast<int32_t>(no) });
+					vec.push_back(std::move(sg));
+				}
+			}
+		}
+
+		// Emit one canonical Actor per (name,seq) group, with aliases for all duplicates
+		for (auto& nameEntry : nameSeqGroups)
+		{
+			const auto& nm = nameEntry.first;
+			auto& groups = nameEntry.second;
+			bool nameHasMultiSeq = (groups.size() > 1);
+			for (auto& sg : groups)
+			{
+				std::unordered_set<std::string> zset;
+				for (auto& o : sg.occs) zset.insert(o.zone);
+				bool spansMultiZone = (zset.size() >= 2);
+
+				SQLiteDataSource::Actor outA;
+				outA.actor_name = nm;
+				outA.events = sg.prototype.events;
+				outA.alias_zones.clear();
+				outA.alias_actor_nos.clear();
+
+				if (spansMultiZone && !nameHasMultiSeq)
+				{
+					// true common: null zone
+					outA.zone_name = "";
+					outA.actor_no = 0;
+				}
+				else
+				{
+					// zone-scoped canonical (shared within zone, or cross when name has variants)
+					const auto& p = sg.occs.front();
+					outA.zone_name = p.zone;
+					outA.actor_no = p.no;
+				}
+
+				// record all occs as aliases (import will use main for zone-scoped, skip self)
+				for (auto& o : sg.occs)
+				{
+					outA.alias_zones.push_back(o.zone);
+					outA.alias_actor_nos.push_back(o.no);
+				}
+				advActorsOut->push_back(std::move(outA));
+			}
+		}
 	}
 
 	// === Phase 2: Verify common actors (raw bytecode compare) ===
@@ -556,23 +834,23 @@ static int RunAllZones(
 		const ActorBlock& block, const ZoneScan& scan,
 		const std::string& actorName, bool isCommon, DialogueDedupMap& dmap,
 		const std::string& effLang) {
-		if (re.dialogues.empty()) return;
-		size_t h = HashDialogues(re.dialogues);
-		auto dit = dmap.find(h);
-		if (dit != dmap.end())
-		{
-			re.text_ref = dit->second.text_ref;
-		}
-		else
-		{
-			std::string tr = isCommon
-				? writer.MakeTextRefCommon(actorName, evt.event_id)
-				: writer.MakeTextRefZone(scan.zone_name, actorName, evt.event_id);
-			writer.WriteTextFile(tr, effLang, actorName, evt.event_id, re.dialogues);
-			dmap[h] = {actorName, evt.event_id, tr};
-			re.text_ref = tr;
-		}
-	};
+			if (re.dialogues.empty()) return;
+			size_t h = HashDialogues(re.dialogues);
+			auto dit = dmap.find(h);
+			if (dit != dmap.end())
+			{
+				re.text_ref = dit->second.text_ref;
+			}
+			else
+			{
+				std::string tr = isCommon
+					? (writerPtr ? writerPtr->MakeTextRefCommon(actorName, evt.event_id) : "")
+					: (writerPtr ? writerPtr->MakeTextRefZone(scan.zone_name, actorName, evt.event_id) : "");
+				if (writerPtr) writerPtr->WriteTextFile(tr, effLang, actorName, evt.event_id, re.dialogues);
+				dmap[h] = { actorName, evt.event_id, tr };
+				re.text_ref = tr;
+			}
+		};
 
 	BytecodeAnalyzer disasmAnalyzer; // for --dump-opcodes
 
@@ -580,6 +858,7 @@ static int RunAllZones(
 	std::cout << "\n=== Phase 3: Exporting ===" << std::endl;
 	for (const auto& scan : scans)
 	{
+		std::cout << scan.zone_name << " (" << scan.zone_id << ")" << std::endl;
 		ZoneIndex zi;
 		zi.zone_id = scan.zone_id;
 		zi.zone_name = scan.zone_name;
@@ -600,14 +879,14 @@ static int RunAllZones(
 					h = h * 31 + b;
 			}
 			return h;
-		};
+			};
 
 		for (const auto& block : scan.actors)
 		{
 			std::string actorName = ResolveActorName(block, scan.entity_map);
 
-			auto it = resultLookup.find(actorName);
-			bool isCommon = (it != resultLookup.end() && it->second->is_common);
+			// Use the shared seq-based decision (same logic as DB dedup)
+			bool isCommon = seqBasedCommonNames.count(actorName) > 0;
 
 			if (isCommon)
 			{
@@ -643,11 +922,11 @@ static int RunAllZones(
 						{
 							std::string effLang = (lang == "all") ? "na" : lang;
 							handleSplitText(re, evt, block, scan, actorName, true, dedupMap, effLang);
-							if (lang == "all" && !scan.zone_strings_jp.empty())
+							if (!scan.zone_strings_ja.empty())
 							{
 								std::vector<DialogueLine> jpDlgs;
 								linker.ExtractDialoguesFromEvent(evt, block.actor_number,
-									block.imed_data, scan.entity_map, scan.zone_strings_jp, jpDlgs);
+									block.imed_data, scan.entity_map, scan.zone_strings_ja, jpDlgs);
 								if (!jpDlgs.empty())
 								{
 									ResolvedEvent jpRe;
@@ -664,7 +943,8 @@ static int RunAllZones(
 					CommonActorData cad;
 					cad.actor_name = actorName;
 					cad.verified = true;
-					cad.zone_names = it->second->zone_names;
+					auto zit = commonNameToZones.find(actorName);
+					cad.zone_names = (zit != commonNameToZones.end()) ? zit->second : std::vector<std::string>{};
 					for (const auto& e : ra.events)
 					{
 						ResolvedEvent re;
@@ -678,56 +958,18 @@ static int RunAllZones(
 						cad.events.push_back(std::move(re));
 					}
 					commonActors.push_back(cad);
-						writer.WriteCommonActorFile(cad);
+					if (writerPtr) writerPtr->WriteCommonActorFile(cad);
 
-						// Build AdvActor for DB import (common).
-						if (advActorsOut)
-						{
-							SQLiteDataSource::Actor aa;
-							aa.actor_name     = actorName;
-							aa.bytecode_hash  = ActorBytecodeHash(block);
-							// zone_name empty => common; alias_zones filled later per-scan
-							for (const auto& e : ra.events)
-							{
-								SQLiteDataSource::Event ae;
-								ae.event_no    = e.event_id;
-								ae.event_index = e.array_index;
-								for (const auto& dl : e.dialogues)
-								{
-									SQLiteDataSource::Dialogue ad;
-									ad.speaker    = dl.speaker;
-									// text_ja / text_en filled below when we know the lang
-									if (lang == "ja")
-                                   ad.text_ja = std::u8string(reinterpret_cast<const char8_t*>(dl.text.c_str()));
-									else
-                                   ad.text_en = std::u8string(reinterpret_cast<const char8_t*>(dl.text.c_str()));
-									ae.dialogues.push_back(std::move(ad));
-								}
-								aa.events.push_back(std::move(ae));
-							}
-							advActorsOut->push_back(std::move(aa));
-						}
+					// DB population for actors (common) is now handled by dedicated seq-based dedup after scans (see below).
 				}
 
 				ZoneIndexEntry entry;
-					entry.actor_number = block.actor_number;
-					entry.actor_name = actorName;
-					entry.category = ActorCategory::common;
-					zi.entries.push_back(entry);
+				entry.actor_number = block.actor_number;
+				entry.actor_name = actorName;
+				entry.category = ActorCategory::common;
+				zi.entries.push_back(entry);
 
-					// Record this zone as an alias for DB import.
-					if (advActorsOut)
-					{
-						for (auto& aa : *advActorsOut)
-						{
-							if (aa.actor_name == actorName && aa.zone_name.empty())
-							{
-								aa.alias_zones.push_back(scan.zone_name);
-								aa.alias_actor_nos.push_back(block.actor_number);
-								break;
-							}
-						}
-					}
+				// (aliasing for DB is handled in dedicated seq-dedup logic below)
 			}
 			else
 			{
@@ -764,11 +1006,11 @@ static int RunAllZones(
 					{
 						std::string effLang = (lang == "all") ? "na" : lang;
 						handleSplitText(re, evt, block, scan, actorName, false, dedupMap, effLang);
-						if (lang == "all" && !scan.zone_strings_jp.empty())
+						if (!scan.zone_strings_ja.empty())
 						{
 							std::vector<DialogueLine> jpDlgs;
 							linker.ExtractDialoguesFromEvent(evt, block.actor_number,
-								block.imed_data, scan.entity_map, scan.zone_strings_jp, jpDlgs);
+								block.imed_data, scan.entity_map, scan.zone_strings_ja, jpDlgs);
 							if (!jpDlgs.empty())
 							{
 								ResolvedEvent jpRe;
@@ -796,7 +1038,7 @@ static int RunAllZones(
 				else r += c;
 			}
 			return r;
-		};
+			};
 
 		std::unordered_map<std::string, std::string> filenameCache; // "name:hash" → filename
 		std::unordered_set<std::string> writtenFiles;
@@ -811,13 +1053,13 @@ static int RunAllZones(
 			{
 				std::string fname;
 				if (nameCount[info.name] == 1)
-					fname = writer.MakeActorFilename(info.name, info.block->actor_number);
+					fname = writerPtr ? writerPtr->MakeActorFilename(info.name, info.block->actor_number) : (safeName(info.name) + ".json");
 				else
 					fname = safeName(info.name) + "_" + std::to_string(info.block->actor_number) + ".json";
 				filenameCache[key] = fname;
 				fit = filenameCache.find(key);
-				if (writtenFiles.insert(fname).second)
-					writer.WriteActorFile(info.resolved, scan.zone_name, fname, splitText);
+				if (writtenFiles.insert(fname).second && writerPtr)
+					writerPtr->WriteActorFile(info.resolved, scan.zone_name, fname, splitText);
 			}
 
 			ZoneIndexEntry entry;
@@ -827,47 +1069,27 @@ static int RunAllZones(
 			entry.category = ActorCategory::private_;
 			zi.entries.push_back(entry);
 
-			// Build AdvActor for DB import (private).
-			if (advActorsOut)
-			{
-				SQLiteDataSource::Actor aa;
-				aa.zone_name     = scan.zone_name;
-				aa.actor_no      = info.block->actor_number;
-				aa.actor_name    = info.name;
-				aa.bytecode_hash = ActorBytecodeHash(*info.block);
-				for (const auto& e : info.resolved.events)
-				{
-					SQLiteDataSource::Event ae;
-					ae.event_no    = e.event_id;
-					ae.event_index = e.array_index;
-					for (const auto& dl : e.dialogues)
-					{
-						SQLiteDataSource::Dialogue ad;
-						ad.speaker    = dl.speaker;
-						if (lang == "ja")
-                           ad.text_ja = std::u8string(reinterpret_cast<const char8_t*>(dl.text.c_str()));
-						else
-                           ad.text_en = std::u8string(reinterpret_cast<const char8_t*>(dl.text.c_str()));
-						ae.dialogues.push_back(std::move(ad));
-					}
-					aa.events.push_back(std::move(ae));
-				}
-				advActorsOut->push_back(std::move(aa));
-			}
+			// (DB actor population uses seq-based grouping after Phase 1 to correctly handle (name, msgseq) dedup)
 		}
 
-		writer.WriteZoneIndex(zi, scan.zone_name);
+		// Emit evac-only actors (listed in evac but have no event blocks in evev).
+		// These have no events. Handled via seq-based (empty-seq) dedup in dedicated logic after Phase 1.
+		if (writerPtr)
+			writerPtr->WriteZoneIndex(zi, scan.zone_name);
 		zoneIndices.push_back(zi);
 	}
 
-	// Write indexes
-	if (!commonActors.empty())
-		writer.WriteCommonIndex(commonActors);
-	writer.WriteMasterIndex(zoneIndices, commonActors);
+	// Write indexes (skipped in dbOnly mode)
+	if (writerPtr)
+	{
+		if (!commonActors.empty())
+			writerPtr->WriteCommonIndex(commonActors);
+		writerPtr->WriteMasterIndex(zoneIndices, commonActors);
 
-	std::cout << "\n=======================================" << std::endl;
-	std::cout << "Common actors found: " << commonActors.size() << std::endl;
-	std::cout << "[DONE] Output written to: " << outputDir << std::endl;
+		std::cout << "\n=======================================" << std::endl;
+		std::cout << "Common actors found: " << commonActors.size() << std::endl;
+		std::cout << "[DONE] Output written to: " << outputDir << std::endl;
+	}
 	return 0;
 }
 
@@ -923,7 +1145,7 @@ static std::string Sanitize(const std::string& s)
 	for (char c : s)
 	{
 		if (c == '<' || c == '>' || c == ':' || c == '"' || c == '/' ||
-		    c == '\\' || c == '|' || c == '?' || c == '*')
+			c == '\\' || c == '|' || c == '?' || c == '*')
 			r += '_';
 		else
 			r += c;
@@ -999,21 +1221,22 @@ static int DumpEventJson(
 		}
 
 		if (zr.actorsJa.empty() && zr.actorsEn.empty())
-		{ std::cout << " [no actors]" << std::endl; continue; }
+		{
+			std::cout << " [no actors]" << std::endl; continue;
+		}
 
 		std::cout << " (" << (zr.actorsJa.empty() ? zr.actorsEn.size() : zr.actorsJa.size()) << " actors)" << std::endl;
 		zones.push_back(std::move(zr));
 	}
 
-	// Detect common actors (same name + bytecode_hash across >=2 zones)
+	// Detect common actors (same name across >=2 zones) -- hash removed, using name only
 	std::map<std::string, std::vector<std::pair<size_t, AnalyzedActor*>>> commonCandidates;
 	for (size_t zi = 0; zi < zones.size(); ++zi)
 	{
 		for (auto& aa : zones[zi].actorsJa)
 		{
 			if (aa.actor_name == "") continue;
-			std::string key = aa.actor_name + "@" + aa.bytecode_hash;
-			commonCandidates[key].push_back({zi, &aa});
+			commonCandidates[aa.actor_name].push_back({ zi, &aa });
 		}
 	}
 
@@ -1089,26 +1312,26 @@ static int DumpEventJson(
 					}
 
 			std::ofstream jout(actorJsonPath, std::ios::binary);
-				jout << "{\n";
-				jout << "  \"actor\": " << EscapeJsonStr(aJa.actor_name) << ",\n";
-				if (isCommon)
+			jout << "{\n";
+			jout << "  \"actor\": " << EscapeJsonStr(aJa.actor_name) << ",\n";
+			if (isCommon)
+			{
+				auto cit = commonActors.find(&aJa);
+				jout << "  \"actor_numbers\": [";
+				const auto& ci = cit->second;
+				bool firstNum = true;
+				for (uint32_t n : ci.actorNumbers)
 				{
-					auto cit = commonActors.find(&aJa);
-					jout << "  \"actor_numbers\": [";
-					const auto& ci = cit->second;
-					bool firstNum = true;
-					for (uint32_t n : ci.actorNumbers)
-					{
-						if (!firstNum) jout << ", ";
-						firstNum = false;
-						jout << n;
-					}
-					jout << "],\n";
+					if (!firstNum) jout << ", ";
+					firstNum = false;
+					jout << n;
 				}
-				else
-				{
-					jout << "  \"actor_number\": " << aJa.actor_number << ",\n";
-				}
+				jout << "],\n";
+			}
+			else
+			{
+				jout << "  \"actor_number\": " << aJa.actor_number << ",\n";
+			}
 			if (!allSpeakers.empty())
 			{
 				jout << "  \"speakers\": [";
@@ -1149,7 +1372,7 @@ static int DumpEventJson(
 				else if (!std::filesystem::exists(fullJa) && hasEvtJa)
 				{
 					WriteTextJsonFile(fullJa, evtJa.textLines);
-					contentDedupJa[evtJa.textHash] = {txtRel};
+					contentDedupJa[evtJa.textHash] = { txtRel };
 				}
 
 				// Content dedup for en
@@ -1157,10 +1380,10 @@ static int DumpEventJson(
 				if (ditEn == contentDedupEn.end() && !std::filesystem::exists(fullEn) && hasEvtEn && !evtEn.textLines.empty())
 				{
 					WriteTextJsonFile(fullEn, evtEn.textLines);
-					contentDedupEn[evtEn.textHash] = {txtRel};
+					contentDedupEn[evtEn.textHash] = { txtRel };
 				}
 
-				pathMap[&aJa][eid] = {reportPath};
+				pathMap[&aJa][eid] = { reportPath };
 
 				if (!firstEvent) jout << ",\n";
 				firstEvent = false;
@@ -1319,16 +1542,16 @@ static int DumpDatabase(
 			{
 				namespace fs = std::filesystem;
 				fs::path base(dumpDir);
-				bool iab = t == "iab"||t=="iwb"||t=="iub"||t=="inb"||t=="ipb"||t=="isb"||t=="icb"||t=="iib";
-				if (iab) { auto o=base/(c+".csv"); fs::create_directories(o.parent_path()); ExportItemCsv(dp,t,o); }
-				else if (t=="fp") { auto o=base/(c+".csv"); fs::create_directories(o.parent_path()); ExportFixedPhraseCsv(dp,o); }
-				else if (t=="erq") { auto o=base/(c+".csv"); fs::create_directories(o.parent_path()); ExportRoeQuestCsv(dp,o); }
-				else if (t=="erc") { auto o=base/(c+".csv"); fs::create_directories(o.parent_path()); ExportRoeCategoryCsv(dp,o); }
-				else if (t=="dmsg"&&(c.starts_with("sys/mis/")||c.starts_with("sys/qst/"))) { auto o=base/(c+".csv"); fs::create_directories(o.parent_path()); ExportQuestDMsgCsv(dp,o); }
-				else if (t=="dmsg") { auto o=base/(c+".csv"); fs::create_directories(o.parent_path()); ExportRegularDMsgCsv(dp,o); }
-				else if (t=="xis") { auto o=base/(c+".txt"); fs::create_directories(o.parent_path()); ExportXiStringTxt(dp,o); }
-				else if (t=="sd") { auto o=base/(c+".txt"); fs::create_directories(o.parent_path()); ExportStatusDataTxt(dp,o); }
-				else if (t=="mbd") { auto o=base/(c+".txt"); fs::create_directories(o.parent_path()); ExportMonBridgeTxt(dp,o); }
+				bool iab = t == "iab" || t == "iwb" || t == "iub" || t == "inb" || t == "ipb" || t == "isb" || t == "icb" || t == "iib";
+				if (iab) { auto o = base / (c + ".csv"); fs::create_directories(o.parent_path()); ExportItemCsv(dp, t, o); }
+				else if (t == "fp") { auto o = base / (c + ".csv"); fs::create_directories(o.parent_path()); ExportFixedPhraseCsv(dp, o); }
+				else if (t == "erq") { auto o = base / (c + ".csv"); fs::create_directories(o.parent_path()); ExportRoeQuestCsv(dp, o); }
+				else if (t == "erc") { auto o = base / (c + ".csv"); fs::create_directories(o.parent_path()); ExportRoeCategoryCsv(dp, o); }
+				else if (t == "dmsg" && (c.starts_with("sys/mis/") || c.starts_with("sys/qst/"))) { auto o = base / (c + ".csv"); fs::create_directories(o.parent_path()); ExportQuestDMsgCsv(dp, o); }
+				else if (t == "dmsg") { auto o = base / (c + ".csv"); fs::create_directories(o.parent_path()); ExportRegularDMsgCsv(dp, o); }
+				else if (t == "xis") { auto o = base / (c + ".txt"); fs::create_directories(o.parent_path()); ExportXiStringTxt(dp, o); }
+				else if (t == "sd") { auto o = base / (c + ".txt"); fs::create_directories(o.parent_path()); ExportStatusDataTxt(dp, o); }
+				else if (t == "mbd") { auto o = base / (c + ".txt"); fs::create_directories(o.parent_path()); ExportMonBridgeTxt(dp, o); }
 			}
 			catch (std::exception& e) { std::cerr << "[WARN] " << t << " " << c << ": " << e.what() << "\n"; }
 		}
@@ -1347,7 +1570,8 @@ static int RunSingleZone(
 	const std::string& lang = "na",
 	bool splitText = false,
 	bool dumpOpcodes = false,
-	std::vector<SQLiteDataSource::Actor>* advActorsOut = nullptr)
+	std::vector<SQLiteDataSource::Actor>* advActorsOut = nullptr,
+	bool dbOnly = false)
 {
 	for (const auto& [name, def] : config)
 	{
@@ -1355,7 +1579,7 @@ static int RunSingleZone(
 		{
 			std::unordered_map<std::string, ZoneDef> single;
 			single[name] = def;
-			return RunAllZones(single, outputDir, pretty, lang, splitText, dumpOpcodes, advActorsOut);
+			return RunAllZones(single, outputDir, pretty, lang, splitText, dumpOpcodes, advActorsOut, dbOnly);
 		}
 	}
 	std::cout << "[ERROR] Zone not found: " << zoneNameOrId << std::endl;
@@ -1526,6 +1750,7 @@ int main(int argc, char** argv)
 
 	std::string outputDir = "event";
 	bool pretty = false;
+	bool eventDbOnly = false;
 	bool listOnly = false;
 	std::string lang = "na"; // "na", "ja", or "all"
 	bool dumpOpcodes = false;
@@ -1563,6 +1788,11 @@ int main(int argc, char** argv)
 			dumpEventJson = true;
 		else if (arg == "--event-db-update")
 			eventDbUpdate = true;
+		else if (arg == "--event-db-only")
+		{
+			eventDbUpdate = true;
+			eventDbOnly = true;
+		}
 		else if (arg == "--event-db-dump")
 			eventDbDump = true;
 		else if (arg == "--db" && i + 1 < argc)
@@ -1574,7 +1804,10 @@ int main(int argc, char** argv)
 		else if (arg == "--list-zones")
 			listOnly = true;
 		else if (arg == "--lang" && i + 1 < argc)
+		{
 			lang = argv[++i];
+			if (lang == "jp") lang = "ja";
+		}
 		else
 			singleTarget = arg;
 	}
@@ -1594,7 +1827,7 @@ int main(int argc, char** argv)
 			for (auto& rel : {
 				std::filesystem::path("data/defs.csv"),
 				std::filesystem::path("../FFXIDatAdv/data/defs.csv"),
-			})
+				})
 			{
 				if (std::filesystem::exists(rel))
 				{
@@ -1647,7 +1880,12 @@ int main(int argc, char** argv)
 	{
 		try
 		{
-           PathUtil::progRootPath = xybase::string::sys_mbs_to_wcs(dbPath);
+			// Set progRootPath to the *directory* containing the target db.
+			// SQLiteDataSource ctor will then do <dir> / "text.db".
+			// This makes --db "path\to\text.db" (or just "text.db") work correctly.
+			std::filesystem::path dbP(dbPath);
+			auto parent = dbP.parent_path();
+			PathUtil::progRootPath = parent.empty() ? L"." : xybase::string::sys_mbs_to_wcs(parent.string());
 			SQLiteDataSource db;
 			db.EventDbDump(outputDir, dumpLang);
 			return 0;
@@ -1668,22 +1906,27 @@ int main(int argc, char** argv)
 	auto doDbUpdate = [&](const std::vector<SQLiteDataSource::Actor>& advActors) {
 		try
 		{
-           PathUtil::progRootPath = xybase::string::sys_mbs_to_wcs(dbPath);
+			// Set progRootPath to the *directory* containing the target db.
+			// SQLiteDataSource ctor will then do <dir> / "text.db".
+			// This makes --db "path\to\text.db" (or just "text.db") and running from x64\Release work.
+			std::filesystem::path dbP(dbPath);
+			auto parent = dbP.parent_path();
+			PathUtil::progRootPath = parent.empty() ? L"." : xybase::string::sys_mbs_to_wcs(parent.string());
 			SQLiteDataSource db;
-			db.EventAdvImport(advActors);
+			db.EventDbImport(advActors);
 			std::cout << "[DB] Imported " << advActors.size() << " actors into text.db" << std::endl;
 		}
 		catch (const std::exception& e)
 		{
 			std::cerr << "[ERROR] DB update failed: " << e.what() << std::endl;
 		}
-	};
+		};
 
 	if (!singleTarget.empty())
 	{
 		std::vector<SQLiteDataSource::Actor> advActors;
 		int rc = RunSingleZone(singleTarget, config, outputDir, pretty, lang, splitText, dumpOpcodes,
-			eventDbUpdate ? &advActors : nullptr);
+			eventDbUpdate ? &advActors : nullptr, eventDbOnly);
 		if (rc == 0 && eventDbUpdate)
 			doDbUpdate(advActors);
 		return rc;
@@ -1698,7 +1941,7 @@ int main(int argc, char** argv)
 	{
 		std::vector<SQLiteDataSource::Actor> advActors;
 		int rc = RunAllZones(config, outputDir, pretty, lang, splitText, dumpOpcodes,
-			eventDbUpdate ? &advActors : nullptr);
+			eventDbUpdate ? &advActors : nullptr, eventDbOnly);
 		if (rc == 0 && eventDbUpdate)
 			doDbUpdate(advActors);
 		return rc;

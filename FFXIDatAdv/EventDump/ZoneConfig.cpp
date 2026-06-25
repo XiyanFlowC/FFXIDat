@@ -67,9 +67,10 @@ std::vector<ZoneDef> ZoneConfig::LoadFromString(const std::string& content)
 			it->evac_path = path;
 		else if (type == "evsb")
 		{
-			if (lang == "na" || lang.empty())
+			// defs.csv uses en/ja; legacy zone_events.csv uses na/jp
+			if (lang == "en" || lang == "na" || lang.empty())
 				it->evsb_path = path;
-			else if (lang == "ja")
+			else if (lang == "ja" || lang == "jp")
 				it->evsb_jp_path = path;
 		}
 

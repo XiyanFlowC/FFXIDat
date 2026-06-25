@@ -8,12 +8,15 @@ BytecodeAnalyzer::BytecodeAnalyzer()
 {
 }
 
-static bool IsWithinBounds(std::span<const uint8_t> data, size_t offset, size_t needed)
+static bool IsWithinBounds(std::span<const uint8_t> data, size_t offset, size_t needed, uint32_t actor_number = 0)
 {
 	if (offset + needed > data.size())
 	{
+		uint8_t opbyte = (offset < data.size()) ? data[offset] : 0xFF;
 		std::ostringstream msg;
-		msg << "[OOB] Instruction at 0x" << std::hex << offset << std::dec
+		msg << "[OOB] Actor 0x" << std::hex << actor_number << std::dec
+			<< " Instruction at 0x" << std::hex << offset << std::dec
+			<< " (opcode 0x" << std::hex << (int)opbyte << std::dec << ")"
 			<< " needs " << needed << " bytes, but buffer has " << data.size();
 		std::cerr << msg.str() << std::endl;
 		return false;
@@ -71,7 +74,7 @@ void BytecodeAnalyzer::ExtractDialogues(
 			if (len == 0) len = 1;
 
 			// Bounds check: ensure we can read the full instruction
-			if (!IsWithinBounds(bytecode, offset, len))
+			if (!IsWithinBounds(bytecode, offset, len, actor_number))
 			{
 				if (!call_stack.empty())
 				{
@@ -205,7 +208,7 @@ std::vector<std::string> BytecodeAnalyzer::Disassemble(
 			size_t len = op.length(bytecode, offset);
 			if (len == 0) len = 1;
 
-			if (!IsWithinBounds(bytecode, offset, len))
+			if (!IsWithinBounds(bytecode, offset, len, actor_number))
 			{
 				lines.push_back(std::format("  {:04X}: <OUT OF BOUNDS>", offset));
 				if (!call_stack.empty())
