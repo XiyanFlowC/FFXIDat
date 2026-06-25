@@ -13,8 +13,12 @@
 #include <set>
 #include <map>
 #include <sstream>
+#include <CsvFile.h>
 
 namespace fs = std::filesystem;
+
+bool EventProcessor::aliasMapLoaded_ = false;
+std::map<std::string, std::string> EventProcessor::aliasMap_;
 
 static std::string SafeName(const std::string& s)
 {
@@ -113,6 +117,99 @@ private:
 	bool loaded_ = false;
 	std::unordered_map<std::string, ZonePaths> zones_;
 };
+
+void EventProcessor::LoadAliasMap()
+{
+	if (aliasMapLoaded_) return;
+	aliasMapLoaded_ = true;
+	auto aliasFile = Config::Instance().GetProgRoot() / L"text" / L"tgt" / L"event" / L"event_aliases.csv";
+	if (std::filesystem::exists(aliasFile) == false)
+	{
+		aliasFile = Config::Instance().GetProgRoot() / L"text" / L"src" / L"event" / L"event_aliases.csv";
+	}
+	if (fs::exists(aliasFile) == false)
+	{
+		Logger::Instance().Warning("Alias file not found: " + Logger::ToUtf8(aliasFile) + ". Event path aliasing will be unavailable.");
+		return;	
+	}
+	CsvFile csv(aliasFile, std::ios::in | std::ios::binary);
+	std::string line;
+	while (!csv.IsEof())
+	{
+		std::string src = Logger::ToUtf8(csv.NextCell());
+		if (src[0] == '#')
+		{
+			csv.NextLine();
+			continue;
+		}
+		std::string dst = Logger::ToUtf8(csv.NextCell());
+		if (!src.empty() && !dst.empty())
+			aliasMap_[src] = dst;
+		csv.NextLine();
+	}
+}
+
+std::filesystem::path EventProcessor::ResolveEventSrcPath(const std::string& actorName, int actorId, int eventIndex, const std::string& zoneName)
+{
+	LoadAliasMap();
+	auto srcEventBase = Config::Instance().GetProgRoot() / L"text" / L"src" / L"event";
+	auto p1 = fs::path(zoneName) / (SafeName(actorName) + "_" + std::to_string(actorId)) / (std::to_string(eventIndex) + ".txt");
+	if (aliasMap_.find(p1.string()) != aliasMap_.end())
+		p1 = aliasMap_[p1.string()];
+	if (fs::exists(srcEventBase / p1))
+		return srcEventBase / p1;
+
+	auto p2 = fs::path(zoneName) / SafeName(actorName) / (std::to_string(eventIndex) + ".txt");
+	if (aliasMap_.find(p2.string()) != aliasMap_.end())
+		p2 = aliasMap_[p2.string()];
+	if (fs::exists(srcEventBase / p2))
+		return srcEventBase / p2;
+
+	auto p4 = fs::path(zoneName) / (std::to_string(actorId)) / (std::to_string(eventIndex) + ".txt");
+	if (aliasMap_.find(p4.string()) != aliasMap_.end())
+		p4 = aliasMap_[p4.string()];
+	if (fs::exists(srcEventBase / p4))
+		return srcEventBase / p4;
+
+	auto p3 = fs::path("common") / (SafeName(actorName)) / (std::to_string(eventIndex) + ".txt");
+	if (aliasMap_.find(p3.string()) != aliasMap_.end())
+		p3 = aliasMap_[p3.string()];
+	if (fs::exists(srcEventBase / p3))
+		return srcEventBase / p3;
+
+	return {};
+}
+
+std::filesystem::path EventProcessor::ResolveEventTgtPath(const std::string& actorName, int actorId, int eventIndex, const std::string& zoneName)
+{
+	LoadAliasMap();
+	auto dstEventBase = Config::Instance().GetProgRoot() / L"text" / L"tgt" / L"event";
+	auto p1 = fs::path(zoneName) / (SafeName(actorName) + "_" + std::to_string(actorId)) / (std::to_string(eventIndex) + ".txt");
+	if (aliasMap_.find(p1.string()) != aliasMap_.end())
+		p1 = aliasMap_[p1.string()];
+	if (fs::exists(dstEventBase / p1))
+		return dstEventBase / p1;
+	
+	auto p2 = fs::path(zoneName) / SafeName(actorName) / (std::to_string(eventIndex) + ".txt");
+	if (aliasMap_.find(p2.string()) != aliasMap_.end())
+		p2 = aliasMap_[p2.string()];
+	if (fs::exists(dstEventBase / p2))
+		return dstEventBase / p2;
+
+	auto p4 = fs::path(zoneName) / (std::to_string(actorId)) / (std::to_string(eventIndex) + ".txt");
+	if (aliasMap_.find(p4.string()) != aliasMap_.end())
+		p4 = aliasMap_[p4.string()];
+	if (fs::exists(dstEventBase / p4))
+		return dstEventBase / p4;
+	
+	auto p3 = fs::path("common") / (SafeName(actorName)) / (std::to_string(eventIndex) + ".txt");
+	if (aliasMap_.find(p3.string()) != aliasMap_.end())
+		p3 = aliasMap_[p3.string()];
+	if (fs::exists(dstEventBase / p3))
+		return dstEventBase / p3;
+
+	return {};
+}
 
 bool EventProcessor::Process(
 	const FileProcessDef& fileDef,
@@ -215,21 +312,7 @@ bool EventProcessor::Process(
 
 		for (const auto& evt : actor.events)
 		{
-			std::string evtFile = std::to_string(evt.event_index) + ".txt";
-
-			auto findSrcPath = [&](const fs::path& base) -> fs::path {
-				fs::path p1 = base / zoneName / actorDir / evtFile;
-				if (fs::exists(p1)) return p1;
-				fs::path p2 = base / zoneName / actorName / evtFile;
-				if (fs::exists(p2)) return p2;
-				fs::path p3 = base / "common" / actorDir / evtFile;
-				if (fs::exists(p3)) return p3;
-				fs::path p4 = base / "common" / actorName / evtFile;
-				if (fs::exists(p4)) return p4;
-				return {};
-				};
-
-			fs::path srcPath = findSrcPath(srcEventBase);
+			fs::path srcPath = ResolveEventSrcPath(actorName, actor.actor_id, evt.event_index, zoneName);
 
 			if (srcPath.empty())
 				continue;

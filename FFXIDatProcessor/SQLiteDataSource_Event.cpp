@@ -1,5 +1,5 @@
 // SQLiteDataSource_Event.cpp
-// EventAdvImport / EventDbDump ¡ª called from FFXIDatAdv.
+// EventAdvImport / EventDbDump ï¿½ï¿½ called from FFXIDatAdv.
 // No FFXIDatAdv headers are included here; communication uses SQLiteDataSource::AdvActor POD structs.
 
 #include "SQLiteDataSource.h"
@@ -13,6 +13,7 @@
 #include <iostream>
 #include <set>
 #include <sstream>
+#include <unordered_map>
 
 // --- helpers ----------------------------------------------------------------
 
@@ -83,14 +84,102 @@ static void UpsertMsg(sqlite3* db, int eventId, uint32_t msgIndex,
 	}
 }
 
-// --- EventAdvImport ---------------------------------------------------------
+// --- EventDbImport ---------------------------------------------------------
 
-void SQLiteDataSource::EventAdvImport(const std::vector<Actor>& actors)
+void SQLiteDataSource::EventDbImport(const std::vector<Actor>& actors)
 {
 	Execute("BEGIN;");
+
+	std::cout << "[EventDbImport] Importing " << actors.size() << " (canonical) actors..." << std::endl;
+	size_t actorCount = 0;
+
+	// Declare prepared statements at function scope so catch can see them
+	sqlite3_stmt *insCommon = nullptr, *selCommon = nullptr;
+	sqlite3_stmt *insPrivate = nullptr, *selPrivate = nullptr;
+	sqlite3_stmt *insAlias = nullptr;
+	sqlite3_stmt *delAlias = nullptr;
+	sqlite3_stmt *delDirect = nullptr;
+	sqlite3_stmt *insEvt = nullptr, *selEvt = nullptr;
+	sqlite3_stmt *delMsg = nullptr;
+	sqlite3_stmt *insMsg = nullptr;
+
 	try
 	{
+		// In-memory caches (big win for repeated zones/texts)
+		std::unordered_map<std::string, int> zoneCache;
+		auto getZone = [&](const std::string& zn) -> int {
+			auto it = zoneCache.find(zn);
+			if (it != zoneCache.end()) return it->second;
+			int id = UpsertZone(db, zn);
+			if (id >= 0) zoneCache[zn] = id;
+			return id;
+		};
+
+		std::unordered_map<std::u8string, int> textCache;
+		auto getText = [&](const std::u8string& t) -> int {
+			if (t.empty()) return -1;
+			auto it = textCache.find(t);
+			if (it != textCache.end()) return it->second;
+			int id = UpsertText(db, reinterpret_cast<const char*>(t.c_str()));
+			if (id >= 0) textCache[t] = id;
+			return id;
+		};
+
 		sqlite3_stmt* stmt = nullptr;
+
+		// Prepare hot statements ONCE (huge win - avoids repeated SQL parsing)
+
+		const char* sqlInsCommon =
+			"INSERT INTO event_actor(zone_id, actor_no, actor_name) VALUES(NULL,NULL,?)"
+			" ON CONFLICT(actor_name) WHERE zone_id IS NULL"
+			" RETURNING id";
+		sqlite3_prepare_v2(db, sqlInsCommon, -1, &insCommon, nullptr);
+
+		const char* sqlSelCommon = "SELECT id FROM event_actor WHERE zone_id IS NULL AND actor_name = ?";
+		sqlite3_prepare_v2(db, sqlSelCommon, -1, &selCommon, nullptr);
+
+		const char* sqlInsPrivate =
+			"INSERT INTO event_actor(zone_id, actor_no, actor_name) VALUES(?,?,?)"
+			" ON CONFLICT(zone_id, actor_no) WHERE zone_id IS NOT NULL"
+			" DO UPDATE SET actor_name=excluded.actor_name RETURNING id";
+		sqlite3_prepare_v2(db, sqlInsPrivate, -1, &insPrivate, nullptr);
+
+		const char* sqlSelPrivate = "SELECT id FROM event_actor WHERE zone_id = ? AND actor_no = ?";
+		sqlite3_prepare_v2(db, sqlSelPrivate, -1, &selPrivate, nullptr);
+
+		const char* sqlInsAlias =
+			"INSERT INTO event_actor_alias(actor_id, zone_id, actor_no) VALUES(?,?,?)"
+			" ON CONFLICT(zone_id, actor_no) DO UPDATE SET actor_id=excluded.actor_id";
+		sqlite3_prepare_v2(db, sqlInsAlias, -1, &insAlias, nullptr);
+
+		const char* sqlDelAlias = "DELETE FROM event_actor_alias WHERE zone_id = ? AND actor_no = ?";
+		sqlite3_prepare_v2(db, sqlDelAlias, -1, &delAlias, nullptr);
+
+		const char* sqlDelDirect = "DELETE FROM event_actor WHERE zone_id = ? AND actor_no = ?";
+		sqlite3_prepare_v2(db, sqlDelDirect, -1, &delDirect, nullptr);
+
+		const char* sqlInsEvt =
+			"INSERT INTO event_event(actor_id, event_no, event_index) VALUES(?,?,?)"
+			" ON CONFLICT(actor_id, event_no, event_index) DO UPDATE SET event_index=event_index RETURNING id";
+		sqlite3_prepare_v2(db, sqlInsEvt, -1, &insEvt, nullptr);
+
+		const char* sqlSelEvt = "SELECT id FROM event_event WHERE actor_id=? AND event_no=? AND event_index=?";
+		sqlite3_prepare_v2(db, sqlSelEvt, -1, &selEvt, nullptr);
+
+		const char* sqlDelExcessMsg =
+			"DELETE FROM event_msg WHERE event_id = ? AND status <> 3 AND msg_index >= ?";
+		sqlite3_prepare_v2(db, sqlDelExcessMsg, -1, &delMsg, nullptr);
+
+		const char* sqlInsMsg = R"(
+			INSERT INTO event_msg(event_id, msg_index, speaker, text_ja_id, text_en_id, status)
+			VALUES (?, ?, ?, ?, ?, 2)
+			ON CONFLICT(event_id, msg_index) DO UPDATE SET
+				speaker    = CASE WHEN status = 3 THEN speaker    ELSE excluded.speaker    END,
+				text_ja_id = CASE WHEN status = 3 THEN text_ja_id ELSE COALESCE(excluded.text_ja_id, text_ja_id) END,
+				text_en_id = CASE WHEN status = 3 THEN text_en_id ELSE COALESCE(excluded.text_en_id, text_en_id) END,
+				status     = CASE WHEN status = 3 THEN 3           ELSE 2                  END
+		)";
+		sqlite3_prepare_v2(db, sqlInsMsg, -1, &insMsg, nullptr);
 
 		for (const auto& actor : actors)
 		{
@@ -99,157 +188,198 @@ void SQLiteDataSource::EventAdvImport(const std::vector<Actor>& actors)
 
 			if (isCommon)
 			{
-				// Upsert canonical common actor row (zone_id=NULL, actor_no=NULL).
-				if (sqlite3_prepare_v2(db,
-					"INSERT INTO event_actor(zone_id, actor_no, actor_name, bytecode_hash) VALUES(NULL,NULL,?,?)"
-					" ON CONFLICT(actor_name) WHERE zone_id IS NULL"
-					" DO UPDATE SET bytecode_hash=excluded.bytecode_hash"
-					" RETURNING id",
-					-1, &stmt, nullptr) == SQLITE_OK)
-				{
-					sqlite3_bind_text(stmt, 1, actor.actor_name.c_str(), -1, SQLITE_TRANSIENT);
-					sqlite3_bind_text(stmt, 2, actor.bytecode_hash.c_str(), -1, SQLITE_TRANSIENT);
-					if (sqlite3_step(stmt) == SQLITE_ROW)
-						actorId = sqlite3_column_int(stmt, 0);
-					sqlite3_finalize(stmt);
+				// Upsert canonical common (reuse prepared)
+				if (insCommon) {
+					sqlite3_reset(insCommon);
+					sqlite3_bind_text(insCommon, 1, actor.actor_name.c_str(), -1, SQLITE_TRANSIENT);
+					if (sqlite3_step(insCommon) == SQLITE_ROW)
+						actorId = sqlite3_column_int(insCommon, 0);
 				}
-
-				// If RETURNING gave nothing (row existed but was not updated), SELECT it.
-				if (actorId < 0)
-				{
-					if (sqlite3_prepare_v2(db,
-						"SELECT id FROM event_actor WHERE zone_id IS NULL AND actor_name = ?",
-						-1, &stmt, nullptr) == SQLITE_OK)
-					{
-						sqlite3_bind_text(stmt, 1, actor.actor_name.c_str(), -1, SQLITE_TRANSIENT);
-						if (sqlite3_step(stmt) == SQLITE_ROW)
-							actorId = sqlite3_column_int(stmt, 0);
-						sqlite3_finalize(stmt);
-					}
+				if (actorId < 0 && selCommon) {
+					sqlite3_reset(selCommon);
+					sqlite3_bind_text(selCommon, 1, actor.actor_name.c_str(), -1, SQLITE_TRANSIENT);
+					if (sqlite3_step(selCommon) == SQLITE_ROW)
+						actorId = sqlite3_column_int(selCommon, 0);
 				}
 				if (actorId < 0) continue;
 
-				// Upsert one alias row per (zone, actor_no) pair.
+				++actorCount;
+				if (actorCount % 20 == 0 || actorCount == actors.size())
+					std::cout << "  [" << actorCount << "/" << actors.size() << "] common: " << actor.actor_name << std::endl;
+
+				// aliases + stray cleanup (use prepared + cache)
 				for (size_t i = 0; i < actor.alias_zones.size(); ++i)
 				{
 					if (i >= actor.alias_actor_nos.size()) break;
-					int zoneId = UpsertZone(db, actor.alias_zones[i]);
+					int zoneId = getZone(actor.alias_zones[i]);
 					if (zoneId < 0) continue;
 
-					if (sqlite3_prepare_v2(db,
-						"INSERT INTO event_actor_alias(actor_id, zone_id, actor_no) VALUES(?,?,?)"
-						" ON CONFLICT(zone_id, actor_no) DO UPDATE SET actor_id=excluded.actor_id",
-						-1, &stmt, nullptr) == SQLITE_OK)
-					{
-						sqlite3_bind_int(stmt, 1, actorId);
-						sqlite3_bind_int(stmt, 2, zoneId);
-						sqlite3_bind_int(stmt, 3, (int)actor.alias_actor_nos[i]);
-						sqlite3_step(stmt);
-						sqlite3_finalize(stmt);
+					// stray direct
+					if (delDirect) {
+						sqlite3_reset(delDirect);
+						sqlite3_bind_int(delDirect, 1, zoneId);
+						sqlite3_bind_int(delDirect, 2, (int)actor.alias_actor_nos[i]);
+						sqlite3_step(delDirect);
+					}
+
+					if (insAlias) {
+						sqlite3_reset(insAlias);
+						sqlite3_bind_int(insAlias, 1, actorId);
+						sqlite3_bind_int(insAlias, 2, zoneId);
+						sqlite3_bind_int(insAlias, 3, (int)actor.alias_actor_nos[i]);
+						sqlite3_step(insAlias);
 					}
 				}
 			}
 			else
 			{
-				// Private actor.
-				int zoneId = UpsertZone(db, actor.zone_name);
+				// Private (zone-scoped) actor. Use prepared + cache
+				int zoneId = getZone(actor.zone_name);
 				if (zoneId < 0) continue;
 
-				if (sqlite3_prepare_v2(db,
-					"INSERT INTO event_actor(zone_id, actor_no, actor_name, bytecode_hash) VALUES(?,?,?,?)"
-					" ON CONFLICT(zone_id, actor_no) WHERE zone_id IS NOT NULL"
-					" DO UPDATE SET actor_name=excluded.actor_name, bytecode_hash=excluded.bytecode_hash"
-					" RETURNING id",
-					-1, &stmt, nullptr) == SQLITE_OK)
-				{
-					sqlite3_bind_int(stmt, 1, zoneId);
-					sqlite3_bind_int(stmt, 2, (int)actor.actor_no);
-					sqlite3_bind_text(stmt, 3, actor.actor_name.c_str(), -1, SQLITE_TRANSIENT);
-					sqlite3_bind_text(stmt, 4, actor.bytecode_hash.c_str(), -1, SQLITE_TRANSIENT);
-					if (sqlite3_step(stmt) == SQLITE_ROW)
-						actorId = sqlite3_column_int(stmt, 0);
-					sqlite3_finalize(stmt);
+				if (insPrivate) {
+					sqlite3_reset(insPrivate);
+					sqlite3_bind_int(insPrivate, 1, zoneId);
+					sqlite3_bind_int(insPrivate, 2, (int)actor.actor_no);
+					sqlite3_bind_text(insPrivate, 3, actor.actor_name.c_str(), -1, SQLITE_TRANSIENT);
+					if (sqlite3_step(insPrivate) == SQLITE_ROW)
+						actorId = sqlite3_column_int(insPrivate, 0);
 				}
-				if (actorId < 0)
-				{
-					if (sqlite3_prepare_v2(db,
-						"SELECT id FROM event_actor WHERE zone_id = ? AND actor_no = ?",
-						-1, &stmt, nullptr) == SQLITE_OK)
-					{
-						sqlite3_bind_int(stmt, 1, zoneId);
-						sqlite3_bind_int(stmt, 2, (int)actor.actor_no);
-						if (sqlite3_step(stmt) == SQLITE_ROW)
-							actorId = sqlite3_column_int(stmt, 0);
-						sqlite3_finalize(stmt);
-					}
+				if (actorId < 0 && selPrivate) {
+					sqlite3_reset(selPrivate);
+					sqlite3_bind_int(selPrivate, 1, zoneId);
+					sqlite3_bind_int(selPrivate, 2, (int)actor.actor_no);
+					if (sqlite3_step(selPrivate) == SQLITE_ROW)
+						actorId = sqlite3_column_int(selPrivate, 0);
 				}
 				if (actorId < 0) continue;
+
+				++actorCount;
+				if (actorCount % 20 == 0 || actorCount == actors.size())
+					std::cout << "  [" << actorCount << "/" << actors.size() << "] private: " << actor.actor_name << " (zone " << actor.zone_name << ")" << std::endl;
+
+				// Remove any alias hijacking the primary slot
+				if (delAlias) {
+					sqlite3_reset(delAlias);
+					sqlite3_bind_int(delAlias, 1, zoneId);
+					sqlite3_bind_int(delAlias, 2, (int)actor.actor_no);
+					sqlite3_step(delAlias);
+				}
+
+				// aliases for other slots (shared within or across zones)
+				for (size_t i = 0; i < actor.alias_zones.size(); ++i)
+				{
+					if (i >= actor.alias_actor_nos.size()) break;
+					const std::string& azone = actor.alias_zones[i];
+					int32_t ano = actor.alias_actor_nos[i];
+					if (azone == actor.zone_name && ano == actor.actor_no) continue;
+					int azid = getZone(azone);
+					if (azid < 0) continue;
+
+					// stray direct
+					if (delDirect) {
+						sqlite3_reset(delDirect);
+						sqlite3_bind_int(delDirect, 1, azid);
+						sqlite3_bind_int(delDirect, 2, (int)ano);
+						sqlite3_step(delDirect);
+					}
+
+					if (insAlias) {
+						sqlite3_reset(insAlias);
+						sqlite3_bind_int(insAlias, 1, actorId);
+						sqlite3_bind_int(insAlias, 2, azid);
+						sqlite3_bind_int(insAlias, 3, (int)ano);
+						sqlite3_step(insAlias);
+					}
+				}
 			}
 
-			// Store events.
+			// Store events (prepared once outside)
 			for (const auto& evt : actor.events)
 			{
 				int eventId = -1;
-				if (sqlite3_prepare_v2(db,
-					"INSERT INTO event_event(actor_id, event_no, event_index) VALUES(?,?,?)"
-					" ON CONFLICT(actor_id, event_no, event_index)"
-					" DO UPDATE SET event_index=event_index RETURNING id",
-					-1, &stmt, nullptr) == SQLITE_OK)
-				{
-					sqlite3_bind_int(stmt, 1, actorId);
-					sqlite3_bind_int(stmt, 2, (int)evt.event_no);
-					sqlite3_bind_int(stmt, 3, (int)evt.event_index);
-					if (sqlite3_step(stmt) == SQLITE_ROW)
-						eventId = sqlite3_column_int(stmt, 0);
-					sqlite3_finalize(stmt);
+				if (insEvt) {
+					sqlite3_reset(insEvt);
+					sqlite3_bind_int(insEvt, 1, actorId);
+					sqlite3_bind_int(insEvt, 2, (int)evt.event_no);
+					sqlite3_bind_int(insEvt, 3, (int)evt.event_index);
+					if (sqlite3_step(insEvt) == SQLITE_ROW)
+						eventId = sqlite3_column_int(insEvt, 0);
 				}
-				if (eventId < 0)
-				{
-					if (sqlite3_prepare_v2(db,
-						"SELECT id FROM event_event WHERE actor_id=? AND event_no=? AND event_index=?",
-						-1, &stmt, nullptr) == SQLITE_OK)
-					{
-						sqlite3_bind_int(stmt, 1, actorId);
-						sqlite3_bind_int(stmt, 2, (int)evt.event_no);
-						sqlite3_bind_int(stmt, 3, (int)evt.event_index);
-						if (sqlite3_step(stmt) == SQLITE_ROW)
-							eventId = sqlite3_column_int(stmt, 0);
-						sqlite3_finalize(stmt);
-					}
+				if (eventId < 0 && selEvt) {
+					sqlite3_reset(selEvt);
+					sqlite3_bind_int(selEvt, 1, actorId);
+					sqlite3_bind_int(selEvt, 2, (int)evt.event_no);
+					sqlite3_bind_int(selEvt, 3, (int)evt.event_index);
+					if (sqlite3_step(selEvt) == SQLITE_ROW)
+						eventId = sqlite3_column_int(selEvt, 0);
 				}
 				if (eventId < 0) continue;
 
-				// Remove stale raw/confirmed rows past the current dialogue count.
-				// user-verified rows (status=3) are preserved.
-				{
-					if (sqlite3_prepare_v2(db,
-						"DELETE FROM event_msg"
-						" WHERE event_id = ? AND status <> 3"
-						" AND msg_index >= ?",
-						-1, &stmt, nullptr) == SQLITE_OK)
-					{
-						sqlite3_bind_int(stmt, 1, eventId);
-						sqlite3_bind_int(stmt, 2, static_cast<int>(evt.dialogues.size()));
-						sqlite3_step(stmt);
-						sqlite3_finalize(stmt);
-					}
+				// delete excess msgs (prepared)
+				if (delMsg) {
+					sqlite3_reset(delMsg);
+					sqlite3_bind_int(delMsg, 1, eventId);
+					sqlite3_bind_int(delMsg, 2, static_cast<int>(evt.dialogues.size()));
+					sqlite3_step(delMsg);
 				}
 
-				// Upsert confirmed messages.
+				// messages - use cached texts + prepared msg stmt
 				for (size_t msgIndex = 0; msgIndex < evt.dialogues.size(); ++msgIndex)
 				{
 					const auto& dl = evt.dialogues[msgIndex];
-					int jaId = dl.text_ja.empty() ? -1 : UpsertText(db, reinterpret_cast<const char*>(dl.text_ja.c_str()));
-					int enId = dl.text_en.empty() ? -1 : UpsertText(db, reinterpret_cast<const char*>(dl.text_en.c_str()));
-					UpsertMsg(db, eventId, static_cast<uint32_t>(msgIndex), dl.speaker, jaId, enId);
+					int jaId = getText(dl.text_ja);
+					int enId = getText(dl.text_en);
+
+					if (insMsg) {
+						sqlite3_reset(insMsg);
+						sqlite3_bind_int(insMsg, 1, eventId);
+						sqlite3_bind_int(insMsg, 2, (int)msgIndex);
+						if (!dl.speaker.empty())
+							sqlite3_bind_text(insMsg, 3, dl.speaker.c_str(), -1, SQLITE_TRANSIENT);
+						else
+							sqlite3_bind_null(insMsg, 3);
+						if (jaId >= 0) sqlite3_bind_int(insMsg, 4, jaId); else sqlite3_bind_null(insMsg, 4);
+						if (enId >= 0) sqlite3_bind_int(insMsg, 5, enId); else sqlite3_bind_null(insMsg, 5);
+						sqlite3_step(insMsg);
+					}
 				}
 			}
 		}
 
+		std::cout << "[EventDbImport] Pruning orphan (unreferenced) actors..." << std::endl;
+		// Final light orphan cleanup for unclean remains from previous dedup runs.
+		// No blanket truncation - stable IDs for unchanged data are preserved.
+		Execute(R"(DELETE FROM event_actor
+			WHERE id NOT IN (SELECT actor_id FROM event_event)
+			  AND id NOT IN (SELECT actor_id FROM event_actor_alias)
+		)");
+
+		// Finalize all prepared statements
+		sqlite3_finalize(insCommon);
+		sqlite3_finalize(selCommon);
+		sqlite3_finalize(insPrivate);
+		sqlite3_finalize(selPrivate);
+		sqlite3_finalize(insAlias);
+		sqlite3_finalize(delAlias);
+		sqlite3_finalize(delDirect);
+		sqlite3_finalize(insEvt);
+		sqlite3_finalize(selEvt);
+		sqlite3_finalize(delMsg);
+		sqlite3_finalize(insMsg);
+
+		std::cout << "[EventDbImport] Import complete." << std::endl;
 		Execute("COMMIT;");
 	}
 	catch (...)
 	{
+		// best effort finalize on error path
+		sqlite3_finalize(insCommon); sqlite3_finalize(selCommon);
+		sqlite3_finalize(insPrivate); sqlite3_finalize(selPrivate);
+		sqlite3_finalize(insAlias); sqlite3_finalize(delAlias);
+		sqlite3_finalize(delDirect);
+		sqlite3_finalize(insEvt); sqlite3_finalize(selEvt);
+		sqlite3_finalize(delMsg); sqlite3_finalize(insMsg);
 		Execute("ROLLBACK;");
 		throw;
 	}

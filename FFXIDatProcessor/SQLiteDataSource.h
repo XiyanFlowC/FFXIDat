@@ -56,7 +56,6 @@ public:
 		int32_t actor_no; // 32-bit unsigned integer
 		std::string actor_name; // ASCII always
 		std::string zone_name; // ASCII always, empty for common actors
-		std::string bytecode_hash; // hex string, empty if not provided
 		std::vector<std::string> alias_zones; // paired with alias_actor_nos
 		std::vector<int32_t> alias_actor_nos; // paired with alias_zones
 		std::vector<Event> events;
@@ -87,7 +86,7 @@ public:
 
 	void EventDbUpdate(const std::u8string& comment, const std::vector<std::u8string>& evsbJa, const std::vector<std::u8string>& evsbEn);
 
-	void EventAdvImport(const std::vector<Actor>& actors);
+	void EventDbImport(const std::vector<Actor>& actors);
 
 	void EventDbDump(const std::string& outputDir, const std::string& lang);
 

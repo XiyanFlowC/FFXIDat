@@ -412,14 +412,12 @@ void SQLiteDataSource::Initialise()
 	)");
 	// zone_id NULL  => common (canonical) actor row
 	// actor_no NULL => common actor (each zone's number lives in event_actor_alias)
-	// bytecode_hash => hex string of full event_data hash; used for common-actor dedup
 	Execute(R"(
 		CREATE TABLE IF NOT EXISTS event_actor (
 			id            INTEGER PRIMARY KEY AUTOINCREMENT,
 			zone_id       INTEGER,
 			actor_no      INTEGER,
 			actor_name    TEXT NOT NULL,
-			bytecode_hash TEXT,
 			FOREIGN KEY (zone_id) REFERENCES event_zone(id) ON DELETE CASCADE
 		);
 	)");
@@ -2069,7 +2067,6 @@ void SQLiteDataSource::EventDbUpdate(const std::u8string& comment,
 			evevPath = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
 		sqlite3_finalize(stmt);
 	}
-	if (evevPath.empty()) return;
 
 	if (sqlite3_prepare_v2(db, "SELECT path FROM file WHERE comment = ? AND type = 'evac'", -1, &stmt, nullptr) == SQLITE_OK)
 	{
@@ -2080,7 +2077,7 @@ void SQLiteDataSource::EventDbUpdate(const std::u8string& comment,
 	}
 
 	ZoneEventImage evev;
-	if (!evev.Load(BuildDatPath(evevPath, gameRoot))) return;
+	bool hasEvev = !evevPath.empty() && evev.Load(BuildDatPath(evevPath, gameRoot));
 
 	std::unordered_map<uint32_t, std::string> actorNames;
 	if (!evacPath.empty())
@@ -2106,45 +2103,127 @@ void SQLiteDataSource::EventDbUpdate(const std::u8string& comment,
 
 	size_t evsbSize = std::max(evsbJa.size(), evsbEn.size());
 
-	for (const auto& actor : evev.GetActors())
+	// Load pre-defined common actor names from common_actor_name.txt (one name per line).
+	// These names are treated as "Common" (one standing canonical + aliases for all zones).
+	// Other names are always private (per-zone).
+	std::set<std::string> commonActorNames;
 	{
-		std::string actorName;
-		auto nit = actorNames.find(actor.actor_id);
-		if (nit != actorNames.end() && !nit->second.empty())
-			actorName = nit->second;
-		if (actorName.empty()) continue; // unnamed actors carry no text
-
-		// FFXIDatProcessor has no bytecode — it cannot compute hash here.
-		// Insert as private actor (zone_id set); EventAdvImport from FFXIDatAdv
-		// will later promote it to common and add an alias if appropriate.
-		int actorId = -1;
-		if (sqlite3_prepare_v2(db,
-		  "INSERT INTO event_actor(zone_id, actor_no, actor_name, bytecode_hash) VALUES(?,?,?,?)"
-			" ON CONFLICT(zone_id, actor_no) DO UPDATE SET actor_name=excluded.actor_name, bytecode_hash=excluded.bytecode_hash"
-			" RETURNING id",
-			-1, &stmt, nullptr) == SQLITE_OK)
-		{
-			sqlite3_bind_int(stmt, 1, zoneId);
-			sqlite3_bind_int(stmt, 2, (int)actor.actor_id);
-			sqlite3_bind_text(stmt, 3, actorName.c_str(), -1, SQLITE_TRANSIENT);
-		   sqlite3_bind_text(stmt, 4, actor.bytecode_hash.c_str(), -1, SQLITE_TRANSIENT);
-			if (sqlite3_step(stmt) == SQLITE_ROW)
-				actorId = sqlite3_column_int(stmt, 0);
-			sqlite3_finalize(stmt);
+		std::ifstream f("common_actor_name.txt");
+		if (f.is_open()) {
+			std::string line;
+			while (std::getline(f, line)) {
+				// trim
+				line.erase(line.begin(), std::find_if(line.begin(), line.end(), [](unsigned char ch){ return !std::isspace(ch); }));
+				line.erase(std::find_if(line.rbegin(), line.rend(), [](unsigned char ch){ return !std::isspace(ch); }).base(), line.end());
+				if (!line.empty()) commonActorNames.insert(line);
+			}
 		}
-		if (actorId < 0) continue;
+	}
 
-	  // Build a coarse ordered text list from imed constants that are valid string indices.
+	for (const auto& kv : actorNames)
+	{
+		uint32_t actor_no = kv.first;
+		std::string actorName = kv.second;
+		if (actorName.empty()) continue;
+
+		const ActorBlock* pBlock = nullptr;
+		if (hasEvev)
+		{
+			for (const auto& ab : evev.GetActors())
+			{
+				if (ab.actor_id == actor_no)
+				{
+					pBlock = &ab;
+					break;
+				}
+			}
+		}
+		bool hasEv = (pBlock != nullptr);
+		const std::vector<EventDescriptor>& evts = hasEv ? pBlock->events : std::vector<EventDescriptor>();
+		const std::vector<uint32_t>& consts = hasEv ? pBlock->constants : std::vector<uint32_t>();
+
+		// --- Decide target actor_id using pre-defined common_actor_name.txt ---
+		// If name is listed, treat as Common (one standing + aliases from all zones).
+		// Otherwise private. (bytecode_hash no longer used)
+		int targetActorId = -1;
+		bool isKnownCommon = commonActorNames.count(actorName) > 0;
+
+		if (isKnownCommon)
+		{
+			// Upsert the common row for this name
+			if (sqlite3_prepare_v2(db,
+				"INSERT INTO event_actor(zone_id, actor_no, actor_name) VALUES(NULL,NULL,?)"
+				" ON CONFLICT(actor_name) WHERE zone_id IS NULL"
+				" RETURNING id",
+				-1, &stmt, nullptr) == SQLITE_OK)
+			{
+				sqlite3_bind_text(stmt, 1, actorName.c_str(), -1, SQLITE_TRANSIENT);
+				if (sqlite3_step(stmt) == SQLITE_ROW)
+					targetActorId = sqlite3_column_int(stmt, 0);
+				sqlite3_finalize(stmt);
+			}
+			if (targetActorId < 0)
+			{
+				if (sqlite3_prepare_v2(db,
+					"SELECT id FROM event_actor WHERE zone_id IS NULL AND actor_name = ?",
+					-1, &stmt, nullptr) == SQLITE_OK)
+				{
+					sqlite3_bind_text(stmt, 1, actorName.c_str(), -1, SQLITE_TRANSIENT);
+					if (sqlite3_step(stmt) == SQLITE_ROW)
+						targetActorId = sqlite3_column_int(stmt, 0);
+					sqlite3_finalize(stmt);
+				}
+			}
+			// ensure alias for this (zone, no)
+			if (targetActorId >= 0)
+			{
+				if (sqlite3_prepare_v2(db,
+					"INSERT INTO event_actor_alias(actor_id, zone_id, actor_no) VALUES(?,?,?)"
+					" ON CONFLICT(zone_id, actor_no) DO UPDATE SET actor_id=excluded.actor_id",
+					-1, &stmt, nullptr) == SQLITE_OK)
+				{
+					sqlite3_bind_int(stmt, 1, targetActorId);
+					sqlite3_bind_int(stmt, 2, zoneId);
+					sqlite3_bind_int(stmt, 3, (int)actor_no);
+					sqlite3_step(stmt);
+					sqlite3_finalize(stmt);
+				}
+			}
+		}
+		else
+		{
+			// private
+			int privateId = -1;
+			if (sqlite3_prepare_v2(db,
+				"INSERT INTO event_actor(zone_id, actor_no, actor_name) VALUES(?,?,?)"
+				" ON CONFLICT(zone_id, actor_no) DO UPDATE SET actor_name=excluded.actor_name"
+				" RETURNING id",
+				-1, &stmt, nullptr) == SQLITE_OK)
+			{
+				sqlite3_bind_int(stmt, 1, zoneId);
+				sqlite3_bind_int(stmt, 2, (int)actor_no);
+				sqlite3_bind_text(stmt, 3, actorName.c_str(), -1, SQLITE_TRANSIENT);
+				if (sqlite3_step(stmt) == SQLITE_ROW)
+					privateId = sqlite3_column_int(stmt, 0);
+				sqlite3_finalize(stmt);
+			}
+			targetActorId = privateId;
+		}
+
+		if (targetActorId < 0) continue;
+		if (!hasEv) continue;  // no events / no msgs to attach for pure-evac actors
+
+		// Build a coarse ordered text list from imed constants that are valid string indices.
 		// The DB stores only dialogue order (msg_index), not evsb slots.
-		std::vector<uint32_t> sortedConsts = actor.constants;
+		std::vector<uint32_t> sortedConsts = consts;
 		std::sort(sortedConsts.begin(), sortedConsts.end());
 		std::vector<uint32_t> validIndices;
 		for (uint32_t idx : sortedConsts)
 			if (idx < evsbSize)
-			   if (validIndices.empty() || validIndices.back() != idx)
+				if (validIndices.empty() || validIndices.back() != idx)
 					validIndices.push_back(idx);
 
-		for (const auto& evt : actor.events)
+		for (const auto& evt : evts)
 		{
 			int eventId = -1;
 			if (sqlite3_prepare_v2(db,
@@ -2153,7 +2232,7 @@ void SQLiteDataSource::EventDbUpdate(const std::u8string& comment,
 				" RETURNING id",
 				-1, &stmt, nullptr) == SQLITE_OK)
 			{
-				sqlite3_bind_int(stmt, 1, actorId);
+				sqlite3_bind_int(stmt, 1, targetActorId);
 				sqlite3_bind_int(stmt, 2, (int)evt.event_id);
 				sqlite3_bind_int(stmt, 3, (int)evt.event_index);
 				if (sqlite3_step(stmt) == SQLITE_ROW)
@@ -2164,26 +2243,26 @@ void SQLiteDataSource::EventDbUpdate(const std::u8string& comment,
 
 			// Remove stale raw entries (status < 3) that are no longer in validIndices.
 			// Confirmed (status=2) or user-verified (status=3) entries are never removed.
-		  if (sqlite3_prepare_v2(db,
+			if (sqlite3_prepare_v2(db,
 				"DELETE FROM event_msg WHERE event_id = ? AND msg_index >= ? AND status = 0",
 				-1, &stmt, nullptr) == SQLITE_OK)
 			{
 				sqlite3_bind_int(stmt, 1, eventId);
-			  sqlite3_bind_int(stmt, 2, static_cast<int>(validIndices.size()));
+				sqlite3_bind_int(stmt, 2, static_cast<int>(validIndices.size()));
 				sqlite3_step(stmt);
 				sqlite3_finalize(stmt);
 			}
 
-		   for (size_t msgIndex = 0; msgIndex < validIndices.size(); ++msgIndex)
+			for (size_t msgIndex = 0; msgIndex < validIndices.size(); ++msgIndex)
 			{
-			   uint32_t idx = validIndices[msgIndex];
+				uint32_t idx = validIndices[msgIndex];
 				int textJaId = -1, textEnId = -1;
 				if (idx < evsbJa.size() && !evsbJa[idx].empty())
 					textJaId = UpsertText(db, reinterpret_cast<const char*>(evsbJa[idx].c_str()));
 				if (idx < evsbEn.size() && !evsbEn[idx].empty())
 					textEnId = UpsertText(db, reinterpret_cast<const char*>(evsbEn[idx].c_str()));
 
-			  UpsertEventMsg(db, eventId, static_cast<uint32_t>(msgIndex), textJaId, textEnId, 0 /* raw/guessed */);
+				UpsertEventMsg(db, eventId, static_cast<uint32_t>(msgIndex), textJaId, textEnId, 0 /* raw/guessed */);
 			}
 		}
 	}
