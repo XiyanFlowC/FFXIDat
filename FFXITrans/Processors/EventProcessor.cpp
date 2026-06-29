@@ -43,9 +43,9 @@ static std::string BuildDatPath(const std::string& romPath)
 		return (root / (romPath + ".DAT")).string();
 }
 
-static std::vector<std::string> ReadTextLines(const fs::path& filePath)
+static std::vector<std::u8string> ReadTextLines(const fs::path& filePath)
 {
-	std::vector<std::string> lines;
+	std::vector<std::u8string> lines;
 	std::ifstream f(filePath);
 	if (!f.is_open())
 		return lines;
@@ -62,7 +62,7 @@ static std::vector<std::string> ReadTextLines(const fs::path& filePath)
 	}
 	std::string line;
 	while (std::getline(f, line))
-		lines.push_back(line);
+		lines.push_back(reinterpret_cast<const char8_t*>(line.c_str()));
 	return lines;
 }
 
@@ -141,7 +141,7 @@ void EventProcessor::LoadAliasMap()
 	if (fs::exists(aliasFile) == false)
 	{
 		Logger::Instance().Warning("Alias file not found: " + Logger::ToUtf8(aliasFile) + ". Event path aliasing will be unavailable.");
-		return;	
+		return;
 	}
 	CsvFile csv(aliasFile, std::ios::in | std::ios::binary);
 	std::string line;
@@ -202,7 +202,7 @@ std::filesystem::path EventProcessor::ResolveEventTgtPath(const std::string& act
 		p1 = aliasMap_[p1.string()];
 	if (fs::exists(dstEventBase / p1))
 		return dstEventBase / p1;
-	
+
 	auto p2 = fs::path(zoneName) / SafeName(actorName) / (std::to_string(eventIndex) + ".txt");
 	if (aliasMap_.find(p2.string()) != aliasMap_.end())
 		p2 = aliasMap_[p2.string()];
@@ -214,7 +214,7 @@ std::filesystem::path EventProcessor::ResolveEventTgtPath(const std::string& act
 		p4 = aliasMap_[p4.string()];
 	if (fs::exists(dstEventBase / p4))
 		return dstEventBase / p4;
-	
+
 	auto p3 = fs::path("common") / (SafeName(actorName)) / (std::to_string(eventIndex) + ".txt");
 	if (aliasMap_.find(p3.string()) != aliasMap_.end())
 		p3 = aliasMap_[p3.string()];
@@ -249,11 +249,12 @@ bool EventProcessor::Process(
 	auto progRoot = cfg.GetProgRoot();
 	defs.Load(progRoot / L"defs.csv");
 
+	std::vector<std::u8string> referenceTexts;
+	bool useJaReference = TryGetJapaneseReference(fileDef, jpDefsByComment, referenceTexts);
+
 	auto* zone = defs.Find(zoneName);
 	if (!zone || zone->evev_path.empty())
 	{
-		std::vector<std::u8string> referenceTexts;
-		bool useJaReference = TryGetJapaneseReference(fileDef, jpDefsByComment, referenceTexts);
 		size_t textIdx = 0;
 		for (auto& s : evsb)
 		{
@@ -299,7 +300,7 @@ bool EventProcessor::Process(
 			actorNameMap = evac.GetIdToNameMap();
 	}
 
-	std::map<size_t, std::string> patches;
+	std::map<size_t, std::u8string> patches;
 	fs::path srcEventBase = progRoot / L"text" / L"src" / L"event";
 	fs::path tgtEventBase = progRoot / L"text" / L"tgt" / L"event";
 
@@ -309,14 +310,16 @@ bool EventProcessor::Process(
 		std::string actorName = (it != actorNameMap.end()) ? it->second : std::to_string(actor.actor_id);
 		std::string actorDir = SafeName(actorName) + "_" + std::to_string(actor.actor_id);
 
-		std::vector<uint32_t> sortedConstants = actor.constants;
-		std::sort(sortedConstants.begin(), sortedConstants.end());
-
 		std::vector<std::pair<uint32_t, std::u8string>> validIndices;
-		for (uint32_t idx : sortedConstants)
+		for (uint32_t idx : actor.constants)
 		{
-			if (idx < evsb.Size())
-				validIndices.push_back({ idx, evsb[idx] });
+			if (idx < evsb.Size() && idx >= 0)
+			{
+				if (useJaReference && idx < referenceTexts.size())
+					validIndices.push_back({ idx, referenceTexts[idx] });
+				else
+					validIndices.push_back({ idx, evsb[idx] });
+			}
 		}
 
 		for (const auto& evt : actor.events)
@@ -349,22 +352,24 @@ bool EventProcessor::Process(
 				continue;
 			}
 
+			size_t matchedInEvent = 0;
 			for (size_t i = 0; i < srcLines.size(); ++i)
 			{
-				const std::string& srcLine = srcLines[i];
+				const std::u8string& srcLine = srcLines[i];
 				for (const auto& [idx, text] : validIndices)
 				{
-					if (xybase::string::to_string(text) == srcLine)
+					if (text == srcLine)
 					{
 						patches[idx] = tgtLines[i];
-						break;
+						++matchedInEvent;
 					}
 				}
 			}
-			Logger::Instance().Info("EventProcessor: Actor " + std::to_string(actor.actor_id) + " (" + actorName + ") event index " + std::to_string(evt.event_index) + " processed, " + std::to_string(srcLines.size()) + " lines will be patched.");
+			Logger::Instance().Info("EventProcessor: Actor " + std::to_string(actor.actor_id) + " (" + actorName + ") event index " + std::to_string(evt.event_index) + " processed, " + std::to_string(matchedInEvent) + " patch entries from " + std::to_string(srcLines.size()) + " source lines.");
 		}
 	}
-	Logger::Instance().Info("EventProcessor: Event override collected. total " + std::to_string(patches.size()) + " lines will be patched in " + std::to_string(evsb.Size()) + " total lines.");
+	if (patches.size() > 0)
+		Logger::Instance().Info("EventProcessor: Event override collected. total " + std::to_string(patches.size()) + " lines will be patched in " + std::to_string(evsb.Size()) + " total lines.");
 
 	for (size_t i = 0; i < evsb.Size(); ++i)
 	{
@@ -373,13 +378,31 @@ bool EventProcessor::Process(
 		auto patchIt = patches.find(i);
 		if (patchIt != patches.end())
 		{
-			result = std::u8string(
-				reinterpret_cast<const char8_t*>(patchIt->second.data()),
-				patchIt->second.size());
+			result = patchIt->second;
+			if (useJaReference && i < referenceTexts.size())
+			{
+				if (!ProcessorUtils::TryAdaptInsCategoryForEnglish(s, result))
+				{
+					// If adaptation fails, fallback to the original text's translation, no event override can be applied
+					result = db.GetTranslation(s);
+				}
+			}
 		}
 		else
 		{
-			result = db.GetTranslation(s);
+			if (useJaReference && i < referenceTexts.size())
+			{
+				std::u8string refTranslated;
+				if (db.TryGetTranslationFromReference(s, referenceTexts[i], refTranslated)
+					&& ProcessorUtils::TryAdaptInsCategoryForEnglish(s, refTranslated))
+					result = refTranslated;
+				else
+					result = db.GetTranslation(s);
+			}
+			else
+			{
+				result = db.GetTranslation(s);
+			}
 		}
 		s = finalTextProcessor.Process(result, s, static_cast<int64_t>(i + 1), 1);
 	}
