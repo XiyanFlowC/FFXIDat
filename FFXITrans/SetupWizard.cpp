@@ -562,7 +562,8 @@ namespace
             L"en_as_ja = 1\n"
             L"ejref_tolerance = 1\n"
             L"verbose = 0\n"
-            L"no_mismatch_log = 1\n";
+            L"no_mismatch_log = 1\n"
+            L"ctrl_seq_check = off\n";
 
         if (!draft.useDetectedGamePath && draft.manualGamePath.has_value() && draft.manualEnglishMode.has_value())
         {

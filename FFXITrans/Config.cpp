@@ -334,15 +334,15 @@ bool Config::LoadFromFile(const fs::path& configPath)
        else if (key == L"ctrl_seq_check")
 		{
 			const auto normalized = ToLowerAscii(value);
-			if (normalized == L"off")
+			if (normalized == L"off" || normalized == L"0")
 			{
 				ctrlSeqCheckMode = CtrlSeqCheckMode::Off;
 			}
-			else if (normalized == L"skip")
+			else if (normalized == L"skip" || normalized == L"1")
 			{
 				ctrlSeqCheckMode = CtrlSeqCheckMode::Skip;
 			}
-			else if (normalized == L"strict")
+			else if (normalized == L"strict" || normalized == L"2")
 			{
 				ctrlSeqCheckMode = CtrlSeqCheckMode::Strict;
 			}

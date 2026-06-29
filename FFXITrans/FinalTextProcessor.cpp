@@ -50,7 +50,7 @@ namespace
 			{
 				if (ch == ',')
 				{
-				  cells.push_back(RawBytesToUtf8(current));
+					cells.push_back(RawBytesToUtf8(current));
 					current.clear();
 				}
 				else if (ch == '"')
@@ -70,7 +70,7 @@ namespace
 			return false;
 		}
 
-	  cells.push_back(RawBytesToUtf8(current));
+		cells.push_back(RawBytesToUtf8(current));
 		return true;
 	}
 
@@ -113,9 +113,9 @@ namespace
 			size_t optionCount = 1;
 			for (char ch : optionsText)
 			{
-			   if (ch == '/')
+				if (ch == '/')
 				{
-				  ++optionCount;
+					++optionCount;
 				}
 			}
 
@@ -276,7 +276,7 @@ size_t FinalTextProcessor::LoadRuleFile(const std::filesystem::path& path)
 	if (!fs::exists(path) || !fs::is_regular_file(path))
 		return 0;
 
- std::ifstream input(path, std::ios::in | std::ios::binary);
+	std::ifstream input(path, std::ios::in | std::ios::binary);
 	if (!input.is_open())
 	{
 		throw std::runtime_error("failed to open rule file");
@@ -316,9 +316,9 @@ size_t FinalTextProcessor::LoadRuleFile(const std::filesystem::path& path)
 		std::u8string occurrenceText;
 		std::vector<std::u8string> cells;
 
-	 try
+		try
 		{
-		 std::string error;
+			std::string error;
 			if (!TryParseRuleCsvLine(line, cells, error))
 			{
 				throw std::runtime_error(error);
@@ -350,7 +350,7 @@ size_t FinalTextProcessor::LoadRuleFile(const std::filesystem::path& path)
 				"FinalTextProcessor CSV parse error: file=" + Logger::ToUtf8(path)
 				+ ", line=" + std::to_string(lineNumber)
 				+ ", error=" + ex.what());
-				throw;
+			throw;
 		}
 
 		if (commandText.empty() || commandText[0] == u8'#')
@@ -476,7 +476,7 @@ bool FinalTextProcessor::TryParseOccurrenceRanges(
 			ranges.push_back(OccurrenceRange{
 				static_cast<size_t>(startValue),
 				static_cast<size_t>(endValue)
-			});
+				});
 		}
 		catch (const std::exception&)
 		{
@@ -544,7 +544,7 @@ std::u8string FinalTextProcessor::ValidateResult(
 		return processedText;
 
 	std::wstring message;
-   if (!TryValidateEvsbSwitchUsage(processedText, originalText, message))
+	if (!TryValidateEvsbSwitchUsage(processedText, originalText, message))
 	{
 		const auto context = BuildValidationContext(rowOrId, colOrColId);
 		const auto originalTextWide = xybase::string::to_wstring(originalText);
@@ -594,7 +594,7 @@ bool FinalTextProcessor::TryValidateEvsbSwitchUsage(
 {
 	const std::string processed(reinterpret_cast<const char*>(processedText.data()), processedText.size());
 	const std::string original(reinterpret_cast<const char*>(originalText.data()), originalText.size());
- bool translatedSyntaxValid = true;
+	bool translatedSyntaxValid = true;
 	const auto translatedSwitchInfos = ParseSwitchUsageInfos(processed, translatedSyntaxValid);
 	if (!translatedSyntaxValid)
 	{
@@ -602,17 +602,17 @@ bool FinalTextProcessor::TryValidateEvsbSwitchUsage(
 		return false;
 	}
 
-   bool originalSyntaxValid = true;
+	bool originalSyntaxValid = true;
 	const auto originalSwitchInfos = ParseSwitchUsageInfos(original, originalSyntaxValid);
 	if (!originalSyntaxValid)
 	{
-	   message = L"原文中的 <switch:...> 结构无法解析，无法执行选项数校验。";
+		message = L"原文中的 <switch:...> 结构无法解析，无法执行选项数校验。";
 		return false;
 	}
 
- if (!originalSwitchInfos.empty() && originalSwitchInfos.size() == translatedSwitchInfos.size())
+	if (!originalSwitchInfos.empty() && originalSwitchInfos.size() == translatedSwitchInfos.size())
 	{
-	   for (size_t i = 0; i < originalSwitchInfos.size(); ++i)
+		for (size_t i = 0; i < originalSwitchInfos.size(); ++i)
 		{
 			if (originalSwitchInfos[i].optionCount != translatedSwitchInfos[i].optionCount)
 			{

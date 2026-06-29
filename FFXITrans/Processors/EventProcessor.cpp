@@ -49,6 +49,17 @@ static std::vector<std::string> ReadTextLines(const fs::path& filePath)
 	std::ifstream f(filePath);
 	if (!f.is_open())
 		return lines;
+	char possibleBOM[3] = { 0 };
+	f.read(possibleBOM, 3);
+	if (possibleBOM[0] == char(0xEF) && possibleBOM[1] == char(0xBB) && possibleBOM[2] == char(0xBF))
+	{
+		// UTF-8 BOM detected, continue reading after BOM
+	}
+	else
+	{
+		// No BOM, reset to beginning
+		f.seekg(0);
+	}
 	std::string line;
 	while (std::getline(f, line))
 		lines.push_back(line);
@@ -153,11 +164,13 @@ std::filesystem::path EventProcessor::ResolveEventSrcPath(const std::string& act
 {
 	LoadAliasMap();
 	auto srcEventBase = Config::Instance().GetProgRoot() / L"text" / L"src" / L"event";
-	auto p1 = fs::path(zoneName) / (SafeName(actorName) + "_" + std::to_string(actorId)) / (std::to_string(eventIndex) + ".txt");
-	if (aliasMap_.find(p1.string()) != aliasMap_.end())
-		p1 = aliasMap_[p1.string()];
-	if (fs::exists(srcEventBase / p1))
-		return srcEventBase / p1;
+
+	// most precise and without ambiguity: zoneName/actorId/eventIndex.txt
+	auto p4 = fs::path(zoneName) / (std::to_string(actorId)) / (std::to_string(eventIndex) + ".txt");
+	if (aliasMap_.find(p4.string()) != aliasMap_.end())
+		p4 = aliasMap_[p4.string()];
+	if (fs::exists(srcEventBase / p4))
+		return srcEventBase / p4;
 
 	auto p2 = fs::path(zoneName) / SafeName(actorName) / (std::to_string(eventIndex) + ".txt");
 	if (aliasMap_.find(p2.string()) != aliasMap_.end())
@@ -165,11 +178,11 @@ std::filesystem::path EventProcessor::ResolveEventSrcPath(const std::string& act
 	if (fs::exists(srcEventBase / p2))
 		return srcEventBase / p2;
 
-	auto p4 = fs::path(zoneName) / (std::to_string(actorId)) / (std::to_string(eventIndex) + ".txt");
-	if (aliasMap_.find(p4.string()) != aliasMap_.end())
-		p4 = aliasMap_[p4.string()];
-	if (fs::exists(srcEventBase / p4))
-		return srcEventBase / p4;
+	auto p1 = fs::path(zoneName) / (SafeName(actorName) + "_" + std::to_string(actorId)) / (std::to_string(eventIndex) + ".txt");
+	if (aliasMap_.find(p1.string()) != aliasMap_.end())
+		p1 = aliasMap_[p1.string()];
+	if (fs::exists(srcEventBase / p1))
+		return srcEventBase / p1;
 
 	auto p3 = fs::path("common") / (SafeName(actorName)) / (std::to_string(eventIndex) + ".txt");
 	if (aliasMap_.find(p3.string()) != aliasMap_.end())
@@ -226,11 +239,7 @@ bool EventProcessor::Process(
 	FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 
 	std::string commentStr = xybase::string::to_string(fileDef.comment);
-	std::string zoneName;
-	{
-		auto slashPos = commentStr.rfind('/');
-		zoneName = (slashPos != std::string::npos) ? commentStr.substr(slashPos + 1) : commentStr;
-	}
+	std::string zoneName = commentStr;
 
 	db.LoadLocalScope(
 		cfg.GetProgRoot() / L"text" / L"src" / (fileDef.comment + std::u8string(u8".txt")),
@@ -317,15 +326,28 @@ bool EventProcessor::Process(
 			if (srcPath.empty())
 				continue;
 
+			Logger::Instance().Info("EventProcessor: processing event overlay: " + Logger::ToUtf8(srcPath));
+
 			fs::path tgtPath = tgtEventBase / srcPath.lexically_relative(srcEventBase);
+			if (fs::exists(tgtPath) == false)
+			{
+				Logger::Instance().Warning("EventProcessor: target event file not found: " + Logger::ToUtf8(tgtPath));
+				continue;
+			}
 
 			auto srcLines = ReadTextLines(srcPath);
 			auto tgtLines = ReadTextLines(tgtPath);
 
 			if (srcLines.empty() || tgtLines.empty())
+			{
+				Logger::Instance().Warning("EventProcessor: empty source or target event file: " + Logger::ToUtf8(srcPath) + " / " + Logger::ToUtf8(tgtPath));
 				continue;
+			}
 			if (srcLines.size() != tgtLines.size())
+			{
+				Logger::Instance().Warning("EventProcessor: source and target event file line count mismatch: " + std::to_string(srcLines.size()) + "<->" + std::to_string(tgtLines.size()));
 				continue;
+			}
 
 			for (size_t i = 0; i < srcLines.size(); ++i)
 			{
@@ -339,8 +361,10 @@ bool EventProcessor::Process(
 					}
 				}
 			}
+			Logger::Instance().Info("EventProcessor: Actor " + std::to_string(actor.actor_id) + " (" + actorName + ") event index " + std::to_string(evt.event_index) + " processed, " + std::to_string(srcLines.size()) + " lines will be patched.");
 		}
 	}
+	Logger::Instance().Info("EventProcessor: Event override collected. total " + std::to_string(patches.size()) + " lines will be patched in " + std::to_string(evsb.Size()) + " total lines.");
 
 	for (size_t i = 0; i < evsb.Size(); ++i)
 	{
