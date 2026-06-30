@@ -90,51 +90,24 @@ bool RoeProcessor::ProcessQuestData(
 				auto itrSrc = srcCsvTranslations.find(datum.id);
 				if (itrSrc != srcCsvTranslations.end())
 				{
-					if (xybase::string::escape(datum.questName()) != itrSrc->second.questName ||
-						xybase::string::escape(datum.description()) != itrSrc->second.description ||
-						xybase::string::escape(datum.note()) != itrSrc->second.note)
+					if (datum.questName() != itrSrc->second.questName ||
+						datum.description() != itrSrc->second.description ||
+						datum.note() != itrSrc->second.note)
 					{
 						Logger::Instance().Warning(
 							"RoeProcessor src validation failed for quest id=" + std::to_string(datum.id)
-							+ " — falling back to TransDB");
+							+ " - falling back to TransDB");
+						Logger::Instance().Note(
+							"Original: " + Logger::ToUtf8(datum.questName()) + " | "
+							+ Logger::ToUtf8(datum.description()) + " | "
+							+ Logger::ToUtf8(datum.note()));
 						skipCsv = true;
 					}
 				}
 			}
 
-			if (skipCsv)
-			{
-				auto& config = Config::Instance();
-				std::u8string originalName = datum.questName();
-				std::u8string alternateOriginalName;
-				if (const auto altItr = alternateNamesById.find(datum.id); altItr != alternateNamesById.end())
-					alternateOriginalName = altItr->second;
-
-				if (!config.IsNoName())
-					datum.setQuestName(processEscaped(
-						TranslationDatabase::Instance().GetTranslation(xybase::string::escape(originalName)),
-						xybase::string::escape(originalName),
-						datum.id,
-						1));
-
-				std::u8string translatedDesc = processEscaped(
-					TranslationDatabase::Instance().GetTranslation(xybase::string::escape(datum.description())),
-					xybase::string::escape(datum.description()),
-					datum.id,
-					2);
-				translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
-				datum.setDescription(translatedDesc);
-
-				datum.setNote(processEscaped(
-					TranslationDatabase::Instance().GetTranslation(xybase::string::escape(datum.note())),
-					xybase::string::escape(datum.note()),
-					datum.id,
-					3));
-				continue;
-			}
-
 			auto itrCsv = csvTranslations.find(datum.id);
-			if (itrCsv == csvTranslations.end())
+			if (itrCsv == csvTranslations.end() || skipCsv)
 			{
 				// Fallback to regular translation
 				auto& config = Config::Instance();
@@ -304,28 +277,21 @@ bool RoeProcessor::ProcessCategoryData(
 				auto itrSrc = srcCsvTranslations.find(datum.id);
 				if (itrSrc != srcCsvTranslations.end())
 				{
-					if (xybase::string::escape(datum.categoryName()) != itrSrc->second)
+					if (datum.categoryName() != itrSrc->second)
 					{
 						Logger::Instance().Warning(
 							"RoeProcessor src validation failed for category id=" + std::to_string(datum.id)
-							+ " — falling back to TransDB");
+							+ " - falling back to TransDB");
+						Logger::Instance().Note(
+							"Original category name: " + Logger::ToUtf8(datum.categoryName())
+							+ ", SRC CSV category name: " + Logger::ToUtf8(itrSrc->second));
 						skipCsv = true;
 					}
 				}
 			}
 
-			if (skipCsv)
-			{
-				datum.setCategoryName(processEscaped(
-					TranslationDatabase::Instance().GetTranslation(xybase::string::escape(datum.categoryName())),
-					xybase::string::escape(datum.categoryName()),
-					datum.id,
-					1));
-				continue;
-			}
-
 			auto itrCsv = csvTranslations.find(datum.id);
-			if (itrCsv == csvTranslations.end())
+			if (itrCsv == csvTranslations.end() || skipCsv)
 			{
 				datum.setCategoryName(processEscaped(
 					TranslationDatabase::Instance().GetTranslation(xybase::string::escape(datum.categoryName())),

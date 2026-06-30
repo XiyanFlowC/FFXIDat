@@ -14,9 +14,9 @@ bool EjrefToleranceProcessor::Process(const FileProcessDef& fileDef,
 	const std::map<std::u8string, FileProcessDef>& jpDefsByComment)
 {
 	// Only active in ejref_tolerance mode
-	if (!(Config::Instance().IsEnglishMode() && 
-		  Config::Instance().IsEnAsJa() && 
-		  Config::Instance().IsEjrefTolerance()))
+	if (!(Config::Instance().IsEnglishMode() &&
+		Config::Instance().IsEnAsJa() &&
+		Config::Instance().IsEjrefTolerance()))
 	{
 		return false;
 	}
@@ -88,7 +88,7 @@ bool EjrefToleranceProcessor::TryProcessGevStatus(const FileProcessDef& fileDef,
 	FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 	for (size_t i = 0; i < evsb.size(); ++i)
 	{
-	   evsb[i] = finalTextProcessor.Process(
+		evsb[i] = finalTextProcessor.Process(
 			db.GetTranslationFromReference(evsb[i], jpEvsb[i % jpEvsb.size()]),
 			evsb[i],
 			static_cast<int64_t>(i + 1),
@@ -123,13 +123,13 @@ bool EjrefToleranceProcessor::TryProcessGevAction(const FileProcessDef& fileDef,
 	for (size_t i = 0; i < evsb.size(); ++i)
 	{
 		if (i < jpEvsb.size())
-		   evsb[i] = finalTextProcessor.Process(
+			evsb[i] = finalTextProcessor.Process(
 				db.GetTranslationFromReference(evsb[i], jpEvsb[i]),
 				evsb[i],
 				static_cast<int64_t>(i + 1),
 				1);
 		else
-		   evsb[i] = finalTextProcessor.Process(
+			evsb[i] = finalTextProcessor.Process(
 				db.GetTranslation(evsb[i]),
 				evsb[i],
 				static_cast<int64_t>(i + 1),
@@ -159,7 +159,7 @@ bool EjrefToleranceProcessor::TryProcessAhtUrhganWhitegate(const FileProcessDef&
 	EventStringBase jpEvsb(jpDatPath);
 	jpEvsb.Read();
 
-	// Load ROM reference strings
+	// Load ROM reference strings (evx/Aht Urhgan Whitegate, en ROM)
 	auto romPath = Config::Instance().GetGameRoot() / u8"ROM/186/97.DAT";
 	if (!std::filesystem::exists(romPath))
 		return false;
@@ -169,10 +169,32 @@ bool EjrefToleranceProcessor::TryProcessAhtUrhganWhitegate(const FileProcessDef&
 
 	// Build mapping rom -> jp by index
 	std::map<std::u8string, std::u8string> romToJp;
-	size_t n = std::min(romEvsb.size(), jpEvsb.size());
+	size_t n = std::min(romEvsb.size(), jpEvsb.size()); // should be equal, but just in case
 	for (size_t i = 0; i < n; ++i)
 	{
-		romToJp[ romEvsb[i] ] = jpEvsb[i];
+		romToJp[romEvsb[i]] = jpEvsb[i];
+	}
+
+	// Now load ev/Aht Urhgan Whitegate (jp/en) pair either
+	jpItr = jpDefsByComment.find(u8"ev/Aht Urhgan Whitegate");
+	if (jpItr == jpDefsByComment.end() || jpItr->second.type != fileDef.type)
+		return false;
+	jpDatPath = Config::Instance().GetGameRoot() / (jpItr->second.path + u8".DAT");
+	if (!std::filesystem::exists(jpDatPath))
+		return false;
+	EventStringBase jpEvsb2(jpDatPath);
+	jpEvsb2.Read();
+
+	romPath = Config::Instance().GetGameRoot() / u8"ROM4/0/123.DAT";
+	if (!std::filesystem::exists(romPath))
+		return false;
+	EventStringBase romEvsb2(romPath);
+	romEvsb2.Read();
+
+	n = std::min(romEvsb2.size(), jpEvsb2.size()); // should be equal as above, but just in case
+	for (size_t i = 0; i < n; ++i)
+	{
+		romToJp[romEvsb2[i]] = jpEvsb2[i];
 	}
 
 	// Now process English file using mapping
@@ -190,7 +212,7 @@ bool EjrefToleranceProcessor::TryProcessAhtUrhganWhitegate(const FileProcessDef&
 		{
 			std::u8string jpText = itr->second;
 			std::u8string translated = db.GetTranslationFromReference(enText, jpText);
-		   evsb[i] = finalTextProcessor.Process(
+			evsb[i] = finalTextProcessor.Process(
 				translated,
 				enText,
 				static_cast<int64_t>(i + 1),
@@ -233,10 +255,10 @@ bool EjrefToleranceProcessor::TryProcessShorterReference(const FileProcessDef& f
 	size_t textIdx = 0;
 
 	auto& db = TranslationDatabase::Instance();
-  FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
+	FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 	for (auto& row : dmsg)
 	{
-	 int rowId = 0;
+		int rowId = 0;
 		if (!row.GetCellsConst().empty() && row.GetCellsConst()[0].GetType() == 1)
 			rowId = row.GetCellsConst()[0].Get<int>();
 		int colNum = 1;
@@ -251,7 +273,7 @@ bool EjrefToleranceProcessor::TryProcessShorterReference(const FileProcessDef& f
 					std::u8string translated = textIdx < jpTexts.size()
 						? db.GetTranslationFromReference(text, jpTexts[textIdx])
 						: db.GetTranslation(text);
-				 cell.Set(xybase::string::unescape(finalTextProcessor.ProcessEscaped(
+					cell.Set(xybase::string::unescape(finalTextProcessor.ProcessEscaped(
 						translated,
 						text,
 						rowId,
@@ -287,12 +309,12 @@ bool EjrefToleranceProcessor::TryProcessSameRowCell0(const FileProcessDef& fileD
 	jpDmsg.Read();
 
 	auto& db = TranslationDatabase::Instance();
- FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
+	FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 	int64_t rowIndex = 0;
 	auto jpRowItr = jpDmsg.begin();
 	for (auto& row : dmsg)
 	{
-	   ++rowIndex;
+		++rowIndex;
 		if (jpRowItr == jpDmsg.end())
 			break;
 
@@ -306,7 +328,7 @@ bool EjrefToleranceProcessor::TryProcessSameRowCell0(const FileProcessDef& fileD
 				if (cells[i].GetType() != 0)
 					continue;
 				std::u8string text = xybase::string::escape(cells[i].Get<std::u8string>());
-			  cells[i].Set(xybase::string::unescape(finalTextProcessor.ProcessEscaped(
+				cells[i].Set(xybase::string::unescape(finalTextProcessor.ProcessEscaped(
 					db.GetTranslationFromReference(text, jpReference),
 					text,
 					rowIndex,
@@ -365,7 +387,7 @@ bool EjrefToleranceProcessor::TryProcessKeyItem(const FileProcessDef& fileDef,
 
 	// Apply translations
 	auto& db = TranslationDatabase::Instance();
-  FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
+	FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 	for (auto& row : dmsg)
 	{
 		auto& cells = row.GetCells();

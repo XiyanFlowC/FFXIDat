@@ -272,7 +272,7 @@ void DataDumper::Flush()
 		}
 	}
 
-	// 5. evsb_msgs.txt — evsb strings not referenced by any dialogue (within-zone orphan, cross-zone dedup)
+	// 5. evsb_msgs.txt - evsb strings not referenced by any dialogue (within-zone orphan, cross-zone dedup)
 	{
 		std::set<std::u8string> orphanTexts;
 		for (const auto& zone : zones_)

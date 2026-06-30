@@ -13,6 +13,8 @@ std::u8string ChsToSJis::ReplaceHanzi(std::u8string in)
 	for (int i = 0; i < in.length(); i += leng)
 	{
 		int cp = xybase::string::to_codepoint(in, i, leng);
+		if (!cp) 
+			return sb.ToString();
 		if (repMap.contains(cp))
 		{
 			sb += repMap[cp];

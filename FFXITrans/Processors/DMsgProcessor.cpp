@@ -56,7 +56,6 @@ bool DMsgProcessor::ProcessQuestDMsg(
 				auto alternateTextsById = ProcessorUtils::CollectDMsgTextsById(alternateDatPath, alternateDef.cellIndicesStr);
 				for (const auto& [id, texts] : alternateTextsById)
 				{
-					// ������������ _ ǰ׺����Ҫ�޳�
 					auto str = xybase::string::unescape(texts.front());
 					size_t startPos = str.find_first_not_of(u8'_');
 					if (startPos != std::u8string::npos)
@@ -118,56 +117,26 @@ bool DMsgProcessor::ProcessQuestDMsg(
 					if (mutableCells.size() >= 3 && mutableCells[2].GetType() == 0)
 						originalDesc = mutableCells[2].Get<std::u8string>();
 
-					if (xybase::string::escape(originalName) != itrSrc->second.name ||
-						xybase::string::escape(originalDesc) != itrSrc->second.description)
+					if (originalName != itrSrc->second.name ||
+						originalDesc != itrSrc->second.description)
 					{
 						Logger::Instance().Warning(
 							"DMsgProcessor src validation failed for rowId=" + std::to_string(rowId)
-							+ " — falling back to TransDB");
+							+ " - falling back to TransDB");
+						Logger::Instance().Note(
+							"Original Name: " + Logger::ToUtf8(originalName)
+							+ ", Expected Name: " + Logger::ToUtf8(itrSrc->second.name)
+							+ ", Original Desc: " + Logger::ToUtf8(originalDesc)
+							+ ", Expected Desc: " + Logger::ToUtf8(itrSrc->second.description)
+						);
 						skipCsv = true;
 					}
 				}
 			}
 
-			if (skipCsv)
-			{
-				auto& config = Config::Instance();
-				std::u8string originalName;
-				if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0)
-					originalName = mutableCells[1].Get<std::u8string>();
-				std::u8string alternateOriginalName;
-				if (const auto altItr = alternateNamesById.find(sourceRowId); altItr != alternateNamesById.end())
-					alternateOriginalName = altItr->second;
-
-				if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0 && !config.IsNoName())
-					mutableCells[1].Set(processEscaped(
-						db.GetTranslation(xybase::string::escape(originalName)),
-						xybase::string::escape(originalName),
-						sourceRowId,
-						2));
-
-				if (mutableCells.size() >= 3 && mutableCells[2].GetType() == 0)
-				{
-					std::u8string translatedDesc = processEscaped(
-						db.GetTranslation(xybase::string::escape(mutableCells[2].Get<std::u8string>())),
-						xybase::string::escape(mutableCells[2].Get<std::u8string>()),
-						sourceRowId,
-						3);
-					if (originalName.starts_with(u8"__"))
-					{
-						auto pos = originalName.find_first_not_of(u8'_');
-						if (pos != std::u8string::npos)
-							originalName = originalName.substr();
-					}
-					translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
-					mutableCells[2].Set(translatedDesc);
-				}
-				continue;
-			}
-
 			auto itrCsv = csvTranslations.find(rowId);
 
-			if (itrCsv == csvTranslations.end())
+			if (itrCsv == csvTranslations.end() || skipCsv)
 			{
 				// Fallback to regular translation
 				auto& config = Config::Instance();
@@ -274,50 +243,26 @@ bool DMsgProcessor::ProcessQuestDMsg(
 					if (mutableCells.size() >= 3 && mutableCells[2].GetType() == 0)
 						originalDesc = mutableCells[2].Get<std::u8string>();
 
-					if (xybase::string::escape(originalName) != itrSrc->second.name ||
-						xybase::string::escape(originalDesc) != itrSrc->second.description)
+					if (originalName != itrSrc->second.name ||
+						originalDesc != itrSrc->second.description)
 					{
 						Logger::Instance().Warning(
 							"DMsgProcessor src validation failed for rowId=" + std::to_string(rowId)
-							+ " — falling back to TransDB");
+							+ " - falling back to TransDB");
+						Logger::Instance().Note(
+							"Original Name: " + Logger::ToUtf8(originalName)
+							+ ", Expected Name: " + Logger::ToUtf8(itrSrc->second.name)
+							+ ", Original Desc: " + Logger::ToUtf8(originalDesc)
+							+ ", Expected Desc: " + Logger::ToUtf8(itrSrc->second.description)
+						);
 						skipCsv = true;
 					}
 				}
 			}
 
-			if (skipCsv)
-			{
-				auto& config = Config::Instance();
-				std::u8string originalName;
-				if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0)
-					originalName = mutableCells[1].Get<std::u8string>();
-				std::u8string alternateOriginalName;
-				if (const auto altItr = alternateNamesById.find(rowId); altItr != alternateNamesById.end())
-					alternateOriginalName = altItr->second;
-
-				if (mutableCells.size() >= 2 && mutableCells[1].GetType() == 0 && !config.IsNoName())
-					mutableCells[1].Set(processEscaped(
-						db.GetTranslation(xybase::string::escape(originalName)),
-						xybase::string::escape(originalName),
-						rowId,
-						2));
-
-				if (mutableCells.size() >= 3 && mutableCells[2].GetType() == 0)
-				{
-					std::u8string translatedDesc = processEscaped(
-						db.GetTranslation(xybase::string::escape(mutableCells[2].Get<std::u8string>())),
-						xybase::string::escape(mutableCells[2].Get<std::u8string>()),
-						rowId,
-						3);
-					translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
-					mutableCells[2].Set(translatedDesc);
-				}
-				continue;
-			}
-
 			auto itrCsv = csvTranslations.find(rowId);
 
-			if (itrCsv == csvTranslations.end())
+			if (itrCsv == csvTranslations.end() || skipCsv)
 			{
 				// Fallback to regular translation
 				auto& config = Config::Instance();

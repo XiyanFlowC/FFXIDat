@@ -10,11 +10,17 @@ namespace fs = std::filesystem;
 class Config
 {
 public:
-  enum class CtrlSeqCheckMode
+	enum class CtrlSeqCheckMode
 	{
 		Off,
 		Skip,
 		Strict,
+	};
+	enum class RosettaMode
+	{
+		Off,
+		BeforeOriginal,
+		AfterOriginal
 	};
 
 	static Config& Instance();
@@ -41,7 +47,7 @@ public:
 	bool IsSrcValidation() const { return srcValidation; }
 	bool IsVerbose() const { return verbose; }
 	bool IsNoName() const { return noname; }
-   CtrlSeqCheckMode GetCtrlSeqCheckMode() const { return ctrlSeqCheckMode; }
+    CtrlSeqCheckMode GetCtrlSeqCheckMode() const { return ctrlSeqCheckMode; }
 	bool IsBilingual() const { return babelCurrentOriginal; }
 	bool IsBabelEnabled() const { return babelCurrentOriginal || babelAlternateOriginal; }
 	bool IsBabelCurrentOriginalEnabled() const { return babelCurrentOriginal; }
@@ -49,7 +55,8 @@ public:
 	bool IsSamuraiJobTransNot() const { return samuraiJobTransNot; }
 	bool IsMonkJobAbbreviated() const { return monkJobAbbreviated; }
 	bool IsSamuraiJobSpecial() const { return samuraiJobSpecial; }
-	bool IsSrcValidationEnabled() const { return checkSrc; }
+	bool IsSrcValidationEnabled() const { return englishMode ? false : checkSrc; }
+	RosettaMode GetRosettaMode() const { return rosettaMode; }
 
 	// Excludes
 	bool IsExcluded(const std::u8string& comment) const;
@@ -90,7 +97,8 @@ private:
 	bool srcValidation = true;
 	bool verbose = false;
 	bool noname = false;
-  CtrlSeqCheckMode ctrlSeqCheckMode = CtrlSeqCheckMode::Skip;
+    CtrlSeqCheckMode ctrlSeqCheckMode = CtrlSeqCheckMode::Off;
+	RosettaMode rosettaMode = RosettaMode::Off;
 	bool babelCurrentOriginal = false;
 	bool babelAlternateOriginal = false;
 	bool samuraiJobTransNot = true;

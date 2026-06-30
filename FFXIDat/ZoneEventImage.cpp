@@ -66,7 +66,9 @@ bool ZoneEventImage::Load(const std::string& path)
 		return false;
 
 	uint32_t block_count = ExtractU32(rd);
-	if (block_count == 0 || block_count > MAX_BLOCKS)
+	// A heuristic check: block_count should not exceed MAX_BLOCKS in case of corrupted data.
+	// A former check for block_count == 0 is commented out because some valid files may have zero blocks.
+	if (/*block_count == 0 || */block_count > MAX_BLOCKS)
 		return false;
 
 	if (!CanRead(rd, finish, block_count * 4))

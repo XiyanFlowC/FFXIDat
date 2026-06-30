@@ -48,6 +48,11 @@ void Logger::Warning(const std::string& message)
 	Log("WARN", message);
 }
 
+void Logger::Note(const std::string& message)
+{
+	Log("NOTE", message);
+}
+
 void Logger::Error(const std::string& message)
 {
 	Log("ERROR", message);
@@ -66,6 +71,11 @@ void Logger::Warning(const std::wstring& message)
 void Logger::Error(const std::wstring& message)
 {
 	Log("ERROR", message);
+}
+
+void Logger::Note(const std::wstring& message)
+{
+	Log("NOTE", message);
 }
 
 void Logger::Log(const std::string& level, const std::string& message)

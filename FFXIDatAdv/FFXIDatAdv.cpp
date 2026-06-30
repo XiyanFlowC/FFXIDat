@@ -28,7 +28,7 @@
 #include <EventString.h>
 #include <xystring.h>
 
-// text.db integration (FFXIDatProcessor — PD, no AGPL propagation)
+// text.db integration (FFXIDatProcessor - PD, no AGPL propagation)
 #include "../FFXIDatProcessor/SQLiteDataSource.h"
 #include "../FFXIDatProcessor/DataManager.h"
 
@@ -1365,7 +1365,7 @@ static int DumpEventJson(
 
 				std::string reportPath = txtRel;
 
-				// Content dedup for ja — if same hash written elsewhere, reuse that path in JSON
+				// Content dedup for ja - if same hash written elsewhere, reuse that path in JSON
 				auto ditJa = contentDedupJa.find(evtJa.textHash);
 				if (ditJa != contentDedupJa.end())
 					reportPath = ditJa->second.txt;
@@ -1445,7 +1445,7 @@ static int DumpEventJson(
 		}
 	}
 
-	// evsb_msgs.txt — orphan strings from both languages
+	// evsb_msgs.txt - orphan strings from both languages
 	{
 		std::set<std::u8string> orphanTexts;
 		for (const auto& zr : zones)
@@ -1457,7 +1457,7 @@ static int DumpEventJson(
 
 		// Actually, we don't have the referenced indices stored per-zone anymore.
 		// The zones_ vector doesn't carry EventAnalyzer instances, just actors.
-		// Skip orphan detection for JSON dump — it's clean event data.
+		// Skip orphan detection for JSON dump - it's clean event data.
 		// User can use --dump-db for full evsb_msgs.txt.
 	}
 
@@ -1497,7 +1497,7 @@ static int DumpDatabase(
 		dumper.AddZone(std::move(analyzer));
 	}
 
-	// Process orphan evsb files (no evev) — only when doing full export
+	// Process orphan evsb files (no evev) - only when doing full export
 	if (fullExport)
 	{
 		auto allDefs = ZoneConfig::Load(csvPath);
@@ -1515,7 +1515,7 @@ static int DumpDatabase(
 		}
 	}
 
-	// Process system data (items, dmsg, xis, fp, roe, sd, mbd) — only when doing full export
+	// Process system data (items, dmsg, xis, fp, roe, sd, mbd) - only when doing full export
 	if (fullExport)
 	{
 		std::ifstream csvStream(csvPath);

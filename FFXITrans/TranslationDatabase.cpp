@@ -184,9 +184,24 @@ void TranslationDatabase::ClearLocalScope()
 
 std::u8string TranslationDatabase::GetTranslationFromReference(const std::u8string& sourceText, const std::u8string& referenceText)
 {
+	auto lit = localMapping.find(referenceText);
+	if (lit != localMapping.end())
+		return lit->second;
+
 	auto itr = textMapping.find(referenceText);
 	if (itr == textMapping.end())
 	{
+		// auto-fallback to source text if reference is not found
+		auto slit = localMapping.find(sourceText);
+		if (slit != localMapping.end())
+			return slit->second;
+
+		auto aitr = textMapping.find(sourceText);
+		if (aitr != textMapping.end())
+			return aitr->second;
+
+		// All resorts failed, record the reference mismatch and return the source text
+
 		if (mismatchSet.find(referenceText) == mismatchSet.end())
 		{
 			mismatchCount++;
@@ -211,25 +226,16 @@ std::u8string TranslationDatabase::GetTranslationFromReference(const std::u8stri
 
 bool TranslationDatabase::TryGetTranslationFromReference(const std::u8string& sourceText, const std::u8string& referenceText, std::u8string& translation)
 {
+	auto lit = localMapping.find(referenceText);
+	if (lit != localMapping.end())
+	{
+		translation = lit->second;
+		return true;
+	}
+
 	auto itr = textMapping.find(referenceText);
 	if (itr == textMapping.end())
 	{
-		if (mismatchSet.find(referenceText) == mismatchSet.end())
-		{
-			mismatchCount++;
-			mismatchSet.insert(referenceText);
-
-			if (Config::Instance().IsVerbose())
-			{
-				std::wcout << L"\n参考失配：" << xybase::string::to_wstring(referenceText) << std::endl;
-			}
-
-			if (mismatchFile.is_open())
-			{
-				mismatchFile.write(reinterpret_cast<const char*>(referenceText.c_str()), referenceText.length());
-				mismatchFile << "\n";
-			}
-		}
 		translation = sourceText;
 		return false;
 	}

@@ -224,12 +224,373 @@ std::filesystem::path EventProcessor::ResolveEventTgtPath(const std::string& act
 	return {};
 }
 
+bool EventProcessor::StripEndingCtrlSeq(const std::u8string& text,
+	std::u8string& strippedText,
+	std::u8string& endingCtrlSeq)
+{
+	// 已知的行结束标记（<-> 系列），按长度降序排列（最长优先匹配）
+	static const std::vector<std::u8string> kEndingTags = {
+		u8"<-:20:20:20:20>",
+		u8"<-:20:20>",
+		u8"<-:20>",
+		u8"<->",
+	};
+
+	for (const auto& tag : kEndingTags) {
+		// 检查文本是否以当前 tag 结尾
+		if (!text.ends_with(tag))
+			continue;
+
+		size_t pos = text.size() - tag.size();          // tag 在 text 中的起始位置
+		bool found7F = false;
+		size_t start7F = std::u8string::npos;
+
+		// 检查 tag 前面是否紧邻一个 7F 标记（即 tag 前一个字符是 '>'）
+		if (pos > 0 && text[pos - 1] == u8'>') {
+			// 从 tag 起始位置向前查找最近的 '<'
+			size_t lt = text.rfind(u8'<', pos - 1);
+			if (lt != std::u8string::npos) {
+				// 检查是否为 "<7F:...>" 格式
+				if (lt + 4 < pos && text[lt] == u8'<' &&
+					text[lt + 1] == u8'7' && text[lt + 2] == u8'F' &&
+					text[lt + 3] == u8':') {
+					// 验证中间部分（lt+4 到 pos-2）是否只包含合法字符（十六进制数字或冒号）
+					bool valid = true;
+					for (size_t i = lt + 4; i < pos - 1; ++i) {
+						char8_t c = text[i];
+						if (!((c >= u8'0' && c <= u8'9') ||
+							(c >= u8'A' && c <= u8'F') ||
+							(c >= u8'a' && c <= u8'f') ||
+							c == u8':')) {
+							valid = false;
+							break;
+						}
+					}
+					if (valid && (pos - lt) > 5) { // 至少 "<7F:>" 长度为5
+						found7F = true;
+						start7F = lt;
+					}
+				}
+			}
+		}
+
+		if (found7F) {
+			// 剥离 7F 标记 + 行结束标记
+			strippedText = text.substr(0, start7F) + text.substr(pos + tag.size());
+			endingCtrlSeq = text.substr(start7F, (pos + tag.size()) - start7F);
+		}
+		else {
+			// 仅剥离行结束标记
+			strippedText = text.substr(0, pos) + text.substr(pos + tag.size());
+			endingCtrlSeq = tag;
+		}
+		return true;
+	}
+
+	// 未找到任何行结束标记
+	strippedText = text;
+	endingCtrlSeq = u8"";
+	return false;
+}
+
+bool EventProcessor::IsSelectPrompt(const std::u8string& text)
+{
+	// <sel> 是选项菜单标记
+	return text.find(u8"<sel>") != std::u8string::npos;
+}
+bool IsValidUTF8(const std::u8string& str) {
+	int lang = 1;
+	for (int p = 0; p < str.size(); ++p) {
+		unsigned char c = str[p];
+		if (c <= 0x7F) {
+			// ASCII
+			continue;
+		}
+		else if ((c & 0xE0) == 0xC0) {
+			// 2-byte sequence
+			if (p + 1 >= str.size() || (str[p + 1] & 0xC0) != 0x80)
+				return false;
+			p += 1;
+		}
+		else if ((c & 0xF0) == 0xE0) {
+			// 3-byte sequence
+			if (p + 2 >= str.size() || (str[p + 1] & 0xC0) != 0x80 || (str[p + 2] & 0xC0) != 0x80)
+				return false;
+			p += 2;
+		}
+		else if ((c & 0xF8) == 0xF0) {
+			// 4-byte sequence
+			if (p + 3 >= str.size() || (str[p + 1] & 0xC0) != 0x80 || (str[p + 2] & 0xC0) != 0x80 || (str[p + 3] & 0xC0) != 0x80)
+				return false;
+			p += 3;
+		}
+		else {
+			return false; // Invalid byte
+		}
+	}
+	return true;
+}
+
+static std::vector<std::u8string> SplitLines(const std::u8string& text)
+{
+	std::vector<std::u8string> result;
+
+	size_t begin = 0;
+	while (true)
+	{
+		size_t pos = text.find(u8"<lf>", begin);
+
+		if (pos == std::u8string::npos)
+		{
+			result.emplace_back(text.substr(begin));
+			break;
+		}
+
+		result.emplace_back(text.substr(begin, pos - begin));
+		begin = pos + 4;
+	}
+
+	return result;
+}
+
+// ASCII 宽度 = 1，其它 UTF-8 字符宽度 = 2
+static int DisplayWidth(std::u8string_view text)
+{
+	int width = 0;
+
+	for (size_t i = 0; i < text.size();)
+	{
+		unsigned char c = static_cast<unsigned char>(text[i]);
+
+		if (c < 0x80)
+		{
+			++width;
+			++i;
+		}
+		else if ((c & 0xE0) == 0xC0)
+		{
+			width += 2;
+			i += 2;
+		}
+		else if ((c & 0xF0) == 0xE0)
+		{
+			width += 2;
+			i += 3;
+		}
+		else if ((c & 0xF8) == 0xF0)
+		{
+			width += 2;
+			i += 4;
+		}
+		else
+		{
+			++i;
+		}
+	}
+
+	return width;
+}
+
+std::u8string EventProcessor::MakeRosettaText(
+	const std::u8string originalText,
+	const std::u8string translatedText,
+	const std::u8string& separator,
+	int insMode)
+{
+	std::u8string bareOriginal, bareTranslated;
+	std::u8string endingCtrlSeq;
+
+	// 如果译文剥离失败，直接返回原文
+	if (!StripEndingCtrlSeq(translatedText, bareTranslated, endingCtrlSeq))
+		return translatedText;
+
+	// 如果原文剥离失败，也直接返回原文
+	std::u8string dummy;
+	if (!StripEndingCtrlSeq(originalText, bareOriginal, dummy))
+		return translatedText;
+
+	if (IsSelectPrompt(bareOriginal))
+	{
+		// ===== 处理选项行 =====
+		// 结构：引导文本<lf><sel>选项1<lf>选项2<lf>...<7F:XX><->
+
+		// 提取 Prompt 前的内容（引导文本 + <lf>）
+		size_t selPos = bareOriginal.find(u8"<sel>");
+		if (selPos == std::u8string::npos) [[unlikely]]
+			return translatedText;  // 安全兜底，不应发生
+		if (translatedText.find(u8"<sel>") == std::u8string::npos)
+			return translatedText;  // 原始数据异常
+
+		std::u8string promptSec = bareOriginal.substr(0, selPos);
+		std::u8string transPromptSec = bareTranslated.substr(0,
+			bareTranslated.find(u8"<sel>"));
+
+		// 提取选项部分（<sel> 之后到行尾）
+		std::u8string optionsSec = bareOriginal.substr(selPos + 5);
+		std::u8string transOptionsSec = bareTranslated.substr(
+			bareTranslated.find(u8"<sel>") + 5);
+
+		// 按 <lf> 分割选项
+		auto splitOptions = [](const std::u8string& sec) -> std::vector<std::u8string> {
+			std::vector<std::u8string> opts;
+			size_t pos = 0;
+			size_t found;
+			while ((found = sec.find(u8"<lf>", pos)) != std::u8string::npos) {
+				opts.push_back(sec.substr(pos, found - pos));
+				pos = found + 4;
+			}
+			std::u8string last = sec.substr(pos);
+			if (!last.empty())
+				opts.push_back(last);
+			return opts;
+			};
+
+		std::vector<std::u8string> options = splitOptions(optionsSec);
+		std::vector<std::u8string> transOptions = splitOptions(transOptionsSec);
+
+		// 如果选项数量不一致，拒绝合并，直接返回译文
+		if (options.size() != transOptions.size())
+			return translatedText;
+
+		// 构建 Rosetta 文本
+		std::u8string rosettaText = transPromptSec + u8"<sel>";
+		for (size_t i = 0; i < options.size(); ++i)
+		{
+			if (insMode == 0)
+			{
+				// 译文 + 分隔符 + 原文
+				rosettaText += transOptions[i] + u8"|" + options[i];
+			}
+			else  // insMode == 1
+			{
+				// 原文 + 分隔符 + 译文
+				rosettaText += options[i] + u8"|" + transOptions[i];
+			}
+			if (i < options.size() - 1)
+				rosettaText += u8"<lf>";
+		}
+
+		return rosettaText + endingCtrlSeq;
+	}
+
+	// ===== 处理普通行 =====
+
+	constexpr int NAME_INDENT = 9; // 第一行预留名字宽度（ASCII）
+
+	auto originalLines = SplitLines(bareOriginal);
+	auto translatedLines = SplitLines(bareTranslated);
+
+	if (originalLines.size() == 1 && translatedLines.size() != 1)
+	{
+		// 对英语文件：通常没有换行，直接输出一行原文，并将译文的<lf>脱去直接拼接返回：
+		std::u8string result;
+		if (insMode == 0)
+		{
+			std::u8string result;
+			for (auto &&line : translatedLines)
+			{
+				result += line;
+			}
+			result += u8"<lf>";
+			result += originalLines[0];
+			return result + endingCtrlSeq;
+		}
+		else {
+			std::u8string result;
+			result += originalLines[0];
+			result += u8"<lf>";
+			for (auto &&line : translatedLines)
+			{
+				result += line;
+			}
+			return result + endingCtrlSeq;
+		}
+	}
+
+	// 计算左侧需要占用的最大显示宽度
+	int targetWidth = 0;
+
+	if (insMode == 0)
+	{
+		// 左侧为译文
+		for (size_t i = 0; i < translatedLines.size(); ++i)
+		{
+			int w = DisplayWidth(translatedLines[i]);
+
+			targetWidth = std::max(targetWidth, w);
+		}
+	}
+	else
+	{
+		// 左侧为原文
+		for (size_t i = 0; i < originalLines.size(); ++i)
+		{
+			int w = DisplayWidth(originalLines[i]);
+
+			targetWidth = std::max(targetWidth, w);
+		}
+	}
+
+	if (targetWidth > 40)
+		targetWidth = 40; // 超过 40 个字符宽度时，令超过的行直接拼接，不再对齐
+
+	std::u8string result;
+
+	size_t lineCount = std::max(originalLines.size(), translatedLines.size());
+
+	for (size_t i = 0; i < lineCount; ++i)
+	{
+		std::u8string left;
+		std::u8string right;
+
+		if (insMode == 0)
+		{
+			if (i < translatedLines.size())
+				left = translatedLines[i];
+
+			if (i < originalLines.size())
+				right = originalLines[i];
+		}
+		else
+		{
+			if (i < originalLines.size())
+				left = originalLines[i];
+
+			if (i < translatedLines.size())
+				right = translatedLines[i];
+		}
+
+		result += left;
+
+		int pad = targetWidth - DisplayWidth(left);
+		if (i == 0)
+			pad -= NAME_INDENT;
+
+		// 至少留一个空格
+		if (pad < 1)
+			pad = 1;
+
+		result.append(static_cast<size_t>(pad), u8' ');
+
+		result += separator;
+		result += right;
+
+		if (i + 1 != lineCount)
+			result += u8"<lf>";
+	}
+
+	return result + endingCtrlSeq;
+}
+
 bool EventProcessor::Process(
 	const FileProcessDef& fileDef,
 	const fs::path& datPath,
 	const fs::path& outPath,
 	const std::map<std::u8string, FileProcessDef>& jpDefsByComment)
 {
+	if (fileDef.type != u8"evsb")
+		return false;
+
 	auto& db = TranslationDatabase::Instance();
 	auto& cfg = Config::Instance();
 
@@ -403,6 +764,11 @@ bool EventProcessor::Process(
 			{
 				result = db.GetTranslation(s);
 			}
+		}
+		if (Config::Instance().GetRosettaMode() != Config::RosettaMode::Off
+			&& !fileDef.comment.starts_with(u8"gev/"))
+		{
+			result = MakeRosettaText(s, result, u8"|", Config::Instance().GetRosettaMode() == Config::RosettaMode::AfterOriginal ? 1 : 0);
 		}
 		s = finalTextProcessor.Process(result, s, static_cast<int64_t>(i + 1), 1);
 	}

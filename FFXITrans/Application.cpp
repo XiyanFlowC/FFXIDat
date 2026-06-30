@@ -709,6 +709,11 @@ std::vector<FileProcessDef> Application::LoadFileDefinitions(bool respectExclude
 	{
 		FileProcessDef fileDef;
 		fileDef.path = def.NextCell();
+		if (fileDef.path.empty() || fileDef.path.starts_with(u8"#"))
+		{
+			def.NextLine();
+			continue;
+		}
 		fileDef.type = def.NextCell();
 		fileDef.lang = def.NextCell();
 		fileDef.comment = def.NextCell();
@@ -885,7 +890,8 @@ int Application::Run(int argc, char** argv)
 		{
 			finalMessage += L"\n\n警告：有 "
 				+ std::to_wstring(FinalTextProcessor::GetSkippedValidationCount())
-				+ L" 条文本因控制序列校验失败而回退为原文。详情见 log.txt。";
+				+ L" 条文本因控制序列校验失败而回退为原文。详情见 log.txt。\n\n"
+				+ L"如果不希望回退为原文，请在 config.ini 中\n添加ctrl_seq_check=off。";
 		}
 
 		ShowInfoMessage(finalMessage);

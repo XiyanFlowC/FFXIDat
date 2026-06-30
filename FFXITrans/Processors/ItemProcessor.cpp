@@ -99,49 +99,25 @@ bool ItemProcessor::Process(
 				{
 					std::u8string originalName = datum.name();
 					std::u8string originalDesc = datum.description();
-					if (xybase::string::escape(originalName) != itrSrc->second.name ||
-						xybase::string::escape(originalDesc) != itrSrc->second.description)
+					if (originalName != itrSrc->second.name ||
+						originalDesc != itrSrc->second.description)
 					{
 						Logger::Instance().Warning(
 							"ItemProcessor src validation failed for id=" + std::to_string(datum.id)
-							+ " — falling back to TransDB");
+							+ " - falling back to TransDB");
+						Logger::Instance().Note(
+							"Original name: " + Logger::ToUtf8(originalName)
+							+ ", SRC CSV name: " + Logger::ToUtf8(itrSrc->second.name)
+							+ ", Original desc: " + Logger::ToUtf8(originalDesc)
+							+ ", SRC CSV desc: " + Logger::ToUtf8(itrSrc->second.description));
 						skipCsv = true;
 					}
 				}
 			}
 
-			if (skipCsv)
-			{
-				// Fallback to regular translation
-				auto& config = Config::Instance();
-				std::u8string originalName = datum.name();
-				std::u8string alternateOriginalName;
-				if (const auto altItr = alternateNamesById.find(datum.id); altItr != alternateNamesById.end())
-					alternateOriginalName = altItr->second;
-
-				if ((translateAllCells || targetCells.count(1)) && !config.IsNoName())
-					datum.setName(processEscaped(
-						db.GetTranslation(xybase::string::escape(originalName)),
-						xybase::string::escape(originalName),
-						datum.id,
-						1));
-
-				if (translateAllCells || targetCells.count(2))
-				{
-					std::u8string translatedDesc = processEscaped(
-						db.GetTranslation(xybase::string::escape(datum.description())),
-						xybase::string::escape(datum.description()),
-						datum.id,
-						2);
-					translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
-					datum.setDescription(translatedDesc);
-				}
-				continue;
-			}
-
 			auto itrCsv = csvTranslations.find(datum.id);
 
-			if (itrCsv == csvTranslations.end())
+			if (itrCsv == csvTranslations.end() || skipCsv)
 			{
 				// Fallback to regular translation
 				auto& config = Config::Instance();

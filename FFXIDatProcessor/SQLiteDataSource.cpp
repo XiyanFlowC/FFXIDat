@@ -1987,7 +1987,7 @@ static std::string BuildDatPath(const std::string& romPath, const std::string& g
 	}
 }
 
-// Compute a simple hex hash of raw bytes — used for actor bytecode dedup.
+// Compute a simple hex hash of raw bytes - used for actor bytecode dedup.
 static std::string BytecodeHashHex(const uint8_t* data, size_t size)
 {
 	uint64_t h = 14695981039346656037ull;

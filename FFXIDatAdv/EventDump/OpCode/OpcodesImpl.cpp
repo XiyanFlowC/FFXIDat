@@ -340,13 +340,13 @@ static bool TryResolveMessage(uint16_t raw, const OpCodeContext& ctx, uint32_t& 
 {
 	if (raw & 0x8000)
 	{
-		// References entry — resolve through imed_data, result IS a string index
+		// References entry - resolve through imed_data, result IS a string index
 		resolvedMsg = ctx.ResolveRef(raw);
 		return true;
 	}
 	if (WorkAddr::IsValid(raw))
 	{
-		// Work area address (WorkLocal, Work_Zone, etc.) — runtime dynamic, can't resolve
+		// Work area address (WorkLocal, Work_Zone, etc.) - runtime dynamic, can't resolve
 		return false;
 	}
 	// An invalid value (not a work address, not a reference) -- game treats it as zero.

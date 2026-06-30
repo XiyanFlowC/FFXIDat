@@ -181,7 +181,7 @@ int ApplicationAdv::Run(bool interactive)
 				L"请再次确认：\n\n"
 				L"1. 游戏和 PlayOnline 已完全关闭。\n"
 				L"2. backup 目录只能存放由程序自动管理的原始 DAT 数据。\n"
-				L"3. 只要游戏更新过，backup 即全部失效——请删除 backup 并重新运行。\n"
+				L"3. 只要游戏更新过，backup 即全部失效--请删除 backup 并重新运行。\n"
 				L"4. 确认您已经有数据备份以免意外。\n\n"
 				L"是否确认覆盖原始游戏文件？",
 				L"FFXI翻译工具",
@@ -270,7 +270,7 @@ int ApplicationAdv::Run(bool interactive)
 
 		std::filesystem::create_directories(outPath.parent_path());
 
-		// Skip evev and evac — they are metadata files, not translation targets
+		// Skip evev and evac - they are metadata files, not translation targets
 		if (def.type == u8"evev" || def.type == u8"evac")
 		{
 			std::cout << " [SKIP]" << std::endl;
@@ -502,7 +502,7 @@ static void ExportOrphanEvsb(
 			pathStr = pathStr.substr(0, pathStr.size() - 4);
 		if (pairedEvsb.count(pathStr))
 		{
-			// Has paired evev — skip (text already exported via event extraction)
+			// Has paired evev - skip (text already exported via event extraction)
 			continue;
 		}
 
@@ -670,7 +670,7 @@ static void ExportOtherTypes(
 			}
 			else if (def.type == u8"dmsg")
 			{
-				// Non-quest DMsg (sys/key_item, sys/region, etc.) — TXT via CollectStrings
+				// Non-quest DMsg (sys/key_item, sys/region, etc.) - TXT via CollectStrings
 				outPath += L".txt";
 				std::filesystem::create_directories(outPath.parent_path());
 

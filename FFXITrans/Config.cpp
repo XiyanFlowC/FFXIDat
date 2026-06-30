@@ -331,7 +331,7 @@ bool Config::LoadFromFile(const fs::path& configPath)
 		{
 			noname = IsTruthyValue(value);
 		}
-       else if (key == L"ctrl_seq_check")
+		else if (key == L"ctrl_seq_check")
 		{
 			const auto normalized = ToLowerAscii(value);
 			if (normalized == L"off" || normalized == L"0")
@@ -351,6 +351,28 @@ bool Config::LoadFromFile(const fs::path& configPath)
 				std::wcerr << L"无法识别的 ctrl_seq_check 配置值：" << value << L"，将继续使用默认值 skip。" << std::endl;
 				Logger::Instance().Warning("Unknown config value for ctrl_seq_check. Falling back to skip mode.");
 				ctrlSeqCheckMode = CtrlSeqCheckMode::Skip;
+			}
+		}
+		else if (key == L"rosetta")
+		{
+			const auto normalized = ToLowerAscii(value);
+			if (normalized == L"off" || normalized == L"0" || normalized == L"false" || normalized == L"no")
+			{
+				rosettaMode = RosettaMode::Off;
+			}
+			else if (normalized == L"before" || normalized == L"1")
+			{
+				rosettaMode = RosettaMode::BeforeOriginal;
+			}
+			else if (normalized == L"after" || normalized == L"2")
+			{
+				rosettaMode = RosettaMode::AfterOriginal;
+			}
+			else
+			{
+				std::wcerr << L"无法识别的罗塞塔配置值：" << value << L"，将继续使用默认值 off。" << std::endl;
+				Logger::Instance().Warning("Unknown config value for rosetta. Falling back to off mode.");
+				rosettaMode = RosettaMode::Off;
 			}
 		}
 		else if (key == L"babel")
@@ -474,13 +496,14 @@ std::string Config::DescribeStateForLog() const
 		<< ", ejrefTolerance=" << ejrefTolerance
 		<< ", verbose=" << verbose
 		<< ", noname=" << noname
-        << ", ctrlSeqCheckMode=" << (ctrlSeqCheckMode == CtrlSeqCheckMode::Off ? "off" : (ctrlSeqCheckMode == CtrlSeqCheckMode::Strict ? "strict" : "skip"))
+		<< ", ctrlSeqCheckMode=" << (ctrlSeqCheckMode == CtrlSeqCheckMode::Off ? "off" : (ctrlSeqCheckMode == CtrlSeqCheckMode::Strict ? "strict" : "skip"))
 		<< ", babelCurrentOriginal=" << babelCurrentOriginal
 		<< ", babelAlternateOriginal=" << babelAlternateOriginal
 		<< ", samuraiJobTransNot=" << samuraiJobTransNot
 		<< ", monkJobAbbreviated=" << monkJobAbbreviated
 		<< ", samuraiJobSpecial=" << samuraiJobSpecial
 		<< ", checkSrc=" << checkSrc
+		<< ", rosettaMode=" << (rosettaMode == RosettaMode::Off ? "off" : (rosettaMode == RosettaMode::BeforeOriginal ? "before" : "after"))
 		<< ", excludes=[";
 
 	bool first = true;

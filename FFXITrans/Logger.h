@@ -15,10 +15,12 @@ public:
 
 	void Info(const std::string& message);
 	void Warning(const std::string& message);
+	void Note(const std::string& message);
 	void Error(const std::string& message);
 
 	void Info(const std::wstring& message);
 	void Warning(const std::wstring& message);
+	void Note(const std::wstring& message);
 	void Error(const std::wstring& message);
 
 	void Log(const std::string& level, const std::string& message);

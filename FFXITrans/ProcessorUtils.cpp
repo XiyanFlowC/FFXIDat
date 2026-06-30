@@ -100,6 +100,11 @@ namespace ProcessorUtils
                 {
                     FileProcessDef loadedDef;
                     loadedDef.path = def.NextCell();
+                    if (loadedDef.path.empty() || loadedDef.path[0] == u8'#')
+                    {
+                        def.NextLine();
+                        continue;
+					}
                     loadedDef.type = def.NextCell();
                     loadedDef.lang = def.NextCell();
                     loadedDef.comment = def.NextCell();

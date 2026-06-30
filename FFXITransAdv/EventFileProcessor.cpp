@@ -400,7 +400,7 @@ bool EventFileProcessor::Process(
 								+ " event=" + std::to_string(evt.event_id)
 								+ "." + std::to_string(evt.array_index)
 								+ " line=" + std::to_string(i)
-								+ " — falling back to TransDB for this event");
+								+ " - falling back to TransDB for this event");
 							allMatch = false;
 							break;
 						}
@@ -416,7 +416,7 @@ bool EventFileProcessor::Process(
 						+ " dls=" + std::to_string(dls.size())
 						+ " src=" + std::to_string(srcLines.size())
 						+ " dst=" + std::to_string(dstLines.size())
-						+ " — falling back to TransDB");
+						+ " - falling back to TransDB");
 				}
 			}
 			else
@@ -432,7 +432,7 @@ bool EventFileProcessor::Process(
 						+ "." + std::to_string(evt.array_index)
 						+ " dls=" + std::to_string(dls.size())
 						+ " dst=" + std::to_string(dstLines.size())
-						+ " — falling back to TransDB");
+						+ " - falling back to TransDB");
 				}
 			}
 
