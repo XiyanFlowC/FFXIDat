@@ -517,6 +517,8 @@ std::u8string EventProcessor::MakeRosettaText(
 		{
 			int w = DisplayWidth(translatedLines[i]);
 
+			if (i == 0) w += NAME_INDENT; // 第一行预留名字宽度
+
 			targetWidth = std::max(targetWidth, w);
 		}
 	}
@@ -527,12 +529,14 @@ std::u8string EventProcessor::MakeRosettaText(
 		{
 			int w = DisplayWidth(originalLines[i]);
 
+			if (i == 0) w += NAME_INDENT; // 第一行预留名字宽度
+
 			targetWidth = std::max(targetWidth, w);
 		}
 	}
 
-	if (targetWidth > 40)
-		targetWidth = 40; // 超过 40 个字符宽度时，令超过的行直接拼接，不再对齐
+	if (targetWidth > 50)
+		targetWidth = 50; // 超过 40 个字符宽度时，令超过的行直接拼接，不再对齐
 
 	std::u8string result;
 
