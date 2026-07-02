@@ -929,7 +929,8 @@ bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentVi
 		}
 		else if (info.fileType == "fp")
 		{
-			return LoadFixedPhraseFile(filePath, contentView);
+			std::string lang = info.language;
+			return LoadFixedPhraseFile(filePath, contentView, lang);
 		}
 		else if (info.fileType == "iab" || info.fileType == "iwb" || info.fileType == "iub" ||
 			info.fileType == "inb" || info.fileType == "ipb" || info.fileType == "isb" ||
@@ -1008,7 +1009,7 @@ bool DatFileManager::LoadArbitraryFile(const std::filesystem::path& filePath, co
 		else if (fileType == "xis") return LoadXiStringFile(filePath, contentView);
 		else if (fileType == "evsb") return LoadEventStringFile(filePath, contentView);
 		else if (fileType == "sd") return LoadStatusDataFile(filePath, contentView);
-		else if (fileType == "fp") return LoadFixedPhraseFile(filePath, contentView);
+		else if (fileType == "fp") return LoadFixedPhraseFile(filePath, contentView, info.language);
 		else if (fileType == "iab" || fileType == "iwb" || fileType == "iub" ||
 			fileType == "inb" || fileType == "ipb" || fileType == "isb" ||
 			fileType == "icb" || fileType == "iib") return LoadItemDataFile(filePath, fileType, contentView);
@@ -1289,19 +1290,70 @@ bool DatFileManager::LoadStatusDataFile(const std::filesystem::path& filePath, C
 	return true;
 }
 
-bool DatFileManager::LoadFixedPhraseFile(const std::filesystem::path& filePath, ContentView* contentView)
+bool DatFileManager::LoadFixedPhraseFile(const std::filesystem::path& filePath, ContentView* contentView, std::string& lang)
 {
 	m_currentFixedPhrase = std::make_unique<FixedPhrase>();
 	m_currentFixedPhrase->Read(filePath);
 
+	// Read Extra DAT for references
+	// For @J (Job), read sys/job
+	// For @A (Area), read sys/area
+	// For @Y (Ability), read sys/ability
+	// For @C (Magic) , read sys/magic
+	DMsg job({}), area({}), ability({}), magic({});
+	for (const auto& info : m_allFileInfos)
+	{
+		if (info.language == lang)
+		{
+			if (info.fileType == "dmsg" && info.category == "sys/job")
+			{
+				std::filesystem::path jobPath = GetDatFilePath(info.localFileId, info.romFolder);
+				if (std::filesystem::exists(jobPath))
+				{
+					job.path = jobPath;
+					job.Read();
+				}
+			}
+			else if (info.fileType == "dmsg" && info.category == "sys/area")
+			{
+				std::filesystem::path areaPath = GetDatFilePath(info.localFileId, info.romFolder);
+				if (std::filesystem::exists(areaPath))
+				{
+					area.path = areaPath;
+					area.Read();
+				}
+			}
+			else if (info.fileType == "dmsg" && info.category == "sys/ability")
+			{
+				std::filesystem::path abilityPath = GetDatFilePath(info.localFileId, info.romFolder);
+				if (std::filesystem::exists(abilityPath))
+				{
+					ability.path = abilityPath;
+					ability.Read();
+				}
+			}
+			else if (info.fileType == "dmsg" && info.category == "sys/magic")
+			{
+				std::filesystem::path magicPath = GetDatFilePath(info.localFileId, info.romFolder);
+				if (std::filesystem::exists(magicPath))
+				{
+					magic.path = magicPath;
+					magic.Read();
+				}
+			}
+		}
+	}
+
 	contentView->Clear();
-	contentView->SetColumnCount(3);
+	contentView->SetColumnCount(4);
 	contentView->SetColumnTitle(0, L"Category");
 	contentView->SetColumnWidth(0, 120);
 	contentView->SetColumnTitle(1, L"Name");
 	contentView->SetColumnWidth(1, 250);
 	contentView->SetColumnTitle(2, L"Pronunciation");
 	contentView->SetColumnWidth(2, 250);
+	contentView->SetColumnTitle(3, L"Resolved Name");
+	contentView->SetColumnWidth(3, 250);
 
 	for (const auto& category : m_currentFixedPhrase->categories)
 	{
@@ -1325,6 +1377,60 @@ bool DatFileManager::LoadFixedPhraseFile(const std::filesystem::path& filePath, 
 			if (maxLineCount > 1)
 			{
 				item->customHeight = maxLineCount * 24;
+			}
+			if (entry.text[0] == '@' && entry.text.length() > 1)
+			{
+				char refType = entry.text[1];
+				std::wstring resolvedName;
+				if (refType == 'J') // Job reference
+				{
+					int jobIndex = xybase::string::stoi(entry.text.substr(2), 16);
+					try {
+						resolvedName = xybase::string::to_wstring(job[jobIndex][0].Get<std::u8string>());
+					}catch(...) {
+						resolvedName = L"[Invalid Job Reference]";
+					}
+				}
+				else if (refType == 'A') // Area reference
+				{
+					int areaIndex = xybase::string::stoi(entry.text.substr(2), 16);
+					try {
+						resolvedName = xybase::string::to_wstring(area[areaIndex][0].Get<std::u8string>());
+					}catch(...) {
+						resolvedName = L"[Invalid Area Reference]";
+					}
+				}
+				else if (refType == 'Y') // Ability reference
+				{
+					int abilityIndex = xybase::string::stoi(entry.text.substr(2), 16);
+					try {
+						resolvedName = xybase::string::to_wstring(ability[abilityIndex][0].Get<std::u8string>());
+					}catch(...) {
+						resolvedName = L"[Invalid Ability Reference]";
+					}
+				}
+				else if (refType == 'C') // Magic reference
+				{
+					int magicIndex = xybase::string::stoi(entry.text.substr(2), 16);
+					try {
+						resolvedName = xybase::string::to_wstring(magic[magicIndex][0].Get<std::u8string>());
+					}catch(...) {
+						resolvedName = L"[Invalid Magic Reference]";
+					}
+				}
+				else
+				{
+					resolvedName = L"[Unknown Reference]";
+				}
+				auto col3 = ColumnData::MakeText((resolvedName));
+				col3.editable = false;
+				item->columns.push_back(std::move(col3));
+			}
+			else
+			{
+				auto col3 = ColumnData::MakeText(L"");
+				col3.editable = false;
+				item->columns.push_back(std::move(col3));
 			}
 
 			contentView->AddItem(std::move(item));

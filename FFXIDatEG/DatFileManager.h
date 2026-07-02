@@ -136,7 +136,7 @@ private:
 	bool LoadEventStringFile(const std::filesystem::path& filePath, ContentView* contentView);
 	bool LoadStatusDataFile(const std::filesystem::path& filePath, ContentView* contentView);
 	bool LoadItemDataFile(const std::filesystem::path& filePath, const std::string& fileType, ContentView* contentView);
-	bool LoadFixedPhraseFile(const std::filesystem::path& filePath, ContentView* contentView);
+	bool LoadFixedPhraseFile(const std::filesystem::path& filePath, ContentView* contentView, std::string& lang);
 	bool LoadMonBridgeFile(const std::filesystem::path& filePath, ContentView* contentView);
 	bool LoadRoeQuestFile(const std::filesystem::path& filePath, ContentView* contentView);
 	bool LoadRoeCategoryFile(const std::filesystem::path& filePath, ContentView* contentView);
