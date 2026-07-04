@@ -1,142 +1,142 @@
-4,inb,jp,itm/normal,1|2
-5,iub,jp,itm/usable,1|2
-6,iwb,jp,itm/weapon,1|2
-7,iab,jp,itm/armor,1|2
-8,ipb,jp,itm/puppet,1|2
-9,icb,jp,itm/currency
-12,sd,jp,sys/status_data
-2768,evsb,jp,ev/Abyssea - Konschtat
-2798,evsb,jp,ev/Abyssea - Tahrongi
-2833,evsb,jp,ev/Southern San d'Oria [S]
-2834,evsb,jp,ev/East Ronfaure [S]
-2835,evsb,jp,ev/Jugner Forest [S]
-2836,evsb,jp,ev/Vunkerl Inlet [S]
-2837,evsb,jp,ev/Batallia Downs [S]
-2838,evsb,jp,ev/La Vaule [S]
-2839,evsb,jp,ev/Everbloom Hollow
-2840,evsb,jp,ev/Bastok Markets [S]
-2841,evsb,jp,ev/North Gustaberg [S]
-2842,evsb,jp,ev/Grauberg [S]
-2843,evsb,jp,ev/Pashhow Marshlands [S]
-2844,evsb,jp,ev/Rolanberry Fields [S]
-2845,evsb,jp,ev/Beadeaux [S]
-2846,evsb,jp,ev/Ruhotz Silvermines
-2847,evsb,jp,ev/Windurst Waters [S]
-2848,evsb,jp,ev/West Sarutabaruta [S]
-2849,evsb,jp,ev/Fort Karugo-Narugo [S]
-2850,evsb,jp,ev/Meriphataud Mountains [S]
-2851,evsb,jp,ev/Sauromugue Champaign [S]
-2852,evsb,jp,ev/Castle Oztroja [S]
-2853,evsb,jp,ev/West Ronfaure
-2854,evsb,jp,ev/East Ronfaure
-2855,evsb,jp,ev/La Theine Plateau
-2856,evsb,jp,ev/Valkurm Dunes
-2857,evsb,jp,ev/Jugner Forest
-2858,evsb,jp,ev/Batallia Downs
-2859,evsb,jp,ev/North Gustaberg
-2860,evsb,jp,ev/South Gustaberg
-2861,evsb,jp,ev/Konschtat Highlands
-2862,evsb,jp,ev/Pashhow Marshlands
-2863,evsb,jp,ev/Rolanberry Fields
-2864,evsb,jp,ev/Beaucedine Glacier
-2865,evsb,jp,ev/Xarcabard
-2868,evsb,jp,ev/West Sarutabaruta
-2869,evsb,jp,ev/East Sarutabaruta
-2870,evsb,jp,ev/Tahrongi Canyon
-2871,evsb,jp,ev/Buburimu Peninsula
-2872,evsb,jp,ev/Meriphataud Mountains
-2873,evsb,jp,ev/Sauromugue Champaign
-2879,evsb,jp,ev/Qufim Island
-2880,evsb,jp,ev/Behemoth's Dominion
-2882,evsb,jp,ev/Ghoyu's Reverie
-2884,evsb,jp,ev/Mordion Gaol
-2885,evsb,jp,ev/Abyssea - La Theine
-2889,evsb,jp,ev/Beaucedine Glacier [S]
-2890,evsb,jp,ev/Xarcabard [S]
-2891,evsb,jp,ev/Castle Zvahl Baileys [S]
-2892,evsb,jp,ev/Horlais Peak
-2893,evsb,jp,ev/Ghelsba Outpost
-2894,evsb,jp,ev/Fort Ghelsba
-2895,evsb,jp,ev/Yughott Grotto
-2896,evsb,jp,ev/Palborough Mines
-2897,evsb,jp,ev/Waughroon Shrine
-2898,evsb,jp,ev/Giddeus
-2899,evsb,jp,ev/Balga's Dais
-2900,evsb,jp,ev/Beadeaux
-2901,evsb,jp,ev/Qulun Dome
-2902,evsb,jp,ev/Davoi
-2903,evsb,jp,ev/Monastic Cavern
-2904,evsb,jp,ev/Castle Oztroja
-2905,evsb,jp,ev/Altar Room
-2908,evsb,jp,ev/Castle Zvahl Keep [S]
-2909,evsb,jp,ev/Throne Room [S]
-2910,evsb,jp,ev/Middle Delkfutt's Tower
-2911,evsb,jp,ev/Upper Delkfutt's Tower
-2914,evsb,jp,ev/Castle Zvahl Baileys
-2915,evsb,jp,ev/Castle Zvahl Keep
-2917,evsb,jp,ev/Garlaige Citadel [S]
-2918,evsb,jp,ev/Throne Room
-2919,evsb,jp,ev/Ranguemont Pass
-2920,evsb,jp,ev/Bostaunieux Oubliette
-2922,evsb,jp,ev/Toraimarai Canal
-2924,evsb,jp,ev/Crawlers' Nest [S]
-2925,evsb,jp,ev/Zeruhn Mines
-2928,evsb,jp,ev/The Eldieme Necropolis [S]
-2935,evsb,jp,ev/Walk of Echoes
-2936,evsb,jp,ev/Maquette Abdhaljs-LegionA
-2937,evsb,jp,ev/Lower Delkfutt's Tower
-2942,evsb,jp,ev/Outer Ra'Kaznar [U3]
-2943,evsb,jp,ev/King Ranperre's Tomb
-2944,evsb,jp,ev/Dangruf Wadi
-2945,evsb,jp,ev/Inner Horutoto Ruins
-2946,evsb,jp,ev/Ordelle's Caves
-2947,evsb,jp,ev/Outer Horutoto Ruins
-2948,evsb,jp,ev/The Eldieme Necropolis
-2949,evsb,jp,ev/Gusgen Mines
-2950,evsb,jp,ev/Crawlers' Nest
-2951,evsb,jp,ev/Maze of Shakhrami
-2952,evsb,jp,ev/198
-2953,evsb,jp,ev/Garlaige Citadel
-2957,evsb,jp,ev/Fei'Yin
-2959,evsb,jp,ev/Qu'Bia Arena
-2963,evsb,jp,ev/209
-2967,evsb,jp,ev/213
-2968,evsb,jp,ev/Abyssea - Attohwa
-2969,evsb,jp,ev/Abyssea - Misareaux
-2970,evsb,jp,ev/Abyssea - Vunkerl
-2971,evsb,jp,ev/Abyssea - Altepa
-2972,evsb,jp,ev/218
-2973,evsb,jp,ev/Ship bound for Selbina
-2974,evsb,jp,ev/Ship bound for Mhaura
-2975,evsb,jp,ev/Provenance
-2976,evsb,jp,ev/San d'Oria-Jeuno Airship
-2977,evsb,jp,ev/Bastok-Jeuno Airship
-2978,evsb,jp,ev/Windurst-Jeuno Airship
-2980,evsb,jp,ev/Ship bound for Selbina
-2981,evsb,jp,ev/Ship bound for Mhaura
-2982,evsb,jp,ev/Throne Room [V]
-2983,evsb,jp,ev/Southern San d'Oria
-2984,evsb,jp,ev/Northern San d'Oria
-2985,evsb,jp,ev/Port San d'Oria
-2986,evsb,jp,ev/Chateau d'Oraguille
-2987,evsb,jp,ev/Bastok Mines
-2988,evsb,jp,ev/Bastok Markets
-2989,evsb,jp,ev/Port Bastok
-2990,evsb,jp,ev/Metalworks
-2991,evsb,jp,ev/Windurst Waters
-2992,evsb,jp,ev/Windurst Walls
-2993,evsb,jp,ev/Port Windurst
-2994,evsb,jp,ev/Windurst Woods
-2995,evsb,jp,ev/Heavens Tower
-2996,evsb,jp,ev/Ru'Lude Gardens
-2997,evsb,jp,ev/Upper Jeuno
-2998,evsb,jp,ev/Lower Jeuno
-2999,evsb,jp,ev/Port Jeuno
-3001,evsb,jp,ev/Selbina
-3002,evsb,jp,ev/Mhaura
-3006,evsb,jp,ev/Abyssea - Uleguerand
-3007,evsb,jp,ev/Abyssea - Grauberg
-3008,evsb,jp,ev/Abyssea - Empyreal Paradox
+4,inb,ja,itm/normal,1|2
+5,iub,ja,itm/usable,1|2
+6,iwb,ja,itm/weapon,1|2
+7,iab,ja,itm/armor,1|2
+8,ipb,ja,itm/puppet,1|2
+9,icb,ja,itm/currency
+12,sd,ja,sys/status_data
+2768,evsb,ja,ev/Abyssea - Konschtat
+2798,evsb,ja,ev/Abyssea - Tahrongi
+2833,evsb,ja,ev/Southern San d'Oria [S]
+2834,evsb,ja,ev/East Ronfaure [S]
+2835,evsb,ja,ev/Jugner Forest [S]
+2836,evsb,ja,ev/Vunkerl Inlet [S]
+2837,evsb,ja,ev/Batallia Downs [S]
+2838,evsb,ja,ev/La Vaule [S]
+2839,evsb,ja,ev/Everbloom Hollow
+2840,evsb,ja,ev/Bastok Markets [S]
+2841,evsb,ja,ev/North Gustaberg [S]
+2842,evsb,ja,ev/Grauberg [S]
+2843,evsb,ja,ev/Pashhow Marshlands [S]
+2844,evsb,ja,ev/Rolanberry Fields [S]
+2845,evsb,ja,ev/Beadeaux [S]
+2846,evsb,ja,ev/Ruhotz Silvermines
+2847,evsb,ja,ev/Windurst Waters [S]
+2848,evsb,ja,ev/West Sarutabaruta [S]
+2849,evsb,ja,ev/Fort Karugo-Narugo [S]
+2850,evsb,ja,ev/Meriphataud Mountains [S]
+2851,evsb,ja,ev/Sauromugue Champaign [S]
+2852,evsb,ja,ev/Castle Oztroja [S]
+2853,evsb,ja,ev/West Ronfaure
+2854,evsb,ja,ev/East Ronfaure
+2855,evsb,ja,ev/La Theine Plateau
+2856,evsb,ja,ev/Valkurm Dunes
+2857,evsb,ja,ev/Jugner Forest
+2858,evsb,ja,ev/Batallia Downs
+2859,evsb,ja,ev/North Gustaberg
+2860,evsb,ja,ev/South Gustaberg
+2861,evsb,ja,ev/Konschtat Highlands
+2862,evsb,ja,ev/Pashhow Marshlands
+2863,evsb,ja,ev/Rolanberry Fields
+2864,evsb,ja,ev/Beaucedine Glacier
+2865,evsb,ja,ev/Xarcabard
+2868,evsb,ja,ev/West Sarutabaruta
+2869,evsb,ja,ev/East Sarutabaruta
+2870,evsb,ja,ev/Tahrongi Canyon
+2871,evsb,ja,ev/Buburimu Peninsula
+2872,evsb,ja,ev/Meriphataud Mountains
+2873,evsb,ja,ev/Sauromugue Champaign
+2879,evsb,ja,ev/Qufim Island
+2880,evsb,ja,ev/Behemoth's Dominion
+2882,evsb,ja,ev/Ghoyu's Reverie
+2884,evsb,ja,ev/Mordion Gaol
+2885,evsb,ja,ev/Abyssea - La Theine
+2889,evsb,ja,ev/Beaucedine Glacier [S]
+2890,evsb,ja,ev/Xarcabard [S]
+2891,evsb,ja,ev/Castle Zvahl Baileys [S]
+2892,evsb,ja,ev/Horlais Peak
+2893,evsb,ja,ev/Ghelsba Outpost
+2894,evsb,ja,ev/Fort Ghelsba
+2895,evsb,ja,ev/Yughott Grotto
+2896,evsb,ja,ev/Palborough Mines
+2897,evsb,ja,ev/Waughroon Shrine
+2898,evsb,ja,ev/Giddeus
+2899,evsb,ja,ev/Balga's Dais
+2900,evsb,ja,ev/Beadeaux
+2901,evsb,ja,ev/Qulun Dome
+2902,evsb,ja,ev/Davoi
+2903,evsb,ja,ev/Monastic Cavern
+2904,evsb,ja,ev/Castle Oztroja
+2905,evsb,ja,ev/Altar Room
+2908,evsb,ja,ev/Castle Zvahl Keep [S]
+2909,evsb,ja,ev/Throne Room [S]
+2910,evsb,ja,ev/Middle Delkfutt's Tower
+2911,evsb,ja,ev/Upper Delkfutt's Tower
+2914,evsb,ja,ev/Castle Zvahl Baileys
+2915,evsb,ja,ev/Castle Zvahl Keep
+2917,evsb,ja,ev/Garlaige Citadel [S]
+2918,evsb,ja,ev/Throne Room
+2919,evsb,ja,ev/Ranguemont Pass
+2920,evsb,ja,ev/Bostaunieux Oubliette
+2922,evsb,ja,ev/Toraimarai Canal
+2924,evsb,ja,ev/Crawlers' Nest [S]
+2925,evsb,ja,ev/Zeruhn Mines
+2928,evsb,ja,ev/The Eldieme Necropolis [S]
+2935,evsb,ja,ev/Walk of Echoes
+2936,evsb,ja,ev/Maquette Abdhaljs-LegionA
+2937,evsb,ja,ev/Lower Delkfutt's Tower
+2942,evsb,ja,ev/Outer Ra'Kaznar [U3]
+2943,evsb,ja,ev/King Ranperre's Tomb
+2944,evsb,ja,ev/Dangruf Wadi
+2945,evsb,ja,ev/Inner Horutoto Ruins
+2946,evsb,ja,ev/Ordelle's Caves
+2947,evsb,ja,ev/Outer Horutoto Ruins
+2948,evsb,ja,ev/The Eldieme Necropolis
+2949,evsb,ja,ev/Gusgen Mines
+2950,evsb,ja,ev/Crawlers' Nest
+2951,evsb,ja,ev/Maze of Shakhrami
+2952,evsb,ja,ev/198
+2953,evsb,ja,ev/Garlaige Citadel
+2957,evsb,ja,ev/Fei'Yin
+2959,evsb,ja,ev/Qu'Bia Arena
+2963,evsb,ja,ev/209
+2967,evsb,ja,ev/213
+2968,evsb,ja,ev/Abyssea - Attohwa
+2969,evsb,ja,ev/Abyssea - Misareaux
+2970,evsb,ja,ev/Abyssea - Vunkerl
+2971,evsb,ja,ev/Abyssea - Altepa
+2972,evsb,ja,ev/218
+2973,evsb,ja,ev/Ship bound for Selbina
+2974,evsb,ja,ev/Ship bound for Mhaura
+2975,evsb,ja,ev/Provenance
+2976,evsb,ja,ev/San d'Oria-Jeuno Airship
+2977,evsb,ja,ev/Bastok-Jeuno Airship
+2978,evsb,ja,ev/Windurst-Jeuno Airship
+2980,evsb,ja,ev/Ship bound for Selbina
+2981,evsb,ja,ev/Ship bound for Mhaura
+2982,evsb,ja,ev/Throne Room [V]
+2983,evsb,ja,ev/Southern San d'Oria
+2984,evsb,ja,ev/Northern San d'Oria
+2985,evsb,ja,ev/Port San d'Oria
+2986,evsb,ja,ev/Chateau d'Oraguille
+2987,evsb,ja,ev/Bastok Mines
+2988,evsb,ja,ev/Bastok Markets
+2989,evsb,ja,ev/Port Bastok
+2990,evsb,ja,ev/Metalworks
+2991,evsb,ja,ev/Windurst Waters
+2992,evsb,ja,ev/Windurst Walls
+2993,evsb,ja,ev/Port Windurst
+2994,evsb,ja,ev/Windurst Woods
+2995,evsb,ja,ev/Heavens Tower
+2996,evsb,ja,ev/Ru'Lude Gardens
+2997,evsb,ja,ev/Upper Jeuno
+2998,evsb,ja,ev/Lower Jeuno
+2999,evsb,ja,ev/Port Jeuno
+3001,evsb,ja,ev/Selbina
+3002,evsb,ja,ev/Mhaura
+3006,evsb,ja,ev/Abyssea - Uleguerand
+3007,evsb,ja,ev/Abyssea - Grauberg
+3008,evsb,ja,ev/Abyssea - Empyreal Paradox
 3024,evsb,en,ev/Abyssea - Konschtat
 3054,evsb,en,ev/Abyssea - Tahrongi
 3089,evsb,en,ev/Southern San d'Oria [S]
@@ -269,25 +269,25 @@
 3262,evsb,en,ev/Abyssea - Uleguerand
 3263,evsb,en,ev/Abyssea - Grauberg
 3264,evsb,en,ev/Abyssea - Empyreal Paradox
-3521,evsb,jp,gev/skill_name
+3521,evsb,ja,gev/skill_name
 3522,evsb,en,gev/skill_name
-3523,evsb,jp,gev/term
+3523,evsb,ja,gev/term
 3524,evsb,en,gev/term
-3525,evsb,jp,gev/emote
+3525,evsb,ja,gev/emote
 3526,evsb,en,gev/emote
-3527,evsb,jp,gev/battle
+3527,evsb,ja,gev/battle
 3528,evsb,en,gev/battle
-3529,evsb,jp,gev/status
+3529,evsb,ja,gev/status
 3530,evsb,en,gev/status
-3531,evsb,jp,gev/message
+3531,evsb,ja,gev/message
 3532,evsb,en,gev/message
-3535,evsb,jp,gev/action
+3535,evsb,ja,gev/action
 3536,evsb,en,gev/action
-12424,xis,jp,lobby/message
-12436,xis,jp,etc/misc_message_01
+12424,xis,ja,lobby/message
+12436,xis,ja,etc/misc_message_01
 12452,xis,en,lobby/message
 12454,xis,en,etc/misc_message_01
-15206,xis,jp,etc/time_formatter
+15206,xis,ja,etc/time_formatter
 15207,xis,en,etc/time_formatter
 15208,xis,en,etc/job_abbr
 15209,xis,en,etc/race_gender_enum
@@ -297,20 +297,20 @@
 15213,iab,en,itm/armor
 15214,ipb,en,itm/puppet
 15289,sd,en,sys/status_data
-21173,dmsg,jp,lobby/misc_message,1
-21174,dmsg,jp,sys/error_message,1
-21176,dmsg,jp,sys/misc_string_01,1
-21178,dmsg,jp,sys/menu/text,1
-21179,dmsg,jp,sys/menu/help,1
-21180,dmsg,jp,sys/menu/title,1
-21181,dmsg,jp,sys/menu/text2,1
-21182,dmsg,jp,sys/region,1
-21183,dmsg,jp,sys/area,1
-21184,dmsg,jp,sys/job,1
-21185,dmsg,jp,sys/weather,1
-21186,dmsg,jp,sys/day_of_week,1
-21187,dmsg,jp,sys/orientation,1
-21188,dmsg,jp,sys/moon_phase,1
+21173,dmsg,ja,lobby/misc_message,1
+21174,dmsg,ja,sys/error_message,1
+21176,dmsg,ja,sys/misc_string_01,1
+21178,dmsg,ja,sys/menu/text,1
+21179,dmsg,ja,sys/menu/help,1
+21180,dmsg,ja,sys/menu/title,1
+21181,dmsg,ja,sys/menu/text2,1
+21182,dmsg,ja,sys/region,1
+21183,dmsg,ja,sys/area,1
+21184,dmsg,ja,sys/job,1
+21185,dmsg,ja,sys/weather,1
+21186,dmsg,ja,sys/day_of_week,1
+21187,dmsg,ja,sys/orientation,1
+21188,dmsg,ja,sys/moon_phase,1
 21189,dmsg,en,lobby/misc_message
 21190,dmsg,en,sys/error_message
 21192,dmsg,en,sys/misc_string_01
@@ -328,34 +328,34 @@
 21205,dmsg,en,sys/area_s
 21206,dmsg,en,sys/job
 21207,dmsg,en,sys/job_abbr
-21363,dmsg,jp,sys/blue_magic_help,1
+21363,dmsg,ja,sys/blue_magic_help,1
 21364,dmsg,en,sys/blue_magic_help
-21706,dmsg,jp,sys/meritpoint_text,1
+21706,dmsg,ja,sys/meritpoint_text,1
 21707,dmsg,en,sys/meritpoint_text
-22232,dmsg,jp,sys/text_command_help,1
+22232,dmsg,ja,sys/text_command_help,1
 22233,dmsg,en,sys/text_command_help
 22320,icb,en,itm/currency
-22431,dmsg,jp,sys/equip_slot_en,1
-22432,dmsg,jp,sys/equip_slot,1
+22431,dmsg,ja,sys/equip_slot_en,1
+22432,dmsg,ja,sys/equip_slot,1
 22433,dmsg,en,sys/equip_slot
-22434,dmsg,jp,sys/key_item,2|3
+22434,dmsg,ja,sys/key_item,2|3
 22435,dmsg,en,sys/key_item,5|6|7
-21528,fp,jp,fixed_phrase
+21528,fp,ja,fixed_phrase
 21529,fp,en,fixed_phrase
-22574,dmsg,jp,sys/qst/sd,2|3
-22575,dmsg,jp,sys/qst/bs,2|3
-22576,dmsg,jp,sys/qst/ws,2|3
-22577,dmsg,jp,sys/qst/jn,2|3
-22578,dmsg,jp,sys/qst/ot,2|3
-22579,dmsg,jp,sys/qst/fr,2|3
-22580,dmsg,jp,sys/qst/at,2|3
-22581,dmsg,jp,sys/mis/sd,2|3
-22582,dmsg,jp,sys/mis/bs,2|3
-22583,dmsg,jp,sys/mis/ws,2|3
-22584,dmsg,jp,sys/mis/zl,2|3
-22585,dmsg,jp,sys/mis/pm,2|3
-22586,dmsg,jp,sys/mis/as,2|3
-22587,dmsg,jp,sys/mis/at,2|3
+22574,dmsg,ja,sys/qst/sd,2|3
+22575,dmsg,ja,sys/qst/bs,2|3
+22576,dmsg,ja,sys/qst/ws,2|3
+22577,dmsg,ja,sys/qst/jn,2|3
+22578,dmsg,ja,sys/qst/ot,2|3
+22579,dmsg,ja,sys/qst/fr,2|3
+22580,dmsg,ja,sys/qst/at,2|3
+22581,dmsg,ja,sys/mis/sd,2|3
+22582,dmsg,ja,sys/mis/bs,2|3
+22583,dmsg,ja,sys/mis/ws,2|3
+22584,dmsg,ja,sys/mis/zl,2|3
+22585,dmsg,ja,sys/mis/pm,2|3
+22586,dmsg,ja,sys/mis/as,2|3
+22587,dmsg,ja,sys/mis/at,2|3
 22588,dmsg,en,sys/qst/sd,2|3
 22589,dmsg,en,sys/qst/bs,2|3
 22590,dmsg,en,sys/qst/ws,2|3
@@ -442,18 +442,18 @@
 22844,dmsg,fr,sys/mis/pm,2|3
 22845,dmsg,fr,sys/mis/as,2|3
 22846,dmsg,fr,sys/mis/at,2|3
-23117,dmsg,jp,sys/title,1
+23117,dmsg,ja,sys/title,1
 23118,dmsg,en,sys/title
 23119,dmsg,de,sys/title
 23120,dmsg,fr,sys/title
-23141,dmsg,jp,sys/status,1
+23141,dmsg,ja,sys/status,1
 23142,dmsg,en,sys/status
 23143,dmsg,de,sys/status
 23144,dmsg,fr,sys/status
-23236,dmsg,jp,sys/ability,1
-23237,dmsg,jp,sys/magic,1
-23238,dmsg,jp,sys/ability_help,1
-23239,dmsg,jp,sys/magic_help,1
+23236,dmsg,ja,sys/ability,1
+23237,dmsg,ja,sys/magic,1
+23238,dmsg,ja,sys/ability_help,1
+23239,dmsg,ja,sys/magic_help,1
 23240,dmsg,en,sys/ability
 23241,dmsg,en,sys/magic
 23242,dmsg,en,sys/ability_help
@@ -471,22 +471,22 @@
 23908,evsb,de,evx/Aht Urhgan Whitegate 2
 23909,evsb,fr,evx/Aht Urhgan Whitegate
 23910,evsb,fr,evx/Aht Urhgan Whitegate 2
-23911,evsb,jp,evx/Aht Urhgan Whitegate
-24002,dmsg,jp,sys/cs_event_race,1
-24003,dmsg,jp,sys/job_attr,1
+23911,evsb,ja,evx/Aht Urhgan Whitegate
+24002,dmsg,ja,sys/cs_event_race,1
+24003,dmsg,ja,sys/job_attr,1
 24005,dmsg,en,sys/cs_event_race
 24006,dmsg,en,sys/job_attr
 24008,dmsg,de,sys/cs_event_race
 24009,dmsg,de,sys/job_attr
 24011,dmsg,fr,sys/cs_event_race
 24012,dmsg,fr,sys/job_attr
-24101,dmsg,jp,sys/mob_race,1
+24101,dmsg,ja,sys/mob_race,1
 24102,dmsg,en,sys/mob_race
 24103,dmsg,de,sys/mob_race
 24104,dmsg,fr,sys/mob_race
-25091,dmsg,jp,sys/qst/wog,2|3
-25092,dmsg,jp,sys/mis/wog,2|3
-25093,dmsg,jp,sys/mis/co,2|3
+25091,dmsg,ja,sys/qst/wog,2|3
+25092,dmsg,ja,sys/mis/wog,2|3
+25093,dmsg,ja,sys/mis/co,2|3
 25094,dmsg,en,sys/qst/wog
 25095,dmsg,en,sys/mis/wog
 25096,dmsg,en,sys/mis/co
@@ -496,45 +496,45 @@
 25100,dmsg,fr,sys/qst/wog
 25101,dmsg,fr,sys/mis/wog
 25102,dmsg,fr,sys/mis/co
-27455,evsb,jp,ev/dbg_scene
+27455,evsb,ja,ev/dbg_scene
 27456,evsb,en,ev/dbg_scene
 27457,evsb,de,ev/dbg_scene
 27458,evsb,fr,ev/dbg_scene
-27796,isb,jp,itm/slip,1|2
+27796,isb,ja,itm/slip,1|2
 27797,isb,en,itm/slip
-28117,dmsg,jp,sys/maze_rune
+28117,dmsg,ja,sys/maze_rune
 28118,dmsg,en,sys/maze_rune
 28119,dmsg,de,sys/maze_rune
 28120,dmsg,fr,sys/maze_rune
-28217,dmsg,jp,sys/item_attr
+28217,dmsg,ja,sys/item_attr
 28218,dmsg,en,sys/item_attr
 28219,dmsg,de,sys/item_attr
 28220,dmsg,fr,sys/item_attr
-28433,dmsg,jp,sys/mis/acp,2|3
+28433,dmsg,ja,sys/mis/acp,2|3
 28434,dmsg,en,sys/mis/acp
 28435,dmsg,de,sys/mis/acp
 28436,dmsg,fr,sys/mis/acp
-28554,dmsg,jp,sys/mis/kupo,2|3
-28555,dmsg,jp,sys/mis/stt,2|3
+28554,dmsg,ja,sys/mis/kupo,2|3
+28555,dmsg,ja,sys/mis/stt,2|3
 28556,dmsg,en,sys/mis/kupo,2|3
 28557,dmsg,en,sys/mis/stt,2|3
 28558,dmsg,de,sys/mis/kupo,2|3
 28559,dmsg,de,sys/mis/stt,2|3
 28560,dmsg,fr,sys/mis/kupo,2|3
 28561,dmsg,fr,sys/mis/stt,2|3
-31039,dmsg,jp,sys/qst/aby,2|3
+31039,dmsg,ja,sys/qst/aby,2|3
 31040,dmsg,en,sys/qst/aby
 31041,dmsg,de,sys/qst/aby
 31042,dmsg,fr,sys/qst/aby
-36680,iab,jp,itm/armor2,1|2
+36680,iab,ja,itm/armor2,1|2
 36681,iab,en,itm/armor2
-36930,mbd,jp,mb/mb_data
+36930,mbd,ja,mb/mb_data
 36931,mbd,en,mb/mb_data
 36932,mbd,de,mb/mb_data
 36933,mbd,fr,mb/mb_data
-37570,dmsg,jp,sys/mis/ad,2|3
-37571,dmsg,jp,sys/qst/ad,2|3
-37572,dmsg,jp,sys/qst/wc,2|3
+37570,dmsg,ja,sys/mis/ad,2|3
+37571,dmsg,ja,sys/qst/ad,2|3
+37572,dmsg,ja,sys/qst/wc,2|3
 37573,dmsg,en,sys/mis/ad
 37574,dmsg,en,sys/qst/ad
 37575,dmsg,en,sys/qst/wc
@@ -544,82 +544,82 @@
 37579,dmsg,fr,sys/mis/ad
 37580,dmsg,fr,sys/qst/ad
 37581,dmsg,fr,sys/qst/wc
-38642,inb,jp,itm/normal2,1|2
+38642,inb,ja,itm/normal2,1|2
 38643,inb,en,itm/normal2
-38814,evsb,jp,ev/Mog Garden
-38815,evsb,jp,ev/Celennia Memorial Library
+38814,evsb,ja,ev/Mog Garden
+38815,evsb,ja,ev/Celennia Memorial Library
 38816,evsb,en,ev/Mog Garden
 38817,evsb,en,ev/Celennia Memorial Library
-39225,evsb,jp,ev/Feretory
+39225,evsb,ja,ev/Feretory
 39226,evsb,en,ev/Feretory
-39311,erq,jp,roe/roe_quest
+39311,erq,ja,roe/roe_quest
 39312,erq,en,roe/roe_quest
-39319,erc,jp,roe/roe_category
+39319,erc,ja,roe/roe_category
 39320,erc,en,roe/roe_category
-39881,dmsg,jp,sys/faith_serifu,1
+39881,dmsg,ja,sys/faith_serifu,1
 39882,dmsg,en,sys/faith_serifu
 39883,dmsg,de,sys/faith_serifu
 39884,dmsg,fr,sys/faith_serifu
-40253,dmsg,jp,sys/jobpoint_text,1
+40253,dmsg,ja,sys/jobpoint_text,1
 40254,dmsg,en,sys/jobpoint_text
 40255,dmsg,de,sys/jobpoint_text
 40256,dmsg,fr,sys/jobpoint_text
-40426,evsb,jp,ev/Leafallia
-40427,evsb,jp,ev/Mount Kamihr
+40426,evsb,ja,ev/Leafallia
+40427,evsb,ja,ev/Mount Kamihr
 40428,evsb,en,ev/Leafallia
 40429,evsb,en,ev/Mount Kamihr
-41530,dmsg,jp,sys/jobpoint_text_2,1
+41530,dmsg,ja,sys/jobpoint_text_2,1
 41531,dmsg,en,sys/jobpoint_text_2
-41979,dmsg,jp,sys/emote_command,1
+41979,dmsg,ja,sys/emote_command,1
 41980,dmsg,en,sys/emote_command
-42601,evsb,jp,ev/Escha - Zi'Tah
+42601,evsb,ja,ev/Escha - Zi'Tah
 42602,evsb,en,ev/Escha - Zi'Tah
-42627,dmsg,jp,sys/mis/rov,2|3
+42627,dmsg,ja,sys/mis/rov,2|3
 42628,dmsg,en,sys/mis/rov
-42639,dmsg,jp,sys/kupoevent
+42639,dmsg,ja,sys/kupoevent
 42640,dmsg,en,sys/kupoevent
-43198,evsb,jp,ev/Escha - Ru'Aun
+43198,evsb,ja,ev/Escha - Ru'Aun
 43199,evsb,en,ev/Escha - Ru'Aun
-43203,evsb,jp,gev/Unity Concord
+43203,evsb,ja,gev/Unity Concord
 43204,evsb,en,gev/Unity Concord
-43857,evsb,jp,ev/Desuetia - Empyreal Paradox
-43858,evsb,jp,ev/Reisenjima
-43859,evsb,jp,ev/Reisenjima Sanctorium
+43857,evsb,ja,ev/Desuetia - Empyreal Paradox
+43858,evsb,ja,ev/Reisenjima
+43859,evsb,ja,ev/Reisenjima Sanctorium
 43860,evsb,en,ev/Desuetia - Empyreal Paradox
 43861,evsb,en,ev/Reisenjima
 43862,evsb,en,ev/Reisenjima Sanctorium
-45010,dmsg,jp,sys/mount,1
-45011,dmsg,jp,sys/mount_help,1
+45010,dmsg,ja,sys/mount,1
+45011,dmsg,ja,sys/mount_help,1
 45012,dmsg,en,sys/mount
 45013,dmsg,en,sys/mount_help
-45241,evsb,jp,ev/Reisenjima Henge
+45241,evsb,ja,ev/Reisenjima Henge
 45242,evsb,en,ev/Reisenjima Henge
-45424,evsb,jp,ev/Dynamis - San d'Oria [D]
+45424,evsb,ja,ev/Dynamis - San d'Oria [D]
 45425,evsb,en,ev/Dynamis - San d'Oria [D]
-45447,evsb,jp,ev/Dynamis - Bastok [D]
+45447,evsb,ja,ev/Dynamis - Bastok [D]
 45448,evsb,en,ev/Dynamis - Bastok [D]
-45475,evsb,jp,ev/Dynamis - Windurst [D]
+45475,evsb,ja,ev/Dynamis - Windurst [D]
 45476,evsb,en,ev/Dynamis - Windurst [D]
-45490,evsb,jp,ev/Dynamis - Jeuno [D]
+45490,evsb,ja,ev/Dynamis - Jeuno [D]
 45491,evsb,en,ev/Dynamis - Jeuno [D]
-46296,evsb,jp,ev/Walk of Echoes [P1]
+46296,evsb,ja,ev/Walk of Echoes [P1]
 46297,evsb,en,ev/Walk of Echoes [P1]
-46357,evsb,jp,ev/Maquette Abdhaljs-LegionB
+46357,evsb,ja,ev/Maquette Abdhaljs-LegionB
 46358,evsb,en,ev/Maquette Abdhaljs-LegionB
-46627,dmsg,jp,sys/mis/vr,2|3
+46627,dmsg,ja,sys/mis/vr,2|3
 46628,dmsg,en,sys/mis/vr
-47969,evsb,jp,ev/Silver Knife
+47969,evsb,ja,ev/Silver Knife
 47970,evsb,en,ev/Silver Knife
-48126,evsb,jp,ev/Gwora - Corridor
+48126,evsb,ja,ev/Gwora - Corridor
 48127,evsb,en,ev/Gwora - Corridor
-48486,evsb,jp,ev/Gwora - Throne Room
+48486,evsb,ja,ev/Gwora - Throne Room
 48487,evsb,en,ev/Gwora - Throne Room
-49272,dmsg,jp,sys/faith_points,
+49272,dmsg,ja,sys/faith_points,
 49273,dmsg,en,sys/faith_points
-36052,evsb,jp,evx/id/ukn1
-36053,evsb,jp,evx/id/ukn2
-36054,evsb,jp,evx/id/ukn3
-36055,evsb,jp,evx/id/ukn4
+36052,evsb,ja,evx/id/ukn1
+36053,evsb,ja,evx/id/ukn2
+36054,evsb,ja,evx/id/ukn3
+36055,evsb,ja,evx/id/ukn4
 36056,evsb,en,evx/id/ukn1
 36057,evsb,en,evx/id/ukn2
 36058,evsb,en,evx/id/ukn3
@@ -632,15 +632,15 @@
 36065,evsb,fr,evx/id/ukn2
 36066,evsb,fr,evx/id/ukn3
 36067,evsb,fr,evx/id/ukn4
-36752,evsb,jp,evx/id2/ukn
+36752,evsb,ja,evx/id2/ukn
 36753,evsb,de,evx/id2/ukn
 36754,evsb,fr,evx/id2/ukn
 36864,evsb,en,evx/id2/ukn
-36910,evsb,jp,evx/id3/ukn1
-36911,evsb,jp,evx/id3/ukn2
-36912,evsb,jp,evx/id3/ukn3
-36913,evsb,jp,evx/id3/ukn4
-36914,evsb,jp,evx/id3/ukn5
+36910,evsb,ja,evx/id3/ukn1
+36911,evsb,ja,evx/id3/ukn2
+36912,evsb,ja,evx/id3/ukn3
+36913,evsb,ja,evx/id3/ukn4
+36914,evsb,ja,evx/id3/ukn5
 36915,evsb,en,evx/id3/ukn1
 36916,evsb,en,evx/id3/ukn2
 36917,evsb,en,evx/id3/ukn3
@@ -662,37 +662,37 @@
 38819,evsb,fr,ev/Celennia Memorial Library
 39227,evsb,de,ev/Feretory
 39228,evsb,fr,ev/Feretory
-46561,evsb,jp,evx/id4/ukn1
-46562,evsb,jp,evx/id4/ukn2
-46563,evsb,jp,evx/id4/ukn3
-46564,evsb,jp,evx/id4/ukn4
-46565,evsb,jp,evx/id4/ukn5
-46566,evsb,jp,evx/id4/ukn6
+46561,evsb,ja,evx/id4/ukn1
+46562,evsb,ja,evx/id4/ukn2
+46563,evsb,ja,evx/id4/ukn3
+46564,evsb,ja,evx/id4/ukn4
+46565,evsb,ja,evx/id4/ukn5
+46566,evsb,ja,evx/id4/ukn6
 46567,evsb,en,evx/id4/ukn1
 46568,evsb,en,evx/id4/ukn2
 46569,evsb,en,evx/id4/ukn3
 46570,evsb,en,evx/id4/ukn4
 46571,evsb,en,evx/id4/ukn5
 46572,evsb,en,evx/id4/ukn6
-46704,evsb,jp,evx/id5/ukn1
-46705,evsb,jp,evx/id5/ukn2
+46704,evsb,ja,evx/id5/ukn1
+46705,evsb,ja,evx/id5/ukn2
 46706,evsb,en,evx/id5/ukn1
 46707,evsb,en,evx/id5/ukn2
-47553,evsb,jp,evx/id6/ukn1
-47554,evsb,jp,evx/id6/ukn2
-47555,evsb,jp,evx/id6/ukn3
+47553,evsb,ja,evx/id6/ukn1
+47554,evsb,ja,evx/id6/ukn2
+47555,evsb,ja,evx/id6/ukn3
 47556,evsb,en,evx/id6/ukn1
 47557,evsb,en,evx/id6/ukn2
 47558,evsb,en,evx/id6/ukn3
-47786,evsb,jp,evx/id7/ukn1
-47787,evsb,jp,evx/id7/ukn2
+47786,evsb,ja,evx/id7/ukn1
+47787,evsb,ja,evx/id7/ukn2
 47788,evsb,en,evx/id7/ukn1
 47789,evsb,en,evx/id7/ukn2
 47971,evsb,de,ev/Silver Knife
 47972,evsb,fr,ev/Silver Knife
 48128,evsb,de,ev/Gwora - Corridor
 48129,evsb,fr,ev/Gwora - Corridor
-48160,evsb,jp,evx/id8
+48160,evsb,ja,evx/id8
 48161,evsb,en,evx/id8
 48488,evsb,de,ev/Gwora - Throne Room
 48489,evsb,fr,ev/Gwora - Throne Room
