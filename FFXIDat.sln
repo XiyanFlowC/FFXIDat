@@ -31,6 +31,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 	ProjectSection(SolutionItems) = preProject
 		data\cp932.csv = data\cp932.csv
+		data\FLIST.csv = data\FLIST.csv
+		data\ROM.csv = data\ROM.csv
+		data\ROM2.csv = data\ROM2.csv
+		data\ROM3.csv = data\ROM3.csv
+		data\ROM4.csv = data\ROM4.csv
+		data\ROM9.csv = data\ROM9.csv
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "解决方案项", "解决方案项", "{9FA3D6BD-1EC1-3BA5-80CB-CE02773A58D5}"
