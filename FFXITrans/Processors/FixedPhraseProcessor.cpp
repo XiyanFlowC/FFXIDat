@@ -91,12 +91,12 @@ bool FixedPhraseProcessor::Process(
 			{
 				entry.text = finalTextProcessor.Process(
 					entry.text,
-					entry.text,
+					u8"",
 					static_cast<int64_t>(entry.cat.ent),
 					1);
 				entry.pron = finalTextProcessor.Process(
 					entry.pron,
-					entry.pron,
+					u8"",
 					static_cast<int64_t>(entry.cat.ent),
 					2);
 			}
