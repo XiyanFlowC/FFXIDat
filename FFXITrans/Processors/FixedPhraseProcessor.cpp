@@ -77,7 +77,7 @@ bool FixedPhraseProcessor::Process(
 		for (size_t categoryIndex = 0; categoryIndex < fixedPhrase.categories.size(); ++categoryIndex)
 		{
 			auto& category = fixedPhrase.categories[categoryIndex];
-			category.categoryName = finalTextProcessor.Process(
+			/*category.categoryName = finalTextProcessor.Process(
 				category.categoryName,
 				category.categoryName,
 				static_cast<int64_t>(category.cat.cat),
@@ -86,10 +86,12 @@ bool FixedPhraseProcessor::Process(
 				category.categoryPron,
 				category.categoryPron,
 				static_cast<int64_t>(category.cat.cat),
-				2);
+				2);*/
+			category.categoryName = ChsToSJis::Instance().ReplaceHanzi(category.categoryName);
+			category.categoryPron = ChsToSJis::Instance().ReplaceHanzi(category.categoryPron);
 			for (auto& entry : category.entries)
 			{
-				entry.text = finalTextProcessor.Process(
+				/*entry.text = finalTextProcessor.Process(
 					entry.text,
 					u8"",
 					static_cast<int64_t>(entry.cat.ent),
@@ -98,7 +100,9 @@ bool FixedPhraseProcessor::Process(
 					entry.pron,
 					u8"",
 					static_cast<int64_t>(entry.cat.ent),
-					2);
+					2);*/
+				entry.text = ChsToSJis::Instance().ReplaceHanzi(entry.text);
+				entry.pron = ChsToSJis::Instance().ReplaceHanzi(entry.text);
 			}
 		}
 
