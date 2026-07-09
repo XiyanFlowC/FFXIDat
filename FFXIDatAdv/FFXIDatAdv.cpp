@@ -1885,7 +1885,8 @@ int main(int argc, char** argv)
 			// This makes --db "path\to\text.db" (or just "text.db") work correctly.
 			std::filesystem::path dbP(dbPath);
 			auto parent = dbP.parent_path();
-			PathUtil::progRootPath = parent.empty() ? L"." : xybase::string::sys_mbs_to_wcs(parent.string());
+			if (!parent.empty())
+				PathUtil::progRootPath = xybase::string::sys_mbs_to_wcs(parent.string());
 			SQLiteDataSource db;
 			db.EventDbDump(outputDir, dumpLang);
 			return 0;
@@ -1911,7 +1912,8 @@ int main(int argc, char** argv)
 			// This makes --db "path\to\text.db" (or just "text.db") and running from x64\Release work.
 			std::filesystem::path dbP(dbPath);
 			auto parent = dbP.parent_path();
-			PathUtil::progRootPath = parent.empty() ? L"." : xybase::string::sys_mbs_to_wcs(parent.string());
+			if (!parent.empty())
+				PathUtil::progRootPath = xybase::string::sys_mbs_to_wcs(parent.string());
 			SQLiteDataSource db;
 			db.EventDbImport(advActors);
 			std::cout << "[DB] Imported " << advActors.size() << " actors into text.db" << std::endl;
