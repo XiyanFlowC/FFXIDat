@@ -1705,3 +1705,628 @@ ROM/214/63,evsb,ja,evx/MMM/id7
 ROM/214/64,evsb,en,evx/MMM/id7
 ROM/214/65,evsb,de,evx/MMM/id7
 ROM/214/66,evsb,fr,evx/MMM/id7
+ROM/166/126,evsb,de,ev/West Ronfaure
+ROM/166/127,evsb,de,ev/East Ronfaure
+ROM/167/0,evsb,de,ev/La Theine Plateau
+ROM/167/1,evsb,de,ev/Valkurm Dunes
+ROM/167/10,evsb,de,ev/Xarcabard
+ROM/167/100,evsb,de,ev/Ru'Lude Gardens
+ROM/167/101,evsb,de,ev/Upper Jeuno
+ROM/167/102,evsb,de,ev/Lower Jeuno
+ROM/167/103,evsb,de,ev/Port Jeuno
+ROM/167/104,evsb,de,ev/Selbina
+ROM/167/105,evsb,de,ev/Mhaura
+ROM/167/106,evsb,de,ev/Abyssea - Uleguerand
+ROM/167/107,evsb,de,ev/Abyssea - Grauberg
+ROM/167/108,evsb,de,ev/Abyssea - Empyreal Paradox
+ROM/167/109,evsb,de,gev/skill_name
+ROM/167/11,evsb,de,ev/West Sarutabaruta
+ROM/167/110,evsb,de,gev/term
+ROM/167/112,evsb,de,gev/emote
+ROM/167/113,evsb,de,gev/status
+ROM/167/114,evsb,de,gev/message
+ROM/167/115,evsb,de,gev/action
+ROM/167/118,evsb,fr,gev/emote
+ROM/167/119,evsb,fr,gev/battle
+ROM/167/12,evsb,de,ev/East Sarutabaruta
+ROM/167/120,evsb,fr,gev/status
+ROM/167/121,evsb,fr,gev/message
+ROM/167/13,evsb,de,ev/Tahrongi Canyon
+ROM/167/14,evsb,de,ev/Buburimu Peninsula
+ROM/167/15,evsb,de,ev/Meriphataud Mountains
+ROM/167/16,evsb,de,ev/Sauromugue Champaign
+ROM/167/17,evsb,de,ev/Qufim Island
+ROM/167/18,evsb,de,ev/Behemoth's Dominion
+ROM/167/19,evsb,de,ev/Ghoyu's Reverie
+ROM/167/2,evsb,de,ev/Jugner Forest
+ROM/167/20,evsb,de,ev/Mordion Gaol
+ROM/167/21,evsb,de,ev/Abyssea - La Theine
+ROM/167/22,evsb,de,ev/Dynamis - Beaucedine
+ROM/167/23,evsb,de,ev/Beaucedine Glacier [S]
+ROM/167/24,evsb,de,ev/Xarcabard [S]
+ROM/167/25,evsb,de,ev/Castle Zvahl Baileys [S]
+ROM/167/26,evsb,de,ev/Horlais Peak
+ROM/167/27,evsb,de,ev/Ghelsba Outpost
+ROM/167/28,evsb,de,ev/Fort Ghelsba
+ROM/167/29,evsb,de,ev/Yughott Grotto
+ROM/167/3,evsb,de,ev/Batallia Downs
+ROM/167/30,evsb,de,ev/Palborough Mines
+ROM/167/31,evsb,de,ev/Waughroon Shrine
+ROM/167/32,evsb,de,ev/Giddeus
+ROM/167/33,evsb,de,ev/Balga's Dais
+ROM/167/34,evsb,de,ev/Beadeaux
+ROM/167/35,evsb,de,ev/Qulun Dome
+ROM/167/36,evsb,de,ev/Davoi
+ROM/167/37,evsb,de,ev/Monastic Cavern
+ROM/167/38,evsb,de,ev/Castle Oztroja
+ROM/167/39,evsb,de,ev/Altar Room
+ROM/167/4,evsb,de,ev/North Gustaberg
+ROM/167/40,evsb,de,ev/Castle Zvahl Keep [S]
+ROM/167/41,evsb,de,ev/Throne Room [S]
+ROM/167/42,evsb,de,ev/Middle Delkfutt's Tower
+ROM/167/43,evsb,de,ev/Upper Delkfutt's Tower
+ROM/167/44,evsb,de,ev/Castle Zvahl Baileys
+ROM/167/45,evsb,de,ev/Castle Zvahl Keep
+ROM/167/46,evsb,de,ev/Garlaige Citadel [S]
+ROM/167/47,evsb,de,ev/Throne Room
+ROM/167/48,evsb,de,ev/Ranguemont Pass
+ROM/167/49,evsb,de,ev/Bostaunieux Oubliette
+ROM/167/5,evsb,de,ev/South Gustaberg
+ROM/167/50,evsb,de,ev/Toraimarai Canal
+ROM/167/51,evsb,de,ev/Crawlers' Nest [S]
+ROM/167/52,evsb,de,ev/Zeruhn Mines
+ROM/167/53,evsb,de,ev/The Eldieme Necropolis [S]
+ROM/167/54,evsb,de,ev/Walk of Echoes
+ROM/167/55,evsb,de,ev/Maquette Abdhaljs-LegionA
+ROM/167/56,evsb,de,ev/Lower Delkfutt's Tower
+ROM/167/57,evsb,de,ev/King Ranperre's Tomb
+ROM/167/58,evsb,de,ev/King Ranperre's Tomb
+ROM/167/59,evsb,de,ev/Dangruf Wadi
+ROM/167/6,evsb,de,ev/Konschtat Highlands
+ROM/167/60,evsb,de,ev/Inner Horutoto Ruins
+ROM/167/61,evsb,de,ev/Ordelle's Caves
+ROM/167/62,evsb,de,ev/Outer Horutoto Ruins
+ROM/167/63,evsb,de,ev/The Eldieme Necropolis
+ROM/167/64,evsb,de,ev/Gusgen Mines
+ROM/167/65,evsb,de,ev/Crawlers' Nest
+ROM/167/66,evsb,de,ev/Maze of Shakhrami
+ROM/167/67,evsb,de,ev/Garlaige Citadel
+ROM/167/68,evsb,de,ev/Garlaige Citadel
+ROM/167/69,evsb,de,ev/Fei'Yin
+ROM/167/7,evsb,de,ev/Pashhow Marshlands
+ROM/167/70,evsb,de,ev/Qu'Bia Arena
+ROM/167/71,evsb,de,ev/Cloister of Tides
+ROM/167/72,evsb,de,ev/Abyssea - Attohwa
+ROM/167/73,evsb,de,ev/Abyssea - Attohwa
+ROM/167/74,evsb,de,ev/Abyssea - Misareaux
+ROM/167/75,evsb,de,ev/Abyssea - Vunkerl
+ROM/167/76,evsb,de,ev/Abyssea - Altepa
+ROM/167/77,evsb,de,ev/Ship bound for Selbina
+ROM/167/78,evsb,de,ev/Ship bound for Selbina
+ROM/167/79,evsb,de,ev/Ship bound for Mhaura
+ROM/167/8,evsb,de,ev/Rolanberry Fields
+ROM/167/80,evsb,de,ev/Provenance
+ROM/167/81,evsb,de,ev/San d'Oria-Jeuno Airship
+ROM/167/82,evsb,de,ev/Bastok-Jeuno Airship
+ROM/167/83,evsb,de,ev/Windurst-Jeuno Airship
+ROM/167/84,evsb,de,evx/Ship bound for Mhaura
+ROM/167/85,evsb,de,ev/Throne Room [V]
+ROM/167/86,evsb,de,ev/Southern San d'Oria
+ROM/167/87,evsb,de,ev/Southern San d'Oria
+ROM/167/88,evsb,de,ev/Northern San d'Oria
+ROM/167/89,evsb,de,ev/Port San d'Oria
+ROM/167/9,evsb,de,ev/Beaucedine Glacier
+ROM/167/90,evsb,de,ev/Chateau d'Oraguille
+ROM/167/91,evsb,de,ev/Bastok Mines
+ROM/167/92,evsb,de,ev/Bastok Markets
+ROM/167/93,evsb,de,ev/Port Bastok
+ROM/167/94,evsb,de,ev/Metalworks
+ROM/167/95,evsb,de,ev/Windurst Waters
+ROM/167/96,evsb,de,ev/Windurst Walls
+ROM/167/97,evsb,de,ev/Port Windurst
+ROM/167/98,evsb,de,ev/Windurst Woods
+ROM/167/99,evsb,de,ev/Heavens Tower
+ROM/176/101,inb,de,itm/normal
+ROM/176/102,inb,de,itm/usable
+ROM/176/103,iwb_o,de,itm/weapon
+ROM/176/104,iab_o,de,itm/armor
+ROM/176/105,ipb,de,itm/puppet
+ROM/176/106,icb,de,itm/currency
+ROM/176/124,evsb,de,ev/unknown
+ROM/176/125,evsb,de,ev/Phanauet Channel
+ROM/176/126,evsb,de,ev/Carpenters' Landing
+ROM/176/127,evsb,de,ev/Manaclipper
+ROM/176/96,fp,de,fixed_phrase
+ROM/177/0,evsb,de,ev/Bibiki Bay
+ROM/177/1,evsb,de,ev/Uleguerand Range
+ROM/177/10,evsb,de,ev/Hall of Transference
+ROM/177/100,evsb,de,ev/Yuhtunga Jungle
+ROM/177/101,evsb,de,ev/Yhoator Jungle
+ROM/177/102,evsb,de,ev/Western Altepa Desert
+ROM/177/103,evsb,de,ev/Valley of Sorrows
+ROM/177/104,evsb,de,ev/Ru'Aun Gardens
+ROM/177/105,evsb,de,ev/Dynamis - Beaucedine
+ROM/177/106,evsb,de,ev/Dynamis - Xarcabard
+ROM/177/107,evsb,de,ev/The Boyahda Tree
+ROM/177/108,evsb,de,ev/Dragon's Aery
+ROM/177/109,evsb,de,ev/Temple of Uggalepih
+ROM/177/11,evsb,de,ev/Abyssea - Konschtat
+ROM/177/110,evsb,de,ev/Den of Rancor
+ROM/177/111,evsb,de,ev/Sacrificial Chamber
+ROM/177/112,evsb,de,ev/Chamber of Oracles
+ROM/177/113,evsb,de,ev/Full Moon Fountain
+ROM/177/114,evsb,de,ev/Korroloka Tunnel
+ROM/177/115,evsb,de,ev/Kuftal Tunnel
+ROM/177/116,evsb,de,ev/Sea Serpent Grotto
+ROM/177/117,evsb,de,ev/Ve'Lugannon Palace
+ROM/177/118,evsb,de,ev/The Shrine of Ru'Avitau
+ROM/177/119,evsb,de,ev/Stellar Fulcrum
+ROM/177/12,evsb,de,ev/Promyvion - Holla
+ROM/177/120,evsb,de,ev/La'Loff Amphitheater
+ROM/177/121,evsb,de,ev/The Celestial Nexus
+ROM/177/122,evsb,de,ev/Dynamis - San d'Oria
+ROM/177/123,evsb,de,ev/Dynamis - Bastok
+ROM/177/124,evsb,de,ev/Dynamis - Windurst
+ROM/177/125,evsb,de,ev/Dynamis - Jeuno
+ROM/177/126,evsb,de,ev/Cloister of Gales
+ROM/177/127,evsb,de,ev/Cloister of Storms
+ROM/177/13,evsb,de,ev/Spire of Holla
+ROM/177/14,evsb,de,ev/Promyvion - Dem
+ROM/177/15,evsb,de,ev/Spire of Dem
+ROM/177/16,evsb,de,ev/Promyvion - Mea
+ROM/177/17,evsb,de,ev/Spire of Mea
+ROM/177/18,evsb,de,ev/Promyvion - Vahzl
+ROM/177/19,evsb,de,ev/Spire of Vahzl
+ROM/177/2,evsb,de,ev/Bearclaw Pinnacle
+ROM/177/20,evsb,de,ev/Lufaise Meadows
+ROM/177/21,evsb,de,ev/Misareaux Coast
+ROM/177/22,evsb,de,ev/Tavnazian Safehold
+ROM/177/23,evsb,de,ev/Phomiuna Aqueducts
+ROM/177/24,evsb,de,ev/Sacrarium
+ROM/177/25,evsb,de,ev/Riverne - Site #B01
+ROM/177/26,evsb,de,ev/Riverne - Site #A01
+ROM/177/27,evsb,de,ev/Monarch Linn
+ROM/177/28,evsb,de,ev/Sealion's Den
+ROM/177/29,evsb,de,ev/Al'Taieu
+ROM/177/3,evsb,de,ev/Attohwa Chasm
+ROM/177/30,evsb,de,ev/Grand Palace of Hu'Xzoi
+ROM/177/31,evsb,de,ev/The Garden of Ru'Hmet
+ROM/177/32,evsb,de,ev/Empyreal Paradox
+ROM/177/33,evsb,de,ev/Temenos
+ROM/177/34,evsb,de,ev/Apollyon
+ROM/177/35,evsb,de,ev/Dynamis - Valkurm
+ROM/177/36,evsb,de,ev/Dynamis - Buburimu
+ROM/177/37,evsb,de,ev/Dynamis - Qufim
+ROM/177/38,evsb,de,ev/Dynamis - Tavnazia
+ROM/177/39,evsb,de,ev/Diorama Abdhaljs-Ghelsba
+ROM/177/4,evsb,de,ev/Boneyard Gully
+ROM/177/40,evsb,de,ev/Abdhaljs Isle-Purgonorgo
+ROM/177/41,evsb,de,ev/Abyssea - Tahrongi
+ROM/177/42,evsb,de,ev/Open sea route to Al Zahbi
+ROM/177/43,evsb,de,ev/Open sea route to Mhaura
+ROM/177/44,evsb,de,ev/Al Zahbi
+ROM/177/45,evsb,de,ev/Aht Urhgan Whitegate
+ROM/177/46,evsb,de,ev/Wajaom Woodlands
+ROM/177/47,evsb,de,ev/Wajaom Woodlands
+ROM/177/48,evsb,de,ev/Bhaflau Thickets
+ROM/177/49,evsb,de,ev/Nashmau
+ROM/177/5,evsb,de,ev/Pso'Xja
+ROM/177/50,evsb,de,ev/Arrapago Reef
+ROM/177/51,evsb,de,ev/Ilrusi Atoll
+ROM/177/52,evsb,de,ev/Periqia
+ROM/177/53,evsb,de,ev/Talacca Cove
+ROM/177/54,evsb,de,ev/Silver Sea route to Nashmau
+ROM/177/55,evsb,de,ev/Silver Sea route to Al Zahbi
+ROM/177/56,evsb,de,ev/The Ashu Talif
+ROM/177/57,evsb,de,ev/Mount Zhayolm
+ROM/177/58,evsb,de,ev/Halvung
+ROM/177/59,evsb,de,ev/Lebros Cavern
+ROM/177/6,evsb,de,ev/The Shrouded Maw
+ROM/177/60,evsb,de,ev/Navukgo Execution Chamber
+ROM/177/61,evsb,de,ev/Mamook
+ROM/177/62,evsb,de,ev/Mamool Ja Training Grounds
+ROM/177/63,evsb,de,ev/Jade Sepulcher
+ROM/177/64,evsb,de,ev/Aydeewa Subterrane
+ROM/177/65,evsb,de,ev/Leujaoam Sanctum
+ROM/177/66,evsb,de,ev/Chocobo Circuit
+ROM/177/67,evsb,de,ev/The Colosseum
+ROM/177/68,evsb,de,ev/Alzadaal Undersea Ruins
+ROM/177/69,evsb,de,ev/Zhayolm Remnants
+ROM/177/7,evsb,de,ev/Oldton Movalpolos
+ROM/177/70,evsb,de,ev/Arrapago Remnants
+ROM/177/71,evsb,de,ev/Bhaflau Remnants
+ROM/177/72,evsb,de,ev/Silver Sea Remnants
+ROM/177/73,evsb,de,ev/Nyzul Isle
+ROM/177/74,evsb,de,ev/Hazhalm Testing Grounds
+ROM/177/75,evsb,de,ev/Caedarva Mire
+ROM/177/76,evsb,de,ev/Southern San d'Oria [S]
+ROM/177/77,evsb,de,ev/East Ronfaure [S]
+ROM/177/78,evsb,de,ev/Jugner Forest [S]
+ROM/177/79,evsb,de,ev/Vunkerl Inlet [S]
+ROM/177/8,evsb,de,ev/Newton Movalpolos
+ROM/177/80,evsb,de,ev/Batallia Downs [S]
+ROM/177/81,evsb,de,ev/La Vaule [S]
+ROM/177/82,evsb,de,ev/Everbloom Hollow
+ROM/177/83,evsb,de,ev/Bastok Markets [S]
+ROM/177/84,evsb,de,ev/North Gustaberg [S]
+ROM/177/85,evsb,de,ev/Grauberg [S]
+ROM/177/86,evsb,de,ev/Pashhow Marshlands [S]
+ROM/177/87,evsb,de,ev/Rolanberry Fields [S]
+ROM/177/88,evsb,de,ev/Beadeaux [S]
+ROM/177/89,evsb,de,ev/Ruhotz Silvermines
+ROM/177/9,evsb,de,ev/Mine Shaft #2716
+ROM/177/90,evsb,de,ev/Windurst Waters [S]
+ROM/177/91,evsb,de,ev/West Sarutabaruta [S]
+ROM/177/92,evsb,de,ev/Fort Karugo-Narugo [S]
+ROM/177/93,evsb,de,ev/Meriphataud Mountains [S]
+ROM/177/94,evsb,de,ev/Sauromugue Champaign [S]
+ROM/177/95,evsb,de,ev/Castle Oztroja [S]
+ROM/177/96,evsb,de,ev/Cape Teriggan
+ROM/177/97,evsb,de,ev/Eastern Altepa Desert
+ROM/177/98,evsb,de,ev/The Sanctuary of Zi'Tah
+ROM/177/99,evsb,de,ev/Ro'Maeve
+ROM/178/0,evsb,de,ev/Cloister of Frost
+ROM/178/1,evsb,de,ev/Ifrit's Cauldron
+ROM/178/10,evsb,de,ev/Kazham
+ROM/178/100,evsb,fr,ev/Temenos
+ROM/178/101,evsb,fr,ev/Apollyon
+ROM/178/102,evsb,fr,ev/Dynamis - Valkurm
+ROM/178/103,evsb,fr,ev/Dynamis - Buburimu
+ROM/178/104,evsb,fr,ev/Dynamis - Qufim
+ROM/178/105,evsb,fr,ev/Dynamis - Tavnazia
+ROM/178/106,evsb,fr,ev/Diorama Abdhaljs-Ghelsba
+ROM/178/107,evsb,fr,ev/Abdhaljs Isle-Purgonorgo
+ROM/178/108,evsb,fr,ev/Abyssea - Tahrongi
+ROM/178/109,evsb,fr,ev/Open sea route to Al Zahbi
+ROM/178/11,evsb,de,ev/Hall of the Gods
+ROM/178/110,evsb,fr,ev/Open sea route to Mhaura
+ROM/178/111,evsb,fr,ev/Al Zahbi
+ROM/178/112,evsb,fr,ev/Aht Urhgan Whitegate
+ROM/178/113,evsb,fr,ev/Aht Urhgan Whitegate
+ROM/178/114,evsb,fr,ev/Wajaom Woodlands
+ROM/178/115,evsb,fr,ev/Bhaflau Thickets
+ROM/178/116,evsb,fr,ev/Nashmau
+ROM/178/117,evsb,fr,ev/Arrapago Reef
+ROM/178/118,evsb,fr,ev/Ilrusi Atoll
+ROM/178/119,evsb,fr,ev/Periqia
+ROM/178/12,evsb,de,ev/Norg
+ROM/178/120,evsb,fr,ev/Talacca Cove
+ROM/178/121,evsb,fr,ev/Silver Sea route to Nashmau
+ROM/178/122,evsb,fr,ev/Silver Sea route to Al Zahbi
+ROM/178/123,evsb,fr,ev/The Ashu Talif
+ROM/178/124,evsb,fr,ev/Mount Zhayolm
+ROM/178/125,evsb,fr,ev/Halvung
+ROM/178/126,evsb,fr,ev/Lebros Cavern
+ROM/178/127,evsb,fr,ev/Navukgo Execution Chamber
+ROM/178/2,evsb,de,ev/Cloister of Flames
+ROM/178/3,evsb,de,ev/Quicksand Caves
+ROM/178/35,fp,fr,fixed_phrase
+ROM/178/4,evsb,de,ev/Cloister of Tremors
+ROM/178/40,inb,fr,itm/normal
+ROM/178/41,inb,fr,itm/usable
+ROM/178/42,iwb_o,fr,itm/weapon
+ROM/178/43,iab_o,fr,itm/armor
+ROM/178/44,ipb,fr,itm/puppet
+ROM/178/45,icb,fr,itm/currency
+ROM/178/5,evsb,de,ev/Cloister of Tides
+ROM/178/6,evsb,de,ev/Gustav Tunnel
+ROM/178/63,evsb,fr,ev/unknown
+ROM/178/64,evsb,fr,ev/Phanauet Channel
+ROM/178/65,evsb,fr,ev/Carpenters' Landing
+ROM/178/66,evsb,fr,ev/Manaclipper
+ROM/178/67,evsb,fr,ev/Bibiki Bay
+ROM/178/68,evsb,fr,ev/Uleguerand Range
+ROM/178/69,evsb,fr,ev/Bearclaw Pinnacle
+ROM/178/7,evsb,de,ev/Labyrinth of Onzozo
+ROM/178/70,evsb,fr,ev/Attohwa Chasm
+ROM/178/71,evsb,fr,ev/Boneyard Gully
+ROM/178/72,evsb,fr,ev/Pso'Xja
+ROM/178/73,evsb,fr,ev/The Shrouded Maw
+ROM/178/74,evsb,fr,ev/Oldton Movalpolos
+ROM/178/75,evsb,fr,ev/Newton Movalpolos
+ROM/178/76,evsb,fr,ev/Mine Shaft #2716
+ROM/178/77,evsb,fr,ev/Hall of Transference
+ROM/178/78,evsb,fr,ev/Abyssea - Konschtat
+ROM/178/79,evsb,fr,ev/Promyvion - Holla
+ROM/178/8,evsb,de,evx/Ship bound for Selbina
+ROM/178/80,evsb,fr,ev/Spire of Holla
+ROM/178/81,evsb,fr,ev/Promyvion - Dem
+ROM/178/82,evsb,fr,ev/Spire of Dem
+ROM/178/83,evsb,fr,ev/Promyvion - Mea
+ROM/178/84,evsb,fr,ev/Spire of Mea
+ROM/178/85,evsb,fr,ev/Promyvion - Vahzl
+ROM/178/86,evsb,fr,ev/Spire of Vahzl
+ROM/178/87,evsb,fr,ev/Lufaise Meadows
+ROM/178/88,evsb,fr,ev/Misareaux Coast
+ROM/178/89,evsb,fr,ev/Tavnazian Safehold
+ROM/178/9,evsb,de,ev/Rabao
+ROM/178/90,evsb,fr,ev/Phomiuna Aqueducts
+ROM/178/91,evsb,fr,ev/Sacrarium
+ROM/178/92,evsb,fr,ev/Riverne - Site #B01
+ROM/178/93,evsb,fr,ev/Riverne - Site #A01
+ROM/178/94,evsb,fr,ev/Monarch Linn
+ROM/178/95,evsb,fr,ev/Sealion's Den
+ROM/178/96,evsb,fr,ev/Al'Taieu
+ROM/178/97,evsb,fr,ev/Grand Palace of Hu'Xzoi
+ROM/178/98,evsb,fr,ev/The Garden of Ru'Hmet
+ROM/178/99,evsb,fr,ev/Empyreal Paradox
+ROM/179/0,evsb,fr,ev/Mamook
+ROM/179/1,evsb,fr,ev/Mamool Ja Training Grounds
+ROM/179/10,evsb,fr,ev/Bhaflau Remnants
+ROM/179/100,evsb,fr,ev/Throne Room
+ROM/179/101,evsb,fr,ev/Ranguemont Pass
+ROM/179/102,evsb,fr,ev/Bostaunieux Oubliette
+ROM/179/103,evsb,fr,ev/Chamber of Oracles
+ROM/179/104,evsb,fr,ev/Toraimarai Canal
+ROM/179/105,evsb,fr,ev/Full Moon Fountain
+ROM/179/106,evsb,fr,ev/Zeruhn Mines
+ROM/179/107,evsb,fr,ev/Zeruhn Mines
+ROM/179/108,evsb,fr,ev/Korroloka Tunnel
+ROM/179/109,evsb,fr,ev/Kuftal Tunnel
+ROM/179/11,evsb,fr,ev/Silver Sea Remnants
+ROM/179/110,evsb,fr,ev/The Eldieme Necropolis [S]
+ROM/179/111,evsb,fr,ev/Sea Serpent Grotto
+ROM/179/112,evsb,fr,ev/Ve'Lugannon Palace
+ROM/179/113,evsb,fr,ev/The Shrine of Ru'Avitau
+ROM/179/114,evsb,fr,ev/Stellar Fulcrum
+ROM/179/115,evsb,fr,ev/La'Loff Amphitheater
+ROM/179/116,evsb,fr,ev/Crawlers' Nest [S]
+ROM/179/117,evsb,fr,ev/Walk of Echoes
+ROM/179/118,evsb,fr,ev/Maquette Abdhaljs-LegionA
+ROM/179/119,evsb,fr,ev/Lower Delkfutt's Tower
+ROM/179/12,evsb,fr,ev/Nyzul Isle
+ROM/179/120,evsb,fr,ev/Dynamis - San d'Oria
+ROM/179/121,evsb,fr,ev/Dynamis - Bastok
+ROM/179/122,evsb,fr,ev/Dynamis - Windurst
+ROM/179/123,evsb,fr,ev/Dynamis - Jeuno
+ROM/179/124,evsb,fr,ev/King Ranperre's Tomb
+ROM/179/125,evsb,fr,ev/King Ranperre's Tomb
+ROM/179/126,evsb,fr,ev/Dangruf Wadi
+ROM/179/127,evsb,fr,ev/Inner Horutoto Ruins
+ROM/179/13,evsb,fr,ev/Hazhalm Testing Grounds
+ROM/179/14,evsb,fr,ev/Caedarva Mire
+ROM/179/15,evsb,fr,ev/Southern San d'Oria [S]
+ROM/179/16,evsb,fr,ev/East Ronfaure [S]
+ROM/179/17,evsb,fr,ev/Jugner Forest [S]
+ROM/179/18,evsb,fr,ev/Vunkerl Inlet [S]
+ROM/179/19,evsb,fr,ev/Batallia Downs [S]
+ROM/179/2,evsb,fr,ev/Jade Sepulcher
+ROM/179/20,evsb,fr,ev/La Vaule [S]
+ROM/179/21,evsb,fr,ev/Everbloom Hollow
+ROM/179/22,evsb,fr,ev/Bastok Markets [S]
+ROM/179/23,evsb,fr,ev/North Gustaberg [S]
+ROM/179/24,evsb,fr,ev/Grauberg [S]
+ROM/179/25,evsb,fr,ev/Pashhow Marshlands [S]
+ROM/179/26,evsb,fr,ev/Rolanberry Fields [S]
+ROM/179/27,evsb,fr,ev/Beadeaux [S]
+ROM/179/28,evsb,fr,ev/Ruhotz Silvermines
+ROM/179/29,evsb,fr,ev/Windurst Waters [S]
+ROM/179/3,evsb,fr,ev/Aydeewa Subterrane
+ROM/179/30,evsb,fr,ev/West Sarutabaruta [S]
+ROM/179/31,evsb,fr,ev/Fort Karugo-Narugo [S]
+ROM/179/32,evsb,fr,ev/Meriphataud Mountains [S]
+ROM/179/33,evsb,fr,ev/Sauromugue Champaign [S]
+ROM/179/34,evsb,fr,ev/Castle Oztroja [S]
+ROM/179/35,evsb,fr,ev/West Ronfaure
+ROM/179/36,evsb,fr,ev/East Ronfaure
+ROM/179/37,evsb,fr,ev/La Theine Plateau
+ROM/179/38,evsb,fr,ev/Valkurm Dunes
+ROM/179/39,evsb,fr,ev/Jugner Forest
+ROM/179/4,evsb,fr,ev/Leujaoam Sanctum
+ROM/179/40,evsb,fr,ev/Batallia Downs
+ROM/179/41,evsb,fr,ev/North Gustaberg
+ROM/179/42,evsb,fr,ev/South Gustaberg
+ROM/179/43,evsb,fr,ev/Konschtat Highlands
+ROM/179/44,evsb,fr,ev/Pashhow Marshlands
+ROM/179/45,evsb,fr,ev/Rolanberry Fields
+ROM/179/46,evsb,fr,ev/Beaucedine Glacier
+ROM/179/47,evsb,fr,ev/Xarcabard
+ROM/179/48,evsb,fr,ev/Cape Teriggan
+ROM/179/49,evsb,fr,ev/Eastern Altepa Desert
+ROM/179/5,evsb,fr,ev/Chocobo Circuit
+ROM/179/50,evsb,fr,ev/West Sarutabaruta
+ROM/179/51,evsb,fr,ev/East Sarutabaruta
+ROM/179/52,evsb,fr,ev/Tahrongi Canyon
+ROM/179/53,evsb,fr,ev/Buburimu Peninsula
+ROM/179/54,evsb,fr,ev/Meriphataud Mountains
+ROM/179/55,evsb,fr,ev/Sauromugue Champaign
+ROM/179/56,evsb,fr,ev/The Sanctuary of Zi'Tah
+ROM/179/57,evsb,fr,ev/Ro'Maeve
+ROM/179/58,evsb,fr,ev/Yuhtunga Jungle
+ROM/179/59,evsb,fr,ev/Yhoator Jungle
+ROM/179/6,evsb,fr,ev/The Colosseum
+ROM/179/60,evsb,fr,ev/Western Altepa Desert
+ROM/179/61,evsb,fr,ev/Qufim Island
+ROM/179/62,evsb,fr,ev/Behemoth's Dominion
+ROM/179/63,evsb,fr,ev/Valley of Sorrows
+ROM/179/64,evsb,fr,ev/Ghoyu's Reverie
+ROM/179/65,evsb,fr,ev/Ru'Aun Gardens
+ROM/179/66,evsb,fr,ev/Mordion Gaol
+ROM/179/67,evsb,fr,ev/Abyssea - La Theine
+ROM/179/68,evsb,fr,ev/Dynamis - Beaucedine
+ROM/179/69,evsb,fr,ev/Dynamis - Beaucedine
+ROM/179/7,evsb,fr,ev/Alzadaal Undersea Ruins
+ROM/179/70,evsb,fr,ev/Dynamis - Xarcabard
+ROM/179/71,evsb,fr,ev/Beaucedine Glacier [S]
+ROM/179/72,evsb,fr,ev/Xarcabard [S]
+ROM/179/73,evsb,fr,ev/Castle Zvahl Baileys [S]
+ROM/179/74,evsb,fr,ev/Horlais Peak
+ROM/179/75,evsb,fr,ev/Ghelsba Outpost
+ROM/179/76,evsb,fr,ev/Fort Ghelsba
+ROM/179/77,evsb,fr,ev/Yughott Grotto
+ROM/179/78,evsb,fr,ev/Palborough Mines
+ROM/179/79,evsb,fr,ev/Waughroon Shrine
+ROM/179/8,evsb,fr,ev/Zhayolm Remnants
+ROM/179/80,evsb,fr,ev/Giddeus
+ROM/179/81,evsb,fr,ev/Balga's Dais
+ROM/179/82,evsb,fr,ev/Beadeaux
+ROM/179/83,evsb,fr,ev/Qulun Dome
+ROM/179/84,evsb,fr,ev/Davoi
+ROM/179/85,evsb,fr,ev/Monastic Cavern
+ROM/179/86,evsb,fr,ev/Castle Oztroja
+ROM/179/87,evsb,fr,ev/Altar Room
+ROM/179/88,evsb,fr,ev/The Boyahda Tree
+ROM/179/89,evsb,fr,ev/Dragon's Aery
+ROM/179/9,evsb,fr,ev/Arrapago Remnants
+ROM/179/90,evsb,fr,ev/Castle Zvahl Keep [S]
+ROM/179/91,evsb,fr,ev/Throne Room [S]
+ROM/179/92,evsb,fr,ev/Middle Delkfutt's Tower
+ROM/179/93,evsb,fr,ev/Upper Delkfutt's Tower
+ROM/179/94,evsb,fr,ev/Temple of Uggalepih
+ROM/179/95,evsb,fr,ev/Den of Rancor
+ROM/179/96,evsb,fr,ev/Castle Zvahl Baileys
+ROM/179/97,evsb,fr,ev/Castle Zvahl Keep
+ROM/179/98,evsb,fr,ev/Sacrificial Chamber
+ROM/179/99,evsb,fr,ev/Garlaige Citadel [S]
+ROM/180/0,evsb,fr,ev/Ordelle's Caves
+ROM/180/1,evsb,fr,ev/Outer Horutoto Ruins
+ROM/180/10,evsb,fr,ev/Cloister of Frost
+ROM/180/11,evsb,fr,ev/Fei'Yin
+ROM/180/12,evsb,fr,ev/Ifrit's Cauldron
+ROM/180/13,evsb,fr,ev/Qu'Bia Arena
+ROM/180/14,evsb,fr,ev/Cloister of Flames
+ROM/180/15,evsb,fr,ev/Quicksand Caves
+ROM/180/16,evsb,fr,ev/Cloister of Tremors
+ROM/180/17,evsb,fr,ev/Cloister of Tides
+ROM/180/18,evsb,fr,ev/Cloister of Tides
+ROM/180/19,evsb,fr,ev/Gustav Tunnel
+ROM/180/2,evsb,fr,ev/The Eldieme Necropolis
+ROM/180/20,evsb,fr,ev/Labyrinth of Onzozo
+ROM/180/21,evsb,fr,ev/Abyssea - Attohwa
+ROM/180/22,evsb,fr,ev/Abyssea - Attohwa
+ROM/180/23,evsb,fr,ev/Abyssea - Misareaux
+ROM/180/24,evsb,fr,ev/Abyssea - Vunkerl
+ROM/180/25,evsb,fr,ev/Abyssea - Altepa
+ROM/180/26,evsb,fr,ev/Ship bound for Selbina
+ROM/180/27,evsb,fr,ev/Ship bound for Selbina
+ROM/180/28,evsb,fr,ev/Ship bound for Mhaura
+ROM/180/29,evsb,fr,ev/Provenance
+ROM/180/3,evsb,fr,ev/Gusgen Mines
+ROM/180/30,evsb,fr,ev/San d'Oria-Jeuno Airship
+ROM/180/31,evsb,fr,ev/Bastok-Jeuno Airship
+ROM/180/32,evsb,fr,ev/Windurst-Jeuno Airship
+ROM/180/33,evsb,fr,evx/Ship bound for Selbina
+ROM/180/34,evsb,fr,evx/Ship bound for Mhaura
+ROM/180/35,evsb,fr,ev/Throne Room [V]
+ROM/180/36,evsb,fr,ev/Southern San d'Oria
+ROM/180/37,evsb,fr,ev/Southern San d'Oria
+ROM/180/38,evsb,fr,ev/Northern San d'Oria
+ROM/180/39,evsb,fr,ev/Port San d'Oria
+ROM/180/4,evsb,fr,ev/Crawlers' Nest
+ROM/180/40,evsb,fr,ev/Chateau d'Oraguille
+ROM/180/41,evsb,fr,ev/Bastok Mines
+ROM/180/42,evsb,fr,ev/Bastok Markets
+ROM/180/43,evsb,fr,ev/Port Bastok
+ROM/180/44,evsb,fr,ev/Metalworks
+ROM/180/45,evsb,fr,ev/Windurst Waters
+ROM/180/46,evsb,fr,ev/Windurst Walls
+ROM/180/47,evsb,fr,ev/Port Windurst
+ROM/180/48,evsb,fr,ev/Windurst Woods
+ROM/180/49,evsb,fr,ev/Heavens Tower
+ROM/180/5,evsb,fr,ev/Maze of Shakhrami
+ROM/180/50,evsb,fr,ev/Ru'Lude Gardens
+ROM/180/51,evsb,fr,ev/Upper Jeuno
+ROM/180/52,evsb,fr,ev/Lower Jeuno
+ROM/180/53,evsb,fr,ev/Port Jeuno
+ROM/180/54,evsb,fr,ev/Rabao
+ROM/180/55,evsb,fr,ev/Selbina
+ROM/180/56,evsb,fr,ev/Mhaura
+ROM/180/57,evsb,fr,ev/Kazham
+ROM/180/58,evsb,fr,ev/Hall of the Gods
+ROM/180/59,evsb,fr,ev/Norg
+ROM/180/6,evsb,fr,ev/Garlaige Citadel
+ROM/180/60,evsb,fr,ev/Abyssea - Grauberg
+ROM/180/61,evsb,fr,ev/Abyssea - Empyreal Paradox
+ROM/180/7,evsb,fr,ev/Garlaige Citadel
+ROM/180/8,evsb,fr,ev/Cloister of Gales
+ROM/180/9,evsb,fr,ev/Cloister of Storms
+ROM/217/25,isb,de,itm/slip
+ROM/217/26,isb,fr,itm/slip
+ROM/286/74,iab_o,de,itm/armor2
+ROM/286/75,iab_o,fr,itm/armor2
+ROM/288/112,evsb,de,ev/Leafallia
+ROM/288/81,iib,de,mb/instinct
+ROM/288/82,iib,fr,mb/instinct
+ROM/301/116,inb,de,itm/normal2
+ROM/301/117,inb,fr,itm/normal2
+ROM/303/34,evsb,de,ev/Feretory
+ROM/306/59,evsb,de,ev/Maquette Abdhaljs-LegionB
+ROM/307/17,erq_o,de,roe/roe_quest
+ROM/307/18,erq_o,fr,roe/roe_quest
+ROM/307/25,erc_o,de,roe/roe_category
+ROM/307/26,erc_o,fr,roe/roe_category
+ROM/315/110,evsb,de,ev/Mount Kamihr
+ROM/315/111,evsb,de,ev/Silver Knife
+ROM/315/112,evsb,fr,ev/Leafallia
+ROM/315/113,evsb,fr,ev/Mount Kamihr
+ROM/332/107,evsb,de,ev/Desuetia - Empyreal Paradox
+ROM/332/108,evsb,fr,ev/Escha - Ru'Aun
+ROM/337/64,evsb,de,ev/Reisenjima
+ROM/337/65,evsb,fr,ev/Desuetia - Empyreal Paradox
+ROM/342/87,evsb,de,ev/Reisenjima Henge
+ROM/342/88,evsb,de,ev/Reisenjima Sanctorium
+ROM/342/89,evsb,de,ev/Dynamis - Bastok [D]
+ROM/342/90,evsb,fr,ev/Reisenjima
+ROM/342/91,evsb,fr,ev/Reisenjima Henge
+ROM/342/92,evsb,fr,ev/Dynamis - San d'Oria [D]
+ROM/353/59,evsb,de,ev/Dynamis - San d'Oria [D]
+ROM/353/60,evsb,fr,ev/Reisenjima Sanctorium
+ROM/354/114,evsb,de,ev/Dynamis - Windurst [D]
+ROM/354/115,evsb,fr,ev/Dynamis - Bastok [D]
+ROM/355/10,evsb,fr,ev/Dynamis - Windurst [D]
+ROM/355/37,evsb,de,ev/Walk of Echoes [P1]
+ROM/355/38,evsb,fr,ev/Dynamis - Jeuno [D]
+ROM/355/52,evsb,de,ev/Gwora - Throne Room
+ROM/355/53,evsb,fr,ev/Walk of Echoes [P1]
+ROM/355/9,evsb,de,ev/Dynamis - Jeuno [D]
+ROM/361/91,evsb,fr,ev/Gwora - Throne Room
+ROM/362/23,evsb,de,ev/Escha - Ru'Aun
+ROM/362/24,evsb,fr,ev/Escha - Zi'Tah
+ROM/374/99,evsb,de,ev/Celennia Memorial Library
+ROM/376/0,evsb,de,ev/Walk of Echoes [P2]
+ROM9/5/125,evsb,de,ev/Eastern Adoulin
+ROM9/5/126,evsb,de,ev/Rala Waterways
+ROM9/5/127,evsb,de,ev/Rala Waterways [U]
+ROM9/6/0,evsb,de,ev/Yahse Hunting Grounds
+ROM9/6/1,evsb,de,ev/Ceizak Battlegrounds
+ROM9/6/10,evsb,de,ev/Cirdas Caverns
+ROM9/6/11,evsb,de,ev/Cirdas Caverns [U]
+ROM9/6/12,evsb,de,ev/Dho Gates
+ROM9/6/13,evsb,de,ev/Woh Gates
+ROM9/6/14,evsb,de,ev/Outer Ra'Kaznar
+ROM9/6/15,evsb,de,ev/Outer Ra'Kaznar [U1]
+ROM9/6/16,evsb,de,ev/Ra'Kaznar Inner Court
+ROM9/6/17,evsb,de,ev/Ra'Kaznar Turris
+ROM9/6/18,evsb,de,ev/Gwora - Corridor
+ROM9/6/2,evsb,de,ev/Foret de Hennetiel
+ROM9/6/20,evsb,de,ev/Mog Garden
+ROM9/6/21,evsb,fr,ev/Western Adoulin
+ROM9/6/22,evsb,fr,ev/Eastern Adoulin
+ROM9/6/23,evsb,fr,ev/Rala Waterways
+ROM9/6/24,evsb,fr,ev/Rala Waterways [U]
+ROM9/6/25,evsb,fr,ev/Yahse Hunting Grounds
+ROM9/6/26,evsb,fr,ev/Ceizak Battlegrounds
+ROM9/6/27,evsb,fr,ev/Foret de Hennetiel
+ROM9/6/28,evsb,fr,ev/Yorcia Weald
+ROM9/6/29,evsb,fr,ev/Yorcia Weald [U]
+ROM9/6/3,evsb,de,ev/Yorcia Weald
+ROM9/6/30,evsb,fr,ev/Morimar Basalt Fields
+ROM9/6/31,evsb,fr,ev/Marjami Ravine
+ROM9/6/32,evsb,fr,ev/Kamihr Drifts
+ROM9/6/33,evsb,fr,ev/Sih Gates
+ROM9/6/34,evsb,fr,ev/Moh Gates
+ROM9/6/35,evsb,fr,ev/Cirdas Caverns
+ROM9/6/36,evsb,fr,ev/Cirdas Caverns [U]
+ROM9/6/37,evsb,fr,ev/Dho Gates
+ROM9/6/38,evsb,fr,ev/Woh Gates
+ROM9/6/39,evsb,fr,ev/Outer Ra'Kaznar
+ROM9/6/4,evsb,de,ev/Yorcia Weald [U]
+ROM9/6/40,evsb,fr,ev/Outer Ra'Kaznar [U1]
+ROM9/6/41,evsb,fr,ev/Ra'Kaznar Inner Court
+ROM9/6/42,evsb,fr,ev/Ra'Kaznar Turris
+ROM9/6/44,evsb,fr,ev/Walk of Echoes [P2]
+ROM9/6/5,evsb,de,ev/Morimar Basalt Fields
+ROM9/6/6,evsb,de,ev/Marjami Ravine
+ROM9/6/7,evsb,de,ev/Kamihr Drifts
+ROM9/6/8,evsb,de,ev/Sih Gates
+ROM9/6/9,evsb,de,ev/Moh Gates
