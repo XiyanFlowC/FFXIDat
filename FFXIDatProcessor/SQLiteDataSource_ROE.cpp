@@ -265,6 +265,7 @@ int SQLiteDataSource::InsertOrGetRoeQuestRecord(uint32_t roe_id)
 		}
 	}
 	sqlite3_finalize(stmt);
+	stmt = nullptr;
 	
 	if (record_id == -1)
 	{
