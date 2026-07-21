@@ -20,7 +20,9 @@ public:
 	{
 		Off,
 		BeforeOriginal,
-		AfterOriginal
+		AfterOriginal,
+		BeforeXenoglossia,
+		AfterXenoglossia,
 	};
 
 	static Config& Instance();
@@ -47,7 +49,7 @@ public:
 	bool IsSrcValidation() const { return srcValidation; }
 	bool IsVerbose() const { return verbose; }
 	bool IsNoName() const { return noname; }
-    CtrlSeqCheckMode GetCtrlSeqCheckMode() const { return ctrlSeqCheckMode; }
+	CtrlSeqCheckMode GetCtrlSeqCheckMode() const { return ctrlSeqCheckMode; }
 	bool IsBilingual() const { return babelCurrentOriginal; }
 	bool IsBabelEnabled() const { return babelCurrentOriginal || babelAlternateOriginal; }
 	bool IsBabelCurrentOriginalEnabled() const { return babelCurrentOriginal; }
@@ -97,7 +99,7 @@ private:
 	bool srcValidation = true;
 	bool verbose = false;
 	bool noname = false;
-    CtrlSeqCheckMode ctrlSeqCheckMode = CtrlSeqCheckMode::Off;
+	CtrlSeqCheckMode ctrlSeqCheckMode = CtrlSeqCheckMode::Off;
 	RosettaMode rosettaMode = RosettaMode::Off;
 	bool babelCurrentOriginal = false;
 	bool babelAlternateOriginal = false;

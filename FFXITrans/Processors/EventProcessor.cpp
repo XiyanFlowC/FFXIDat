@@ -13,6 +13,7 @@
 #include <set>
 #include <map>
 #include <sstream>
+#include <optional>
 #include <CsvFile.h>
 
 namespace fs = std::filesystem;
@@ -228,7 +229,7 @@ bool EventProcessor::StripEndingCtrlSeq(const std::u8string& text,
 	std::u8string& strippedText,
 	std::u8string& endingCtrlSeq)
 {
-	// ÒÑÖªµÄĞĞ½áÊø±ê¼Ç£¨<-> ÏµÁĞ£©£¬°´³¤¶È½µĞòÅÅÁĞ£¨×î³¤ÓÅÏÈÆ¥Åä£©
+	// å·²çŸ¥çš„è¡Œç»“æŸæ ‡è®°ï¼ˆ<-> ç³»åˆ—ï¼‰ï¼ŒæŒ‰é•¿åº¦é™åºæ’åˆ—ï¼ˆæœ€é•¿ä¼˜å…ˆåŒ¹é…ï¼‰
 	static const std::vector<std::u8string> kEndingTags = {
 		u8"<-:20:20:20:20>",
 		u8"<-:20:20>",
@@ -237,24 +238,24 @@ bool EventProcessor::StripEndingCtrlSeq(const std::u8string& text,
 	};
 
 	for (const auto& tag : kEndingTags) {
-		// ¼ì²éÎÄ±¾ÊÇ·ñÒÔµ±Ç° tag ½áÎ²
+		// æ£€æŸ¥æ–‡æœ¬æ˜¯å¦ä»¥å½“å‰ tag ç»“å°¾
 		if (!text.ends_with(tag))
 			continue;
 
-		size_t pos = text.size() - tag.size();          // tag ÔÚ text ÖĞµÄÆğÊ¼Î»ÖÃ
+		size_t pos = text.size() - tag.size();          // tag åœ¨ text ä¸­çš„èµ·å§‹ä½ç½®
 		bool found7F = false;
 		size_t start7F = std::u8string::npos;
 
-		// ¼ì²é tag Ç°ÃæÊÇ·ñ½ôÁÚÒ»¸ö 7F ±ê¼Ç£¨¼´ tag Ç°Ò»¸ö×Ö·ûÊÇ '>'£©
+		// æ£€æŸ¥ tag å‰é¢æ˜¯å¦ç´§é‚»ä¸€ä¸ª 7F æ ‡è®°ï¼ˆå³ tag å‰ä¸€ä¸ªå­—ç¬¦æ˜¯ '>'ï¼‰
 		if (pos > 0 && text[pos - 1] == u8'>') {
-			// ´Ó tag ÆğÊ¼Î»ÖÃÏòÇ°²éÕÒ×î½üµÄ '<'
+			// ä» tag èµ·å§‹ä½ç½®å‘å‰æŸ¥æ‰¾æœ€è¿‘çš„ '<'
 			size_t lt = text.rfind(u8'<', pos - 1);
 			if (lt != std::u8string::npos) {
-				// ¼ì²éÊÇ·ñÎª "<7F:...>" ¸ñÊ½
+				// æ£€æŸ¥æ˜¯å¦ä¸º "<7F:...>" æ ¼å¼
 				if (lt + 4 < pos && text[lt] == u8'<' &&
 					text[lt + 1] == u8'7' && text[lt + 2] == u8'F' &&
 					text[lt + 3] == u8':') {
-					// ÑéÖ¤ÖĞ¼ä²¿·Ö£¨lt+4 µ½ pos-2£©ÊÇ·ñÖ»°üº¬ºÏ·¨×Ö·û£¨Ê®Áù½øÖÆÊı×Ö»òÃ°ºÅ£©
+					// éªŒè¯ä¸­é—´éƒ¨åˆ†ï¼ˆlt+4 åˆ° pos-2ï¼‰æ˜¯å¦åªåŒ…å«åˆæ³•å­—ç¬¦ï¼ˆåå…­è¿›åˆ¶æ•°å­—æˆ–å†’å·ï¼‰
 					bool valid = true;
 					for (size_t i = lt + 4; i < pos - 1; ++i) {
 						char8_t c = text[i];
@@ -266,7 +267,7 @@ bool EventProcessor::StripEndingCtrlSeq(const std::u8string& text,
 							break;
 						}
 					}
-					if (valid && (pos - lt) > 5) { // ÖÁÉÙ "<7F:>" ³¤¶ÈÎª5
+					if (valid && (pos - lt) > 5) { // è‡³å°‘ "<7F:>" é•¿åº¦ä¸º5
 						found7F = true;
 						start7F = lt;
 					}
@@ -275,19 +276,19 @@ bool EventProcessor::StripEndingCtrlSeq(const std::u8string& text,
 		}
 
 		if (found7F) {
-			// °şÀë 7F ±ê¼Ç + ĞĞ½áÊø±ê¼Ç
+			// å‰¥ç¦» 7F æ ‡è®° + è¡Œç»“æŸæ ‡è®°
 			strippedText = text.substr(0, start7F) + text.substr(pos + tag.size());
 			endingCtrlSeq = text.substr(start7F, (pos + tag.size()) - start7F);
 		}
 		else {
-			// ½ö°şÀëĞĞ½áÊø±ê¼Ç
+			// ä»…å‰¥ç¦»è¡Œç»“æŸæ ‡è®°
 			strippedText = text.substr(0, pos) + text.substr(pos + tag.size());
 			endingCtrlSeq = tag;
 		}
 		return true;
 	}
 
-	// Î´ÕÒµ½ÈÎºÎĞĞ½áÊø±ê¼Ç
+	// æœªæ‰¾åˆ°ä»»ä½•è¡Œç»“æŸæ ‡è®°
 	strippedText = text;
 	endingCtrlSeq = u8"";
 	return false;
@@ -295,7 +296,7 @@ bool EventProcessor::StripEndingCtrlSeq(const std::u8string& text,
 
 bool EventProcessor::IsSelectPrompt(const std::u8string& text)
 {
-	// <sel> ÊÇÑ¡Ïî²Ëµ¥±ê¼Ç
+	// <sel> æ˜¯é€‰é¡¹èœå•æ ‡è®°
 	return text.find(u8"<sel>") != std::u8string::npos;
 }
 bool IsValidUTF8(const std::u8string& str) {
@@ -353,7 +354,7 @@ static std::vector<std::u8string> SplitLines(const std::u8string& text)
 	return result;
 }
 
-// ASCII ¿í¶È = 1£¬ÆäËü UTF-8 ×Ö·û¿í¶È = 2
+// ASCII å®½åº¦ = 1ï¼Œå…¶å®ƒ UTF-8 å­—ç¬¦å®½åº¦ = 2
 static int DisplayWidth(std::u8string_view text)
 {
 	int width = 0;
@@ -400,37 +401,37 @@ std::u8string EventProcessor::MakeRosettaText(
 	std::u8string bareOriginal, bareTranslated;
 	std::u8string endingCtrlSeq;
 
-	// Èç¹ûÒëÎÄ°şÀëÊ§°Ü£¬Ö±½Ó·µ»ØÔ­ÎÄ
+	// å¦‚æœè¯‘æ–‡å‰¥ç¦»å¤±è´¥ï¼Œç›´æ¥è¿”å›åŸæ–‡
 	if (!StripEndingCtrlSeq(translatedText, bareTranslated, endingCtrlSeq))
 		return translatedText;
 
-	// Èç¹ûÔ­ÎÄ°şÀëÊ§°Ü£¬Ò²Ö±½Ó·µ»ØÔ­ÎÄ
+	// å¦‚æœåŸæ–‡å‰¥ç¦»å¤±è´¥ï¼Œä¹Ÿç›´æ¥è¿”å›åŸæ–‡
 	std::u8string dummy;
 	if (!StripEndingCtrlSeq(originalText, bareOriginal, dummy))
 		return translatedText;
 
 	if (IsSelectPrompt(bareOriginal))
 	{
-		// ===== ´¦ÀíÑ¡ÏîĞĞ =====
-		// ½á¹¹£ºÒıµ¼ÎÄ±¾<lf><sel>Ñ¡Ïî1<lf>Ñ¡Ïî2<lf>...<7F:XX><->
+		// ===== å¤„ç†é€‰é¡¹è¡Œ =====
+		// ç»“æ„ï¼šå¼•å¯¼æ–‡æœ¬<lf><sel>é€‰é¡¹1<lf>é€‰é¡¹2<lf>...<7F:XX><->
 
-		// ÌáÈ¡ Prompt Ç°µÄÄÚÈİ£¨Òıµ¼ÎÄ±¾ + <lf>£©
+		// æå– Prompt å‰çš„å†…å®¹ï¼ˆå¼•å¯¼æ–‡æœ¬ + <lf>ï¼‰
 		size_t selPos = bareOriginal.find(u8"<sel>");
 		if (selPos == std::u8string::npos) [[unlikely]]
-			return translatedText;  // °²È«¶µµ×£¬²»Ó¦·¢Éú
+			return translatedText;  // å®‰å…¨å…œåº•ï¼Œä¸åº”å‘ç”Ÿ
 		if (translatedText.find(u8"<sel>") == std::u8string::npos)
-			return translatedText;  // Ô­Ê¼Êı¾İÒì³£
+			return translatedText;  // åŸå§‹æ•°æ®å¼‚å¸¸
 
 		std::u8string promptSec = bareOriginal.substr(0, selPos);
 		std::u8string transPromptSec = bareTranslated.substr(0,
 			bareTranslated.find(u8"<sel>"));
 
-		// ÌáÈ¡Ñ¡Ïî²¿·Ö£¨<sel> Ö®ºóµ½ĞĞÎ²£©
+		// æå–é€‰é¡¹éƒ¨åˆ†ï¼ˆ<sel> ä¹‹ååˆ°è¡Œå°¾ï¼‰
 		std::u8string optionsSec = bareOriginal.substr(selPos + 5);
 		std::u8string transOptionsSec = bareTranslated.substr(
 			bareTranslated.find(u8"<sel>") + 5);
 
-		// °´ <lf> ·Ö¸îÑ¡Ïî
+		// æŒ‰ <lf> åˆ†å‰²é€‰é¡¹
 		auto splitOptions = [](const std::u8string& sec) -> std::vector<std::u8string> {
 			std::vector<std::u8string> opts;
 			size_t pos = 0;
@@ -448,22 +449,22 @@ std::u8string EventProcessor::MakeRosettaText(
 		std::vector<std::u8string> options = splitOptions(optionsSec);
 		std::vector<std::u8string> transOptions = splitOptions(transOptionsSec);
 
-		// Èç¹ûÑ¡ÏîÊıÁ¿²»Ò»ÖÂ£¬¾Ü¾øºÏ²¢£¬Ö±½Ó·µ»ØÒëÎÄ
+		// å¦‚æœé€‰é¡¹æ•°é‡ä¸ä¸€è‡´ï¼Œæ‹’ç»åˆå¹¶ï¼Œç›´æ¥è¿”å›è¯‘æ–‡
 		if (options.size() != transOptions.size())
 			return translatedText;
 
-		// ¹¹½¨ Rosetta ÎÄ±¾
+		// æ„å»º Rosetta æ–‡æœ¬
 		std::u8string rosettaText = transPromptSec + u8"<sel>";
 		for (size_t i = 0; i < options.size(); ++i)
 		{
 			if (insMode == 0)
 			{
-				// ÒëÎÄ + ·Ö¸ô·û + Ô­ÎÄ
+				// è¯‘æ–‡ + åˆ†éš”ç¬¦ + åŸæ–‡
 				rosettaText += transOptions[i] + u8"|" + options[i];
 			}
 			else  // insMode == 1
 			{
-				// Ô­ÎÄ + ·Ö¸ô·û + ÒëÎÄ
+				// åŸæ–‡ + åˆ†éš”ç¬¦ + è¯‘æ–‡
 				rosettaText += options[i] + u8"|" + transOptions[i];
 			}
 			if (i < options.size() - 1)
@@ -473,16 +474,16 @@ std::u8string EventProcessor::MakeRosettaText(
 		return rosettaText + endingCtrlSeq;
 	}
 
-	// ===== ´¦ÀíÆÕÍ¨ĞĞ =====
+	// ===== å¤„ç†æ™®é€šè¡Œ =====
 
-	constexpr int NAME_INDENT = 9; // µÚÒ»ĞĞÔ¤ÁôÃû×Ö¿í¶È£¨ASCII£©
+	constexpr int NAME_INDENT = 9; // ç¬¬ä¸€è¡Œé¢„ç•™åå­—å®½åº¦ï¼ˆASCIIï¼‰
 
 	auto originalLines = SplitLines(bareOriginal);
 	auto translatedLines = SplitLines(bareTranslated);
 
 	if (originalLines.size() == 1 && translatedLines.size() != 1)
 	{
-		// ¶ÔÓ¢ÓïÎÄ¼ş£ºÍ¨³£Ã»ÓĞ»»ĞĞ£¬Ö±½ÓÊä³öÒ»ĞĞÔ­ÎÄ£¬²¢½«ÒëÎÄµÄ<lf>ÍÑÈ¥Ö±½ÓÆ´½Ó·µ»Ø£º
+		// å¯¹è‹±è¯­æ–‡ä»¶ï¼šé€šå¸¸æ²¡æœ‰æ¢è¡Œï¼Œç›´æ¥è¾“å‡ºä¸€è¡ŒåŸæ–‡ï¼Œå¹¶å°†è¯‘æ–‡çš„<lf>è„±å»ç›´æ¥æ‹¼æ¥è¿”å›ï¼š
 		std::u8string result;
 		if (insMode == 0)
 		{
@@ -507,36 +508,36 @@ std::u8string EventProcessor::MakeRosettaText(
 		}
 	}
 
-	// ¼ÆËã×ó²àĞèÒªÕ¼ÓÃµÄ×î´óÏÔÊ¾¿í¶È
+	// è®¡ç®—å·¦ä¾§éœ€è¦å ç”¨çš„æœ€å¤§æ˜¾ç¤ºå®½åº¦
 	int targetWidth = 0;
 
 	if (insMode == 0)
 	{
-		// ×ó²àÎªÒëÎÄ
+		// å·¦ä¾§ä¸ºè¯‘æ–‡
 		for (size_t i = 0; i < translatedLines.size(); ++i)
 		{
 			int w = DisplayWidth(translatedLines[i]);
 
-			if (i == 0) w += NAME_INDENT; // µÚÒ»ĞĞÔ¤ÁôÃû×Ö¿í¶È
+			if (i == 0) w += NAME_INDENT; // ç¬¬ä¸€è¡Œé¢„ç•™åå­—å®½åº¦
 
 			targetWidth = std::max(targetWidth, w);
 		}
 	}
 	else
 	{
-		// ×ó²àÎªÔ­ÎÄ
+		// å·¦ä¾§ä¸ºåŸæ–‡
 		for (size_t i = 0; i < originalLines.size(); ++i)
 		{
 			int w = DisplayWidth(originalLines[i]);
 
-			if (i == 0) w += NAME_INDENT; // µÚÒ»ĞĞÔ¤ÁôÃû×Ö¿í¶È
+			if (i == 0) w += NAME_INDENT; // ç¬¬ä¸€è¡Œé¢„ç•™åå­—å®½åº¦
 
 			targetWidth = std::max(targetWidth, w);
 		}
 	}
 
 	if (targetWidth > 50)
-		targetWidth = 50; // ³¬¹ı 40 ¸ö×Ö·û¿í¶ÈÊ±£¬Áî³¬¹ıµÄĞĞÖ±½ÓÆ´½Ó£¬²»ÔÙ¶ÔÆë
+		targetWidth = 50; // è¶…è¿‡ 40 ä¸ªå­—ç¬¦å®½åº¦æ—¶ï¼Œä»¤è¶…è¿‡çš„è¡Œç›´æ¥æ‹¼æ¥ï¼Œä¸å†å¯¹é½
 
 	std::u8string result;
 
@@ -570,7 +571,7 @@ std::u8string EventProcessor::MakeRosettaText(
 		if (i == 0)
 			pad -= NAME_INDENT;
 
-		// ÖÁÉÙÁôÒ»¸ö¿Õ¸ñ
+		// è‡³å°‘ç•™ä¸€ä¸ªç©ºæ ¼
 		if (pad < 1)
 			pad = 1;
 
@@ -618,6 +619,34 @@ bool EventProcessor::Process(
 	bool useJaReference = TryGetJapaneseReference(fileDef, jpDefsByComment, referenceTexts);
 
 	auto* zone = defs.Find(zoneName);
+
+	Config::RosettaMode rosettaMode = Config::Instance().GetRosettaMode();
+	std::optional<EventStringBase> xenoglossiaEvsb;
+	if ((rosettaMode == Config::RosettaMode::BeforeXenoglossia || rosettaMode == Config::RosettaMode::AfterXenoglossia)
+		&& zone && !fileDef.comment.starts_with(u8"gev/"))
+	{
+		std::string altEvsbPath = cfg.IsEnglishMode() ? zone->evsb_ja_path : zone->evsb_en_path;
+		if (!altEvsbPath.empty())
+		{
+			std::string altDatPath = BuildDatPath(altEvsbPath);
+			EventStringBase altEvsb(altDatPath);
+			altEvsb.Read();
+			if (altEvsb.Size() > 0)
+			{
+				xenoglossiaEvsb = std::move(altEvsb);
+				Logger::Instance().Info("EventProcessor: Xenoglossia alternate language evsb loaded: " + altDatPath + " (" + std::to_string(xenoglossiaEvsb->Size()) + " strings)");
+			}
+			else
+			{
+				Logger::Instance().Warning("EventProcessor: Xenoglossia alternate evsb is empty: " + altDatPath);
+			}
+		}
+		else
+		{
+			Logger::Instance().Warning("EventProcessor: Xenoglossia alternate language path not found for zone: " + zoneName);
+		}
+	}
+
 	if (!zone || zone->evev_path.empty())
 	{
 		size_t textIdx = 0;
@@ -636,6 +665,23 @@ bool EventProcessor::Process(
 			else
 			{
 				translated = db.GetTranslation(s);
+			}
+			if (rosettaMode != Config::RosettaMode::Off
+				&& !fileDef.comment.starts_with(u8"gev/"))
+			{
+				if (rosettaMode == Config::RosettaMode::BeforeXenoglossia || rosettaMode == Config::RosettaMode::AfterXenoglossia)
+				{
+					std::u8string altText = s;
+					if (xenoglossiaEvsb.has_value() && textIdx < xenoglossiaEvsb->Size())
+						altText = (*xenoglossiaEvsb)[textIdx];
+					int insMode = (rosettaMode == Config::RosettaMode::AfterXenoglossia) ? 1 : 0;
+					translated = MakeRosettaText(s, altText, u8"|", insMode);
+				}
+				else
+				{
+					int insMode = (rosettaMode == Config::RosettaMode::AfterOriginal) ? 1 : 0;
+					translated = MakeRosettaText(s, translated, u8"|", insMode);
+				}
 			}
 			s = finalTextProcessor.Process(translated, s, static_cast<int64_t>(textIdx + 1), 1);
 			++textIdx;
@@ -769,10 +815,22 @@ bool EventProcessor::Process(
 				result = db.GetTranslation(s);
 			}
 		}
-		if (Config::Instance().GetRosettaMode() != Config::RosettaMode::Off
+		if (rosettaMode != Config::RosettaMode::Off
 			&& !fileDef.comment.starts_with(u8"gev/"))
 		{
-			result = MakeRosettaText(s, result, u8"|", Config::Instance().GetRosettaMode() == Config::RosettaMode::AfterOriginal ? 1 : 0);
+			if (rosettaMode == Config::RosettaMode::BeforeXenoglossia || rosettaMode == Config::RosettaMode::AfterXenoglossia)
+			{
+				std::u8string altText = s;
+				if (xenoglossiaEvsb.has_value() && i < xenoglossiaEvsb->Size())
+					altText = (*xenoglossiaEvsb)[i];
+				int insMode = (rosettaMode == Config::RosettaMode::AfterXenoglossia) ? 1 : 0;
+				result = MakeRosettaText(s, altText, u8"|", insMode);
+			}
+			else
+			{
+				int insMode = (rosettaMode == Config::RosettaMode::AfterOriginal) ? 1 : 0;
+				result = MakeRosettaText(s, result, u8"|", insMode);
+			}
 		}
 		s = finalTextProcessor.Process(result, s, static_cast<int64_t>(i + 1), 1);
 	}

@@ -251,6 +251,39 @@ ROM/200/50,dmsg,jp,Multi Column,1|3|5
 
 除 `dmsg` 外，部分结构化类型在当前实现中也会使用该字段进行列级控制。
 
+#### Rosetta 对照模式（双语显示）
+
+Rosetta 模式用于在游戏中同时显示原文和译文，方便对照阅读。通过 `config.ini` 中的 `rosetta` 键启用，仅对事件对话（evsb）文件生效。
+
+**模式说明：**
+
+| 值 | 效果 | 示例 |
+|------|------|------|
+| `off` | 关闭罗斯塔模式（默认） | 仅显示译文 |
+| `before` | 译文在前，原文在后 | `译文 ｜原文` |
+| `after` | 原文在前，译文在后 | `原文 ｜译文` |
+| `xenoglossia` | 异种语言对照（译文→目标语言文本） | 日文模式：`英文 ｜日文`；英文模式：`日文 ｜英文` |
+| `xenoglossia_after` | 异种语言对照（原文在前） | 日文模式：`日文 ｜英文`；英文模式：`英文 ｜日文` |
+
+**配置示例：**
+```ini
+; 开启异种语言对照（日文模式下显示英文对照，英文模式下显示日文对照）
+rosetta=xenoglossia
+
+; 或使用 after 变体（原文在前）
+rosetta=xenoglossia_after
+```
+
+**异种语言模式（xenoglossia）工作原理：**
+
+1. 根据当前语言模式自动选择对照语言：
+   - 日文模式（`english_mode=false`）：载入对应英文 DAT 文件中的文本
+   - 英文模式（`english_mode=true`）：载入对应日文 DAT 文件中的文本
+2. 匹配方式基于 `defs.csv` 中的 comment 字段，查找同一区域对应语言的 evsb 文件
+3. 若无法找到对应语言的平行文本（缺少 defs.csv 定义或文件不存在），则回退使用当前语言的原文作为对照
+
+> **注意** - 异种语言模式需要在 `defs.csv` 中同时定义日文和英文对应的 evsb 条目。程序会根据 comment 自动匹配目标语言的文件路径。
+
 ## 文件结构
 
 ### 基本目录结构
@@ -308,7 +341,8 @@ HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\PlayOnlineUS\InstallFolder
 | `ejref_tolerance` | 布尔值 | 启用更宽松的 EJ 参考匹配处理 | `ejref_tolerance=true` |
 | `verbose` | 布尔值 | 输出更详细的处理日志 | `verbose=true` |
 | `noname` | 布尔值 | 跳过名称字段，只处理描述等文本 | `noname=true` |
-| `babel` | 字符串 | 控制是否在译文前附带原文；支持 `false`、`bilingual`、`exotic`、`trilingual` 等值 | `babel=trilingual` |
+| `babel` | 字符串 | 控制是否在物品说明中附带原文；支持 `false`、`bilingual`（双语对照）、`exotic`（异种语言对照）、`trilingual`（全对照） 等值 | `babel=trilingual` |
+| `rosetta` | 字符串 | 罗塞塔对照模式；支持 `off`、`before`、`after`、`xenoglossia`、`xenoglossia_after` | `rosetta=xenoglossia` |
 | `bilingual` | 布尔值 | 旧版兼容配置，等价于启用当前语言原文前缀 | `bilingual=true` |
 | `excludes` | 列表 | 按 `comment` 排除定义项，支持 `,` 分隔和通配符 | `excludes=ev/*,sys/debug_*` |
 | `ctrl_seq_check` | 字符串 | 控制序列检查模式；`off`/`skip`/`strict` | `ctrl_seq_check=strict` |

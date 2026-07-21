@@ -368,6 +368,14 @@ bool Config::LoadFromFile(const fs::path& configPath)
 			{
 				rosettaMode = RosettaMode::AfterOriginal;
 			}
+			else if (normalized == L"xenoglossia" || normalized == L"xenoglossia_before" || normalized == L"3")
+			{
+				rosettaMode = RosettaMode::BeforeXenoglossia;
+			}
+			else if (normalized == L"xenoglossia_after" || normalized == L"4")
+			{
+				rosettaMode = RosettaMode::AfterXenoglossia;
+			}
 			else
 			{
 				std::wcerr << L"无法识别的罗塞塔配置值：" << value << L"，将继续使用默认值 off。" << std::endl;
@@ -503,7 +511,7 @@ std::string Config::DescribeStateForLog() const
 		<< ", monkJobAbbreviated=" << monkJobAbbreviated
 		<< ", samuraiJobSpecial=" << samuraiJobSpecial
 		<< ", checkSrc=" << checkSrc
-		<< ", rosettaMode=" << (rosettaMode == RosettaMode::Off ? "off" : (rosettaMode == RosettaMode::BeforeOriginal ? "before" : "after"))
+		<< ", rosettaMode=" << (rosettaMode == RosettaMode::Off ? "off" : (rosettaMode == RosettaMode::BeforeOriginal ? "before" : (rosettaMode == RosettaMode::AfterOriginal ? "after" : (rosettaMode == RosettaMode::BeforeXenoglossia ? "xenoglossia" : "xenoglossia_after"))))
 		<< ", excludes=[";
 
 	bool first = true;
