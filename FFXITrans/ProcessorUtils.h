@@ -44,6 +44,7 @@ namespace ProcessorUtils
     std::u8string BuildInsToken(const std::vector<std::u8string>& parts);
     std::u8string BuildInsKey(const std::vector<std::u8string>& parts);
     bool TryAdaptInsCategoryForEnglish(const std::u8string& englishSource, std::u8string& translated);
+    bool TryAdaptInsCategoryForCurrentLanguage(const std::u8string& sourceText, std::u8string& foreignText);
 
     // Collect strings from various file types
     std::vector<std::u8string> CollectStrings(const std::filesystem::path& datPath, const std::u8string& type, const std::u8string& cellIndicesStr);

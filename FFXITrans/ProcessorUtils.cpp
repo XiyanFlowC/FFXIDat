@@ -264,6 +264,42 @@ namespace ProcessorUtils
             return false;
         }
 
+        bool TryMapEnglishInsTypeToJapaneseMiddle(std::u8string& type)
+        {
+            if (type == u8"23" || type == u8"24" || type == u8"25")
+            {
+                type = u8"13";
+                return true;
+            }
+            if (type == u8"26" || type == u8"27" || type == u8"28")
+            {
+                type = u8"14";
+                return true;
+            }
+            if (type == u8"30")
+            {
+                type = u8"15";
+                return true;
+            }
+            if (type == u8"33" || type == u8"36")
+            {
+                type = u8"16";
+                return true;
+            }
+            if (type == u8"42" || type == u8"45")
+            {
+                type = u8"17";
+                return true;
+            }
+            if (type == u8"17" || type == u8"18")
+            {
+                type = u8"1A";
+                return true;
+            }
+
+            return false;
+        }
+
         void NormalizeEnglishInsTypeToMiddle(std::u8string& type)
         {
             if (type == u8"24" || type == u8"25")
@@ -284,18 +320,32 @@ namespace ProcessorUtils
             }
         }
 
-        bool TryBuildEnglishInsTokenParts(
-            const InsToken& translatedToken,
+        bool TryMapForeignInsTypeToCurrent(std::u8string& type)
+        {
+            if (Config::Instance().IsEnglishMode())
+                return TryMapJapaneseInsTypeToEnglishMiddle(type);
+
+            return TryMapEnglishInsTypeToJapaneseMiddle(type);
+        }
+
+        void NormalizeCurrentInsTypeToMiddle(std::u8string& type)
+        {
+            if (Config::Instance().IsEnglishMode())
+                NormalizeEnglishInsTypeToMiddle(type);
+        }
+
+        bool TryBuildCurrentInsTokenParts(
+            const InsToken& foreignToken,
             const std::map<std::u8string, std::vector<std::u8string>>& sourcePartsByVar,
             std::vector<std::u8string>& tokenParts)
         {
-            tokenParts = translatedToken.parts;
-            if (tokenParts.size() >= 2 && TryMapJapaneseInsTypeToEnglishMiddle(tokenParts[1]))
+            tokenParts = foreignToken.parts;
+            if (tokenParts.size() >= 2 && TryMapForeignInsTypeToCurrent(tokenParts[1]))
             {
                 return true;
             }
 
-            const auto key = BuildInsKey(translatedToken.parts);
+            const auto key = BuildInsKey(foreignToken.parts);
             const auto sourceItr = sourcePartsByVar.find(key);
             if (sourceItr == sourcePartsByVar.end())
             {
@@ -310,19 +360,19 @@ namespace ProcessorUtils
 
             if (tokenParts.size() >= 2)
             {
-                NormalizeEnglishInsTypeToMiddle(tokenParts[1]);
+                NormalizeCurrentInsTypeToMiddle(tokenParts[1]);
             }
 
             return true;
         }
     }
 
-    bool TryAdaptInsCategoryForEnglish(const std::u8string& englishSource, std::u8string& translated)
+    bool TryAdaptInsCategoryForCurrentLanguage(const std::u8string& sourceText, std::u8string& foreignText)
     {
-        auto sourceTokens = ParseInsTokens(englishSource);
-        auto translatedTokens = ParseInsTokens(translated);
+        auto sourceTokens = ParseInsTokens(sourceText);
+        auto foreignTokens = ParseInsTokens(foreignText);
 
-        if (translatedTokens.empty())
+        if (foreignTokens.empty())
             return true;
 
         std::map<std::u8string, std::vector<std::u8string>> sourcePartsByVar;
@@ -343,31 +393,36 @@ namespace ProcessorUtils
             }
         }
 
-        for (const auto& translatedToken : translatedTokens)
+        for (const auto& foreignToken : foreignTokens)
         {
-            if (translatedToken.parts.size() < 5)
+            if (foreignToken.parts.size() < 5)
             {
-                auto tokenStr = BuildInsToken(translatedToken.parts);
+                auto tokenStr = BuildInsToken(foreignToken.parts);
                 if (!sourceShortTokens.contains(tokenStr))
                     return false;
             }
         }
 
-        for (auto it = translatedTokens.rbegin(); it != translatedTokens.rend(); ++it)
+        for (auto it = foreignTokens.rbegin(); it != foreignTokens.rend(); ++it)
         {
             auto& token = *it;
             if (token.parts.size() < 5)
                 continue;
 
             std::vector<std::u8string> tokenParts;
-            if (!TryBuildEnglishInsTokenParts(token, sourcePartsByVar, tokenParts))
+            if (!TryBuildCurrentInsTokenParts(token, sourcePartsByVar, tokenParts))
                 return false;
 
             auto newToken = BuildInsToken(tokenParts);
-            translated.replace(token.start, token.end - token.start, newToken);
+            foreignText.replace(token.start, token.end - token.start, newToken);
         }
 
         return true;
+    }
+
+    bool TryAdaptInsCategoryForEnglish(const std::u8string& englishSource, std::u8string& translated)
+    {
+        return TryAdaptInsCategoryForCurrentLanguage(englishSource, translated);
     }
 
     ItemSpecType GetItemSpecType(const std::u8string& type)

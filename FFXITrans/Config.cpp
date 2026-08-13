@@ -360,7 +360,7 @@ bool Config::LoadFromFile(const fs::path& configPath)
 			{
 				rosettaMode = RosettaMode::Off;
 			}
-			else if (normalized == L"before" || normalized == L"1")
+			else if (normalized == L"before" || normalized == L"stone" || normalized == L"1")
 			{
 				rosettaMode = RosettaMode::BeforeOriginal;
 			}

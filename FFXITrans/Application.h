@@ -4,7 +4,7 @@
 #include <map>
 #include "ProcessorUtils.h"
 
-#define VERSION "0.39.1"
+#define VERSION "0.40"
 
 class Application
 {

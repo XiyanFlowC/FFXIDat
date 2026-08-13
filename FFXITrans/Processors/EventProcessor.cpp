@@ -673,7 +673,14 @@ bool EventProcessor::Process(
 				{
 					std::u8string altText = s;
 					if (xenoglossiaEvsb.has_value() && textIdx < xenoglossiaEvsb->Size())
+					{
 						altText = (*xenoglossiaEvsb)[textIdx];
+						if (!ProcessorUtils::TryAdaptInsCategoryForCurrentLanguage(s, altText))
+						{
+							Logger::Instance().Warning("EventProcessor: Xenoglossia ins category adaptation failed, fallback to current language for evsb string #" + std::to_string(textIdx + 1) + " of " + zoneName);
+							altText = s;
+						}
+					}
 					int insMode = (rosettaMode == Config::RosettaMode::AfterXenoglossia) ? 1 : 0;
 					translated = MakeRosettaText(s, altText, u8"|", insMode);
 				}
@@ -822,7 +829,14 @@ bool EventProcessor::Process(
 			{
 				std::u8string altText = s;
 				if (xenoglossiaEvsb.has_value() && i < xenoglossiaEvsb->Size())
+				{
 					altText = (*xenoglossiaEvsb)[i];
+					if (!ProcessorUtils::TryAdaptInsCategoryForCurrentLanguage(s, altText))
+					{
+						Logger::Instance().Warning("EventProcessor: Xenoglossia ins category adaptation failed, fallback to current language for evsb string #" + std::to_string(i + 1) + " of " + zoneName);
+						altText = s;
+					}
+				}
 				int insMode = (rosettaMode == Config::RosettaMode::AfterXenoglossia) ? 1 : 0;
 				result = MakeRosettaText(s, altText, u8"|", insMode);
 			}
