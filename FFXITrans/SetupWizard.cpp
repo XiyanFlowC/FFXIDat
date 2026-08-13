@@ -437,18 +437,26 @@ namespace
         CsvFile defs(defsPath, std::ios::in | std::ios::binary);
         while (!defs.IsEof())
         {
-            std::u8string path = defs.NextCell();
-            if (path[0] == '#') continue;
-            std::u8string type = defs.NextCell();
-            std::u8string lang = defs.NextCell();
-            std::u8string comment = defs.NextCell();
-            defs.NextLine();
+            try
+            {
+                std::u8string path = defs.NextCell();
+                if (path[0] == '#') continue;
+                std::u8string type = defs.NextCell();
+                std::u8string lang = defs.NextCell();
+                std::u8string comment = defs.NextCell();
+                defs.NextLine();
 
-            if (path.empty() || type.empty() || lang.empty() || comment.empty())
+                if (path.empty() || type.empty() || lang.empty() || comment.empty())
+                    continue;
+
+                if (unique.insert(comment).second)
+                    comments.push_back(comment);
+            }
+            catch (std::runtime_error& e)
+            {
+                defs.NextLine();
                 continue;
-
-            if (unique.insert(comment).second)
-                comments.push_back(comment);
+            }
         }
 
         std::sort(comments.begin(), comments.end());
