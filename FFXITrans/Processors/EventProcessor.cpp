@@ -682,7 +682,7 @@ bool EventProcessor::Process(
 						}
 					}
 					int insMode = (rosettaMode == Config::RosettaMode::AfterXenoglossia) ? 1 : 0;
-					translated = MakeRosettaText(s, altText, u8"|", insMode);
+					translated = MakeRosettaText(altText, translated, u8"|", insMode);
 				}
 				else
 				{
@@ -838,7 +838,7 @@ bool EventProcessor::Process(
 					}
 				}
 				int insMode = (rosettaMode == Config::RosettaMode::AfterXenoglossia) ? 1 : 0;
-				result = MakeRosettaText(s, altText, u8"|", insMode);
+				result = MakeRosettaText(altText, result, u8"|", insMode);
 			}
 			else
 			{

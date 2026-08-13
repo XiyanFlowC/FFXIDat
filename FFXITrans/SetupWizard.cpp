@@ -438,6 +438,7 @@ namespace
         while (!defs.IsEof())
         {
             std::u8string path = defs.NextCell();
+            if (path[0] == '#') continue;
             std::u8string type = defs.NextCell();
             std::u8string lang = defs.NextCell();
             std::u8string comment = defs.NextCell();
