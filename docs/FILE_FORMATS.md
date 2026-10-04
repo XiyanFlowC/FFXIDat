@@ -259,7 +259,7 @@ Each entry consists of:
 
 #### File Structure
 
-The file consists of a sequence of `ItemEntry` structures, each representing a single item. The entire file is encrypted using a byte-wise rotate-right-by-5-bits (ROR5) operation. See [`FFXIDat/ItemData.cpp`](../FFXIDat/ItemData.cpp), functions `decryptRor5` and `encryptRol5`.
+The file is a sequence of fixed size slots, each holding one item record. The whole file is encrypted with a byte-wise rotate-right-by-5-bits (ROR5) operation that is applied to every slot. See `slotfile::Ror5Cipher` in [`FFXIDat/SlotFile.h`](../FFXIDat/SlotFile.h).
 
 ```
 [ItemEntry 1][ItemEntry 2]...[ItemEntry N]
@@ -267,25 +267,31 @@ The file consists of a sequence of `ItemEntry` structures, each representing a s
 
 #### Encryption
 
-All bytes in the file are encrypted using ROR5. On reading, each byte is rotated right by 5 bits; on writing, the inverse (ROL5) is applied. This is handled automatically by the code unless `encryptionSuppression` is enabled. See [`FFXIDat/ItemData.cpp`](../FFXIDat/ItemData.cpp).
+All bytes in the file are encrypted using ROR5. On reading, each byte is rotated right by 5 bits; on writing, the inverse (ROL5) is applied. This is handled automatically unless `encryptionSuppression` is enabled. See `slotfile::Ror5Cipher` in [`FFXIDat/SlotFile.h`](../FFXIDat/SlotFile.h).
 
 #### Entry Format
 
-Each entry is defined by the following structure (see [`FFXIDat/ItemData.h`](../FFXIDat/ItemData.h)):
+The v30 entry (`itmfmt::v30::Entry` in [`FFXIDat/ItemFormatV30.h`](../FFXIDat/ItemFormatV30.h)) is:
 
 ```cpp
-struct ItemEntry {
-    ItemHeader header;           // Flags and basic properties (bitfields)
-    ItemSpecData spec;           // Type-specific data (626 bytes, union)
-    uint32_t image_length;       // Actual icon data size
-    char image_data[2427];       // Icon bitmap (DXT-compressed, see Image.h)
-    uint8_t end_marker;          // Always 0xFF
+struct Entry {
+    Header header;               // 16 bytes: id, two flag bytes, extended_flags,
+                                 //           stack_size, item_type, resource_id, valid_targets
+    SpecData spec;               // 624 bytes, union of the eight per type specs
+    uint32_t image_length;       // offset 640: actual icon data size
+    char image_data[4475];       // offset 644: icon bitmap (DXT-compressed, see Image.h)
+    uint8_t end_marker;          // offset 5119: always 0xFF
 };
 ```
 
+The older layouts (`v10`, `v20`) use a 14 byte header (the same fields without `extended_flags`), a
+626 byte spec union and a 2427 byte icon area, which is why their slot is 0xC00 bytes. Their spec
+area is kept as opaque bytes: only the header and the position of the text record are modelled, so
+those records are rewritten byte for byte without guessing their field meanings.
+
 ##### ItemHeader
 
-The `ItemHeader` contains the item ID and a series of bitfields for flags (e.g., rare, ex, inscribable), stack size, item type, resource ID, and valid targets. See the `ItemHeader` struct in [`FFXIDat/ItemData.h`](../FFXIDat/ItemData.h).
+The header carries the item ID, two bytes of flag bitfields (e.g., rare, ex, inscribable), and the 16 bit fields `extended_flags` (v30 only, at offset 6), `stack_size`, `item_type`, `resource_id` and `valid_targets` (offsets 8/10/12/14 in v30, 6/8/10/12 in v10 and v20). See `itmfmt::v30::Header` in [`FFXIDat/ItemFormatV30.h`](../FFXIDat/ItemFormatV30.h); [`FFXIDat/ItemData.h`](../FFXIDat/ItemData.h) re-exports it as `ItemHeader`.
 
 ##### ItemSpecData
 
@@ -293,12 +299,14 @@ This is a union of several possible structures, selected according to the item t
 
 ##### Text Fields (Name, Description, etc.)
 
-Text fields are stored as a `Record` structure within the appropriate spec. The format of the `Record` varies by language:
+Text fields are stored as a `Record` structure at the text offset of the record version (see the table below). The number and meaning of the cells depends on the language of the table:
 
 - **Japanese files**: Two cells, both strings: `[Name, Description]`
 - **English files**: Five or more cells: `[Name, LogFlag (int), Singular, Plural, Description]`
+- **French files**: Six cells (name, log flag, singular, plural, and the description in cell 5)
+- **German files**: Nine cells (description in cell 8)
 
-The code provides accessors for these fields (see `ItemDatum` class in [`FFXIDat/ItemData.h`](../FFXIDat/ItemData.h)), which automatically select the correct cell based on the file format.
+The datum (`itmfmt::Datum`) provides accessors for these fields (`name`, `name_sg`, `name_pl`, `description`, `logFlag`), which pick the cell from the cell count they observe. See [`FFXIDat/ItemFormatV30.h`](../FFXIDat/ItemFormatV30.h).
 
 ##### Job, Race, and Equipment Slot Applicability
 
@@ -306,24 +314,37 @@ These are stored as bitfields within the spec structures. See `ItemJobApplicabil
 
 ##### Image Data
 
-The icon for each item is stored as a DXT-compressed bitmap in the `image_data` array. The actual length is given by `image_length`. The code validates that the length does not exceed the array size. See `Image` handling in [`FFXIDat/Image.h`](../FFXIDat/Image.h) and usage in [`FFXIDat/ItemData.cpp`](../FFXIDat/ItemData.cpp).
+The icon for each item is stored as a DXT-compressed bitmap in the `image_data` array at offset 644. The actual length is given by the 32 bit field at offset 640. The code validates that the length does not exceed the array size. See `Image` handling in [`FFXIDat/Image.h`](../FFXIDat/Image.h) and usage in [`FFXIDat/ItemFormatV30.h`](../FFXIDat/ItemFormatV30.h).
 
 ##### End Marker
 
-Each entry must end with a byte of value `0xFF`. The code checks this for integrity.
+Each slot must end with a byte of value `0xFF` (the last byte of the slot). The container checks this marker for every slot before it parses any record.
 
 #### Special Case: Currency Files
 
 Currency files (see `ItemSpecType::CURRENCY` in [`FFXIDat/ItemData.h`](../FFXIDat/ItemData.h)) have the following unique properties:
 
-- The file size is always exactly 0xC000 (49152) bytes.
-- There is exactly one `ItemEntry` in the file; the remainder is zero-padded.
-- The code enforces these constraints on both read and write (see comments in [`FFXIDat/ItemData.cpp`](../FFXIDat/ItemData.cpp)).
+- The file size is exactly `Format::currencySlots` slots (16): 0x14000 bytes on the v30 layout and 0xC000 bytes on the v10 and v20 layouts.
+- There is exactly one entry in the file; the remainder is zero-padded.
+- The container enforces these constraints on both read and write (see `slotfile::SlotFile` in [`FFXIDat/SlotFile.h`](../FFXIDat/SlotFile.h)).
+
+#### Record Versions
+
+Three record layouts of this family have been observed:
+
+| Version | Layout header | Slot size | Header | Text record offset (`inb` / `iub` / `iwb` / `iab` / `ipb` / `isb` / `icb` / `iib`) | Icon capacity | Used by |
+|---|---|---|---|---|---|---|
+| `v30` (newest known) | [`ItemFormatV30.h`](../FFXIDat/ItemFormatV30.h) | 0x1400 | 16 bytes | 28 / 28 / 60 / 48 / 28 / 84 / 20 / 44 | 4475 | ja/en tables after the 2026-09 update |
+| `v20` | [`ItemFormatV20.h`](../FFXIDat/ItemFormatV20.h) | 0xC00 | 14 bytes | 24 / 28 / 56 / 44 / 24 / 84 / 16 / 40 | 2427 | ja/en tables before the 2026-09 update |
+| `v10` (oldest known) | [`ItemFormatV10.h`](../FFXIDat/ItemFormatV10.h) | 0xC00 | 14 bytes | 24 / 24 / 48 / 40 / 24 / 84 / 16 / 40 | 2427 | the de/fr tables left in the live client |
 
 #### References
 
-- [`FFXIDat/ItemData.h`](../FFXIDat/ItemData.h): Structure definitions and accessors
-- [`FFXIDat/ItemData.cpp`](../FFXIDat/ItemData.cpp): File reading/writing, encryption, and special cases
+- [`FFXIDat/ItemData.h`](../FFXIDat/ItemData.h): facade, compatibility names and routing
+- [`FFXIDat/SlotFile.h`](../FFXIDat/SlotFile.h): the slot container shared by items, RoE and MonBridge
+- [`FFXIDat/ItemFormats.h`](../FFXIDat/ItemFormats.h): version aliases and the routing table
+- [`FFXIDat/ItemFormatV30.h`](../FFXIDat/ItemFormatV30.h), [`FFXIDat/ItemFormatV10.h`](../FFXIDat/ItemFormatV10.h): the layout of each version
+- [`FFXIDat/ItemFormats.cpp`](../FFXIDat/ItemFormats.cpp): the CSV view of this family
 - [`FFXIDat/Record.h`](../FFXIDat/Record.h): Record and Row structures for text fields
 - [`FFXIDat/Image.h`](../FFXIDat/Image.h): Image handling
 
@@ -349,6 +370,7 @@ struct StatusEntry {
 ```
 
 **Notes**:
+- The slot is 0x1800 (6144) bytes and every slot ends with a `0xFF` marker, like the families above; the shared container (`slotfile::SlotFile`) does not implement this cipher, so StatusData keeps its own reader (see [`FFXIDat/StatusData.cpp`](../FFXIDat/StatusData.cpp)).
 - ID and spec data are stored using ROL7 (rotate left by 7 bits) encryption and decrypted using ROR7 (rotate right by 7 bits)
 - Image data is stored unencrypted
 - Fixed image size of 5499 bytes
@@ -363,23 +385,38 @@ struct StatusEntry {
 
 **Purpose**: Stores objectives, rewards, and category information for the Records of Eminence system.
 
-**Encryption**: The entire file is stored using ROL5 (rotate left by 5 bits) encryption. On reading, the file is decrypted using ROR5. See [`FFXIDat/RecordsOfEminence.h`](../FFXIDat/RecordsOfEminence.h).
+**Encryption**: The file is stored with the same slot rotation as the other families: ROR5 on reading, ROL5 on writing. See `slotfile::Ror5Cipher` in [`FFXIDat/SlotFile.h`](../FFXIDat/SlotFile.h).
 
 #### File Structure
 
 There are two main file types:
 
-1. **Quest File (`ROM/307/15`)**: Contains individual quest/objective entries.
-2. **Category File (`ROM/307/23`)**: Contains category entries that organise quests.
+1. **Quest File (`ROM/307/15`, type `erq`)**: Contains individual quest/objective entries.
+2. **Category File (`ROM/307/23`, type `erc`)**: Contains category entries that organise quests.
+
+Three record layouts of this family have been observed:
+
+| Version | Layout header | Slot size | Text record offset (quest / category) | Used by |
+|---|---|---|---|---|
+| `v30` (newest known) | [`RoeFormatV30.h`](../FFXIDat/RoeFormatV30.h) | 0x1400 | 32 / 568 | ja/en tables after the 2026-09 update |
+| `v20` | [`RoeFormatV20.h`](../FFXIDat/RoeFormatV20.h) | 0xC00 | 32 / 568 | ja/en tables before the 2026-09 update |
+| `v10` (oldest known) | [`RoeFormatV10.h`](../FFXIDat/RoeFormatV10.h) | 0xC00 | 28 / 568 | de/fr tables of the live client, selected by the `_o` type suffix |
+
+The category record is the same in `v10` and `v20`, which is why `RoeFormatV20.h` reuses the `v10`
+type for it. Only the quest record gained `uni_reward` in `v20` (see below).
+
+Actually there is no v20 for category or the `v30` in the code is actuaally the v2 of this file,
+the only reason why it got v30 instead of v20 is try to keep the version same with the quest file, 
+reduce the cost to understand there is only two version of the category file whilst the quest file has three version.
 
 ---
 
 #### Quest Entry Format
 
-Each quest entry is defined as follows (see `RoeQuestEntry` in [`FFXIDat/RecordsOfEminence.h`](../FFXIDat/RecordsOfEminence.h)):
+Each quest entry is defined as follows (see `roefmt::v30::QuestEntry` in [`FFXIDat/RoeFormatV30.h`](../FFXIDat/RoeFormatV30.h); `RoeQuestEntry` in [`FFXIDat/RecordsOfEminence.h`](../FFXIDat/RecordsOfEminence.h) is the same type):
 
 ```cpp
-struct RoeQuestEntry {
+struct QuestEntry {
     uint32_t id;                // Unique quest ID
     uint32_t release_date;      // Date in YYYYMMDD format
     uint32_t repeatable;        // 0 = not repeatable, 1 = repeatable
@@ -387,20 +424,23 @@ struct RoeQuestEntry {
     uint32_t emi_reward;        // Eminence points reward
     uint32_t exp_reward;        // Experience points reward
     uint32_t cap_reward;        // Capacity points reward
-    uint32_t uni_reward;        // Unity points reward
+    uint32_t uni_reward;        // Unity points reward (v20 and v30 only)
     union {
-        char raw[3039];
+        char raw[5087];         // 5087 here, 3039 in v20, 3043 in v10
         Record info_rec;        // Text fields (see below)
     } info;
     char terminator;            // Must be 0xFF
 };
 ```
 
+The `v10` record has no `uni_reward` field: its reward block ends at `cap_reward`, which is why its
+text record sits 4 bytes earlier and its text capacity is 4 bytes larger than `v20`'s.
+
 **Text Fields**:
 - Stored in the `info_rec` field as a `Record` structure.
 - **Japanese files**: 3 cells (cell 0: quest name, cell 1: description, cell 2: unused)
 - **English files**: 5 cells (cell 0 & 1: quest name, cell 2: unused, cell 3: description, cell 4: unused)
-- Accessors for these fields are provided in the code (see `RoeQuestDatum` in [`FFXIDat/RecordsOfEminence.h`](../FFXIDat/RecordsOfEminence.h)).
+- Accessors for these fields are provided in the code (see `roefmt::QuestDatum` in [`FFXIDat/RoeFormatV30.h`](../FFXIDat/RoeFormatV30.h)).
 
 **Rewards**:
 - The various reward fields specify the points or experience granted upon completion.
@@ -409,10 +449,10 @@ struct RoeQuestEntry {
 
 #### Category Entry Format
 
-Each category entry is defined as follows (see `RoeCategoryEntry` in [`FFXIDat/RecordsOfEminence.h`](../FFXIDat/RecordsOfEminence.h)):
+Each category entry is defined as follows (see `roefmt::v30::CategoryEntry` in [`FFXIDat/RoeFormatV30.h`](../FFXIDat/RoeFormatV30.h); `RoeCategoryEntry` in [`FFXIDat/RecordsOfEminence.h`](../FFXIDat/RecordsOfEminence.h) is the same type, and `v20` reuses the `v10` one):
 
 ```cpp
-struct RoeCategoryEntry {
+struct CategoryEntry {
     uint32_t id;                    // Unique category ID
     uint32_t count_of_children;     // Number of child entries
     struct {
@@ -421,8 +461,8 @@ struct RoeCategoryEntry {
         uint32_t ukn[3];            // Unknown, usually zero
     } children[28];
     union {
-        char raw[2503];
-        Record info_rec;            // Text fields (see below)
+        char raw[4551];             // 4551 in v30, 2503 in v10 and v20
+        Record info_rec;            // Text fields (see below), cell 0 is the category name
     } info;
     char terminator;                // Must be 0xFF
 };
@@ -452,24 +492,51 @@ struct RoeCategoryEntry {
 
 ### Monster Bridge
 
-**Location**: ROM/27/38
+**Location**: `ROM/288/66` (ja/en, type `mbd`) and `ROM/288/68` (de/fr, type `mbd_o`)
 
 **Purpose**: Monster display names and internal identifiers
 
+**Encryption**: The file is stored with the same slot rotation as the other families: ROR5 on reading, ROL5 on writing. See `slotfile::Ror5Cipher` in [`FFXIDat/SlotFile.h`](../FFXIDat/SlotFile.h).
+
+#### Record Versions
+
+| Version | Layout header | Slot size | Name field | Text record | Text capacity | Icon length / data |
+|---|---|---|---|---|---|---|
+| `v30` (newest known) | [`MonBridgeFormatV30.h`](../FFXIDat/MonBridgeFormatV30.h) | 0x1400 | offset 8 | offset 116 | 524 | 640 / 644 |
+| `v10`, `v20` (oldest known) | [`MonBridgeFormatV10.h`](../FFXIDat/MonBridgeFormatV10.h) | 0xC00 | offset 6 | offset 112 | 528 | 640 / 644 |
+
+`v20` is an alias of `v10` in this family: the ja/en tables before the 2026-10 update used the same
+record as the de/fr tables of that era, so both version labels select that layout. The `_o` type
+suffix selects it as well.
+
 #### Entry Format
 
+The v30 entry (`mbfmt::v30::Entry`, 0x1400 bytes):
+
 ```cpp
-struct MonBridgeEntry {
-    uint16_t id;                // Monster ID
-    char internalName[32];      // ASCII identifier (DO NOT TRANSLATE)
-    Record displayName;         // Localized display name
+struct Entry {
+    uint32_t id;
+    uint16_t idx;               // at offset 4 in every version
+    uint16_t ukn0;              // always zero in observed data
+    char name[32];              // ASCII identifier (DO NOT TRANSLATE)
+    int16_t para1[5];
+    uint16_t ukn1;              // always zero in observed data
+    int8_t para2[64];
+    union {
+        char raw[524];          // 524 here, 528 in v10 and v20
+        Record info_rec;        // Localized display name (cell 0)
+    } rec;
+    uint32_t icon_size;         // offset 640: size of icon_data, 0 if no icon
+    char icon_data[4475];       // offset 644 (2427 bytes in v10 and v20)
+    char terminator;            // Must be 0xFF
 };
 ```
 
+Two 16 bit fields (`ukn0` at 6, `ukn1` at 50, both always zero in the observed data) were inserted
+in the ja/en record, which moves `name` from offset 6 to 8, `para2` from 48 to 52 and the text record
+from 112 to 116; the older record has neither field.
 
-**Important**: The `internalName` field is used by game logic to identify monsters and must remain in ASCII. Only the `displayName` should be translated.
-
-**Encryption**: The entire file is stored using ROL5 (rotate left by 5 bits) encryption. On reading, the file is decrypted using ROR5. See [`FFXIDat/MonBridge.cpp`](../FFXIDat/MonBridge.cpp).
+**Important**: The `name` field is used by game logic to identify monsters and must remain in ASCII. Only the display name (cell 0 of the text record) should be translated.
 
 ---
 

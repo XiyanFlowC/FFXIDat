@@ -35,6 +35,13 @@ This project provides tools to work with FFXI's game data files, including text 
 ### Menu and UI
 - **Block Files** (magic: `menu`) — Menu layouts and textures (DXT1/DXT3 compression)
 
+## Supported Languages and Record Versions
+
+- **Languages**: `ja`, `en`, `de`, `fr`. The de/fr tables shipped by the live client are frozen; they were translated from the ja/en tables.
+- **Record versions**: the families that have more than one known layout are labelled `v10` (oldest known), `v20` and `v30` (newest known). The version is selected by the type code in `data/defs.csv` / `data/FLIST.csv`: a code without a suffix (`inb`, `mbd`, `erq`) is the newest known layout, a trailing `_o` (`inb_o`, `mbd_o`, `erq_o`, `erc_o`) is the oldest known layout.
+- **Implemented**: items (`inb`/`iub`/`iwb`/`iab`/`ipb`/`isb`/`icb`/`iib`, v10/v20/v30), Records of Eminence quest and category (`erq`/`erc`, v10/v20/v30), MonBridge (`mbd`, v10 — which v20 aliases — and v30), StatusData, DMsg, XISTRING, event strings, fixed phrase, menu block files.
+- **Not implemented**: the unified `SlotFile` handling system, currently the `StatusData` holds itself.
+
 ## Quick Start
 
 ### Extraction

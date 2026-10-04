@@ -6,6 +6,11 @@
 void Row::ReadRow(Record *buffer, int limit)
 {
 	cells.clear();
+	// Callers may hand us arbitrary bytes (file type sniffing), so the cell
+	// table has to fit into the record before it is walked.
+	if (buffer->cellCount < 0 ||
+		4 + static_cast<size_t>(buffer->cellCount) * 8 > static_cast<size_t>(limit))
+		throw std::out_of_range("Record cell count out of range.");
 	intptr_t base = (intptr_t)buffer;
 	for (int i = 0; i < buffer->cellCount; ++i)
 	{
@@ -18,7 +23,6 @@ void Row::ReadRow(Record *buffer, int limit)
 		else
 		{
 			RecordString *str = (RecordString *)(base + offset);
-			//assert(str->one == 1 && str->zero[0] == 0 && str->zero[1] == 0 && str->zero[2] == 0 && str->zero[3] == 0 && str->zero[4] == 0 && str->zero[5] == 0);
 			bool valid = str->one == 1 && str->zero[0] == 0 && str->zero[1] == 0 && str->zero[2] == 0 && str->zero[3] == 0 && str->zero[4] == 0 && str->zero[5] == 0;
 			if (!valid) throw std::runtime_error("Invalid RecordString format.");
 

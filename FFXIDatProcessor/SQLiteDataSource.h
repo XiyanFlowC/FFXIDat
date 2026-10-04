@@ -5,15 +5,9 @@
 #include <string>
 #include <exception>
 #include "CsvFile.h"
-
-// Forward declarations for ItemData structures
-struct ItemWeaponSpec;
-struct ItemArmourSpec;
-struct ItemUsableSpec;
-struct ItemNormalSpec;
-struct ItemEquipSlot;
-struct ItemRaceApplicability;
-struct ItemJobApplicability;
+// The item structs live in the layout headers; ItemData.h carries the
+// compatibility names (ItemWeaponSpec, ItemEquipSlot, ...).
+#include "ItemData.h"
 
 class SQLException : public std::runtime_error {
 public:
@@ -120,21 +114,21 @@ protected:
 	void InsertJobApplicability(int item_id, const ItemJobApplicability &jobs);
 	
 	// MonBridge support methods
-	void ImportMonBridgeDat(const int file_id, const std::wstring &path);
-	void TranslateMonBridgeDat(int file_id, const wchar_t *file_path);
+	void ImportMonBridgeDat(const int file_id, const std::wstring &path, slotfile::Version version = slotfile::Version::V30);
+	void TranslateMonBridgeDat(int file_id, const wchar_t *file_path, slotfile::Version version = slotfile::Version::V30);
 	int InsertOrGetMonBridgeRecord(int file_id, uint32_t mb_id);
 	
 	// RecordsOfEminence support methods
-	void ImportRoeCategoryDat(const int file_id, const std::wstring &path);
-	void TranslateRoeCategoryDat(int file_id, const wchar_t *file_path);
+	void ImportRoeCategoryDat(const int file_id, const std::wstring &path, slotfile::Version version = slotfile::Version::V30);
+	void TranslateRoeCategoryDat(int file_id, const wchar_t *file_path, slotfile::Version version = slotfile::Version::V30);
 	int InsertOrGetRoeCategoryRecord(uint32_t roe_id);
 
 	// Quest/Mission DMsg support methods
 	int InsertOrGetQuestDMsgRecord(const std::u8string &category, int quest_id);
 	void UpdateQuestDMsgRecord(const std::u8string &lang, int record_id, const std::u8string &name, const std::u8string &description);
 	
-	void ImportRoeQuestDat(const int file_id, const std::wstring &path);
-	void TranslateRoeQuestDat(int file_id, const wchar_t *file_path);
+	void ImportRoeQuestDat(const int file_id, const std::wstring &path, slotfile::Version version = slotfile::Version::V30);
+	void TranslateRoeQuestDat(int file_id, const wchar_t *file_path, slotfile::Version version = slotfile::Version::V30);
 	int InsertOrGetRoeQuestRecord(uint32_t roe_id);
 };
 

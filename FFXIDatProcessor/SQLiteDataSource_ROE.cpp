@@ -32,16 +32,16 @@ namespace
 }
 
 // ============================================
-// ROM/307/15 - Quest Entry Support (type: erc)
+// ROM/307/15 - Quest Entry Support (type: erq)
 // ============================================
 
-void SQLiteDataSource::ImportRoeQuestDat(const int file_id, const std::wstring &path)
+void SQLiteDataSource::ImportRoeQuestDat(const int file_id, const std::wstring &path, slotfile::Version version)
 {
 	sqlite3_stmt *stmt = nullptr;
 	std::u8string fileLang = GetFileLang(file_id);
 	
 	RecordsOfEminence roe;
-	roe.ReadQuest(path);
+	roe.ReadQuest(path, version);
 	
 	int rowCounter = 1;
 	for (const auto &datum : roe.questData) {
@@ -187,7 +187,7 @@ void SQLiteDataSource::ImportRoeQuestDat(const int file_id, const std::wstring &
 	}
 }
 
-void SQLiteDataSource::TranslateRoeQuestDat(int file_id, const wchar_t *file_path)
+void SQLiteDataSource::TranslateRoeQuestDat(int file_id, const wchar_t *file_path, slotfile::Version version)
 {
 	std::wstring inputPath = file_path;
 	if (!inputPath.ends_with(L".DAT")) {
@@ -200,7 +200,7 @@ void SQLiteDataSource::TranslateRoeQuestDat(int file_id, const wchar_t *file_pat
 	RecordsOfEminence roe;
 	
 	// Read original data first (preserves all game configuration fields)
-	roe.ReadQuest(datPath);
+	roe.ReadQuest(datPath, version);
 	if (!IsRoeLang(fileLang))
 	{
 		roe.WriteQuest(outPath);
@@ -300,16 +300,16 @@ int SQLiteDataSource::InsertOrGetRoeQuestRecord(uint32_t roe_id)
 }
 
 // ================================================
-// ROM/307/23 - Category Entry Support (type: erq)
+// ROM/307/23 - Category Entry Support (type: erc)
 // ================================================
 
-void SQLiteDataSource::ImportRoeCategoryDat(const int file_id, const std::wstring &path)
+void SQLiteDataSource::ImportRoeCategoryDat(const int file_id, const std::wstring &path, slotfile::Version version)
 {
 	sqlite3_stmt *stmt = nullptr;
 	std::u8string fileLang = GetFileLang(file_id);
 	
 	RecordsOfEminence roe;
-	roe.ReadCategory(path);
+	roe.ReadCategory(path, version);
 	
 	int rowCounter = 1;
 	for (const auto &datum : roe.categoryData) {
@@ -409,7 +409,7 @@ void SQLiteDataSource::ImportRoeCategoryDat(const int file_id, const std::wstrin
 	}
 }
 
-void SQLiteDataSource::TranslateRoeCategoryDat(int file_id, const wchar_t *file_path)
+void SQLiteDataSource::TranslateRoeCategoryDat(int file_id, const wchar_t *file_path, slotfile::Version version)
 {
 	std::wstring inputPath = file_path;
 	if (!inputPath.ends_with(L".DAT")) {
@@ -422,7 +422,7 @@ void SQLiteDataSource::TranslateRoeCategoryDat(int file_id, const wchar_t *file_
 	RecordsOfEminence roe;
 	
 	// Read original data first (preserves all children relationships and other fields)
-	roe.ReadCategory(datPath);
+	roe.ReadCategory(datPath, version);
 	if (!IsRoeLang(fileLang))
 	{
 		roe.WriteCategory(outPath);

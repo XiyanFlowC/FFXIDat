@@ -7,6 +7,7 @@
 #include <iostream>
 #include "DataManager.h"
 #include "ItemData.h"
+#include <LegacyTypeSuffix.h>
 #include "StatusData.h"
 #include "MonBridge.h"
 #include "RecordsOfEminence.h"
@@ -1156,21 +1157,21 @@ void SQLiteDataSource::ImportDat(const std::string &path, const std::string &typ
 				++rowNum;
 			}
 		}
-		else if (type == "ieb" || type == "inb" || type == "iub" || type == "iwb" || type == "iab" || type == "ipb" || type == "isb" || type == "icb" || type == "iib")
+		else if (IsItemTypeCode(type))
 		{
 			ImportItemDat(file_id, datPath, xybase::string::sys_mbs_to_wcs(type));
 		}
-		else if (type == "mbd")
+		else if (BaseTypeOf(type) == "mbd")
 		{
-			ImportMonBridgeDat(file_id, datPath);
+			ImportMonBridgeDat(file_id, datPath, VersionForTypeCode(type));
 		}
-		else if (type == "erq") // ROM/307/15 - Quest entries
+		else if (BaseTypeOf(type) == "erq") // ROM/307/15 - Quest entries
 		{
-			ImportRoeQuestDat(file_id, datPath);
+			ImportRoeQuestDat(file_id, datPath, VersionForTypeCode(type));
 		}
-		else if (type == "erc") // ROM/307/23 - Category entries
+		else if (BaseTypeOf(type) == "erc") // ROM/307/23 - Category entries
 		{
-			ImportRoeCategoryDat(file_id, datPath);
+			ImportRoeCategoryDat(file_id, datPath, VersionForTypeCode(type));
 		}
 
 		if (type == "dmsg" && IsQuestDMsgComment(fileComment) && IsQuestDMsgLang(fileLang))
@@ -1405,21 +1406,21 @@ void SQLiteDataSource::TranslateDat(int file_id, const char *file_path, const ch
 		}
 		statusData.Write(outPath);
 	}
-	else if (t == "ieb" || t == "inb" || t == "iub" || t == "iwb" || t == "iab" || type == "ipb" || type == "isb" || type == "icb" || type == "iib")
+	else if (IsItemTypeCode(t))
 	{
 		TranslateItemDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str(), t.c_str());
 	}
-	else if (t == "mbd")
+	else if (BaseTypeOf(t) == "mbd")
 	{
-		TranslateMonBridgeDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str());
+		TranslateMonBridgeDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str(), VersionForTypeCode(t));
 	}
-	else if (t == "erq") // ROM/307/15 - Quest entries
+	else if (BaseTypeOf(t) == "erq") // ROM/307/15 - Quest entries
 	{
-		TranslateRoeQuestDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str());
+		TranslateRoeQuestDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str(), VersionForTypeCode(t));
 	}
-	else if (t == "erc") // ROM/307/23 - Category entries
+	else if (BaseTypeOf(t) == "erc") // ROM/307/23 - Category entries
 	{
-		TranslateRoeCategoryDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str());
+		TranslateRoeCategoryDat(file_id, xybase::string::sys_mbs_to_wcs(file_path).c_str(), VersionForTypeCode(t));
 	}
 }
 
@@ -1445,18 +1446,20 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
 	ItemData itemData;
 	ItemSpecType specType = ItemSpecType::NORMAL;
 	
-	// Determine spec type based on type parameter
-	if (type == L"ieb") specType = ItemSpecType::ARMOUR;
-	else if (type == L"inb") specType = ItemSpecType::NORMAL;
-	else if (type == L"iub") specType = ItemSpecType::USABLE;
-	else if (type == L"iwb") specType = ItemSpecType::WEAPON;
-	else if (type == L"iab") specType = ItemSpecType::ARMOUR;
-	else if (type == L"isb") specType = ItemSpecType::SLIP;
-	else if (type == L"ipb") specType = ItemSpecType::PUPPET;
-	else if (type == L"icb") specType = ItemSpecType::CURRENCY;
-	else if (type == L"iib") specType = ItemSpecType::INSTINCT;
+	// Determine spec type based on type parameter; a trailing "_o" selects the
+	// legacy de/fr record layout
+	const std::wstring baseType = xybase::string::to_wstring(BaseTypeOf(xybase::string::to_string(type)));
+	if (baseType == L"ieb") specType = ItemSpecType::ARMOUR;
+	else if (baseType == L"inb") specType = ItemSpecType::NORMAL;
+	else if (baseType == L"iub") specType = ItemSpecType::USABLE;
+	else if (baseType == L"iwb") specType = ItemSpecType::WEAPON;
+	else if (baseType == L"iab") specType = ItemSpecType::ARMOUR;
+	else if (baseType == L"isb") specType = ItemSpecType::SLIP;
+	else if (baseType == L"ipb") specType = ItemSpecType::PUPPET;
+	else if (baseType == L"icb") specType = ItemSpecType::CURRENCY;
+	else if (baseType == L"iib") specType = ItemSpecType::INSTINCT;
 	
-	itemData.Read(path, specType);
+	itemData.Read(path, specType, VersionForTypeCode(xybase::string::to_string(type)));
 	
 	int rowCounter = 1;
 	for (const auto &datum : itemData.data) {
@@ -1487,7 +1490,7 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
 		if (sqlite3_prepare_v2(db, updateMainSQL, -1, &stmt, nullptr) == SQLITE_OK)
 		{
 			std::string specTypeStr;
-			switch (datum.spec_type) {
+			switch (datum.schema) {
 				case ItemSpecType::WEAPON: specTypeStr = "WEAPON"; break;
 				case ItemSpecType::ARMOUR: specTypeStr = "ARMOUR"; break;
 				case ItemSpecType::USABLE: specTypeStr = "USABLE"; break;
@@ -1533,7 +1536,7 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
 		sqlite3_finalize(stmt);
 		
 		// Insert spec-specific data based on type
-		switch (datum.spec_type) {
+		switch (datum.schema) {
 			case ItemSpecType::WEAPON:
 				InsertWeaponSpec(item_record_id, datum.originalEntry.spec.weapon);
 				InsertEquipSlots(item_record_id, datum.originalEntry.spec.weapon.equip_slots);
@@ -1845,8 +1848,7 @@ void SQLiteDataSource::TranslateItemDat(int file_id, const wchar_t *file_path, c
 	ItemData itemData;
 	ItemSpecType specType = ItemSpecType::NORMAL;
 	
-	// Determine spec type based on type parameter
-	std::string typeStr(type);
+	std::string typeStr = BaseTypeOf(std::string(type));
 	if (typeStr == "ieb") specType = ItemSpecType::ARMOUR;
 	else if (typeStr == "inb") specType = ItemSpecType::NORMAL;
 	else if (typeStr == "iub") specType = ItemSpecType::USABLE;
@@ -1858,7 +1860,7 @@ void SQLiteDataSource::TranslateItemDat(int file_id, const wchar_t *file_path, c
 	else if (typeStr == "iib") specType = ItemSpecType::INSTINCT;
 	
 	// Read original data first
-	itemData.Read(datPath, specType);
+	itemData.Read(datPath, specType, VersionForTypeCode(std::string(type)));
 	
 	sqlite3_stmt *stmt = nullptr;
 	
@@ -2390,12 +2392,12 @@ void SQLiteDataSource::UpdateQuestDMsgRecord(const std::u8string &lang, int reco
 	sqlite3_finalize(stmt);
 }
 
-void SQLiteDataSource::ImportMonBridgeDat(const int file_id, const std::wstring &path)
+void SQLiteDataSource::ImportMonBridgeDat(const int file_id, const std::wstring &path, slotfile::Version version)
 {
 	sqlite3_stmt *stmt = nullptr;
 	
 	MonBridge monBridge;
-	monBridge.Read(path);
+	monBridge.Read(path, version);
 	
 	int rowCounter = 1;
 	for (const auto &datum : monBridge.data) {
@@ -2457,7 +2459,7 @@ void SQLiteDataSource::ImportMonBridgeDat(const int file_id, const std::wstring 
 	}
 }
 
-void SQLiteDataSource::TranslateMonBridgeDat(int file_id, const wchar_t *file_path)
+void SQLiteDataSource::TranslateMonBridgeDat(int file_id, const wchar_t *file_path, slotfile::Version version)
 {
 	std::wstring inputPath = file_path;
 	if (!inputPath.ends_with(L".DAT")) {
@@ -2469,7 +2471,7 @@ void SQLiteDataSource::TranslateMonBridgeDat(int file_id, const wchar_t *file_pa
 	MonBridge monBridge;
 	
 	// Read original data first
-	monBridge.Read(datPath);
+	monBridge.Read(datPath, version);
 	
 	sqlite3_stmt *stmt = nullptr;
 	

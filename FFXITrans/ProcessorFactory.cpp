@@ -32,7 +32,7 @@ void ProcessorFactory::RegisterDefaultProcessors()
     // Register DMsgProcessor
     RegisterProcessor(u8"dmsg", std::make_shared<DMsgProcessor>());
 
-    // Register ItemProcessor for all item types
+    // The "_o" suffixed types are the legacy (de/fr) record layout.
     auto itemProcessor = std::make_shared<ItemProcessor>();
     RegisterProcessor(u8"iab", itemProcessor);
     RegisterProcessor(u8"iwb", itemProcessor);
@@ -42,6 +42,14 @@ void ProcessorFactory::RegisterDefaultProcessors()
     RegisterProcessor(u8"isb", itemProcessor);
     RegisterProcessor(u8"icb", itemProcessor);
     RegisterProcessor(u8"iib", itemProcessor);
+    RegisterProcessor(u8"iab_o", itemProcessor);
+    RegisterProcessor(u8"iwb_o", itemProcessor);
+    RegisterProcessor(u8"iub_o", itemProcessor);
+    RegisterProcessor(u8"inb_o", itemProcessor);
+    RegisterProcessor(u8"ipb_o", itemProcessor);
+    RegisterProcessor(u8"isb_o", itemProcessor);
+    RegisterProcessor(u8"icb_o", itemProcessor);
+    RegisterProcessor(u8"iib_o", itemProcessor);
 
     // Register StatusDataProcessor
     RegisterProcessor(u8"sd", std::make_shared<StatusDataProcessor>());
@@ -51,11 +59,14 @@ void ProcessorFactory::RegisterDefaultProcessors()
 
     // Register MonBridgeProcessor
     RegisterProcessor(u8"mbd", std::make_shared<MonBridgeProcessor>());
+    RegisterProcessor(u8"mbd_o", std::make_shared<MonBridgeProcessor>());
 
     // Register RoeProcessor for both quest and category types
     auto roeProcessor = std::make_shared<RoeProcessor>();
     RegisterProcessor(u8"erq", roeProcessor);
     RegisterProcessor(u8"erc", roeProcessor);
+    RegisterProcessor(u8"erq_o", roeProcessor);
+    RegisterProcessor(u8"erc_o", roeProcessor);
 
     // Register special ejref_tolerance processor
     ejrefToleranceProcessor = std::make_shared<EjrefToleranceProcessor>();

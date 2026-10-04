@@ -562,8 +562,8 @@
 36681,iab,en,itm/armor2
 36930,mbd,ja,mb/mb_data
 36931,mbd,en,mb/mb_data
-36932,mbd,de,mb/mb_data
-36933,mbd,fr,mb/mb_data
+36932,mbd_o,de,mb/mb_data
+36933,mbd_o,fr,mb/mb_data
 37570,dmsg,ja,sys/mis/ad,2|3
 37571,dmsg,ja,sys/qst/ad,2|3
 37572,dmsg,ja,sys/qst/wc,2|3
@@ -728,3 +728,5 @@
 48161,evsb,en,evx/id8
 48488,evsb,de,ev/Gwora - Throne Room
 48489,evsb,fr,ev/Gwora - Throne Room
+49549,inb,ja,itm/normal3,1|2
+49550,inb,en,itm/normal3

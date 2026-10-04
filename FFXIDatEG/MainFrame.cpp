@@ -30,7 +30,7 @@ namespace {
 	constexpr int IDC_PROMPT_ROM_EDIT = 3007;
 	constexpr int IDC_PROMPT_LOCAL_EDIT = 3008;
 
-	const wchar_t* kPromptClass = L"FFXIDatEGPrompt";
+	const wchar_t* PROMPT_CLASS = L"FFXIDatEGPrompt";
 
 	std::wstring LocalizedOrDefault(const wchar_t* key, const wchar_t* fallback)
 	{
@@ -158,7 +158,7 @@ namespace {
 		wc.hInstance = instance;
 		wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1);
-		wc.lpszClassName = kPromptClass;
+		wc.lpszClassName = PROMPT_CLASS;
 		if (!RegisterClassExW(&wc))
 			return false;
 		registered = true;
@@ -342,7 +342,7 @@ bool MainFrame::PromptForFileType(std::string& outType, const std::string& sugge
 	std::wstring title = LocalizedOrDefault(L"dialog_filetype_title", L"Select File Type");
 	HWND hwnd = CreateWindowExW(
 		WS_EX_DLGMODALFRAME,
-		kPromptClass,
+		PROMPT_CLASS,
 		title.c_str(),
 		WS_POPUP | WS_CAPTION | WS_SYSMENU,
 		x, y,
@@ -368,7 +368,9 @@ bool MainFrame::PromptForFileType(std::string& outType, const std::string& sugge
 	const std::vector<std::wstring> types = {
 		L"dmsg", L"xis", L"evsb", L"sd", L"fp",
 		L"iab", L"iwb", L"iub", L"inb", L"ipb", L"isb", L"icb", L"iib",
-		L"mbd", L"erq", L"erc"
+		L"mbd", L"erq", L"erc",
+		L"inb_o", L"iub_o", L"iwb_o", L"iab_o", L"ipb_o", L"isb_o", L"icb_o", L"iib_o",
+		L"mbd_o", L"erq_o", L"erc_o"
 	};
 	int selectedIndex = 0;
 	for (size_t i = 0; i < types.size(); ++i)
@@ -698,7 +700,7 @@ bool MainFrame::PromptForFileId(int& outGlobalId, std::string& outRomFolder, int
 	std::wstring title = LocalizedOrDefault(L"dialog_open_by_id_title", L"Open File by ID");
 	HWND hwnd = CreateWindowExW(
 		WS_EX_DLGMODALFRAME,
-		kPromptClass,
+		PROMPT_CLASS,
 		title.c_str(),
 		WS_POPUP | WS_CAPTION | WS_SYSMENU,
 		x, y,
@@ -724,7 +726,9 @@ bool MainFrame::PromptForFileId(int& outGlobalId, std::string& outRomFolder, int
 	const std::vector<std::wstring> types = {
 		L"dmsg", L"xis", L"evsb", L"sd", L"fp",
 		L"iab", L"iwb", L"iub", L"inb", L"ipb", L"isb", L"icb", L"iib",
-		L"mbd", L"erq", L"erc"
+		L"mbd", L"erq", L"erc",
+		L"inb_o", L"iub_o", L"iwb_o", L"iab_o", L"ipb_o", L"isb_o", L"icb_o", L"iib_o",
+		L"mbd_o", L"erq_o", L"erc_o"
 	};
 	for (const auto& type : types)
 	{

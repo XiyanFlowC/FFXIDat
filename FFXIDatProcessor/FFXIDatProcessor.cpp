@@ -167,27 +167,34 @@ static int DetectFileType(const char *path)
 	}
 	catch (...) {}
 
-	// --- ItemData (ROR5 + periodic 0xFF) ---
+	// --- ItemData (ROR5 + periodic 0xFF): every known record version ---
 	{
-		bool itemPeriodic = (sizeof(ItemEntry) > 0 && (size_t)size >= sizeof(ItemEntry));
-		if (itemPeriodic)
+		for (const auto &route : itmfmt::VERSION_ROUTES)
 		{
-			uint64_t count = (size_t)size / sizeof(ItemEntry);
-			if (count >= 1)
+			const size_t recordSize = route.slotSize;
+			const std::string suffix(route.suffix);
+			if (size < recordSize || size % recordSize != 0)
+				continue;
+
+			// Currency uses one entry and 15 zero-filled record slots.
+			uint64_t count = size == recordSize * route.currencySlots
+				? 1 : size / recordSize;
+			bool itemPeriodic = count >= 1;
+			if (itemPeriodic)
 			{
 				std::ifstream f(p, std::ios::binary);
 				for (uint64_t i = 1; i <= count; ++i)
 				{
-					f.seekg(static_cast<std::streamoff>(i * sizeof(ItemEntry) - 1), std::ios::beg);
+					f.seekg(static_cast<std::streamoff>(i * recordSize - 1), std::ios::beg);
 					char marker = 0;
 					f.read(&marker, 1);
 					if (f.gcount() != 1 || static_cast<uint8_t>(marker) != 0xFF)
 					{ itemPeriodic = false; break; }
 				}
 			}
-		}
-		if (itemPeriodic)
-		{
+			if (!itemPeriodic)
+				continue;
+
 			const std::pair<ItemSpecType, const char *> specs[] = {
 				{ItemSpecType::NORMAL, "inb"}, {ItemSpecType::USABLE, "iub"},
 				{ItemSpecType::WEAPON, "iwb"}, {ItemSpecType::ARMOUR, "iab"},
@@ -198,93 +205,123 @@ static int DetectFileType(const char *path)
 			{
 				try {
 					ItemData item;
-					item.Read(p.wstring(), spec);
+					item.Read(p.wstring(), spec, route.version);
 					if (!item.data.empty() && item.data.begin()->cellCount() > 0)
-						results.push_back(std::string("item.") + name);
+						results.push_back(std::string("item.") + name + suffix);
 				}
 				catch (...) {}
 			}
 		}
 	}
 
-	// --- ROE Quest ---
+	// --- ROE Quest: current and legacy (de/fr) layouts ---
 	{
-		bool periodic = (sizeof(RoeQuestEntry) > 0 && (size_t)size >= sizeof(RoeQuestEntry));
-		if (periodic)
+		const std::pair<size_t, bool> layouts[] = {
+			{ sizeof(RoeQuestEntry), false },
+			{ sizeof(RoeQuestEntryLegacy), true },
+		};
+		for (const auto &[recordSize, legacy] : layouts)
 		{
-			uint64_t count = (size_t)size / sizeof(RoeQuestEntry);
-			std::ifstream f(p, std::ios::binary);
-			for (uint64_t i = 1; i <= count; ++i)
+			if (size < recordSize || size % recordSize != 0)
+				continue;
+
+			uint64_t count = size / recordSize;
+			bool periodic = count >= 1;
+			if (periodic)
 			{
-				f.seekg(static_cast<std::streamoff>(i * sizeof(RoeQuestEntry) - 1), std::ios::beg);
-				char marker = 0;
-				f.read(&marker, 1);
-				if (f.gcount() != 1 || static_cast<uint8_t>(marker) != 0xFF)
-				{ periodic = false; break; }
+				std::ifstream f(p, std::ios::binary);
+				for (uint64_t i = 1; i <= count; ++i)
+				{
+					f.seekg(static_cast<std::streamoff>(i * recordSize - 1), std::ios::beg);
+					char marker = 0;
+					f.read(&marker, 1);
+					if (f.gcount() != 1 || static_cast<uint8_t>(marker) != 0xFF)
+					{ periodic = false; break; }
+				}
 			}
-		}
-		if (periodic)
-		{
+			if (!periodic)
+				continue;
+
 			try {
 				RecordsOfEminence roe;
-				roe.ReadQuest(p.wstring());
+				roe.ReadQuest(p.wstring(), legacy ? slotfile::Version::V10 : slotfile::Version::V30);
 				if (!roe.questData.empty())
-					results.push_back("roe.quest");
+					results.push_back(legacy ? "roe.quest_o" : "roe.quest");
 			}
 			catch (...) {}
 		}
 	}
 
-	// --- ROE Category ---
+	// --- ROE Category: current and legacy (de/fr) layouts ---
 	{
-		bool periodic = (sizeof(RoeCategoryEntry) > 0 && (size_t)size >= sizeof(RoeCategoryEntry));
-		if (periodic)
+		const std::pair<size_t, bool> layouts[] = {
+			{ sizeof(RoeCategoryEntry), false },
+			{ sizeof(RoeCategoryEntryLegacy), true },
+		};
+		for (const auto &[recordSize, legacy] : layouts)
 		{
-			uint64_t count = (size_t)size / sizeof(RoeCategoryEntry);
-			std::ifstream f(p, std::ios::binary);
-			for (uint64_t i = 1; i <= count; ++i)
+			if (size < recordSize || size % recordSize != 0)
+				continue;
+
+			uint64_t count = size / recordSize;
+			bool periodic = count >= 1;
+			if (periodic)
 			{
-				f.seekg(static_cast<std::streamoff>(i * sizeof(RoeCategoryEntry) - 1), std::ios::beg);
-				char marker = 0;
-				f.read(&marker, 1);
-				if (f.gcount() != 1 || static_cast<uint8_t>(marker) != 0xFF)
-				{ periodic = false; break; }
+				std::ifstream f(p, std::ios::binary);
+				for (uint64_t i = 1; i <= count; ++i)
+				{
+					f.seekg(static_cast<std::streamoff>(i * recordSize - 1), std::ios::beg);
+					char marker = 0;
+					f.read(&marker, 1);
+					if (f.gcount() != 1 || static_cast<uint8_t>(marker) != 0xFF)
+					{ periodic = false; break; }
+				}
 			}
-		}
-		if (periodic)
-		{
+			if (!periodic)
+				continue;
+
 			try {
 				RecordsOfEminence roe;
-				roe.ReadCategory(p.wstring());
+				roe.ReadCategory(p.wstring(), legacy ? slotfile::Version::V10 : slotfile::Version::V30);
 				if (!roe.categoryData.empty())
-					results.push_back("roe.category");
+					results.push_back(legacy ? "roe.category_o" : "roe.category");
 			}
 			catch (...) {}
 		}
 	}
 
-	// --- MonBridge ---
+	// --- MonBridge: current and legacy (de/fr) layouts ---
 	{
-		bool periodic = (sizeof(MBRecord) > 0 && (size_t)size >= sizeof(MBRecord));
-		if (periodic)
+		const std::pair<size_t, bool> layouts[] = {
+			{ sizeof(MBRecord), false },
+			{ sizeof(MBRecordLegacy), true },
+		};
+		for (const auto &[recordSize, legacy] : layouts)
 		{
-			uint64_t count = (size_t)size / sizeof(MBRecord);
-			std::ifstream f(p, std::ios::binary);
-			for (uint64_t i = 1; i <= count; ++i)
+			if (size < recordSize || size % recordSize != 0)
+				continue;
+
+			uint64_t count = size / recordSize;
+			bool periodic = count >= 1;
+			if (periodic)
 			{
-				f.seekg(static_cast<std::streamoff>(i * sizeof(MBRecord) - 1), std::ios::beg);
-				char marker = 0;
-				f.read(&marker, 1);
-				if (f.gcount() != 1 || static_cast<uint8_t>(marker) != 0xFF)
-				{ periodic = false; break; }
+				std::ifstream f(p, std::ios::binary);
+				for (uint64_t i = 1; i <= count; ++i)
+				{
+					f.seekg(static_cast<std::streamoff>(i * recordSize - 1), std::ios::beg);
+					char marker = 0;
+					f.read(&marker, 1);
+					if (f.gcount() != 1 || static_cast<uint8_t>(marker) != 0xFF)
+					{ periodic = false; break; }
+				}
 			}
-		}
-		if (periodic)
-		{
+			if (!periodic)
+				continue;
+
 			try {
 				MonBridge mb;
-				mb.Read(p.wstring());
-				results.push_back("mbd");
+				mb.Read(p.wstring(), legacy ? slotfile::Version::V10 : slotfile::Version::V30);
+				results.push_back(legacy ? "mbd_o" : "mbd");
 			}
 			catch (...) {}
 		}
@@ -1042,9 +1079,7 @@ void ExtractSysText()
 				}
 
 				// 6) ROR5 + periodic 0xFF heuristic group: ItemData / ROE / MonBridge
-				bool itemPeriodic = hasPeriodicFFMarker(p, (size_t)size, sizeof(ItemEntry));
-				bool itemCurrencyLike = ((size_t)size == 0xC000) && checkByteAt(p, sizeof(ItemEntry) - 1, 0xFF);
-				if (allowItemData && (itemPeriodic || itemCurrencyLike))
+				if (allowItemData)
 				{
 					const std::pair<ItemSpecType, const wchar_t *> itemSpecs[] = {
 						{ ItemSpecType::NORMAL, L"normal" },
@@ -1055,71 +1090,103 @@ void ExtractSysText()
 						{ ItemSpecType::SLIP, L"slip" },
 						{ ItemSpecType::CURRENCY, L"currency" },
 					};
-					for (const auto &[spec, name] : itemSpecs)
+					for (const auto &route : itmfmt::VERSION_ROUTES)
 					{
-						try
+						const size_t recordSize = route.slotSize;
+						const std::wstring layoutSuffix = xybase::string::to_wstring(std::string(route.suffix));
+						bool itemPeriodic = hasPeriodicFFMarker(p, (size_t)size, recordSize);
+						bool itemCurrencyLike = size == recordSize * route.currencySlots
+							&& checkByteAt(p, recordSize - 1, 0xFF);
+						if (!itemPeriodic && !itemCurrencyLike)
+							continue;
+
+						for (const auto &[spec, name] : itemSpecs)
 						{
-							ItemData item;
-							item.Read(xybase::string::to_wstring(p), spec);
-							if (!item.data.size() || !item.data.begin()->cellCount())
-								continue;
-							if (!item.data.empty())
+							try
 							{
-								std::wcout << L"item(" << name << L") p=" << p << std::endl;
-								item.ToICsv(PathUtil::GetOutPathConf(rom, c, n) + L".item." + std::wstring(name) + L".csv");
-								detectedTypes.insert("item." + xybase::string::to_string(std::wstring(name)));
+								ItemData item;
+								item.Read(xybase::string::to_wstring(p), spec, route.version);
+								if (!item.data.size() || !item.data.begin()->cellCount())
+									continue;
+								if (!item.data.empty())
+								{
+									std::wcout << L"item(" << name << layoutSuffix << L") p=" << p << std::endl;
+									item.ToICsv(PathUtil::GetOutPathConf(rom, c, n) + L".item." + std::wstring(name) + layoutSuffix + L".csv");
+									detectedTypes.insert("item." + xybase::string::to_string(std::wstring(name) + layoutSuffix));
+								}
 							}
+							catch (...) {}
 						}
-						catch (...) {}
 					}
 				}
 
-				bool roeQuestPeriodic = hasPeriodicFFMarker(p, (size_t)size, sizeof(RoeQuestEntry));
-				if (allowROE && roeQuestPeriodic)
+				const std::pair<size_t, bool> roeQuestLayouts[] = {
+					{ sizeof(RoeQuestEntry), false },
+					{ sizeof(RoeQuestEntryLegacy), true },
+				};
+				for (const auto &[recordSize, legacy] : roeQuestLayouts)
 				{
+					bool roeQuestPeriodic = hasPeriodicFFMarker(p, (size_t)size, recordSize);
+					if (!allowROE || !roeQuestPeriodic)
+						continue;
+
 					try
 					{
 						RecordsOfEminence roe;
-						roe.ReadQuest(p.wstring());
+						roe.ReadQuest(p.wstring(), legacy ? slotfile::Version::V10 : slotfile::Version::V30);
 						if (!roe.questData.empty())
 						{
-							std::wcout << L"roe.quest p=" << p << std::endl;
-							roe.QuestToICsv(xybase::string::sys_wcs_to_mbs(PathUtil::GetOutPathConf(rom, c, n) + L".roe.quest.csv").c_str());
-							detectedTypes.insert("roe.quest");
+							std::wcout << L"roe.quest p=" << p << (legacy ? L" (legacy)" : L"") << std::endl;
+							roe.QuestToICsv(xybase::string::sys_wcs_to_mbs(PathUtil::GetOutPathConf(rom, c, n) + (legacy ? L".roe.quest_o.csv" : L".roe.quest.csv")).c_str());
+							detectedTypes.insert(legacy ? "roe.quest_o" : "roe.quest");
 						}
 					}
 					catch (...) {}
 				}
 
-				bool roeCategoryPeriodic = hasPeriodicFFMarker(p, (size_t)size, sizeof(RoeCategoryEntry));
-				if (allowROE && roeCategoryPeriodic)
+				const std::pair<size_t, bool> roeCategoryLayouts[] = {
+					{ sizeof(RoeCategoryEntry), false },
+					{ sizeof(RoeCategoryEntryLegacy), true },
+				};
+				for (const auto &[recordSize, legacy] : roeCategoryLayouts)
 				{
+					bool roeCategoryPeriodic = hasPeriodicFFMarker(p, (size_t)size, recordSize);
+					if (!allowROE || !roeCategoryPeriodic)
+						continue;
+
 					try
 					{
 						RecordsOfEminence roe;
-						roe.ReadCategory(p.wstring());
+						roe.ReadCategory(p.wstring(), legacy ? slotfile::Version::V10 : slotfile::Version::V30);
 						if (!roe.categoryData.empty())
 						{
-							std::wcout << L"roe.category p=" << p << std::endl;
-							roe.CategoryToICsv(xybase::string::sys_wcs_to_mbs(PathUtil::GetOutPathConf(rom, c, n) + L".roe.category.csv").c_str());
-							detectedTypes.insert("roe.category");
+							std::wcout << L"roe.category p=" << p << (legacy ? L" (legacy)" : L"") << std::endl;
+							roe.CategoryToICsv(xybase::string::sys_wcs_to_mbs(PathUtil::GetOutPathConf(rom, c, n) + (legacy ? L".roe.category_o.csv" : L".roe.category.csv")).c_str());
+							detectedTypes.insert(legacy ? "roe.category_o" : "roe.category");
 						}
 					}
 					catch (...) {}
 				}
 
-				bool mbPeriodic = hasPeriodicFFMarker(p, (size_t)size, sizeof(MBRecord));
-				if (allowMonBridge && mbPeriodic)
+				const std::pair<size_t, bool> mbLayouts[] = {
+					{ sizeof(MBRecord), false },
+					{ sizeof(MBRecordLegacy), true },
+				};
+				for (const auto &[recordSize, legacy] : mbLayouts)
 				{
+					bool mbPeriodic = hasPeriodicFFMarker(p, (size_t)size, recordSize);
+					if (!allowMonBridge || !mbPeriodic)
+						continue;
+
 					try
 					{
 						MonBridge mb;
-						mb.Read(p.wstring());
+						mb.Read(p.wstring(), legacy ? slotfile::Version::V10 : slotfile::Version::V30);
 						if (!mb.data.empty())
 						{
-							std::wcout << L"mb p=" << p << std::endl;
-							mb.ToICsv(PathUtil::GetOutPathConf(rom, c, n) + L".mb.csv");
-							detectedTypes.insert("mb");
+							std::wcout << L"mb p=" << p << (legacy ? L" (legacy)" : L"") << std::endl;
+							mb.ToICsv(PathUtil::GetOutPathConf(rom, c, n) + (legacy ? L".mb_o.csv" : L".mb.csv"));
+							detectedTypes.insert(legacy ? "mbd_o" : "mbd");
 						}
 					}
 					catch (...) {}
@@ -1280,13 +1347,13 @@ void ExportItemData(void)
 				csv.NewCell(h);
 			}
 		} else if (specType == ItemSpecType::SLIP) {
-			for (int i = 0; i < 70; ++i) {
+		  for (size_t i = 0; i < sizeof(ItemSlipSpec::ukn); ++i) {
 				csv.NewCell(xybase::string::to_utf8(std::string("Ukn") + std::to_string(i)));
 			}
 		} else if (specType == ItemSpecType::CURRENCY) {
 			csv.NewCell(u8"Ukn");
 		} else if (specType == ItemSpecType::INSTINCT) {
-			for (int i = 0; i < 13; ++i) {
+		  for (size_t i = 0; i < sizeof(ItemInstinctSpec::ukn) / sizeof(uint16_t); ++i) {
 				csv.NewCell(xybase::string::to_utf8(std::string("Ukn") + std::to_string(i)));
 			}
 		}
@@ -1295,7 +1362,7 @@ void ExportItemData(void)
 
 		// Write data rows
 		for (const auto& datum : jaData.data) {
-			auto toU8 = [](auto v) {
+			auto toUtf8 = [](auto v) {
 				return xybase::string::to_utf8(std::to_string(v));
 			};
 
@@ -1317,16 +1384,16 @@ void ExportItemData(void)
 			const auto& hdr = datum.flags();
 
 			// Write basic fields
-			csv.NewCell(toU8(datum.id));
+			csv.NewCell(toUtf8(datum.id));
 			csv.NewCell(jaName);
 			csv.NewCell(enName);
 			csv.NewCell(enSg);
 			csv.NewCell(enPl);
 			csv.NewCell(jaDesc);
 			csv.NewCell(enDesc);
-			csv.NewCell(toU8(datum.stack_size()));
-			csv.NewCell(toU8(datum.item_type()));
-			csv.NewCell(toU8(datum.resource_id()));
+			csv.NewCell(toUtf8(datum.stack_size()));
+			csv.NewCell(toUtf8(datum.item_type()));
+			csv.NewCell(toUtf8(datum.resource_id()));
 
 			// ValidTargets flags
 			uint16_t targets = datum.valid_targets();
@@ -1368,85 +1435,85 @@ void ExportItemData(void)
 			// Write spec-specific fields
 			if (specType == ItemSpecType::WEAPON) {
 				const auto& spec = datum.originalEntry.spec.weapon;
-				csv.NewCell(toU8(spec.level));
-				csv.NewCell(toU8(*(uint16_t*)&spec.equip_slots));
-				csv.NewCell(toU8(*(uint16_t*)&spec.races));
-				csv.NewCell(toU8(*(uint32_t*)&spec.jobs));
-				csv.NewCell(toU8(spec.slvl));
-				csv.NewCell(toU8(spec.ukn2));
-				csv.NewCell(toU8(spec.dmg));
-				csv.NewCell(toU8(spec.delay));
-				csv.NewCell(toU8(spec.dps));
-				csv.NewCell(toU8(spec.skill));
-				csv.NewCell(toU8(spec.ukn12));
-				csv.NewCell(toU8(spec.ukn7));
-				csv.NewCell(toU8(spec.ukn9));
-				csv.NewCell(toU8(spec.max_charges));
-				csv.NewCell(toU8(spec.cast_factor));
-				csv.NewCell(toU8(spec.use_time));
-				csv.NewCell(toU8(spec.reuse_time));
-				csv.NewCell(toU8(spec.ukn20));
-				csv.NewCell(toU8(spec.related_item_id));
-				csv.NewCell(toU8(spec.ilvl));
-				csv.NewCell(toU8(spec.ukn22));
-				csv.NewCell(toU8(spec.ukn23));
+				csv.NewCell(toUtf8(spec.level));
+				csv.NewCell(toUtf8(*(uint16_t*)&spec.equip_slots));
+				csv.NewCell(toUtf8(*(const uint16_t*)&spec.races));
+				csv.NewCell(toUtf8(*(uint32_t*)&spec.jobs));
+				csv.NewCell(toUtf8(spec.slvl));
+				csv.NewCell(toUtf8(spec.ukn2));
+				csv.NewCell(toUtf8(spec.dmg));
+				csv.NewCell(toUtf8(spec.delay));
+				csv.NewCell(toUtf8(spec.dps));
+				csv.NewCell(toUtf8(spec.skill));
+				csv.NewCell(toUtf8(spec.ukn12));
+				csv.NewCell(toUtf8(spec.ukn7));
+				csv.NewCell(toUtf8(spec.ukn9));
+				csv.NewCell(toUtf8(spec.max_charges));
+				csv.NewCell(toUtf8(spec.cast_factor));
+				csv.NewCell(toUtf8(spec.use_time));
+				csv.NewCell(toUtf8(spec.reuse_time));
+				csv.NewCell(toUtf8(spec.ukn20));
+				csv.NewCell(toUtf8(spec.related_item_id));
+				csv.NewCell(toUtf8(spec.ilvl));
+				csv.NewCell(toUtf8(spec.ukn22));
+				csv.NewCell(toUtf8(spec.ukn23));
 			} else if (specType == ItemSpecType::ARMOUR) {
 				const auto& spec = datum.originalEntry.spec.armour;
-				csv.NewCell(toU8(spec.level));
-				csv.NewCell(toU8(*(uint16_t*)&spec.equip_slots));
-				csv.NewCell(toU8(*(uint16_t*)&spec.equip_races));
-				csv.NewCell(toU8(*(uint32_t*)&spec.equip_jobs));
-				csv.NewCell(toU8(spec.slvl));
-				csv.NewCell(toU8(spec.shield_size));
-				csv.NewCell(toU8(spec.max_charges));
-				csv.NewCell(toU8(spec.cast_factor));
-				csv.NewCell(toU8(spec.use_time));
-				csv.NewCell(toU8(spec.reuse_time));
-				csv.NewCell(toU8(spec.ukn1));
-				csv.NewCell(toU8(spec.related_item_id));
-				csv.NewCell(toU8(spec.ilvl));
-				csv.NewCell(toU8(spec.ukn3));
-				csv.NewCell(toU8(spec.ukn4));
+				csv.NewCell(toUtf8(spec.level));
+				csv.NewCell(toUtf8(*(uint16_t*)&spec.equip_slots));
+			   csv.NewCell(toUtf8(*(const uint16_t*)&spec.equip_races));
+				csv.NewCell(toUtf8(*(uint32_t*)&spec.equip_jobs));
+				csv.NewCell(toUtf8(spec.slvl));
+				csv.NewCell(toUtf8(spec.shield_size));
+				csv.NewCell(toUtf8(spec.max_charges));
+				csv.NewCell(toUtf8(spec.cast_factor));
+				csv.NewCell(toUtf8(spec.use_time));
+				csv.NewCell(toUtf8(spec.reuse_time));
+				csv.NewCell(toUtf8(spec.ukn1));
+				csv.NewCell(toUtf8(spec.related_item_id));
+				csv.NewCell(toUtf8(spec.ilvl));
+				csv.NewCell(toUtf8(spec.ukn3));
+				csv.NewCell(toUtf8(spec.ukn4));
 			} else if (specType == ItemSpecType::USABLE) {
 				const auto& spec = datum.originalEntry.spec.usable;
-				csv.NewCell(toU8(spec.cast_factor));
-				csv.NewCell(toU8(spec.ukn1));
-				csv.NewCell(toU8(spec.ukn2));
-				csv.NewCell(toU8(spec.ukn3));
+				csv.NewCell(toUtf8(spec.cast_factor));
+				csv.NewCell(toUtf8(spec.ukn1));
+				csv.NewCell(toUtf8(spec.ukn2));
+				csv.NewCell(toUtf8(spec.ukn3));
 			} else if (specType == ItemSpecType::NORMAL) {
 				const auto& spec = datum.originalEntry.spec.normal;
-				csv.NewCell(toU8(spec.element));
-				csv.NewCell(toU8(spec.storage));
-				csv.NewCell(toU8(spec.related_item_id));
-				csv.NewCell(toU8(spec.ukn4));
-				csv.NewCell(toU8(spec.ukn5));
+				csv.NewCell(toUtf8(spec.element));
+				csv.NewCell(toUtf8(spec.storage));
+				csv.NewCell(toUtf8(spec.related_item_id));
+				csv.NewCell(toUtf8(spec.ukn4));
+				csv.NewCell(toUtf8(spec.ukn5));
 			} else if (specType == ItemSpecType::PUPPET) {
 				const auto& spec = datum.originalEntry.spec.puppet;
 				csv.NewCell(spec.equip_slots.head ? u8"1" : u8"0");
 				csv.NewCell(spec.equip_slots.body ? u8"1" : u8"0");
 				csv.NewCell(spec.equip_slots.attachment ? u8"1" : u8"0");
-				csv.NewCell(toU8(*(uint16_t*)&spec.equip_slots)); // Raw slot value
-				csv.NewCell(toU8(spec.fire));
-				csv.NewCell(toU8(spec.ice));
-				csv.NewCell(toU8(spec.air));
-				csv.NewCell(toU8(spec.earth));
-				csv.NewCell(toU8(spec.thunder));
-				csv.NewCell(toU8(spec.water));
-				csv.NewCell(toU8(spec.light));
-				csv.NewCell(toU8(spec.dark));
-				csv.NewCell(toU8(spec.ukn));
+				csv.NewCell(toUtf8(*(const uint32_t*)&spec.equip_slots)); // Raw slot value
+				csv.NewCell(toUtf8(spec.fire));
+				csv.NewCell(toUtf8(spec.ice));
+				csv.NewCell(toUtf8(spec.air));
+				csv.NewCell(toUtf8(spec.earth));
+				csv.NewCell(toUtf8(spec.thunder));
+				csv.NewCell(toUtf8(spec.water));
+				csv.NewCell(toUtf8(spec.light));
+				csv.NewCell(toUtf8(spec.dark));
+				csv.NewCell(toUtf8(spec.ukn));
 			} else if (specType == ItemSpecType::SLIP) {
 				const auto& spec = datum.originalEntry.spec.slip;
-				for (int i = 0; i < 70; ++i) {
-					csv.NewCell(toU8(spec.ukn[i]));
+			  for (auto value : spec.ukn) {
+					csv.NewCell(toUtf8(value));
 				}
 			} else if (specType == ItemSpecType::CURRENCY) {
 				const auto& spec = datum.originalEntry.spec.currency;
-				csv.NewCell(toU8(spec.ukn));
+				csv.NewCell(toUtf8(spec.ukn));
 			} else if (specType == ItemSpecType::INSTINCT) {
 				const auto& spec = datum.originalEntry.spec.instinct;
-				for (int i = 0; i < 13; ++i) {
-					csv.NewCell(toU8(spec.ukn[i]));
+			  for (auto value : spec.ukn) {
+					csv.NewCell(toUtf8(value));
 				}
 			}
 

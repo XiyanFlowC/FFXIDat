@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="源文件">
@@ -12,6 +12,9 @@
     <Filter Include="资源文件">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="SlotFormats">
+      <UniqueIdentifier>{484e1f38-834d-4a06-b0db-279c2c12eaa5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -69,6 +72,51 @@
     <ClInclude Include="ZoneActor.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ItemFormats.h">
+      <Filter>SlotFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemFormatV10.h">
+      <Filter>SlotFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemFormatV20.h">
+      <Filter>SlotFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemFormatV30.h">
+      <Filter>SlotFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemSpecType.h">
+      <Filter>SlotFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="LegacyTypeSuffix.h">
+      <Filter>SlotFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="MonBridgeFormats.h">
+      <Filter>SlotFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="MonBridgeFormatV10.h">
+      <Filter>SlotFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="MonBridgeFormatV30.h">
+      <Filter>SlotFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="RoeFormats.h">
+      <Filter>SlotFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="RoeFormatV10.h">
+      <Filter>SlotFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="RoeFormatV20.h">
+      <Filter>SlotFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="RoeFormatV30.h">
+      <Filter>SlotFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="SlotFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SlotFileCsv.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -117,6 +165,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ZoneEventImage.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemFormatsCsv.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RoeFormatsCsv.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MonBridgeFormatsCsv.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

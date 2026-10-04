@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <map>
 #include <set>
+#include <SlotFile.h>   // slotfile::Version: the record version of a DAT
 #include <string>
 #include <vector>
 #include <memory>
@@ -137,7 +138,7 @@ private:
 	bool LoadStatusDataFile(const std::filesystem::path& filePath, ContentView* contentView);
 	bool LoadItemDataFile(const std::filesystem::path& filePath, const std::string& fileType, ContentView* contentView);
 	bool LoadFixedPhraseFile(const std::filesystem::path& filePath, ContentView* contentView, std::string& lang);
-	bool LoadMonBridgeFile(const std::filesystem::path& filePath, ContentView* contentView);
-	bool LoadRoeQuestFile(const std::filesystem::path& filePath, ContentView* contentView);
-	bool LoadRoeCategoryFile(const std::filesystem::path& filePath, ContentView* contentView);
+	bool LoadMonBridgeFile(const std::filesystem::path& filePath, ContentView* contentView, slotfile::Version version = slotfile::Version::V30);
+	bool LoadRoeQuestFile(const std::filesystem::path& filePath, ContentView* contentView, slotfile::Version version = slotfile::Version::V30);
+	bool LoadRoeCategoryFile(const std::filesystem::path& filePath, ContentView* contentView, slotfile::Version version = slotfile::Version::V30);
 };

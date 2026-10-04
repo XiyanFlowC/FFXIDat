@@ -31,8 +31,8 @@ int YesNoPrompt(const std::wstring& prompt);
 namespace
 {
 	namespace fs = std::filesystem;
-	constexpr wchar_t kAppTitle[] = L"FFXI汉化插入工具";
-	constexpr wchar_t kProgressWindowClassName[] = L"FFXITransProgressWindow";
+	constexpr wchar_t APP_TITLE[] = L"FFXI汉化插入工具";
+	constexpr wchar_t PROGRESS_WINDOW_CLASS_NAME[] = L"FFXITransProgressWindow";
 
 	void PumpWindowMessages()
 	{
@@ -44,7 +44,7 @@ namespace
 		}
 	}
 
-	void ShowMessageBox(const std::wstring& message, UINT flags, const wchar_t* title = kAppTitle)
+	void ShowMessageBox(const std::wstring& message, UINT flags, const wchar_t* title = APP_TITLE)
 	{
 		Logger::Instance().Info(std::string("Displaying message box. title=") + Logger::ToUtf8(std::wstring(title)) + ", flags=" + std::to_string(flags));
 		MessageBoxW(nullptr, message.c_str(), title, flags | MB_SETFOREGROUND | MB_TOPMOST);
@@ -132,7 +132,7 @@ namespace
 			const HINSTANCE instance = GetModuleHandleW(nullptr);
 			window_ = CreateWindowExW(
 				WS_EX_DLGMODALFRAME | WS_EX_TOPMOST,
-				kProgressWindowClassName,
+				PROGRESS_WINDOW_CLASS_NAME,
 				title,
 				WS_CAPTION | WS_SYSMENU,
 				CW_USEDEFAULT,
@@ -224,7 +224,7 @@ namespace
 		{
 			const HINSTANCE instance = GetModuleHandleW(nullptr);
 			WNDCLASSEXW existing{};
-			if (GetClassInfoExW(instance, kProgressWindowClassName, &existing))
+			if (GetClassInfoExW(instance, PROGRESS_WINDOW_CLASS_NAME, &existing))
 				return;
 
 			WNDCLASSEXW windowClass{};
@@ -233,7 +233,7 @@ namespace
 			windowClass.hInstance = instance;
 			windowClass.hCursor = LoadCursorW(nullptr, IDC_ARROW);
 			windowClass.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_BTNFACE + 1);
-			windowClass.lpszClassName = kProgressWindowClassName;
+			windowClass.lpszClassName = PROGRESS_WINDOW_CLASS_NAME;
 			RegisterClassExW(&windowClass);
 		}
 
@@ -560,7 +560,7 @@ int YesNoPrompt(const std::wstring& prompt)
 	const int result = MessageBoxW(
 		nullptr,
 		prompt.c_str(),
-		kAppTitle,
+		APP_TITLE,
 		MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2 | MB_SETFOREGROUND | MB_TOPMOST);
 	Logger::Instance().Info(std::string("User prompt result=") + (result == IDYES ? "Yes" : "No")
 		+ ", prompt=" + Logger::ToUtf8(prompt));

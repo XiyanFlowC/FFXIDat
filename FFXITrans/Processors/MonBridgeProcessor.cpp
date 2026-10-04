@@ -4,6 +4,7 @@
 #include "../Config.h"
 #include "../ProcessorUtils.h"
 #include <MonBridge.h>
+#include <LegacyTypeSuffix.h>
 #include <xystring.h>
 
 bool MonBridgeProcessor::Process(
@@ -13,7 +14,7 @@ bool MonBridgeProcessor::Process(
 	const std::map<std::u8string, FileProcessDef>& jpDefsByComment)
 {
 	MonBridge monBridge;
-	monBridge.Read(datPath);
+	monBridge.Read(datPath, VersionForTypeCode(fileDef.type));
 	FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 
 	// Check for ID-mapped reference (en_as_ja mode)

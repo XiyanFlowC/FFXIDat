@@ -39,6 +39,7 @@ namespace {
 		}
 		return lineCount;
 	}
+
 }
 
 DatFileManager::DatFileManager(const std::filesystem::path& gamePath)
@@ -415,42 +416,42 @@ bool DatFileManager::ExportDatToCsv(const DatFileInfo& info, const std::filesyst
 			f.ToCsv(csvPath.wstring());
 			return true;
 		}
-		if (info.fileType == "iab" || info.fileType == "iwb" || info.fileType == "iub" || info.fileType == "iib" ||
-			info.fileType == "inb" || info.fileType == "ipb" || info.fileType == "isb" || info.fileType == "icb")
+		if (IsItemTypeCode(info.fileType))
 		{
+			const std::string baseType = BaseTypeOf(info.fileType);
 			ItemSpecType specType = ItemSpecType::NORMAL;
-			if (info.fileType == "iab") specType = ItemSpecType::ARMOUR;
-			else if (info.fileType == "iwb") specType = ItemSpecType::WEAPON;
-			else if (info.fileType == "iub") specType = ItemSpecType::USABLE;
-			else if (info.fileType == "ipb") specType = ItemSpecType::PUPPET;
-			else if (info.fileType == "isb") specType = ItemSpecType::SLIP;
-			else if (info.fileType == "icb") specType = ItemSpecType::CURRENCY;
-			else if (info.fileType == "iib") specType = ItemSpecType::INSTINCT;
+			if (baseType == "iab") specType = ItemSpecType::ARMOUR;
+			else if (baseType == "iwb") specType = ItemSpecType::WEAPON;
+			else if (baseType == "iub") specType = ItemSpecType::USABLE;
+			else if (baseType == "ipb") specType = ItemSpecType::PUPPET;
+			else if (baseType == "isb") specType = ItemSpecType::SLIP;
+			else if (baseType == "icb") specType = ItemSpecType::CURRENCY;
+			else if (baseType == "iib") specType = ItemSpecType::INSTINCT;
 
 			ItemData f;
-			f.Read(datPath.wstring(), specType);
+			f.Read(datPath.wstring(), specType, VersionForTypeCode(info.fileType));
 			f.ToICsv(csvPath.wstring());
 			return true;
 		}
-		if (info.fileType == "mbd")
+		if (BaseTypeOf(info.fileType) == "mbd")
 		{
 			MonBridge f;
-			f.Read(datPath.wstring());
+			f.Read(datPath.wstring(), VersionForTypeCode(info.fileType));
 			f.ToICsv(csvPath.wstring());
 			return true;
 		}
-		if (info.fileType == "erq")
+		if (BaseTypeOf(info.fileType) == "erq")
 		{
 			RecordsOfEminence f;
-			f.ReadQuest(datPath.wstring());
+			f.ReadQuest(datPath.wstring(), VersionForTypeCode(info.fileType));
 			auto out = csvPath.string();
 			f.QuestToICsv(out.c_str());
 			return true;
 		}
-		if (info.fileType == "erc")
+		if (BaseTypeOf(info.fileType) == "erc")
 		{
 			RecordsOfEminence f;
-			f.ReadCategory(datPath.wstring());
+			f.ReadCategory(datPath.wstring(), VersionForTypeCode(info.fileType));
 			auto out = csvPath.string();
 			f.CategoryToICsv(out.c_str());
 			return true;
@@ -932,23 +933,21 @@ bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentVi
 			std::string lang = info.language;
 			return LoadFixedPhraseFile(filePath, contentView, lang);
 		}
-		else if (info.fileType == "iab" || info.fileType == "iwb" || info.fileType == "iub" ||
-			info.fileType == "inb" || info.fileType == "ipb" || info.fileType == "isb" ||
-			info.fileType == "icb" || info.fileType == "iib")
+		else if (IsItemTypeCode(info.fileType))
 		{
 			return LoadItemDataFile(filePath, info.fileType, contentView);
 		}
-		else if (info.fileType == "mbd")
+		else if (BaseTypeOf(info.fileType) == "mbd")
 		{
-			return LoadMonBridgeFile(filePath, contentView);
+			return LoadMonBridgeFile(filePath, contentView, VersionForTypeCode(info.fileType));
 		}
-		else if (info.fileType == "erq")
+		else if (BaseTypeOf(info.fileType) == "erq")
 		{
-			return LoadRoeQuestFile(filePath, contentView);
+			return LoadRoeQuestFile(filePath, contentView, VersionForTypeCode(info.fileType));
 		}
-		else if (info.fileType == "erc")
+		else if (BaseTypeOf(info.fileType) == "erc")
 		{
-			return LoadRoeCategoryFile(filePath, contentView);
+			return LoadRoeCategoryFile(filePath, contentView, VersionForTypeCode(info.fileType));
 		}
 		else
 		{
@@ -1010,12 +1009,10 @@ bool DatFileManager::LoadArbitraryFile(const std::filesystem::path& filePath, co
 		else if (fileType == "evsb") return LoadEventStringFile(filePath, contentView);
 		else if (fileType == "sd") return LoadStatusDataFile(filePath, contentView);
 		else if (fileType == "fp") return LoadFixedPhraseFile(filePath, contentView, info.language);
-		else if (fileType == "iab" || fileType == "iwb" || fileType == "iub" ||
-			fileType == "inb" || fileType == "ipb" || fileType == "isb" ||
-			fileType == "icb" || fileType == "iib") return LoadItemDataFile(filePath, fileType, contentView);
-		else if (fileType == "mbd") return LoadMonBridgeFile(filePath, contentView);
-		else if (fileType == "erq") return LoadRoeQuestFile(filePath, contentView);
-		else if (fileType == "erc") return LoadRoeCategoryFile(filePath, contentView);
+		else if (IsItemTypeCode(fileType)) return LoadItemDataFile(filePath, fileType, contentView);
+		else if (BaseTypeOf(fileType) == "mbd") return LoadMonBridgeFile(filePath, contentView, VersionForTypeCode(fileType));
+		else if (BaseTypeOf(fileType) == "erq") return LoadRoeQuestFile(filePath, contentView, VersionForTypeCode(fileType));
+		else if (BaseTypeOf(fileType) == "erc") return LoadRoeCategoryFile(filePath, contentView, VersionForTypeCode(fileType));
 		else
 		{
 			std::wstring msg = L"Unsupported file type: ";
@@ -1445,16 +1442,18 @@ bool DatFileManager::LoadItemDataFile(const std::filesystem::path& filePath, con
 {
 	m_currentItemData = std::make_unique<ItemData>();
 
-	ItemSpecType specType = ItemSpecType::NORMAL;
-	if (fileType == "iab") specType = ItemSpecType::ARMOUR;
-	else if (fileType == "iwb") specType = ItemSpecType::WEAPON;
-	else if (fileType == "iub") specType = ItemSpecType::USABLE;
-	else if (fileType == "ipb") specType = ItemSpecType::PUPPET;
-	else if (fileType == "isb") specType = ItemSpecType::SLIP;
-	else if (fileType == "icb") specType = ItemSpecType::CURRENCY;
-	else if (fileType == "iib") specType = ItemSpecType::INSTINCT;
+	const std::string baseType = BaseTypeOf(fileType);
 
-	m_currentItemData->Read(filePath, specType);
+	ItemSpecType specType = ItemSpecType::NORMAL;
+	if (baseType == "iab") specType = ItemSpecType::ARMOUR;
+	else if (baseType == "iwb") specType = ItemSpecType::WEAPON;
+	else if (baseType == "iub") specType = ItemSpecType::USABLE;
+	else if (baseType == "ipb") specType = ItemSpecType::PUPPET;
+	else if (baseType == "isb") specType = ItemSpecType::SLIP;
+	else if (baseType == "icb") specType = ItemSpecType::CURRENCY;
+	else if (baseType == "iib") specType = ItemSpecType::INSTINCT;
+
+	m_currentItemData->Read(filePath, specType, VersionForTypeCode(fileType));
 
 	contentView->Clear();
 
@@ -1741,10 +1740,10 @@ bool DatFileManager::LoadItemDataFile(const std::filesystem::path& filePath, con
 }
 
 // ==================== MonBridge (mbd) ====================
-bool DatFileManager::LoadMonBridgeFile(const std::filesystem::path& filePath, ContentView* contentView)
+bool DatFileManager::LoadMonBridgeFile(const std::filesystem::path& filePath, ContentView* contentView, slotfile::Version version)
 {
 	m_currentMonBridge = std::make_unique<MonBridge>();
-	m_currentMonBridge->Read(filePath);
+	m_currentMonBridge->Read(filePath, version);
 
 	contentView->Clear();
 	contentView->SetColumnCount(4);
@@ -1780,10 +1779,10 @@ bool DatFileManager::LoadMonBridgeFile(const std::filesystem::path& filePath, Co
 }
 
 // ==================== RecordsOfEminence - Quest (erq) ====================
-bool DatFileManager::LoadRoeQuestFile(const std::filesystem::path& filePath, ContentView* contentView)
+bool DatFileManager::LoadRoeQuestFile(const std::filesystem::path& filePath, ContentView* contentView, slotfile::Version version)
 {
 	m_currentRoe = std::make_unique<RecordsOfEminence>();
-	m_currentRoe->ReadQuest(filePath);
+	m_currentRoe->ReadQuest(filePath, version);
 
 	contentView->Clear();
 
@@ -1875,10 +1874,10 @@ bool DatFileManager::LoadRoeQuestFile(const std::filesystem::path& filePath, Con
 }
 
 // ==================== RecordsOfEminence - Category (erc) ====================
-bool DatFileManager::LoadRoeCategoryFile(const std::filesystem::path& filePath, ContentView* contentView)
+bool DatFileManager::LoadRoeCategoryFile(const std::filesystem::path& filePath, ContentView* contentView, slotfile::Version version)
 {
 	m_currentRoe = std::make_unique<RecordsOfEminence>();
-	m_currentRoe->ReadCategory(filePath);
+	m_currentRoe->ReadCategory(filePath, version);
 
 	contentView->Clear();
 	contentView->SetColumnCount(2);

@@ -427,13 +427,14 @@ namespace ProcessorUtils
 
     ItemSpecType GetItemSpecType(const std::u8string& type)
     {
-        if (type == u8"iab") return ItemSpecType::ARMOUR;
-        if (type == u8"iwb") return ItemSpecType::WEAPON;
-        if (type == u8"iub") return ItemSpecType::USABLE;
-        if (type == u8"ipb") return ItemSpecType::PUPPET;
-        if (type == u8"isb") return ItemSpecType::SLIP;
-        if (type == u8"icb") return ItemSpecType::CURRENCY;
-        if (type == u8"iib") return ItemSpecType::INSTINCT;
+        const std::u8string base = StripLegacyTypeSuffix(type);
+        if (base == u8"iab") return ItemSpecType::ARMOUR;
+        if (base == u8"iwb") return ItemSpecType::WEAPON;
+        if (base == u8"iub") return ItemSpecType::USABLE;
+        if (base == u8"ipb") return ItemSpecType::PUPPET;
+        if (base == u8"isb") return ItemSpecType::SLIP;
+        if (base == u8"icb") return ItemSpecType::CURRENCY;
+        if (base == u8"iib") return ItemSpecType::INSTINCT;
         return ItemSpecType::NORMAL;
     }
 
@@ -441,7 +442,7 @@ namespace ProcessorUtils
     {
         std::map<uint32_t, std::vector<std::u8string>> result;
         ItemData itemData;
-        itemData.Read(datPath, GetItemSpecType(type));
+        itemData.Read(datPath, GetItemSpecType(type), VersionForTypeCode(type));
 
         for (const auto& datum : itemData.data)
         {
@@ -520,6 +521,8 @@ namespace ProcessorUtils
     {
         std::vector<std::u8string> result;
 
+		const auto base = StripLegacyTypeSuffix(type);
+
         if (type == u8"xis")
         {
             XiString xis(datPath);
@@ -591,13 +594,13 @@ namespace ProcessorUtils
                 }
             }
         }
-        else if (type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb" || type == u8"ipb" || type == u8"isb" || type == u8"icb" || type == u8"iib")
+        else if (base == u8"iab" || base == u8"iwb" || base == u8"iub" || base == u8"inb" || base == u8"ipb" || base == u8"isb" || base == u8"icb" || base == u8"iib")
         {
             std::set<int> targetCells = ParseCellIndices(cellIndicesStr);
             bool translateAllCells = targetCells.empty();
 
             ItemData itemData;
-            itemData.Read(datPath, GetItemSpecType(type));
+            itemData.Read(datPath, GetItemSpecType(type), VersionForTypeCode(type));
 
             for (auto& datum : itemData.data)
             {
@@ -616,10 +619,10 @@ namespace ProcessorUtils
                 }
             }
         }
-        else if (type == u8"mbd")
+        else if (StripLegacyTypeSuffix(type) == u8"mbd")
         {
             MonBridge monBridge;
-            monBridge.Read(datPath);
+            monBridge.Read(datPath, VersionForTypeCode(type));
             for (auto& datum : monBridge.data)
             {
                 if (!datum.displayName.empty())
@@ -628,10 +631,10 @@ namespace ProcessorUtils
                 }
             }
         }
-        else if (type == u8"erq")
+        else if (StripLegacyTypeSuffix(type) == u8"erq")
         {
             RecordsOfEminence roe;
-            roe.ReadQuest(datPath);
+            roe.ReadQuest(datPath, VersionForTypeCode(type));
             std::set<int> targetCells = ParseCellIndices(cellIndicesStr);
 
             for (auto& datum : roe.questData)
@@ -651,10 +654,10 @@ namespace ProcessorUtils
                 }
             }
         }
-        else if (type == u8"erc")
+        else if (StripLegacyTypeSuffix(type) == u8"erc")
         {
             RecordsOfEminence roe;
-            roe.ReadCategory(datPath);
+            roe.ReadCategory(datPath, VersionForTypeCode(type));
             for (auto& datum : roe.categoryData)
             {
                 try

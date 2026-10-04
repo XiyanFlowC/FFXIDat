@@ -11,19 +11,21 @@
 
 bool ItemProcessor::SupportsType(const std::u8string& type) const
 {
-	return type == u8"iab" || type == u8"iwb" || type == u8"iub" || type == u8"inb"
-		|| type == u8"ipb" || type == u8"isb" || type == u8"icb" || type == u8"iib";
+	const std::u8string base = StripLegacyTypeSuffix(type);
+	return base == u8"iab" || base == u8"iwb" || base == u8"iub" || base == u8"inb"
+		|| base == u8"ipb" || base == u8"isb" || base == u8"icb" || base == u8"iib";
 }
 
 ItemSpecType GetItemSpecType(const std::u8string& type)
 {
-	if (type == u8"iab") return ItemSpecType::ARMOUR;
-	if (type == u8"iwb") return ItemSpecType::WEAPON;
-	if (type == u8"iub") return ItemSpecType::USABLE;
-	if (type == u8"ipb") return ItemSpecType::PUPPET;
-	if (type == u8"isb") return ItemSpecType::SLIP;
-	if (type == u8"icb") return ItemSpecType::CURRENCY;
-	if (type == u8"iib") return ItemSpecType::INSTINCT;
+	const std::u8string base = StripLegacyTypeSuffix(type);
+	if (base == u8"iab") return ItemSpecType::ARMOUR;
+	if (base == u8"iwb") return ItemSpecType::WEAPON;
+	if (base == u8"iub") return ItemSpecType::USABLE;
+	if (base == u8"ipb") return ItemSpecType::PUPPET;
+	if (base == u8"isb") return ItemSpecType::SLIP;
+	if (base == u8"icb") return ItemSpecType::CURRENCY;
+	if (base == u8"iib") return ItemSpecType::INSTINCT;
 	return ItemSpecType::NORMAL;
 }
 
@@ -50,7 +52,7 @@ bool ItemProcessor::Process(
 
 	ItemData itemData;
 	ItemSpecType specType = GetItemSpecType(fileDef.type);
-	itemData.Read(datPath, specType);
+	itemData.Read(datPath, specType, VersionForTypeCode(fileDef.type));
 
 	std::map<uint32_t, std::u8string> alternateNamesById;
 	if (Config::Instance().IsBabelAlternateOriginalEnabled())

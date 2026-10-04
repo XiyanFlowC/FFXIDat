@@ -130,9 +130,9 @@ void ContentView::SetColumnWidth(int index, int width)
 
 const std::wstring& ContentView::GetColumnTitle(int index) const
 {
-	static const std::wstring kEmpty;
+	static const std::wstring EMPTY;
 	if (index < 0 || index >= static_cast<int>(m_columnTitles.size()))
-		return kEmpty;
+		return EMPTY;
 	return m_columnTitles[index];
 }
 

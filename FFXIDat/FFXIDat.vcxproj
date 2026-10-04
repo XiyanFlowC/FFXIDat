@@ -154,7 +154,22 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="ItemData.h" />
+    <ClInclude Include="ItemFormats.h" />
+    <ClInclude Include="ItemFormatV10.h" />
+    <ClInclude Include="ItemFormatV20.h" />
+    <ClInclude Include="ItemFormatV30.h" />
+    <ClInclude Include="ItemSpecType.h" />
+    <ClInclude Include="LegacyTypeSuffix.h" />
+    <ClInclude Include="SlotFile.h" />
+    <ClInclude Include="SlotFileCsv.h" />
     <ClInclude Include="MonBridge.h" />
+    <ClInclude Include="MonBridgeFormatV10.h" />
+    <ClInclude Include="MonBridgeFormatV30.h" />
+    <ClInclude Include="MonBridgeFormats.h" />
+    <ClInclude Include="RoeFormatV10.h" />
+    <ClInclude Include="RoeFormatV20.h" />
+    <ClInclude Include="RoeFormatV30.h" />
+    <ClInclude Include="RoeFormats.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Record.h" />
     <ClInclude Include="RecordFormat.h" />
@@ -173,7 +188,9 @@
     <ClCompile Include="FixedPhrase.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="ItemData.cpp" />
+    <ClCompile Include="ItemFormatsCsv.cpp" />
     <ClCompile Include="MonBridge.cpp" />
+    <ClCompile Include="MonBridgeFormatsCsv.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -182,6 +199,7 @@
     </ClCompile>
     <ClCompile Include="Record.cpp" />
     <ClCompile Include="RecordsOfEminence.cpp" />
+    <ClCompile Include="RoeFormatsCsv.cpp" />
     <ClCompile Include="StatusData.cpp" />
     <ClCompile Include="XiString.cpp" />
     <ClCompile Include="ZoneActor.cpp" />

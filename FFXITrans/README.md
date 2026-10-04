@@ -38,6 +38,8 @@ FFXITrans 是一个面向《最终幻想XI》的文本提取与汉化插入工�
 
 > `prepare` 模式还会兼容处理部分旧定义中的类型，例如 `mb`。
 
+> 类型后缀 `_o` 表示该表使用旧的记录布局（de/fr 表，0xC00 槽）：物品、MonBridge、RoE 类型都可以带该后缀，例如 `inb_o`、`mbd_o`、`erq_o`、`erc_o`。无后缀表示最新已知布局。
+
 ## 系统要求
 
 - **操作系统** - Windows 7 或更高版本
@@ -581,6 +583,7 @@ CJK字符,对应的Shift-JIS字符或组合
 ## 更新日志
 
 ### 当前版本
+- 支持 `_o` 后缀的旧记录布局（de/fr 表）：物品、MonBridge、RoE quest/category 按类型后缀选择记录版本，无后缀 = 最新布局，`_o` = 最旧布局
 - 支持 `EventProcessor`：当 evsb 有配对 evev 时，利用 FFXIDat 的 `ZoneEventImage`/`ZoneActor` 解析事件结构，从 `text/tgt/event/` 读取译文建立逐事件补丁，未覆盖索引自动回退 `TranslationDatabase`
 - 支持 `TranslationDatabase` 本地作用域：每个文件处理时优先匹配 `text/{src|tgt}/<comment>.txt`，实现文件级翻译优先
 

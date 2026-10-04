@@ -7,6 +7,7 @@
 #include "../ProcessorUtils.h"
 #include "../ChsToSJis.h"
 #include <RecordsOfEminence.h>
+#include <LegacyTypeSuffix.h>
 #include <xystring.h>
 
 bool RoeProcessor::Process(
@@ -15,11 +16,11 @@ bool RoeProcessor::Process(
 	const std::filesystem::path& outPath,
 	const std::map<std::u8string, FileProcessDef>& jpDefsByComment)
 {
-	if (fileDef.type == u8"erq")
+	if (StripLegacyTypeSuffix(fileDef.type) == u8"erq")
 	{
 		return ProcessQuestData(fileDef, datPath, outPath, jpDefsByComment);
 	}
-	else if (fileDef.type == u8"erc")
+	else if (StripLegacyTypeSuffix(fileDef.type) == u8"erc")
 	{
 		return ProcessCategoryData(fileDef, datPath, outPath, jpDefsByComment);
 	}
@@ -33,7 +34,7 @@ bool RoeProcessor::ProcessQuestData(
 	const std::map<std::u8string, FileProcessDef>& jpDefsByComment)
 {
 	RecordsOfEminence roe;
-	roe.ReadQuest(datPath);
+	roe.ReadQuest(datPath, VersionForTypeCode(fileDef.type));
 	FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 
 	auto processText = [&](const std::u8string& translated, const std::u8string& original, int64_t rowOrId, int64_t colOrColId)
@@ -239,7 +240,7 @@ bool RoeProcessor::ProcessCategoryData(
 	const std::map<std::u8string, FileProcessDef>& jpDefsByComment)
 {
 	RecordsOfEminence roe;
-	roe.ReadCategory(datPath);
+	roe.ReadCategory(datPath, VersionForTypeCode(fileDef.type));
 	FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 
 	auto processText = [&](const std::u8string& translated, const std::u8string& original, int64_t rowOrId, int64_t colOrColId)

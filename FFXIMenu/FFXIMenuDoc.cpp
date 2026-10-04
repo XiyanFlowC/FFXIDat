@@ -531,6 +531,7 @@ BOOL CFFXIMenuDoc::OnSaveDocument(LPCTSTR lpszPathName)
 	}
 
 	SetModifiedFlag(FALSE);
+	return TRUE;
 }
 
 void CFFXIMenuDoc::DeleteContents()
