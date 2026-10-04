@@ -4,11 +4,24 @@ Note: The FFXIDatEG subproject is licensed under the MIT License.
 See FFXIDatEG/LICENSE for details. 
 
 The FFXIDatAdv subproject is licensed under the AGPL-3.0 License.
-See FFXIDatAdv/LICENSE for details.
+See FFXIDatAdv/LICENSE.md for details.
 
-The other subprojects of FFXITrans, including the core translation
-processing library, are released under the Unlicense, which is a
-public domain dedication.
+The FFXITrans subproject is licensed under the MIT License.
+See FFXITrans/LICENSE for details.
+
+The FFXITransAdv subproject is licensed under the AGPL-3.0 License.
+See FFXITransAdv/LICENSE for details.
+
+The other subprojects, including the core translation processing
+library, are released under the Unlicense, which is a public domain
+dedication.
+
+Third-party sources:
+
+* The definition tables kept in FFXIDatAdv/data are adapted from
+  atom0s/XiEvents (AGPL-3.0). See FFXIDatAdv/data/NOTICE.md.
+* The global DAT file ID resolution method was written with reference
+  to Windower/POLUtils (Apache-2.0). No POLUtils code is included.
 ================================================================================
 
 This is free and unencumbered software released into the public domain.
@@ -35,4 +48,3 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
 For more information, please refer to <https://unlicense.org>
-

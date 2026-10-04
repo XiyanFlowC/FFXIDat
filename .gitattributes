@@ -1,7 +1,8 @@
 ###############################################################################
 # Set default behavior to automatically normalize line endings.
 ###############################################################################
-* text=auto
+# store LF in the repository, check out CRLF
+* text=auto eol=crlf
 
 ###############################################################################
 # Set default behavior for command prompt diff.

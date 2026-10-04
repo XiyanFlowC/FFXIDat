@@ -97,7 +97,7 @@ Actors with identical `(actor_name, message_sequence)` appearing in 2+ zones (wh
 
 ## References
 
-- [POLUtils](https://github.com/Windower/POLUtils) — POL/FFXI Data utilities
+- [POLUtils](https://github.com/Windower/POLUtils) — the global VTABLE/FTABLE DAT file ID resolution used here was learned by reading this Apache-2.0 licensed project; no POLUtils code is included (see `FFXIDatProcessor/IdResolver.cpp`)
 - [XiEvents](https://github.com/atom0s/XiEvents) — FFXI event system reverse-engineering docs
 - [FFXI-EventsDump](https://github.com/sruon/FFXI-EventsDump/) — Python event extraction tool
 

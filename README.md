@@ -82,8 +82,14 @@ Open `FFXIDat.sln` and build the solution.
 
 ## References
 
-- [POLUtils](https://github.com/Windower/POLUtils) — Apache 2.0 licensed FFXI DAT utilities
+- [POLUtils](https://github.com/Windower/POLUtils) — Apache 2.0 licensed FFXI DAT utilities; the global DAT file ID resolution (VTABLE/FTABLE lookup, see `FFXIDatProcessor/IdResolver.cpp`) was written with reference to the approach documented there — it is a reference/learning source only, no POLUtils code is included
 - [XiEvents](https://github.com/atom0s/XiEvents) — FFXI event system reverse-engineering docs
+
+## Third-Party Sources
+
+The definition table kept in `FFXIDatAdv/data/` (`defs.csv`) is adapted from
+atom0s/XiEvents (AGPL-3.0). See `FFXIDatAdv/data/NOTICE.md` for the source
+attribution, the modification notice and the redistribution requirements.
 
 ## License
 
