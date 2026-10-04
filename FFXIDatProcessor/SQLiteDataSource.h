@@ -104,14 +104,56 @@ protected:
 	int InsertOrGetItemRecord(int file_id, uint32_t item_id, const std::wstring &type);
 	int InsertOrGetText(const std::u8string &text);
 	
-	// Spec-specific insertion methods
-	void InsertWeaponSpec(int item_id, const ItemWeaponSpec &spec);
-	void InsertArmourSpec(int item_id, const ItemArmourSpec &spec);
-	void InsertUsableSpec(int item_id, const ItemUsableSpec &spec);
-	void InsertNormalSpec(int item_id, const ItemNormalSpec &spec);
-	void InsertEquipSlots(int item_id, const ItemEquipSlot &slots);
-	void InsertRaceApplicability(int item_id, const ItemRaceApplicability &races);
-	void InsertJobApplicability(int item_id, const ItemJobApplicability &jobs);
+	// Spec-specific insertion methods. The spec struct of every item version
+	// names the same members, so the inserters are templates over the spec type
+	// the datum of that version carries; a member only the newer versions have
+	// (ilvl, ukn2, ukn22, ...) is bound as NULL for the older ones, and a member
+	// only the older ones have (ukn_after_related, ukn_after_use_time) as NULL
+	// for the newer ones, so a version is never silently written as zeroes.
+	//
+	// BIND_IF_PRESENT binds one such member: the requires-expression is written
+	// where the member is named, so a member this version does not model binds
+	// NULL instead of a zero, and a reader can tell the two apart.
+#define BIND_IF_PRESENT(stmt, index, expression) \
+	do { \
+		if constexpr (requires { expression; }) \
+			sqlite3_bind_int((stmt), (index), static_cast<int>(expression)); \
+		else \
+			sqlite3_bind_null((stmt), (index)); \
+	} while (false)
+
+	// The equip flags, the race mask and the job mask are named bitfields in v10
+	// and v30 but plain words in v20. BIND_FLAG binds one flag of either form: the
+	// named member where the version has it, the bit at the same position in the
+	// word otherwise, so every version writes exactly the flags the CSV export of
+	// the family spells out.
+	static int FlagBit(int value, int bit) { return (value >> bit) & 1; }
+
+#define BIND_FLAG(stmt, index, expression, bit, member) \
+	do { \
+		if constexpr (requires { (expression).member; }) \
+			sqlite3_bind_int((stmt), (index), ((expression).member) ? 1 : 0); \
+		else \
+			sqlite3_bind_int((stmt), (index), FlagBit(static_cast<unsigned>(expression), (bit))); \
+	} while (false)
+
+
+
+
+	template <class Spec>
+	void InsertWeaponSpec(int item_id, const Spec &spec);
+	template <class Spec>
+	void InsertArmourSpec(int item_id, const Spec &spec);
+	template <class Spec>
+	void InsertUsableSpec(int item_id, const Spec &spec);
+	template <class Spec>
+	void InsertNormalSpec(int item_id, const Spec &spec);
+	template <class Slots>
+	void InsertEquipSlots(int item_id, const Slots &slots);
+	template <class Races>
+	void InsertRaceApplicability(int item_id, const Races &races);
+	template <class Jobs>
+	void InsertJobApplicability(int item_id, const Jobs &jobs);
 	
 	// MonBridge support methods
 	void ImportMonBridgeDat(const int file_id, const std::wstring &path, slotfile::Version version = slotfile::Version::V30);

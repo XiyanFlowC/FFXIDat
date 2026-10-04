@@ -63,7 +63,7 @@ struct Format
 	static constexpr std::string_view id = "v20";
 	static constexpr std::string_view scope = "ja/en Records of Eminence tables before the 2026-10 update";
 	static constexpr Version version = Version::V20;
-
+	
 	static constexpr size_t slotSize = sizeof(QuestEntry);
 	static constexpr size_t cipherSpan = slotSize;
 	static constexpr size_t currencySlots = 1;

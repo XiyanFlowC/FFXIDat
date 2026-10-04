@@ -1466,11 +1466,11 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
 		int item_record_id = -1;
 		try
 		{
-			item_record_id = InsertOrGetItemRecord(file_id, datum.id, type);
+			item_record_id = InsertOrGetItemRecord(file_id, datum.id(), type);
 		}
 		catch (SQLException &ex)
 		{
-			Ring(xybase::string::to_utf8(std::string("Failed to insert or get item record for item ID ") + std::to_string(datum.id) + ": " + ex.what()).c_str());
+			Ring(xybase::string::to_utf8(std::string("Failed to insert or get item record for item ID ") + std::to_string(datum.id()) + ": " + ex.what()).c_str());
 			rowCounter++;
 			continue;
 		}
@@ -1490,7 +1490,7 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
 		if (sqlite3_prepare_v2(db, updateMainSQL, -1, &stmt, nullptr) == SQLITE_OK)
 		{
 			std::string specTypeStr;
-			switch (datum.schema) {
+			switch (datum.schema()) {
 				case ItemSpecType::WEAPON: specTypeStr = "WEAPON"; break;
 				case ItemSpecType::ARMOUR: specTypeStr = "ARMOUR"; break;
 				case ItemSpecType::USABLE: specTypeStr = "USABLE"; break;
@@ -1504,63 +1504,73 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
 			sqlite3_bind_int(stmt, 3, datum.item_type());
 			sqlite3_bind_int(stmt, 4, datum.resource_id());
 			sqlite3_bind_int(stmt, 5, datum.valid_targets());
-			sqlite3_bind_int(stmt, 6, datum.flags().is_scroll ? 1 : 0);
-			sqlite3_bind_int(stmt, 7, datum.flags().is_not_listable ? 1 : 0);
-			sqlite3_bind_int(stmt, 8, datum.flags().is_inscribable ? 1 : 0);
-			sqlite3_bind_int(stmt, 9, datum.flags().is_alt ? 1 : 0);
-			sqlite3_bind_int(stmt, 10, datum.flags().ukn_flg1 ? 1 : 0);
-			sqlite3_bind_int(stmt, 11, datum.flags().is_in_mystery_box ? 1 : 0);
-			sqlite3_bind_int(stmt, 12, datum.flags().is_gm_item ? 1 : 0);
-			sqlite3_bind_int(stmt, 13, datum.flags().is_wall_decoration ? 1 : 0);
-			sqlite3_bind_int(stmt, 14, datum.flags().is_rare ? 1 : 0);
-			sqlite3_bind_int(stmt, 15, datum.flags().is_unsellable ? 1 : 0);
-			sqlite3_bind_int(stmt, 16, datum.flags().is_unmailable ? 1 : 0);
-			sqlite3_bind_int(stmt, 17, datum.flags().is_ex ? 1 : 0);
-			sqlite3_bind_int(stmt, 18, datum.flags().is_equipment ? 1 : 0);
-			sqlite3_bind_int(stmt, 19, datum.flags().is_npc_tradeable ? 1 : 0);
-			sqlite3_bind_int(stmt, 20, datum.flags().is_usable ? 1 : 0);
-			sqlite3_bind_int(stmt, 21, datum.flags().is_linkshell ? 1 : 0);
-			sqlite3_bind_int(stmt, 22, datum.originalEntry.image_length);
+			// The flag block is the header of the version that read the record (14 bytes
+			// for v10 / v20, 16 for v30), so it is read through the version visitor.
+			datum.visit([&](const auto &record) {
+				const auto &flags = record.flags();
+				sqlite3_bind_int(stmt, 6, flags.is_scroll ? 1 : 0);
+				sqlite3_bind_int(stmt, 7, flags.is_not_listable ? 1 : 0);
+				sqlite3_bind_int(stmt, 8, flags.is_inscribable ? 1 : 0);
+				sqlite3_bind_int(stmt, 9, flags.is_alt ? 1 : 0);
+				sqlite3_bind_int(stmt, 10, flags.ukn_flg1 ? 1 : 0);
+				sqlite3_bind_int(stmt, 11, flags.is_in_mystery_box ? 1 : 0);
+				sqlite3_bind_int(stmt, 12, flags.is_gm_item ? 1 : 0);
+				sqlite3_bind_int(stmt, 13, flags.is_wall_decoration ? 1 : 0);
+				sqlite3_bind_int(stmt, 14, flags.is_rare ? 1 : 0);
+				sqlite3_bind_int(stmt, 15, flags.is_unsellable ? 1 : 0);
+				sqlite3_bind_int(stmt, 16, flags.is_unmailable ? 1 : 0);
+				sqlite3_bind_int(stmt, 17, flags.is_ex ? 1 : 0);
+				sqlite3_bind_int(stmt, 18, flags.is_equipment ? 1 : 0);
+				sqlite3_bind_int(stmt, 19, flags.is_npc_tradeable ? 1 : 0);
+				sqlite3_bind_int(stmt, 20, flags.is_usable ? 1 : 0);
+				sqlite3_bind_int(stmt, 21, flags.is_linkshell ? 1 : 0);
+			});
+			sqlite3_bind_int(stmt, 22, datum.image_length());
 			
 			// Handle image data
-			if (datum.originalEntry.image_length > 0) {
-				sqlite3_bind_blob(stmt, 23, datum.originalEntry.image_data, datum.originalEntry.image_length, SQLITE_STATIC);
+			if (datum.image_length() > 0) {
+				sqlite3_bind_blob(stmt, 23, datum.image_data(), datum.image_length(), SQLITE_STATIC);
 			} else {
 				sqlite3_bind_null(stmt, 23);
 			}
 			
-			sqlite3_bind_int(stmt, 24, datum.originalEntry.end_marker);
+			sqlite3_bind_int(stmt, 24, datum.end_marker());
 			sqlite3_bind_int(stmt, 25, item_record_id);
 			sqlite3_step(stmt);
 		}
 		sqlite3_finalize(stmt);
 		
-		// Insert spec-specific data based on type
-		switch (datum.schema) {
-			case ItemSpecType::WEAPON:
-				InsertWeaponSpec(item_record_id, datum.originalEntry.spec.weapon);
-				InsertEquipSlots(item_record_id, datum.originalEntry.spec.weapon.equip_slots);
-				InsertRaceApplicability(item_record_id, datum.originalEntry.spec.weapon.races);
-				InsertJobApplicability(item_record_id, datum.originalEntry.spec.weapon.jobs);
-				break;
-				
-			case ItemSpecType::ARMOUR:
-				InsertArmourSpec(item_record_id, datum.originalEntry.spec.armour);
-				InsertEquipSlots(item_record_id, datum.originalEntry.spec.armour.equip_slots);
-				InsertRaceApplicability(item_record_id, datum.originalEntry.spec.armour.equip_races);
-				InsertJobApplicability(item_record_id, datum.originalEntry.spec.armour.equip_jobs);
-				break;
-				
-			case ItemSpecType::USABLE:
-				InsertUsableSpec(item_record_id, datum.originalEntry.spec.usable);
-				break;
-				
-			case ItemSpecType::NORMAL:
-			default:
-				InsertNormalSpec(item_record_id, datum.originalEntry.spec.normal);
-				break;
-		}
-		
+		// Insert the spec of the version that read the record. The visitor hands
+		// over that version's datum, so `spec` below is the spec struct of the
+		// record layout: a v10 or v20 record reaches the same inserters as a v30
+		// one, and every field it really has is read (an absent field is bound as
+		// NULL by the inserter).
+		datum.visit([&](const auto &record) {
+			switch (datum.schema()) {
+				case ItemSpecType::WEAPON:
+					InsertWeaponSpec(item_record_id, record.originalEntry.spec.weapon);
+					InsertEquipSlots(item_record_id, record.originalEntry.spec.weapon.equip_slots);
+					InsertRaceApplicability(item_record_id, record.originalEntry.spec.weapon.races);
+					InsertJobApplicability(item_record_id, record.originalEntry.spec.weapon.jobs);
+					break;
+
+				case ItemSpecType::ARMOUR:
+					InsertArmourSpec(item_record_id, record.originalEntry.spec.armour);
+					InsertEquipSlots(item_record_id, record.originalEntry.spec.armour.equip_slots);
+					InsertRaceApplicability(item_record_id, record.originalEntry.spec.armour.equip_races);
+					InsertJobApplicability(item_record_id, record.originalEntry.spec.armour.equip_jobs);
+					break;
+
+				case ItemSpecType::USABLE:
+					InsertUsableSpec(item_record_id, record.originalEntry.spec.usable);
+					break;
+
+				case ItemSpecType::NORMAL:
+				default:
+					InsertNormalSpec(item_record_id, record.originalEntry.spec.normal);
+					break;
+			}
+		});		
 		// Insert name text if not empty
 		try {
 			std::u8string itemName = datum.name();
@@ -1613,7 +1623,13 @@ void SQLiteDataSource::ImportItemDat(const int file_id, const std::wstring &path
 	}
 }
 
-void SQLiteDataSource::InsertWeaponSpec(int item_id, const ItemWeaponSpec &spec)
+// One spec member that only some versions of the family have. A member the
+// datum of this version does not model is stored as NULL rather than as a zero,
+// so a reader can tell "this version has no such field" from "the field is 0",
+// and no version is silently written as zeroes.
+
+template <class Spec>
+void SQLiteDataSource::InsertWeaponSpec(int item_id, const Spec &spec)
 {
 	sqlite3_stmt *stmt = nullptr;
 	
@@ -1628,8 +1644,8 @@ void SQLiteDataSource::InsertWeaponSpec(int item_id, const ItemWeaponSpec &spec)
 	{
 		sqlite3_bind_int(stmt, 1, item_id);
 		sqlite3_bind_int(stmt, 2, spec.level);
-		sqlite3_bind_int(stmt, 3, spec.slvl);
-		sqlite3_bind_int(stmt, 4, spec.ukn2);
+		BIND_IF_PRESENT(stmt, 3, spec.slvl);
+		BIND_IF_PRESENT(stmt, 4, spec.ukn2);
 		sqlite3_bind_int(stmt, 5, spec.dmg);
 		sqlite3_bind_int(stmt, 6, spec.delay);
 		sqlite3_bind_int(stmt, 7, spec.dps);
@@ -1643,15 +1659,16 @@ void SQLiteDataSource::InsertWeaponSpec(int item_id, const ItemWeaponSpec &spec)
 		sqlite3_bind_int(stmt, 15, spec.reuse_time);
 		sqlite3_bind_int(stmt, 16, spec.ukn20);
 		sqlite3_bind_int(stmt, 17, spec.related_item_id);
-		sqlite3_bind_int(stmt, 18, spec.ilvl);
-		sqlite3_bind_int(stmt, 19, spec.ukn22);
-		sqlite3_bind_int(stmt, 20, spec.ukn23);
+		BIND_IF_PRESENT(stmt, 18, spec.ilvl);
+		BIND_IF_PRESENT(stmt, 19, spec.ukn22);
+		BIND_IF_PRESENT(stmt, 20, spec.ukn23);
 		sqlite3_step(stmt);
 	}
 	sqlite3_finalize(stmt);
 }
 
-void SQLiteDataSource::InsertArmourSpec(int item_id, const ItemArmourSpec &spec)
+template <class Spec>
+void SQLiteDataSource::InsertArmourSpec(int item_id, const Spec &spec)
 {
 	sqlite3_stmt *stmt = nullptr;
 	
@@ -1666,7 +1683,7 @@ void SQLiteDataSource::InsertArmourSpec(int item_id, const ItemArmourSpec &spec)
 	{
 		sqlite3_bind_int(stmt, 1, item_id);
 		sqlite3_bind_int(stmt, 2, spec.level);
-		sqlite3_bind_int(stmt, 3, spec.slvl);
+		BIND_IF_PRESENT(stmt, 3, spec.slvl);
 		sqlite3_bind_int(stmt, 4, spec.shield_size);
 		sqlite3_bind_int(stmt, 5, spec.max_charges);
 		sqlite3_bind_int(stmt, 6, spec.cast_factor);
@@ -1674,15 +1691,16 @@ void SQLiteDataSource::InsertArmourSpec(int item_id, const ItemArmourSpec &spec)
 		sqlite3_bind_int(stmt, 8, spec.reuse_time);
 		sqlite3_bind_int(stmt, 9, spec.ukn1);
 		sqlite3_bind_int(stmt, 10, spec.related_item_id);
-		sqlite3_bind_int(stmt, 11, spec.ilvl);
-		sqlite3_bind_int(stmt, 12, spec.ukn3);
-		sqlite3_bind_int(stmt, 13, spec.ukn4);
+		BIND_IF_PRESENT(stmt, 11, spec.ilvl);
+		BIND_IF_PRESENT(stmt, 12, spec.ukn3);
+		BIND_IF_PRESENT(stmt, 13, spec.ukn4);
 		sqlite3_step(stmt);
 	}
 	sqlite3_finalize(stmt);
 }
 
-void SQLiteDataSource::InsertUsableSpec(int item_id, const ItemUsableSpec &spec)
+template <class Spec>
+void SQLiteDataSource::InsertUsableSpec(int item_id, const Spec &spec)
 {
 	sqlite3_stmt *stmt = nullptr;
 	
@@ -1696,15 +1714,16 @@ void SQLiteDataSource::InsertUsableSpec(int item_id, const ItemUsableSpec &spec)
 	{
 		sqlite3_bind_int(stmt, 1, item_id);
 		sqlite3_bind_int(stmt, 2, spec.cast_factor);
-		sqlite3_bind_int(stmt, 3, spec.ukn1);
-		sqlite3_bind_int(stmt, 4, spec.ukn2);
-		sqlite3_bind_int(stmt, 5, spec.ukn3);
+		BIND_IF_PRESENT(stmt, 3, spec.ukn1);
+		BIND_IF_PRESENT(stmt, 4, spec.ukn2);
+		BIND_IF_PRESENT(stmt, 5, spec.ukn3);
 		sqlite3_step(stmt);
 	}
 	sqlite3_finalize(stmt);
 }
 
-void SQLiteDataSource::InsertNormalSpec(int item_id, const ItemNormalSpec &spec)
+template <class Spec>
+void SQLiteDataSource::InsertNormalSpec(int item_id, const Spec &spec)
 {
 	sqlite3_stmt *stmt = nullptr;
 	
@@ -1720,14 +1739,15 @@ void SQLiteDataSource::InsertNormalSpec(int item_id, const ItemNormalSpec &spec)
 		sqlite3_bind_int(stmt, 2, spec.element);
 		sqlite3_bind_int(stmt, 3, spec.storage);
 		sqlite3_bind_int(stmt, 4, spec.related_item_id);
-		sqlite3_bind_int(stmt, 5, spec.ukn4);
-		sqlite3_bind_int(stmt, 6, spec.ukn5);
+		BIND_IF_PRESENT(stmt, 5, spec.ukn4);
+		BIND_IF_PRESENT(stmt, 6, spec.ukn5);
 		sqlite3_step(stmt);
 	}
 	sqlite3_finalize(stmt);
 }
 
-void SQLiteDataSource::InsertEquipSlots(int item_id, const ItemEquipSlot &slots)
+template <class Slots>
+void SQLiteDataSource::InsertEquipSlots(int item_id, const Slots &slots)
 {
 	sqlite3_stmt *stmt = nullptr;
 	
@@ -1741,28 +1761,29 @@ void SQLiteDataSource::InsertEquipSlots(int item_id, const ItemEquipSlot &slots)
 	if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
 	{
 		sqlite3_bind_int(stmt, 1, item_id);
-		sqlite3_bind_int(stmt, 2, slots.main_hand ? 1 : 0);
-		sqlite3_bind_int(stmt, 3, slots.sub_hand ? 1 : 0);
-		sqlite3_bind_int(stmt, 4, slots.ranged ? 1 : 0);
-		sqlite3_bind_int(stmt, 5, slots.ammo ? 1 : 0);
-		sqlite3_bind_int(stmt, 6, slots.head ? 1 : 0);
-		sqlite3_bind_int(stmt, 7, slots.body ? 1 : 0);
-		sqlite3_bind_int(stmt, 8, slots.hands ? 1 : 0);
-		sqlite3_bind_int(stmt, 9, slots.legs ? 1 : 0);
-		sqlite3_bind_int(stmt, 10, slots.feet ? 1 : 0);
-		sqlite3_bind_int(stmt, 11, slots.neck ? 1 : 0);
-		sqlite3_bind_int(stmt, 12, slots.waist ? 1 : 0);
-		sqlite3_bind_int(stmt, 13, slots.left_ear ? 1 : 0);
-		sqlite3_bind_int(stmt, 14, slots.right_ear ? 1 : 0);
-		sqlite3_bind_int(stmt, 15, slots.left_ring ? 1 : 0);
-		sqlite3_bind_int(stmt, 16, slots.right_ring ? 1 : 0);
-		sqlite3_bind_int(stmt, 17, slots.back ? 1 : 0);
+		BIND_FLAG(stmt, 2, slots, 0, main_hand);
+		BIND_FLAG(stmt, 3, slots, 1, sub_hand);
+		BIND_FLAG(stmt, 4, slots, 2, ranged);
+		BIND_FLAG(stmt, 5, slots, 3, ammo);
+		BIND_FLAG(stmt, 6, slots, 4, head);
+		BIND_FLAG(stmt, 7, slots, 5, body);
+		BIND_FLAG(stmt, 8, slots, 6, hands);
+		BIND_FLAG(stmt, 9, slots, 7, legs);
+		BIND_FLAG(stmt, 10, slots, 8, feet);
+		BIND_FLAG(stmt, 11, slots, 9, neck);
+		BIND_FLAG(stmt, 12, slots, 10, waist);
+		BIND_FLAG(stmt, 13, slots, 11, left_ear);
+		BIND_FLAG(stmt, 14, slots, 12, right_ear);
+		BIND_FLAG(stmt, 15, slots, 13, left_ring);
+		BIND_FLAG(stmt, 16, slots, 14, right_ring);
+		BIND_FLAG(stmt, 17, slots, 15, back);
 		sqlite3_step(stmt);
 	}
 	sqlite3_finalize(stmt);
 }
 
-void SQLiteDataSource::InsertRaceApplicability(int item_id, const ItemRaceApplicability &races)
+template <class Races>
+void SQLiteDataSource::InsertRaceApplicability(int item_id, const Races &races)
 {
 	sqlite3_stmt *stmt = nullptr;
 	
@@ -1776,22 +1797,23 @@ void SQLiteDataSource::InsertRaceApplicability(int item_id, const ItemRaceApplic
 	if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
 	{
 		sqlite3_bind_int(stmt, 1, item_id);
-		sqlite3_bind_int(stmt, 2, races.None ? 1 : 0);
-		sqlite3_bind_int(stmt, 3, races.HumeMale ? 1 : 0);
-		sqlite3_bind_int(stmt, 4, races.HumeFemale ? 1 : 0);
-		sqlite3_bind_int(stmt, 5, races.ElvaanMale ? 1 : 0);
-		sqlite3_bind_int(stmt, 6, races.ElvaanFemale ? 1 : 0);
-		sqlite3_bind_int(stmt, 7, races.TaruMale ? 1 : 0);
-		sqlite3_bind_int(stmt, 8, races.TaruFemale ? 1 : 0);
-		sqlite3_bind_int(stmt, 9, races.Mithra ? 1 : 0);
-		sqlite3_bind_int(stmt, 10, races.Galka ? 1 : 0);
-		sqlite3_bind_int(stmt, 11, races.Rsv);
+		sqlite3_bind_int(stmt, 2, 0);
+		BIND_FLAG(stmt, 3, races, 0, HumeMale);
+		BIND_FLAG(stmt, 4, races, 1, HumeFemale);
+		BIND_FLAG(stmt, 5, races, 2, ElvaanMale);
+		BIND_FLAG(stmt, 6, races, 3, ElvaanFemale);
+		BIND_FLAG(stmt, 7, races, 4, TaruMale);
+		BIND_FLAG(stmt, 8, races, 5, TaruFemale);
+		BIND_FLAG(stmt, 9, races, 6, Mithra);
+		BIND_FLAG(stmt, 10, races, 7, Galka);
+		BIND_IF_PRESENT(stmt, 11, races.Rsv);
 		sqlite3_step(stmt);
 	}
 	sqlite3_finalize(stmt);
 }
 
-void SQLiteDataSource::InsertJobApplicability(int item_id, const ItemJobApplicability &jobs)
+template <class Jobs>
+void SQLiteDataSource::InsertJobApplicability(int item_id, const Jobs &jobs)
 {
 	sqlite3_stmt *stmt = nullptr;
 	
@@ -1806,31 +1828,31 @@ void SQLiteDataSource::InsertJobApplicability(int item_id, const ItemJobApplicab
 	if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
 	{
 		sqlite3_bind_int(stmt, 1, item_id);
-		sqlite3_bind_int(stmt, 2, jobs.pld ? 1 : 0);
-		sqlite3_bind_int(stmt, 3, jobs.thf ? 1 : 0);
-		sqlite3_bind_int(stmt, 4, jobs.rdm ? 1 : 0);
-		sqlite3_bind_int(stmt, 5, jobs.blm ? 1 : 0);
-		sqlite3_bind_int(stmt, 6, jobs.whm ? 1 : 0);
-		sqlite3_bind_int(stmt, 7, jobs.mnk ? 1 : 0);
-		sqlite3_bind_int(stmt, 8, jobs.war ? 1 : 0);
-		sqlite3_bind_int(stmt, 9, jobs.rsv1 ? 1 : 0);
-		sqlite3_bind_int(stmt, 10, jobs.smn ? 1 : 0);
-		sqlite3_bind_int(stmt, 11, jobs.drg ? 1 : 0);
-		sqlite3_bind_int(stmt, 12, jobs.nin ? 1 : 0);
-		sqlite3_bind_int(stmt, 13, jobs.sam ? 1 : 0);
-		sqlite3_bind_int(stmt, 14, jobs.rng ? 1 : 0);
-		sqlite3_bind_int(stmt, 15, jobs.brd ? 1 : 0);
-		sqlite3_bind_int(stmt, 16, jobs.bst ? 1 : 0);
-		sqlite3_bind_int(stmt, 17, jobs.drk ? 1 : 0);
-		sqlite3_bind_int(stmt, 18, jobs.mon ? 1 : 0);
-		sqlite3_bind_int(stmt, 19, jobs.run ? 1 : 0);
-		sqlite3_bind_int(stmt, 20, jobs.geo ? 1 : 0);
-		sqlite3_bind_int(stmt, 21, jobs.sch ? 1 : 0);
-		sqlite3_bind_int(stmt, 22, jobs.dnc ? 1 : 0);
-		sqlite3_bind_int(stmt, 23, jobs.pup ? 1 : 0);
-		sqlite3_bind_int(stmt, 24, jobs.cor ? 1 : 0);
-		sqlite3_bind_int(stmt, 25, jobs.blu ? 1 : 0);
-		sqlite3_bind_int(stmt, 26, jobs.rsv2);
+		BIND_FLAG(stmt, 2, jobs, 6, pld);
+		BIND_FLAG(stmt, 3, jobs, 5, thf);
+		BIND_FLAG(stmt, 4, jobs, 4, rdm);
+		BIND_FLAG(stmt, 5, jobs, 3, blm);
+		BIND_FLAG(stmt, 6, jobs, 2, whm);
+		BIND_FLAG(stmt, 7, jobs, 1, mnk);
+		BIND_FLAG(stmt, 8, jobs, 0, war);
+		sqlite3_bind_int(stmt, 9, 0);
+		BIND_FLAG(stmt, 10, jobs, 14, smn);
+		BIND_FLAG(stmt, 11, jobs, 13, drg);
+		BIND_FLAG(stmt, 12, jobs, 12, nin);
+		BIND_FLAG(stmt, 13, jobs, 11, sam);
+		BIND_FLAG(stmt, 14, jobs, 10, rng);
+		BIND_FLAG(stmt, 15, jobs, 9, brd);
+		BIND_FLAG(stmt, 16, jobs, 8, bst);
+		BIND_FLAG(stmt, 17, jobs, 7, drk);
+		BIND_FLAG(stmt, 18, jobs, 21, mon);
+		BIND_FLAG(stmt, 19, jobs, 20, run);
+		BIND_FLAG(stmt, 20, jobs, 19, geo);
+		BIND_FLAG(stmt, 21, jobs, 18, sch);
+		BIND_FLAG(stmt, 22, jobs, 17, dnc);
+		BIND_FLAG(stmt, 23, jobs, 16, pup);
+		BIND_FLAG(stmt, 24, jobs, 15, cor);
+		BIND_FLAG(stmt, 25, jobs, 15, blu);
+		BIND_IF_PRESENT(stmt, 26, jobs.rsv2);
 		sqlite3_step(stmt);
 	}
 	sqlite3_finalize(stmt);
@@ -1865,7 +1887,7 @@ void SQLiteDataSource::TranslateItemDat(int file_id, const wchar_t *file_path, c
 	sqlite3_stmt *stmt = nullptr;
 	
 	// Get translations for each item
-	for (auto &datum : itemData.data) {
+	for (auto datum : itemData.data) {
 		// Get name translation
 		if (sqlite3_prepare_v2(db, 
 			"SELECT tr.text FROM items i "
@@ -1875,7 +1897,7 @@ void SQLiteDataSource::TranslateItemDat(int file_id, const wchar_t *file_path, c
 			-1, &stmt, nullptr) == SQLITE_OK)
 		{
 			sqlite3_bind_int(stmt, 1, file_id);
-			sqlite3_bind_int(stmt, 2, datum.id);
+			sqlite3_bind_int(stmt, 2, datum.id());
 			if (sqlite3_step(stmt) == SQLITE_ROW) {
 				const char* translatedName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
 				if (translatedName) {
@@ -1895,7 +1917,7 @@ void SQLiteDataSource::TranslateItemDat(int file_id, const wchar_t *file_path, c
 			-1, &stmt, nullptr) == SQLITE_OK)
 		{
 			sqlite3_bind_int(stmt, 1, file_id);
-			sqlite3_bind_int(stmt, 2, datum.id);
+			sqlite3_bind_int(stmt, 2, datum.id());
 			if (sqlite3_step(stmt) == SQLITE_ROW) {
 				const char* translatedDesc = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
 				if (translatedDesc) {

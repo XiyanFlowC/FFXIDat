@@ -154,6 +154,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="ItemData.h" />
+    <ClInclude Include="ItemDatum.h" />
     <ClInclude Include="ItemFormats.h" />
     <ClInclude Include="ItemFormatV10.h" />
     <ClInclude Include="ItemFormatV20.h" />

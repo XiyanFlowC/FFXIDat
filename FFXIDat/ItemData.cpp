@@ -8,7 +8,9 @@
 
 namespace
 {
-// Every operation of this family is the same container call on a different layout.
+// Every operation of this family is the same container call on a different
+// layout, and the layout of a store follows from the alternative it holds: the
+// store keeps one vector per version and exactly one of them is in use.
 template <class Fn>
 void WithLayout(itmfmt::Version version, Fn &&fn)
 {
@@ -24,28 +26,53 @@ void WithLayout(itmfmt::Version version, Fn &&fn)
 
 void ItemData::Read(std::wstring path, ItemSpecType defaultSpecType, itmfmt::Version version)
 {
-	std::vector<ItemDatum> records;
 	WithLayout(version, [&](auto file) {
 		file.encryptionSuppression = encryptionSuppression;
 		file.Read(path, defaultSpecType);
-		records = std::move(file.data);
+		// The layout decides which alternative of the store the records land in:
+		// they keep the typed view of the layout that parsed them.
+		store = std::move(file.data);
 	});
 
-	data = std::move(records);
 	layoutVersion = version;
 }
 
 void ItemData::Write(std::wstring path)
 {
-	WithLayout(layoutVersion, [&](auto file) {
+	switch (store.index())
+	{
+	case 0:
+	{
+		auto file = slotfile::SlotFile<itmfmt::v10::Format>{};
 		file.encryptionSuppression = encryptionSuppression;
-		file.Write(path, data);
-	});
+		file.Write(path, std::get<std::vector<itmfmt::v10::Datum>>(store));
+		return;
+	}
+	case 1:
+	{
+		auto file = slotfile::SlotFile<itmfmt::v20::Format>{};
+		file.encryptionSuppression = encryptionSuppression;
+		file.Write(path, std::get<std::vector<itmfmt::v20::Datum>>(store));
+		return;
+	}
+	case 2:
+	{
+		auto file = slotfile::SlotFile<itmfmt::v30::Format>{};
+		file.encryptionSuppression = encryptionSuppression;
+		file.Write(path, std::get<std::vector<itmfmt::v30::Datum>>(store));
+		return;
+	}
+	}
+	throw std::runtime_error("Unknown item record version");
 }
 
 void ItemData::ToICsv(const std::wstring &path) const
 {
-	WithLayout(layoutVersion, [&](auto file) {
-		slotfile::WriteICsv<decltype(file)::LayoutType>(path, data);
-	});
+	switch (store.index())
+	{
+	case 0: slotfile::WriteICsv<itmfmt::v10::Format>(path, std::get<std::vector<itmfmt::v10::Datum>>(store)); return;
+	case 1: slotfile::WriteICsv<itmfmt::v20::Format>(path, std::get<std::vector<itmfmt::v20::Datum>>(store)); return;
+	case 2: slotfile::WriteICsv<itmfmt::v30::Format>(path, std::get<std::vector<itmfmt::v30::Datum>>(store)); return;
+	}
+	throw std::runtime_error("Unknown item record version");
 }

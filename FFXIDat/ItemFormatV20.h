@@ -236,7 +236,7 @@ namespace itmfmt
 		};
 		struct PuppetSpec 
 		{
-			uint32_t equip_slots;
+			PuppetSlots equip_slots;
 			uint8_t fire : 4;
 			uint8_t ice : 4;
 			uint8_t air : 4;
@@ -281,10 +281,15 @@ namespace itmfmt
 		static_assert(offsetof(Entry, image_length) == 640, "v20 blob length offset mismatch");
 		static_assert(offsetof(Entry, image_data) == 644, "v20 blob data offset mismatch");
 
+		// One v20 record: the typed view is this version's Entry, so the spec area
+		// of a v20 slot is readable as the v20 spec structs.
+		class Datum : public DatumBase<Entry> { public: using Entry = v20::Entry; };
+
 		struct Format
 		{
 			using Entry = v20::Entry;
-			using Datum = itmfmt::Datum;
+			// Every version of this family owns its datum, exactly like v10 above.
+			using Datum = v20::Datum;
 			using Schema = SpecType;
 
 			static constexpr Version version = Version::V20;
@@ -342,7 +347,7 @@ namespace itmfmt
 		static_assert(Format::TextOffset(SpecType::CURRENCY) == 16, "v20 currency text offset mismatch");
 		static_assert(Format::TextOffset(SpecType::INSTINCT) == 40, "v20 instinct text offset mismatch");
 
-		static_assert(slotfile::SlotDatum<itmfmt::Datum, Format>, "v20 datum does not match the container protocol");
+		static_assert(slotfile::SlotDatum<Datum, Format>, "v20 datum does not match the container protocol");
 
 	} // namespace v20
 } // namespace itmfmt

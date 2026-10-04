@@ -14,6 +14,16 @@
 #include <iostream>
 
 namespace {
+// Whether a variant can hold T at all. This is a question about the type, so a
+// default constructed variant (which holds its first alternative) answers it
+// just as well as any other value; std::holds_alternative asks about the
+// alternative a particular value currently holds instead.
+template <class T, class Variant>
+struct VariantHolds : std::false_type {};
+
+template <class T, class... Ts>
+struct VariantHolds<T, std::variant<Ts...>> : std::bool_constant<(std::is_same_v<T, Ts> || ...)> {};
+
 Record* GetRecord(ItemEntry& entry, ItemSpecType type)
 {
 	switch (type) {
@@ -148,7 +158,12 @@ TEST_F(ItemDataTest, AllCurrentTypesRoundTripByteIdentically)
 			ASSERT_EQ(items.data.size(), 1u);
 			EXPECT_TRUE(items.data[0].name() == u8"Name");
 			EXPECT_TRUE(items.data[0].description() == u8"Description");
-			EXPECT_EQ(items.data[0].flags().extended_flags, 0xA55A);
+			items.data[0].visit([](const auto &datum) {
+				using Datum = std::remove_cvref_t<decltype(datum)>;
+				// extended_flags exists in the v30 header only.
+				if constexpr (std::is_same_v<typename Datum::Entry, itmfmt::v30::Entry>)
+					EXPECT_EQ(datum.flags().extended_flags, 0xA55A);
+			});
 			ASSERT_NO_THROW(items.Write(output.wstring()));
 			EXPECT_EQ(Load(output), bytes);
 		}
@@ -175,8 +190,16 @@ TEST_F(ItemDataTest, AllLegacyTypesRoundTripByteIdentically)
 		EXPECT_EQ(items.data[0].stack_size(), 12);
 		EXPECT_EQ(items.data[0].item_type(), 5);
 		EXPECT_EQ(items.data[0].resource_id(), 0x1234);
-		EXPECT_TRUE(items.data[0].layoutId == "v10");
-		EXPECT_FALSE(items.data[0].hasTypedSpec);
+		EXPECT_TRUE(items.data[0].layoutId() == "v10");
+		// The v10 datum owns the v10 typed view: originalEntry is the memory
+		// image of the slot, typed as the v10 Entry.
+		EXPECT_EQ(items.data[0].raw().size(), itmfmt::v10::Format::slotSize);
+		items.data[0].visit([](const auto &datum) {
+			using Datum = std::remove_cvref_t<decltype(datum)>;
+			const bool typedAsThisVersion = std::is_same_v<typename Datum::Entry, itmfmt::v10::Entry>;
+			EXPECT_TRUE(typedAsThisVersion);
+			EXPECT_EQ(datum.originalEntry.end_marker, 0xFF);
+		});
 		ASSERT_NO_THROW(items.Write(output.wstring()));
 		EXPECT_EQ(Load(output), bytes);
 	}
@@ -261,8 +284,16 @@ TEST_F(ItemDataTest, RejectsOversizedTranslationBeforeSerializing)
 	EXPECT_EQ(Load(output), previousOutput);
 }
 
+// The unknown array of a schema owns one column per element, whether its
+// elements are bytes or words: the count is asked of the struct itself, so a
+// struct that grows an element cannot leave the header behind.
 TEST_F(ItemDataTest, CsvColumnCountsFollowCurrentUnknownArrays)
 {
+	// The columns of a v30 row that every schema shares, in order.
+	const char8_t *commonColumns[] = { u8"ID", u8"Name", u8"Description", u8"Flags", u8"ExtendedFlags",
+		u8"Stack", u8"Type", u8"ResID", u8"Targets", u8"ImageLength" };
+	constexpr size_t common = std::size(commonColumns);
+
 	for (const auto type : {ItemSpecType::SLIP, ItemSpecType::INSTINCT}) {
 		const auto input = folder / "input.DAT";
 		const auto output = folder / "output.csv";
@@ -271,32 +302,78 @@ TEST_F(ItemDataTest, CsvColumnCountsFollowCurrentUnknownArrays)
 		items.encryptionSuppression = true;
 		items.Read(input.wstring(), type);
 		items.ToICsv(output.wstring());
-		std::ifstream csv(output, std::ios::binary);
-		std::string header, row;
-		ASSERT_TRUE(static_cast<bool>(std::getline(csv, header)));
-		ASSERT_TRUE(static_cast<bool>(std::getline(csv, row)));
-		EXPECT_EQ(std::count(header.begin(), header.end(), ','), std::count(row.begin(), row.end(), ','));
-		const int unknownColumns = type == ItemSpecType::SLIP ? 68 : 14;
-		// The v30 common columns are ID, Name, Description, Flags, ExtendedFlags,
-		// Stack, Type, ResID, Targets, ImageLength: ten cells, nine separators.
-		EXPECT_EQ(std::count(header.begin(), header.end(), ','), 9 + unknownColumns);
+		CsvFile csv(output, std::ios::in | std::ios::binary);
+		std::vector<std::u8string> header, values;
+		do { header.push_back(csv.NextCell()); } while (!csv.IsEol());
+		csv.NextLine();
+		do { values.push_back(csv.NextCell()); } while (!csv.IsEol());
+		// The header and the row of one record are two views of the same column
+		// list, so they line up cell for cell, and no column is a placeholder.
+		ASSERT_EQ(header.size(), values.size());
+		EXPECT_TRUE(std::none_of(header.begin(), header.end(), [](const auto &value) { return value.empty(); }));
+		for (size_t column = 0; column < common; ++column)
+			EXPECT_TRUE(header[column] == commonColumns[column]);
+		// SlipSpec::ukn is an array of bytes, InstinctSpec::ukn an array of words.
+		const size_t unknownColumns = type == ItemSpecType::SLIP
+			? sizeof(itmfmt::v30::SlipSpec::ukn)
+			: sizeof(itmfmt::v30::InstinctSpec::ukn) / sizeof(uint16_t);
+		EXPECT_EQ(header.size(), common + unknownColumns);
 	}
 }
 
 // The CSV of a legacy version lists the fields of that version's spec structs,
-// including the unknown ones, and nothing else: the columns after the nine
-// common ones are the spec fields followed by the eight text cells.
+// including the unknown ones, and nothing else: the columns after the common ones
+// are the spec columns of that version (WriteLegacyHeader in ItemFormatsCsv.cpp)
+// and no column is a placeholder.
 TEST_F(ItemDataTest, LegacyCsvReportsVersionSpecificFieldsAndUnknownBytes)
 {
 	const ItemSpecType types[] = { ItemSpecType::NORMAL, ItemSpecType::USABLE, ItemSpecType::WEAPON,
 		ItemSpecType::ARMOUR, ItemSpecType::PUPPET, ItemSpecType::SLIP,
 		ItemSpecType::CURRENCY, ItemSpecType::INSTINCT };
-	// Field counts of itmfmt::v10 / v20 NormalSpec, UsableSpec, WeaponSpec,
-	// ArmourSpec, PuppetSpec, SlipSpec, CurrencySpec, InstinctSpec.
-	const size_t v10Fields[] = { 5, 9, 18, 13, 13, 70, 2, 26 };
-	const size_t v20Fields[] = { 5, 13, 22, 15, 13, 70, 2, 26 };
-	constexpr size_t common = 9;
-	constexpr size_t textCells = 8;
+
+	// The columns every item version shares, in order. `ExtendedFlags` belongs to
+	// the v30 header only, so a legacy header must not carry it; the English text
+	// cells are absent as well because the row of this record has two cells.
+	const char8_t *commonColumns[] = { u8"ID", u8"Name", u8"Description", u8"Flags",
+		u8"Stack", u8"Type", u8"ResID", u8"Targets", u8"ImageLength" };
+	constexpr size_t common = std::size(commonColumns);
+
+	// The spec columns of a legacy row are the named fields of that version's
+	// spec struct followed by one column per element of its unknown arrays. The
+	// unknown part is asked of the structs themselves (the `sizeof` of the array
+	// ItemFormatV10.h / V20.h declares), so a struct that grows an unknown byte
+	// cannot leave the header behind; the named part is the field list of those
+	// structs, which the CSV writer spells out column by column and which is what
+	// `named` counts here.
+	auto specColumns = [](itmfmt::Version version, ItemSpecType type) -> size_t {
+		const bool v10 = version == itmfmt::Version::V10;
+		switch (type)
+		{
+		case ItemSpecType::NORMAL:
+			return 3 + (v10 ? sizeof(itmfmt::v10::NormalSpec::ukn) : sizeof(itmfmt::v20::NormalSpec::ukn));
+		case ItemSpecType::USABLE:
+			return 1 + (v10 ? sizeof(itmfmt::v10::UsableSpec::ukn) : sizeof(itmfmt::v20::UsableSpec::ukn));
+		case ItemSpecType::WEAPON:
+			// Level, Slots, Races, Jobs, DMG, Delay, DPS, Skill, Ukn12, Ukn7, Ukn9,
+			// MaxCharges, CastFactor, UseTime, ReuseTime, Ukn20, RelatedItemId and
+			// then the version tail (v10: UknAfterRelated; v20: SuperiorLevel,
+			// Ukn2 ... iLvl, Ukn22, Ukn23).
+			return v10 ? 18 : 22;
+		case ItemSpecType::ARMOUR:
+			// v10: Level .. UknAfterRelated; v20: the same block with SuperiorLevel
+			// and the iLvl / Ukn3 / Ukn4 tail.
+			return v10 ? 13 : 15;
+		case ItemSpecType::PUPPET:
+			return 11 + (v10 ? sizeof(itmfmt::v10::PuppetSpec::ukn) : sizeof(itmfmt::v20::PuppetSpec::ukn));
+		case ItemSpecType::SLIP:
+			return v10 ? sizeof(itmfmt::v10::SlipSpec::ukn) : sizeof(itmfmt::v20::SlipSpec::ukn);
+		case ItemSpecType::CURRENCY:
+			return v10 ? sizeof(itmfmt::v10::CurrencySpec::ukn) : sizeof(itmfmt::v20::CurrencySpec::ukn);
+		case ItemSpecType::INSTINCT:
+			return v10 ? sizeof(itmfmt::v10::InstinctSpec::ukn) : sizeof(itmfmt::v20::InstinctSpec::ukn);
+		}
+		return 0;
+	};
 	for (const auto version : { itmfmt::Version::V10, itmfmt::Version::V20 }) {
 		for (size_t i = 0; i < std::size(types); ++i) {
 			const auto type = types[i];
@@ -322,26 +399,92 @@ TEST_F(ItemDataTest, LegacyCsvReportsVersionSpecificFieldsAndUnknownBytes)
 			do { header.push_back(csv.NextCell()); } while (!csv.IsEol());
 			csv.NextLine();
 			do { values.push_back(csv.NextCell()); } while (!csv.IsEol());
+			// The header and the row of one record are two views of the same
+			// column list: they have to line up cell for cell.
 			ASSERT_EQ(header.size(), values.size());
-			const size_t fields = version == itmfmt::Version::V10 ? v10Fields[i] : v20Fields[i];
-			EXPECT_EQ(header.size(), common + fields + textCells);
+			// The common block is the shared column list of this layout, without
+			// the extended_flags of the v30 header.
+			for (size_t column = 0; column < common; ++column)
+				EXPECT_TRUE(header[column] == commonColumns[column]);
+			EXPECT_TRUE(std::find(header.begin(), header.end(), u8"ExtendedFlags") == header.end());
+			// The spec block is what the structs of this version hold, and the
+			// header ends there: no text cells are appended and, per the column
+			// ownership rule, no column is left empty as a placeholder.
+			EXPECT_EQ(header.size(), common + specColumns(version, type));
 			EXPECT_TRUE(std::none_of(header.begin(), header.end(), [](const auto &value) { return value.empty(); }));
 			EXPECT_TRUE(values[0] == u8"10240");
 			EXPECT_TRUE(values[4] == u8"12");
 			EXPECT_TRUE(values[5] == u8"5");
 			EXPECT_TRUE(values[6] == u8"4660");
 			EXPECT_TRUE(values[7] == u8"Self");
+			// The record below is a tape of the slot offsets: the byte at slot
+			// offset N holds N. A numeric column is printed in decimal, so the
+			// number a field of `width` little endian bytes at offset N spells is
+			// what that column has to show; a spec cell that shows it was read
+			// through the struct of the version that parsed the record, not
+			// through a zeroed view of another one.
+			auto tape = [](size_t offset, size_t width) {
+				uint32_t value = 0;
+				for (size_t i = 0; i < width; ++i)
+					value |= static_cast<uint32_t>(offset + i) << (8 * i);
+				const std::string text = std::to_string(value);
+				return std::u8string(text.begin(), text.end());
+			};
+			// gtest of this version cannot print a std::u8string, so a mismatch
+			// reports both cells as plain text.
+			auto ascii = [](const std::u8string &value) {
+				std::string text;
+				for (char8_t c : value) text.push_back(static_cast<char>(c));
+				return text;
+			};
 			if (type == ItemSpecType::WEAPON || type == ItemSpecType::ARMOUR) {
 				const bool currentFields = version == itmfmt::Version::V20;
 				EXPECT_EQ(std::find(header.begin(), header.end(), u8"SuperiorLevel") != header.end(), currentFields);
 				EXPECT_EQ(std::find(header.begin(), header.end(), u8"iLvl") != header.end(), currentFields);
 				EXPECT_EQ(std::find(header.begin(), header.end(), u8"UknAfterRelated") != header.end(), !currentFields);
+
+				const bool v10 = version == itmfmt::Version::V10;
+				if (type == ItemSpecType::WEAPON) {
+					using V10Entry = itmfmt::v10::Entry;
+					using V20Entry = itmfmt::v20::Entry;
+					// Level sits at the beginning of every legacy weapon spec and dmg
+					// right after the flags block, so both columns carry the offset of
+					// the record of that version (header included), and the two
+					// versions differ.
+					EXPECT_TRUE(header[common] == u8"Level");
+					const auto level = tape(v10 ? offsetof(V10Entry, spec.weapon.level) : offsetof(V20Entry, spec.weapon.level),
+						v10 ? sizeof(V10Entry::spec.weapon.level) : sizeof(V20Entry::spec.weapon.level));
+					EXPECT_TRUE(values[common] == level)
+						<< "Level: " << ascii(values[common]) << ", the tape says " << ascii(level);
+					const auto dmg = std::find(header.begin() + common, header.end(), u8"DMG");
+					ASSERT_NE(dmg, header.end()) << "the weapon header has no DMG column";
+					const auto dmgCell = values[static_cast<size_t>(dmg - header.begin())];
+					const auto dmgTape = tape(v10 ? offsetof(V10Entry, spec.weapon.dmg) : offsetof(V20Entry, spec.weapon.dmg),
+						v10 ? sizeof(V10Entry::spec.weapon.dmg) : sizeof(V20Entry::spec.weapon.dmg));
+					EXPECT_TRUE(dmgCell == dmgTape)
+						<< "DMG: " << ascii(dmgCell) << ", the tape says " << ascii(dmgTape);
+				}
+				else {
+					using V10Entry = itmfmt::v10::Entry;
+					using V20Entry = itmfmt::v20::Entry;
+					// ShieldSize sits at a different slot offset in v10 than in v20:
+					// the column follows the struct of the version that read the
+					// record, not that of the other one.
+					const auto shieldSize = std::find(header.begin() + common, header.end(), u8"ShieldSize");
+					ASSERT_NE(shieldSize, header.end()) << "the armour header has no ShieldSize column";
+					const auto shieldCell = values[static_cast<size_t>(shieldSize - header.begin())];
+					const auto shieldTape = tape(
+						v10 ? offsetof(V10Entry, spec.armour.shield_size) : offsetof(V20Entry, spec.armour.shield_size),
+						v10 ? sizeof(V10Entry::spec.armour.shield_size) : sizeof(V20Entry::spec.armour.shield_size));
+					EXPECT_TRUE(shieldCell == shieldTape)
+						<< "ShieldSize: " << ascii(shieldCell) << ", the tape says " << ascii(shieldTape);
+				}
 			}
 			else {
 				// The last spec field is a byte of the raw prefix, which the test
 				// filled with its own offset (the last one before the text record).
 				const auto expected = std::to_string(TextOffset - 1);
-				EXPECT_TRUE(values[common + fields - 1] == std::u8string(expected.begin(), expected.end()));
+				EXPECT_TRUE(values[common + specColumns(version, type) - 1] == std::u8string(expected.begin(), expected.end()));
 			}
 		}
 	}
@@ -582,11 +725,92 @@ TEST_F(ItemDataTest, AllFamilyLayoutsMatchMeasurements)
 	EXPECT_EQ(roefmt::v20::Quest::TextCapacity(roefmt::Schema::QUEST), 3039u);
 
 	// Routing: the data side annotation is the only version signal.
-	ASSERT_EQ(std::size(itmfmt::VERSION_ROUTES), 2u);
-	EXPECT_EQ(itmfmt::VERSION_ROUTES[0].version, itmfmt::CURRENT_VERSION);
-	EXPECT_EQ(itmfmt::VERSION_ROUTES[0].suffix, "");
-	EXPECT_EQ(itmfmt::VERSION_ROUTES[1].version, itmfmt::Version::V10);
-	EXPECT_EQ(itmfmt::VERSION_ROUTES[1].suffix, "_o");
+	//
+	// The rows of the table are a moving target (a version can be added, and a
+	// version can get another alias), so what is checked here are properties of
+	// the table rather than its current rows: a row that copies the constants of
+	// a neighbouring layout, a duplicated row and a missing documented
+	// annotation still turn these red.
+	//
+	// One entry per version of the family: its label, the layout the explicit
+	// path loads for it (`ItemData::Read(path, type, version)`, WithLayout in
+	// ItemData.cpp) and whether the store keeps an alternative for it
+	// (DatumStore in ItemFormats.h).
+	struct KnownLayout
+	{
+		itmfmt::Version version;
+		std::string_view id;
+		size_t slotSize;
+		size_t currencySlots;
+		bool heldByStore;
+	};
+	const KnownLayout known[] = {
+		{ V10::version, V10::id, V10::slotSize, V10::currencySlots,
+			VariantHolds<std::vector<itmfmt::v10::Datum>, itmfmt::DatumStore>::value },
+		{ V20::version, V20::id, V20::slotSize, V20::currencySlots,
+			VariantHolds<std::vector<itmfmt::v20::Datum>, itmfmt::DatumStore>::value },
+		{ itmfmt::v30::Format::version, itmfmt::v30::Format::id,
+			itmfmt::v30::Format::slotSize, itmfmt::v30::Format::currencySlots,
+			VariantHolds<std::vector<itmfmt::v30::Datum>, itmfmt::DatumStore>::value },
+	};
+	auto layoutOf = [&](itmfmt::Version version) -> const KnownLayout * {
+		for (const KnownLayout &layout : known)
+			if (layout.version == version) return &layout;
+		return nullptr;
+	};
+	// The trait behind that column asks about the type list of the store, so a
+	// type the store cannot hold has to answer false: that keeps the column from
+	// being true whatever the store looks like.
+	EXPECT_FALSE((VariantHolds<std::vector<int>, itmfmt::DatumStore>::value));
+	EXPECT_TRUE((VariantHolds<std::vector<itmfmt::v20::Datum>, itmfmt::DatumStore>::value));
+	auto routed = [](itmfmt::Version version) {
+		return std::any_of(std::begin(itmfmt::VERSION_ROUTES), std::end(itmfmt::VERSION_ROUTES),
+			[&](const itmfmt::VersionRoute &route) { return route.version == version; });
+	};
+	auto annotated = [](std::string_view suffix) -> const itmfmt::Version * {
+		for (const auto &route : itmfmt::VERSION_ROUTES)
+			if (route.suffix == suffix) return &route.version;
+		return nullptr;
+	};
+
+	std::vector<std::string_view> suffixes;
+	for (const auto &route : itmfmt::VERSION_ROUTES)
+	{
+		SCOPED_TRACE("route " + std::string(route.suffix));
+		// A row describes the layout of the version it names; one that carries
+		// the constants of a neighbouring layout is the defect this catches.
+		const KnownLayout *layout = layoutOf(route.version);
+		ASSERT_NE(layout, nullptr) << "a route names a version this family does not have";
+		EXPECT_EQ(route.id, layout->id);
+		EXPECT_EQ(route.slotSize, layout->slotSize);
+		EXPECT_EQ(route.currencySlots, layout->currencySlots);
+		// ... and it is only a usable row if that version can be loaded at all,
+		// which needs a layout of that version and a slot of the store to keep
+		// its records in.
+		EXPECT_TRUE(layout->heldByStore) << "no store alternative keeps the records of this version";
+		// One annotation per row: a duplicate would make the sniffer ambiguous.
+		EXPECT_EQ(std::count(suffixes.begin(), suffixes.end(), route.suffix), 0);
+		suffixes.push_back(route.suffix);
+	}
+
+	// The annotations the family documents: the newest known layout is spelled
+	// with no suffix at all, the oldest one as "_o".
+	ASSERT_NE(annotated(""), nullptr) << "the newest known layout has to be annotated";
+	EXPECT_EQ(*annotated(""), itmfmt::CURRENT_VERSION);
+	ASSERT_NE(annotated("_o"), nullptr) << "the oldest known layout has to be annotated";
+	EXPECT_EQ(*annotated("_o"), itmfmt::OLDEST_VERSION);
+
+	// Every version of the family is selectable by one of the two paths: the
+	// annotation of a row, or an explicit `Version` request, which loads any
+	// version the store keeps an alternative for (the pre-update v20 corpus is
+	// read that way). A version neither annotated nor kept could not be loaded
+	// by any path.
+	for (const KnownLayout &layout : known)
+	{
+		SCOPED_TRACE(std::string(layout.id));
+		EXPECT_TRUE(routed(layout.version) || layout.heldByStore)
+			<< "no annotation and no explicit load selects this version";
+	}
 }
 
 // The container itself, without any family facade: read a live DAT, assemble it
@@ -749,36 +973,63 @@ TEST_F(ItemDataTest, ContainerRejectsMalformedSlots)
 }
 
 // Text records that are not canonical but still well formed: the container
-// parses them, and a rewrite is only byte identical when the record was already
-// canonical (the writer lays the cells out back to back).
+// parses them and the rewrite normalizes them, so a rewrite is byte identical
+// only when the record was already canonical (the writer lays the cells out back
+// to back, in table order, each cell starting on its four byte boundary).
+//
+// Byte level round trip is only promised for the canonical records the installed
+// client writes: a non canonical layout that the parser accepts (discontinuous
+// cells, a shared offset, a nonzero hole) is rearranged by an unmodified
+// rewrite, so its byte for byte losslessness is out of scope. See
+// docs/FILE_FORMATS.md ("无损回写范围") and itmfmt::DatumBase::store.
 TEST_F(ItemDataTest, NonCanonicalTextRecordsParseAndRewrite)
 {
 	using File = slotfile::SlotFile<itmfmt::v30::Format>;
 	const auto input = folder / "input.DAT";
 	File file;
+	// The cases below are built in memory and are not encrypted, so the cipher
+	// of the container has to stay out of the way: a rotation would turn the
+	// cell count and every offset into something else.
+	file.encryptionSuppression = true;
 
+	// The text record of the current normal item: its cell count at 28, its cell
+	// table (one 8 byte RecordSpec per cell) at 32, the cell payloads behind it.
 	constexpr size_t text = 28;
 	constexpr size_t table = text + 4;
-	constexpr size_t firstCell = table + 8;
-	constexpr size_t secondCell = table + 16;
+	constexpr size_t cell0 = table;
+	constexpr size_t cell1 = table + 8;
+
+	// A string cell is a 28 byte header (the marker `one == 1` and six zero
+	// words) followed by the NUL terminated text, padded to a four byte boundary
+	// (Cell::GetSize in Record.cpp), so the canonical offset of the cell behind
+	// "Alpha" is 20 + 36.
+	auto cellSize = [](const char* value) {
+		return 28 + ((std::strlen(value) + 1 + 3) & ~static_cast<size_t>(3));
+	};
+	const size_t canonical = 20 + cellSize("Alpha");
 
 	// The text area of every case holds two string cells whose payloads are laid
-	// out by hand at the given offsets; the canonical layout of "Alpha" and
-	// "Beta" is 20 (payload 20..33) and 34 (payload 34..47). `nonzeroAt` marks
-	// one byte of the area that is not part of any payload.
+	// out by hand at the given offsets; every offset but the canonical one leaves
+	// a hole, i.e. bytes that belong to no payload (54..59 for the 60 below).
+	// `nonzeroAt` marks one byte of that hole.
 	constexpr size_t noMark = static_cast<size_t>(-1);
 	auto build = [&](size_t firstOffset, size_t secondOffset, size_t nonzeroAt) {
 		auto bytes = MakeFile(ItemSpecType::NORMAL);
 		int32_t count = 2;
 		std::memcpy(bytes.data() + text, &count, sizeof(count));
 		int32_t offset = static_cast<int32_t>(firstOffset);
-		std::memcpy(bytes.data() + table, &offset, sizeof(offset));
+		std::memcpy(bytes.data() + cell0, &offset, sizeof(offset));
 		offset = static_cast<int32_t>(secondOffset);
-		std::memcpy(bytes.data() + secondCell, &offset, sizeof(offset));
+		std::memcpy(bytes.data() + cell1, &offset, sizeof(offset));
 		int32_t type = 0;
-		std::memcpy(bytes.data() + table + 4, &type, sizeof(type));
-		std::memcpy(bytes.data() + secondCell + 4, &type, sizeof(type));
+		std::memcpy(bytes.data() + cell0 + 4, &type, sizeof(type));
+		std::memcpy(bytes.data() + cell1 + 4, &type, sizeof(type));
+		std::vector<size_t> written;
 		auto writeCell = [&](size_t at, const char* value) {
+			// Cells that share one offset share one payload, so the first text
+			// written there is the one both of them read.
+			if (std::find(written.begin(), written.end(), at) != written.end()) return;
+			written.push_back(at);
 			const std::vector<char> header(28, 0);
 			int32_t one = 1;
 			std::memcpy(bytes.data() + text + at, &one, sizeof(one));
@@ -791,29 +1042,41 @@ TEST_F(ItemDataTest, NonCanonicalTextRecordsParseAndRewrite)
 		return bytes;
 	};
 
-	struct Case { std::vector<char> bytes; bool byteIdentical; const char* what; };
+	struct Case
+	{
+		std::vector<char> bytes;
+		bool byteIdentical;
+		const char* what;
+		const char8_t* name;
+		const char8_t* description;
+	};
 	const std::vector<Case> cases = {
-		// A hole between the two payloads is left alone by the parse, but the
-		// rewrite appends the second cell right behind the first one, so the
-		// result is canonical and no longer byte identical.
-		{ build(20, 60, noMark), false, "gap between cells" },
-		// A nonzero byte in that hole: same as above.
-		{ build(20, 60, 34), false, "nonzero byte in the gap" },
-		// Two cells that share one payload: both read "Alpha" and the rewrite
-		// emits two cells, so the result is longer than the input.
-		{ build(20, 20, noMark), false, "shared cell offset" },
+		// A hole between the two payloads (the second cell sits at 60 instead of
+		// its canonical 56) is left alone by the parse, but the rewrite puts the
+		// second cell on its canonical offset, so the result is canonical and no
+		// longer byte identical.
+		{ build(20, 60, noMark), false, "gap between cells", u8"Alpha", u8"Beta" },
+		// A nonzero byte in that hole: same as above. The hole is not required to
+		// be zero, neither by the parser nor by the writer.
+		{ build(20, 60, 56), false, "nonzero byte in the gap", u8"Alpha", u8"Beta" },
+		// Two cells that share one payload: both read "Alpha", and the rewrite
+		// gives the second cell a payload of its own, so the result differs.
+		{ build(20, 20, noMark), false, "shared cell offset", u8"Alpha", u8"Alpha" },
 		// The canonical layout is byte identical: the rewrite only normalizes
 		// what was not canonical in the first place.
-		{ build(20, 34, noMark), true, "canonical layout" },
+		{ build(20, canonical, noMark), true, "canonical layout", u8"Alpha", u8"Beta" },
 	};
 
 	for (const auto& test : cases) {
 		SCOPED_TRACE(test.what);
 		Save(input, test.bytes);
+		// Well formed but non canonical: a hole between the cells, a nonzero byte
+		// in that hole and a shared cell offset are all accepted, see the
+		// contract of slotfile::ValidateTextRecord.
 		ASSERT_NO_THROW(file.Read(input.wstring()));
 		ASSERT_EQ(file.data.size(), 1u);
-		EXPECT_TRUE(file.data[0].name() == u8"Alpha");
-		EXPECT_TRUE(file.data[0].description() == u8"Beta");
+		EXPECT_TRUE(file.data[0].name() == test.name);
+		EXPECT_TRUE(file.data[0].description() == test.description);
 		const auto rewritten = file.Serialize(file.data);
 		ASSERT_EQ(rewritten.size(), test.bytes.size());
 		EXPECT_EQ(rewritten == test.bytes, test.byteIdentical);
@@ -891,3 +1154,79 @@ TEST_F(ItemDataTest, PreUpdateCorpusRoundTripsByteIdentically)
 	}
 }
 
+// The typed view belongs to the layout that read the record: a v10 record is
+// typed as the v10 Entry and a v20 record as the v20 one, so the spec area of an
+// older record is readable and its values come from that record's own bytes.
+//
+// The same slots are patched for both versions (offset 36 holds 11, 42 holds 22,
+// 46 holds 33). The two structs place `jobs` differently - v10 has a 2 byte
+// JobFlags there, v20 a 4 byte word - so the very same bytes read back as a
+// different (and known) value per version. A shared, newer-version-only typed
+// view cannot produce this.
+
+// The typed view belongs to the layout that read the record: a v10 record is
+// typed as the v10 Entry and a v20 record as the v20 one, so the spec area of an
+// older record is readable and its values come from that record's own bytes.
+// The two versions place the spec fields differently, so a shared typed view of
+// the newest layout cannot produce what this test checks.
+TEST_F(ItemDataTest, LegacySpecIsReadThroughThatVersionOwnTypedView)
+{
+	const itmfmt::Version versions[] = { itmfmt::Version::V10, itmfmt::Version::V20 };
+	const uint16_t racesValue = 11, dmgValue = 22, delayValue = 33;
+	for (const auto version : versions) {
+		SCOPED_TRACE(static_cast<int>(version));
+		const size_t textOffset = version == itmfmt::Version::V10
+			? itmfmt::v10::Format::TextOffset(ItemSpecType::WEAPON)
+			: itmfmt::v20::Format::TextOffset(ItemSpecType::WEAPON);
+		auto bytes = MakeLegacyFile(ItemSpecType::WEAPON);
+		// Clear the spec area and the text area, patch the spec words, and lay the
+		// text record where this version puts it (v10 after 48 bytes, v20 after 56).
+		std::fill(bytes.begin() + 14, bytes.begin() + 640, 0);
+		auto patch16 = [&](size_t specOffset, uint16_t value) {
+			std::memcpy(bytes.data() + sizeof(itmfmt::v10::Header) + specOffset, &value, 2);
+		};
+		// Each layout is patched at its own offsets, so every version reads the
+		// words its own struct places there (v20 puts slvl where v10 keeps the
+		// second half of its 2 byte JobFlags).
+		patch16(version == itmfmt::Version::V10
+			? offsetof(itmfmt::v10::WeaponSpec, races) : offsetof(itmfmt::v20::WeaponSpec, races), racesValue);
+		patch16(version == itmfmt::Version::V10
+			? offsetof(itmfmt::v10::WeaponSpec, dmg) : offsetof(itmfmt::v20::WeaponSpec, dmg), dmgValue);
+		patch16(version == itmfmt::Version::V10
+			? offsetof(itmfmt::v10::WeaponSpec, delay) : offsetof(itmfmt::v20::WeaponSpec, delay), delayValue);
+		Row text;
+		text.GetCells().emplace_back(u8"Name");
+		text.GetCells().emplace_back(u8"Description");
+		text.WriteRow(reinterpret_cast<Record*>(bytes.data() + textOffset), static_cast<int>(640 - textOffset));
+		const auto input = folder / "input.DAT";
+		Save(input, bytes);
+		ItemData items;
+		items.encryptionSuppression = true;
+		ASSERT_NO_THROW(items.Read(input.wstring(), ItemSpecType::WEAPON, version));
+		ASSERT_EQ(items.data.size(), 1u);
+		items.data[0].visit([&](const auto &datum) {
+			using Datum = std::remove_cvref_t<decltype(datum)>;
+			// The typed view of this record is the Entry of its own layout.
+			const bool typedAsThisVersion = version == itmfmt::Version::V10
+				? std::is_same_v<typename Datum::Entry, itmfmt::v10::Entry>
+				: std::is_same_v<typename Datum::Entry, itmfmt::v20::Entry>;
+			EXPECT_TRUE(typedAsThisVersion);
+
+			const auto &spec = datum.originalEntry.spec.weapon;
+			// The race mask is 16 bits in both versions, so the same two bytes read
+			// back the same; the words after it describe this version only (v10 has
+			// no slvl / ukn2, v20 no ukn_after_related), which is what makes this a
+			// per version view and not a shared one.
+			uint16_t races = 0;
+			if constexpr (std::is_same_v<std::remove_cvref_t<decltype(spec.races)>, uint16_t>)
+				races = spec.races;
+			else
+				std::memcpy(&races, &spec.races, sizeof(spec.races));
+			EXPECT_EQ(races, racesValue);
+			EXPECT_EQ(spec.dmg, dmgValue);
+			EXPECT_EQ(spec.delay, delayValue);
+			const bool hasSlvl = requires { spec.slvl; };
+			EXPECT_EQ(hasSlvl, version == itmfmt::Version::V20);
+		});
+	}
+}

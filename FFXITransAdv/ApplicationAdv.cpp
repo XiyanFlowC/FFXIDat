@@ -567,11 +567,11 @@ static void ExportOtherTypes(
 		if (type == u8"icb") return ItemSpecType::CURRENCY;
 		if (type == u8"iib") return ItemSpecType::INSTINCT;
 		return ItemSpecType::NORMAL;
-	};
+		};
 
 	auto isQuestDMsg = [](const std::u8string& comment) -> bool {
 		return comment.starts_with(u8"sys/mis/") || comment.starts_with(u8"sys/qst/");
-	};
+		};
 
 	int count = 0;
 	for (const auto& def : allDefs)
@@ -615,12 +615,13 @@ static void ExportOtherTypes(
 					try {
 						if (datum.name() == u8".")
 							continue;
-						csv.NewCell(xybase::string::itos<char8_t>(datum.id));
+						csv.NewCell(xybase::string::itos<char8_t>(datum.id()));
 						csv.NewCell(datum.name());
 						csv.NewCell(datum.description());
 						csv.NewLine();
 						++rows;
-					} catch (...) {}
+					}
+					catch (...) {}
 				}
 				std::cout << "  " << xybase::string::to_string(def.comment) << ": "
 					<< rows << " items" << std::endl;
@@ -707,9 +708,12 @@ static void ExportOtherTypes(
 				for (const auto& entry : roe.questData)
 				{
 					csv.NewCell(xybase::string::itos<char8_t>(entry.id));
-					try { csv.NewCell(entry.questName()); } catch (...) { csv.NewCell(u8""); }
-					try { csv.NewCell(entry.description()); } catch (...) { csv.NewCell(u8""); }
-					try { csv.NewCell(entry.note()); } catch (...) { csv.NewCell(u8""); }
+					try { csv.NewCell(entry.questName()); }
+					catch (...) { csv.NewCell(u8""); }
+					try { csv.NewCell(entry.description()); }
+					catch (...) { csv.NewCell(u8""); }
+					try { csv.NewCell(entry.note()); }
+					catch (...) { csv.NewCell(u8""); }
 					csv.NewLine();
 				}
 				std::cout << "  " << xybase::string::to_string(def.comment) << ": "
@@ -735,7 +739,8 @@ static void ExportOtherTypes(
 					try {
 						std::u8string name = entry.categoryName();
 						csv.NewCell(name);
-					} catch (...) {
+					}
+					catch (...) {
 						csv.NewCell(u8"");
 					}
 					csv.NewLine();

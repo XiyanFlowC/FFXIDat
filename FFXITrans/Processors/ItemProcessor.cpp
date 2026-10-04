@@ -41,14 +41,14 @@ bool ItemProcessor::Process(
 	FinalTextProcessor finalTextProcessor(fileDef.comment, fileDef.type);
 
 	auto processText = [&](const std::u8string& translated, const std::u8string& original, int64_t rowOrId, int64_t colOrColId)
-	{
-		return finalTextProcessor.Process(translated, original, rowOrId, colOrColId);
-	};
+		{
+			return finalTextProcessor.Process(translated, original, rowOrId, colOrColId);
+		};
 
 	auto processEscaped = [&](const std::u8string& translated, const std::u8string& original, int64_t rowOrId, int64_t colOrColId)
-	{
-		return xybase::string::unescape(finalTextProcessor.ProcessEscaped(translated, original, rowOrId, colOrColId));
-	};
+		{
+			return xybase::string::unescape(finalTextProcessor.ProcessEscaped(translated, original, rowOrId, colOrColId));
+		};
 
 	ItemData itemData;
 	ItemSpecType specType = GetItemSpecType(fileDef.type);
@@ -91,12 +91,12 @@ bool ItemProcessor::Process(
 				csvLoader.GetSrcCsvPath(fileDef.comment));
 		}
 
-		for (auto& datum : itemData.data)
+		for (auto datum : itemData.data)
 		{
 			bool skipCsv = false;
 			if (srcValidationEnabled && !srcCsvTranslations.empty())
 			{
-				auto itrSrc = srcCsvTranslations.find(datum.id);
+				auto itrSrc = srcCsvTranslations.find(datum.id());
 				if (itrSrc != srcCsvTranslations.end())
 				{
 					std::u8string originalName = datum.name();
@@ -105,7 +105,7 @@ bool ItemProcessor::Process(
 						originalDesc != itrSrc->second.description)
 					{
 						Logger::Instance().Warning(
-							"ItemProcessor src validation failed for id=" + std::to_string(datum.id)
+							"ItemProcessor src validation failed for id=" + std::to_string(datum.id())
 							+ " - falling back to TransDB");
 						Logger::Instance().Note(
 							"Original name: " + Logger::ToUtf8(originalName)
@@ -117,7 +117,7 @@ bool ItemProcessor::Process(
 				}
 			}
 
-			auto itrCsv = csvTranslations.find(datum.id);
+			auto itrCsv = csvTranslations.find(datum.id());
 
 			if (itrCsv == csvTranslations.end() || skipCsv)
 			{
@@ -125,14 +125,14 @@ bool ItemProcessor::Process(
 				auto& config = Config::Instance();
 				std::u8string originalName = datum.name();
 				std::u8string alternateOriginalName;
-				if (const auto altItr = alternateNamesById.find(datum.id); altItr != alternateNamesById.end())
+				if (const auto altItr = alternateNamesById.find(datum.id()); altItr != alternateNamesById.end())
 					alternateOriginalName = altItr->second;
 
 				if ((translateAllCells || targetCells.count(1)) && !config.IsNoName())
 					datum.setName(processEscaped(
 						db.GetTranslation(xybase::string::escape(originalName)),
 						xybase::string::escape(originalName),
-						datum.id,
+						datum.id(),
 						1));
 
 				if (translateAllCells || targetCells.count(2))
@@ -140,7 +140,7 @@ bool ItemProcessor::Process(
 					std::u8string translatedDesc = processEscaped(
 						db.GetTranslation(xybase::string::escape(datum.description())),
 						xybase::string::escape(datum.description()),
-						datum.id,
+						datum.id(),
 						2);
 					translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
 					datum.setDescription(translatedDesc);
@@ -152,14 +152,14 @@ bool ItemProcessor::Process(
 			auto& config = Config::Instance();
 			std::u8string originalName = datum.name();
 			std::u8string alternateOriginalName;
-			if (const auto altItr = alternateNamesById.find(datum.id); altItr != alternateNamesById.end())
+			if (const auto altItr = alternateNamesById.find(datum.id()); altItr != alternateNamesById.end())
 				alternateOriginalName = altItr->second;
 
 			if (!config.IsNoName())
 			{
 				if (!itrCsv->second.name.empty() && (translateAllCells || targetCells.count(1)))
 				{
-					auto convertedName = processText(itrCsv->second.name, originalName, datum.id, 1);
+					auto convertedName = processText(itrCsv->second.name, originalName, datum.id(), 1);
 					datum.setName(convertedName);
 					datum.setName_sg(convertedName);
 					datum.setName_pl(convertedName);
@@ -169,7 +169,7 @@ bool ItemProcessor::Process(
 					datum.setName(processEscaped(
 						db.GetTranslation(xybase::string::escape(originalName)),
 						xybase::string::escape(originalName),
-						datum.id,
+						datum.id(),
 						1));
 				}
 			}
@@ -179,14 +179,14 @@ bool ItemProcessor::Process(
 				std::u8string translatedDesc;
 				if (!itrCsv->second.description.empty())
 				{
-					translatedDesc = processText(itrCsv->second.description, datum.description(), datum.id, 2);
+					translatedDesc = processText(itrCsv->second.description, datum.description(), datum.id(), 2);
 				}
 				else
 				{
 					translatedDesc = processEscaped(
 						db.GetTranslation(xybase::string::escape(datum.description())),
 						xybase::string::escape(datum.description()),
-						datum.id,
+						datum.id(),
 						2);
 				}
 
@@ -221,18 +221,18 @@ bool ItemProcessor::Process(
 
 	size_t textIdx = 0;
 
-	for (auto& datum : itemData.data)
+	for (auto datum : itemData.data)
 	{
 		// Use ID-mapped reference if available
 		auto& config = Config::Instance();
 		std::u8string originalName = datum.name();
 		std::u8string alternateOriginalName;
-		if (const auto altItr = alternateNamesById.find(datum.id); altItr != alternateNamesById.end())
+		if (const auto altItr = alternateNamesById.find(datum.id()); altItr != alternateNamesById.end())
 			alternateOriginalName = altItr->second;
 
 		if (!jpTextsById.empty())
 		{
-			auto jpTextItr = jpTextsById.find(datum.id);
+			auto jpTextItr = jpTextsById.find(datum.id());
 			if (jpTextItr != jpTextsById.end())
 			{
 				if (!jpTextItr->second.empty() && (translateAllCells || targetCells.count(1)) && !config.IsNoName())
@@ -242,7 +242,7 @@ bool ItemProcessor::Process(
 					auto unescapedName = processEscaped(
 						translatedName,
 						xybase::string::escape(originalName),
-						datum.id,
+						datum.id(),
 						1);
 					datum.setName(unescapedName);
 					datum.setName_sg(unescapedName);
@@ -255,7 +255,7 @@ bool ItemProcessor::Process(
 					std::u8string finalDesc = processEscaped(
 						translatedDesc,
 						xybase::string::escape(datum.description()),
-						datum.id,
+						datum.id(),
 						2);
 					finalDesc = ProcessorUtils::PrependBabelText(finalDesc, originalName, alternateOriginalName);
 					datum.setDescription(finalDesc);
@@ -289,7 +289,7 @@ bool ItemProcessor::Process(
 					cell.Set(xybase::string::unescape(finalTextProcessor.ProcessEscaped(
 						translated,
 						text,
-						datum.id,
+						datum.id(),
 						cellIndex)));
 					++textIdx;
 				}

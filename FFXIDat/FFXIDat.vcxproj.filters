@@ -45,6 +45,9 @@
     <ClInclude Include="ItemData.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ItemDatum.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="Image.h">
       <Filter>头文件</Filter>
     </ClInclude>

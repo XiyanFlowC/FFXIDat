@@ -8,10 +8,13 @@
 // the runtime record version to the right layout.
 //
 // The record version is selected here and comes from the data side annotation
-// ("" for the newest known layout, "_o" for the oldest one).
+// ("" for the newest known layout, "_o" for the oldest one). The store keeps one
+// vector per version, so a record read with an older layout still carries that
+// layout's typed view (see itmfmt::AnyDatum in ItemFormats.h).
 
 #include <cstdint>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "ItemFormats.h"
@@ -41,7 +44,7 @@ using SkillType = itmfmt::v30::SkillType;
 class ItemData
 {
 public:
-	using ItemDatum = itmfmt::Datum;
+	ItemData() : data(store) {}
 
 	using ValidTarget = uint16_t; // bitmask for valid target types, e.g. player, NPC, etc.
 	const ValidTarget VT_SELF = 0x0001,
@@ -64,8 +67,15 @@ public:
 	// Record version this store was read with; it is also the version written back.
 	itmfmt::Version version() const { return layoutVersion; }
 
-	std::vector<ItemDatum> data;
+	// The records of the version this store was read with: `data[i]`, `data.size()`
+	// and iteration give the version aware handle, `data.visit(...)` the typed view.
+	itmfmt::AnyData data;
+
+	// The whole store, for callers that need the vector of one version.
+	itmfmt::DatumStore &Store() { return store; }
+	const itmfmt::DatumStore &Store() const { return store; }
 
 private:
+	itmfmt::DatumStore store;
 	itmfmt::Version layoutVersion = itmfmt::CURRENT_VERSION;
 };

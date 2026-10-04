@@ -110,6 +110,29 @@ inline constexpr size_t INT_CELL_SIZE = 4;           // one int32 payload
 // therefore walks the cell table by offset and length (`base + offset`, bounded
 // by `limit`) instead of dereferencing the record structures, which would read
 // out of the text area as soon as a field is malformed.
+//
+// What makes a record structurally valid, and nothing more: the cell table (the
+// count at the head of the record plus one 8 byte RecordSpec per cell) fits into
+// the text area, every cell offset is at or behind the end of that table, the
+// payload the offset points at (28 header bytes plus the bytes up to and
+// including the NUL for a string cell, 4 bytes for an int cell) stays inside the
+// text area, every type code is 0 or 1, and a string cell has a NUL inside the
+// area. That is the whole contract, so all of the following are accepted on
+// purpose:
+//
+//   - cells that are not back to back, i.e. a hole between two payloads,
+//   - holes of any content, nonzero bytes included,
+//   - offsets that are neither ascending nor distinct (two cells may point at
+//     one shared payload), and any order of the cells after the table.
+//
+// The rewrite of such a record is therefore not byte identical: it lays the
+// cells out canonically (Row::WriteRow pads every string cell to a four byte
+// boundary and puts the next cell right behind it). Byte level round trip is
+// promised for the canonical records the installed client writes, and for those
+// only; see docs/FILE_FORMATS.md.
+//
+// Everything the container refuses on top of this (stride, end marker, currency
+// padding, cell count bounds) lives in ParseInto and ReadRow.
 inline void ValidateTextRecord(const char *slot, size_t TextOffset, size_t textEnd)
 {
 	if (TextOffset > textEnd || textEnd - TextOffset < TEXT_RECORD_HEADER_SIZE)

@@ -338,6 +338,17 @@ Three record layouts of this family have been observed:
 | `v20` | [`ItemFormatV20.h`](../FFXIDat/ItemFormatV20.h) | 0xC00 | 14 bytes | 24 / 28 / 56 / 44 / 24 / 84 / 16 / 40 | 2427 | ja/en tables before the 2026-09 update |
 | `v10` (oldest known) | [`ItemFormatV10.h`](../FFXIDat/ItemFormatV10.h) | 0xC00 | 14 bytes | 24 / 24 / 48 / 40 / 24 / 84 / 16 / 40 | 2427 | the de/fr tables left in the live client |
 
+##### Canonical Text Records
+
+Byte level round trip is only guaranteed for the canonical records the installed client writes: a non
+canonical layout that the parser accepts (discontinuous cells, a shared cell offset, a nonzero hole
+between two payloads) is rearranged by an unchanged rewrite, so its byte for byte losslessness is not
+covered by that promise. The acceptance contract is documented at `slotfile::ValidateTextRecord` in
+[`FFXIDat/SlotFile.h`](../FFXIDat/SlotFile.h), the rewrite at `itmfmt::DatumBase::store` in
+[`FFXIDat/ItemDatum.h`](../FFXIDat/ItemDatum.h).
+
+> 无损回写范围：字节级往返只保证由实装客户端产生的规范化记录；解析器接受的非常规布局（非连续 cell／共享偏移／非零空洞）在未修改回写下会被重排，其逐字节无损不在保证范围内。
+
 #### References
 
 - [`FFXIDat/ItemData.h`](../FFXIDat/ItemData.h): facade, compatibility names and routing

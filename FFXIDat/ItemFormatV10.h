@@ -9,15 +9,17 @@
 // and the text record is placed by `textOffset()`, which is derived from the
 // structs below. The field semantics of the spec area are not modelled.
 //
-// This header includes the v30 one for the family vocabulary, the shared datum
-// (itmfmt::Datum) and the shared writer helpers.
+// This header includes the shared datum base (itmfmt::DatumBase), which carries
+// the code every version of the family shares; the typed view it holds is the
+// Entry of this version.
 
 #include <cstddef>
 #include <cstdint>
 #include <span>
 #include <string_view>
 
-#include "ItemFormatV30.h"
+#include "ItemDatum.h"
+#include "CsvFile.h"
 
 namespace itmfmt
 {
@@ -256,7 +258,7 @@ namespace itmfmt
 		};
 		struct PuppetSpec
 		{ 
-			uint32_t equip_slots;
+			PuppetSlots equip_slots;
 			uint8_t fire : 4;
 			uint8_t ice : 4;
 			uint8_t air : 4;
@@ -305,13 +307,18 @@ namespace itmfmt
 		static_assert(offsetof(Entry, header.resource_id) == 10, "v10 resource id offset mismatch");
 		static_assert(offsetof(Entry, header.valid_targets) == 12, "v10 valid targets offset mismatch");
 
+		// One v10 record: the typed view is this version's Entry, so the spec area
+		// of a v10 slot is readable as the v10 spec structs.
+		class Datum : public DatumBase<Entry> { public: using Entry = v10::Entry; };
+
 		struct Format
 		{
 			using Entry = v10::Entry;
-			// The family shares one datum type: the text row, the semantic header, the
-			// image and the raw slot bytes have the same shape in every version, only the
-			// offsets differ, and those come from this layout.
-			using Datum = itmfmt::Datum;
+			// Every version of this family owns its datum: the text row, the
+			// semantic header, the image and the raw slot bytes have the same
+			// shape in every version, only the offsets differ, and those come
+			// from this layout.
+			using Datum = v10::Datum;
 			using Schema = SpecType;
 
 			static constexpr Version version = Version::V10;
@@ -369,7 +376,7 @@ namespace itmfmt
 		static_assert(Format::TextOffset(SpecType::CURRENCY) == 16, "v10 currency text offset mismatch");
 		static_assert(Format::TextOffset(SpecType::INSTINCT) == 40, "v10 instinct text offset mismatch");
 
-		static_assert(slotfile::SlotDatum<itmfmt::Datum, Format>, "v10 datum does not match the container protocol");
+		static_assert(slotfile::SlotDatum<Datum, Format>, "v10 datum does not match the container protocol");
 
 	} // namespace v10
 } // namespace itmfmt

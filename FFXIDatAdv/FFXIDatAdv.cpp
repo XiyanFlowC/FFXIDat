@@ -61,7 +61,7 @@ static void ExportItemCsv(const std::string& datPath, const std::string& type, c
 	{
 		try {
 			if (datum.name() == u8".") continue;
-			csv.NewCell(xybase::string::itos<char8_t>(datum.id));
+			csv.NewCell(xybase::string::itos<char8_t>(datum.id()));
 			csv.NewCell(datum.name());
 			csv.NewCell(datum.description());
 			csv.NewLine();
@@ -600,7 +600,7 @@ static int RunAllZones(
 				}
 			}
 			return h;
-		};
+			};
 
 		// evev actors
 		for (const auto& scn : scans) {
@@ -610,8 +610,8 @@ static int RunAllZones(
 				size_t sig = getSig(block, scn);
 				auto& v = lightGroups[nm];
 				bool found = false;
-				for (auto& g : v) if (g.sig == sig) { g.occs.push_back({scn.zone_name}); found = true; break; }
-				if (!found) v.push_back({sig, {{scn.zone_name}}});
+				for (auto& g : v) if (g.sig == sig) { g.occs.push_back({ scn.zone_name }); found = true; break; }
+				if (!found) v.push_back({ sig, {{scn.zone_name}} });
 			}
 		}
 
@@ -626,8 +626,8 @@ static int RunAllZones(
 				size_t sig = 0;
 				auto& v = lightGroups[nm];
 				bool found = false;
-				for (auto& g : v) if (g.sig == sig) { g.occs.push_back({scn.zone_name}); found = true; break; }
-				if (!found) v.push_back({sig, {{scn.zone_name}}});
+				for (auto& g : v) if (g.sig == sig) { g.occs.push_back({ scn.zone_name }); found = true; break; }
+				if (!found) v.push_back({ sig, {{scn.zone_name}} });
 			}
 		}
 
@@ -703,7 +703,7 @@ static int RunAllZones(
 				aa.events.push_back(std::move(ae));
 			}
 			return aa;
-		};
+			};
 
 		// Collect evev actors
 		for (const auto& scn : scans)

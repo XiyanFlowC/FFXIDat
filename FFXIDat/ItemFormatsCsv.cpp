@@ -25,7 +25,6 @@
 namespace
 {
 using itmfmt::CsvContext;
-using itmfmt::Datum;
 using itmfmt::SpecType;
 
 std::u8string ToUtf8(int64_t value)
@@ -150,7 +149,11 @@ std::u8string SkillTypeToU8(uint8_t skill)
 	}
 }
 
-std::u8string FlagsToDescription(const itmfmt::v30::Header &header)
+// The flag block of every version carries the same flags in the same two bytes,
+// so these helpers are templates: a v10 / v20 header serves them as well as a v30
+// one. `extended_flags`, which only v30 has, is not part of the description.
+template <class Header>
+std::u8string FlagsToDescription(const Header &header)
 {
 	std::stringstream ss;
 	if (header.is_ex) ss << "Ex ";
@@ -183,7 +186,8 @@ std::u8string JoinUtf8(const std::vector<const char8_t *> &parts)
 	return result;
 }
 
-std::u8string EquipSlotText(const itmfmt::v30::EquipSlots &slots)
+template <class EquipSlots>
+std::u8string EquipSlotText(const EquipSlots &slots)
 {
 	std::vector<const char8_t *> parts;
 	if (slots.main_hand) parts.push_back(u8"MainHand");
@@ -205,7 +209,8 @@ std::u8string EquipSlotText(const itmfmt::v30::EquipSlots &slots)
 	return JoinUtf8(parts);
 }
 
-std::u8string RaceText(const itmfmt::v30::RaceFlags &races)
+template <class RaceFlags>
+std::u8string RaceText(const RaceFlags &races)
 {
 	std::vector<const char8_t *> parts;
 
@@ -242,7 +247,8 @@ std::u8string RaceText(const itmfmt::v30::RaceFlags &races)
 	return JoinUtf8(parts);
 }
 
-std::u8string JobText(const itmfmt::v30::JobFlags &jobs)
+template <class JobFlags>
+std::u8string JobText(const JobFlags &jobs)
 {
 	std::vector<const char8_t *> parts;
 	if (jobs.pld) parts.push_back(u8"PLD");
@@ -282,6 +288,7 @@ T CsvMask(const U &value)
 	return result;
 }
 
+template <class Datum>
 CsvContext ContextOf(std::span<const Datum> records)
 {
 	CsvContext context;
@@ -324,7 +331,7 @@ void WriteCommonHeader(CsvFile &csv, const CsvContext &context)
 	}
 }
 
-template <class L>
+template <class L, class Datum>
 void WriteCommonRow(CsvFile &csv, const CsvContext &context, const Datum &datum)
 {
 	std::u8string name;
@@ -425,6 +432,7 @@ void WriteV30Header(CsvFile &csv, const CsvContext &context)
 	}
 }
 
+template <class Datum>
 void WriteV30Row(CsvFile &csv, const Datum &datum)
 {
 	switch (datum.schema)
@@ -638,17 +646,19 @@ void WriteLegacyHeader(CsvFile &csv, const CsvContext &context)
 	}
 }
 
-// The v10 and v20 spec structs are reached through the layout that read the
-// record, so `if constexpr` picks the members that version actually has; the
-// value order is the column order of WriteLegacyHeader above.
+// The v10 and v20 spec structs are reached through the typed view of the layout
+// that read the record, so `if constexpr` picks the members that version actually
+// has; the value order is the column order of WriteLegacyHeader above.
 template <class L>
-void WriteLegacyRow(CsvFile &csv, const Datum &datum)
+void WriteLegacyRow(CsvFile &csv, const typename L::Datum &datum)
 {
 	if (datum.layoutId != L::id || datum.rawBytes.size() != L::slotSize)
 		throw std::runtime_error("CSV record does not match item layout " + std::string(L::id));
 
-	typename L::Entry entry;
-	std::memcpy(&entry, datum.rawBytes.data(), sizeof(entry));
+	// The datum of this layout owns the typed view of this layout: `originalEntry`
+	// is the memory image of the slot, so the spec area is read as the structs
+	// below with no reinterpretation.
+	const typename L::Entry &entry = datum.originalEntry;
 
 	auto number = [&](auto value) { csv.NewCell(ToUtf8(value)); };
 	// The unknown arrays of this family are byte arrays except the instinct one,
@@ -657,7 +667,7 @@ void WriteLegacyRow(CsvFile &csv, const Datum &datum)
 		for (size_t i = 0; i < sizeof(bytes); ++i)
 			number(static_cast<unsigned>(static_cast<uint8_t>(bytes[i])));
 	};
-	auto unknownWords = [&](const auto &words) {
+	auto unknownUnits = [&](const auto &words) {
 		for (size_t i = 0; i < sizeof(words) / sizeof(words[0]); ++i)
 			number(static_cast<unsigned>(static_cast<uint16_t>(words[i])));
 	};
@@ -759,7 +769,7 @@ void WriteLegacyRow(CsvFile &csv, const Datum &datum)
 		break;
 	}
 	case SpecType::SLIP: unknownBytes(entry.spec.slip.ukn); break;
-	case SpecType::INSTINCT: unknownWords(entry.spec.instinct.ukn); break;
+	case SpecType::INSTINCT: unknownUnits(entry.spec.instinct.ukn); break;
 	case SpecType::CURRENCY: unknownBytes(entry.spec.currency.ukn); break;
 	}
 }

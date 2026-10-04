@@ -4,6 +4,7 @@
 #include <iostream>
 #include <clocale>
 #include <format>
+#include <bit>
 #include <exception>
 #include <set>
 #include <unordered_map>
@@ -1200,7 +1201,6 @@ void ExtractSysText()
 }
 
 #include "IdResolver.h"
-
 void ExportItemData(void)
 {
 	IdResolver ir;
@@ -1262,7 +1262,7 @@ void ExportItemData(void)
 				try { pl = datum.name_pl(); } catch (...) {}
 				try { desc = datum.description(); }
 				catch (...) {}	
-				enNames[datum.id] = std::make_tuple(name, sg, pl, desc);
+				enNames[datum.id()] = std::make_tuple(name, sg, pl, desc);
 			} catch (...) {}
 		}
 
@@ -1361,7 +1361,8 @@ void ExportItemData(void)
 		csv.NewLine();
 
 		// Write data rows
-		for (const auto& datum : jaData.data) {
+		for (const auto& anyDatum : jaData.data) {
+			anyDatum.visit([&](const auto& datum) {
 			auto toUtf8 = [](auto v) {
 				return xybase::string::to_utf8(std::to_string(v));
 			};
@@ -1381,6 +1382,7 @@ void ExportItemData(void)
 				enDesc = std::get<3>(enIt->second);
 			}
 
+			// The header of the version this record was read with.
 			const auto& hdr = datum.flags();
 
 			// Write basic fields
@@ -1433,14 +1435,24 @@ void ExportItemData(void)
 			csv.NewCell(hdr.is_rare ? u8"1" : u8"0");
 
 			// Write spec-specific fields
-			if (specType == ItemSpecType::WEAPON) {
+			// Write the spec of the version that read the record: `datum` is the
+			// record of that version here, so a v10 or v20 record is read as its own
+			// spec struct instead of as an empty v30 one. A column whose field does
+			// not exist in that version stays empty.
+			switch (specType) {
+			case ItemSpecType::WEAPON:
+			{
 				const auto& spec = datum.originalEntry.spec.weapon;
 				csv.NewCell(toUtf8(spec.level));
-				csv.NewCell(toUtf8(*(uint16_t*)&spec.equip_slots));
-				csv.NewCell(toUtf8(*(const uint16_t*)&spec.races));
-				csv.NewCell(toUtf8(*(uint32_t*)&spec.jobs));
-				csv.NewCell(toUtf8(spec.slvl));
-				csv.NewCell(toUtf8(spec.ukn2));
+				csv.NewCell(toUtf8(std::bit_cast<uint16_t>(spec.equip_slots)));
+				csv.NewCell(toUtf8(std::bit_cast<uint16_t>(spec.races)));
+				csv.NewCell(toUtf8(std::bit_cast<uint32_t>(spec.jobs)));
+				// v10 has no slvl / ukn2, so those two columns stay empty there.
+				if constexpr (requires { spec.slvl; })
+				{
+					csv.NewCell(toUtf8(spec.slvl));
+					csv.NewCell(toUtf8(spec.ukn2));
+				}
 				csv.NewCell(toUtf8(spec.dmg));
 				csv.NewCell(toUtf8(spec.delay));
 				csv.NewCell(toUtf8(spec.dps));
@@ -1454,16 +1466,23 @@ void ExportItemData(void)
 				csv.NewCell(toUtf8(spec.reuse_time));
 				csv.NewCell(toUtf8(spec.ukn20));
 				csv.NewCell(toUtf8(spec.related_item_id));
-				csv.NewCell(toUtf8(spec.ilvl));
-				csv.NewCell(toUtf8(spec.ukn22));
-				csv.NewCell(toUtf8(spec.ukn23));
-			} else if (specType == ItemSpecType::ARMOUR) {
+				if constexpr (requires { spec.ilvl; })
+				{
+					csv.NewCell(toUtf8(spec.ilvl));
+					csv.NewCell(toUtf8(spec.ukn22));
+					csv.NewCell(toUtf8(spec.ukn23));
+				}
+				break;
+			}
+			case ItemSpecType::ARMOUR:
+			{
 				const auto& spec = datum.originalEntry.spec.armour;
 				csv.NewCell(toUtf8(spec.level));
-				csv.NewCell(toUtf8(*(uint16_t*)&spec.equip_slots));
-			   csv.NewCell(toUtf8(*(const uint16_t*)&spec.equip_races));
-				csv.NewCell(toUtf8(*(uint32_t*)&spec.equip_jobs));
-				csv.NewCell(toUtf8(spec.slvl));
+				csv.NewCell(toUtf8(std::bit_cast<uint16_t>(spec.equip_slots)));
+				csv.NewCell(toUtf8(std::bit_cast<uint16_t>(spec.equip_races)));
+				csv.NewCell(toUtf8(std::bit_cast<uint32_t>(spec.equip_jobs)));
+				// v10 has no slvl, so that column stays empty there.
+				if constexpr (requires { spec.slvl; }) csv.NewCell(toUtf8(spec.slvl));
 				csv.NewCell(toUtf8(spec.shield_size));
 				csv.NewCell(toUtf8(spec.max_charges));
 				csv.NewCell(toUtf8(spec.cast_factor));
@@ -1471,28 +1490,35 @@ void ExportItemData(void)
 				csv.NewCell(toUtf8(spec.reuse_time));
 				csv.NewCell(toUtf8(spec.ukn1));
 				csv.NewCell(toUtf8(spec.related_item_id));
-				csv.NewCell(toUtf8(spec.ilvl));
-				csv.NewCell(toUtf8(spec.ukn3));
-				csv.NewCell(toUtf8(spec.ukn4));
-			} else if (specType == ItemSpecType::USABLE) {
+				if constexpr (requires { spec.ilvl; })
+				{
+					csv.NewCell(toUtf8(spec.ilvl));
+					csv.NewCell(toUtf8(spec.ukn3));
+					csv.NewCell(toUtf8(spec.ukn4));
+				}
+				break;
+			}
+			case ItemSpecType::USABLE:
+			{
 				const auto& spec = datum.originalEntry.spec.usable;
 				csv.NewCell(toUtf8(spec.cast_factor));
-				csv.NewCell(toUtf8(spec.ukn1));
-				csv.NewCell(toUtf8(spec.ukn2));
-				csv.NewCell(toUtf8(spec.ukn3));
-			} else if (specType == ItemSpecType::NORMAL) {
+				break;
+			}
+			case ItemSpecType::NORMAL:
+			{
 				const auto& spec = datum.originalEntry.spec.normal;
 				csv.NewCell(toUtf8(spec.element));
 				csv.NewCell(toUtf8(spec.storage));
 				csv.NewCell(toUtf8(spec.related_item_id));
-				csv.NewCell(toUtf8(spec.ukn4));
-				csv.NewCell(toUtf8(spec.ukn5));
-			} else if (specType == ItemSpecType::PUPPET) {
+				break;
+			}
+			case ItemSpecType::PUPPET:
+			{
 				const auto& spec = datum.originalEntry.spec.puppet;
-				csv.NewCell(spec.equip_slots.head ? u8"1" : u8"0");
-				csv.NewCell(spec.equip_slots.body ? u8"1" : u8"0");
-				csv.NewCell(spec.equip_slots.attachment ? u8"1" : u8"0");
-				csv.NewCell(toUtf8(*(const uint32_t*)&spec.equip_slots)); // Raw slot value
+				csv.NewCell((spec.equip_slots.head) ? u8"1" : u8"0");
+				csv.NewCell((spec.equip_slots.body) ? u8"1" : u8"0");
+				csv.NewCell((spec.equip_slots.attachment) ? u8"1" : u8"0");
+				csv.NewCell(toUtf8(std::bit_cast<uint32_t>(spec.equip_slots))); // Raw slot value
 				csv.NewCell(toUtf8(spec.fire));
 				csv.NewCell(toUtf8(spec.ice));
 				csv.NewCell(toUtf8(spec.air));
@@ -1501,21 +1527,42 @@ void ExportItemData(void)
 				csv.NewCell(toUtf8(spec.water));
 				csv.NewCell(toUtf8(spec.light));
 				csv.NewCell(toUtf8(spec.dark));
-				csv.NewCell(toUtf8(spec.ukn));
-			} else if (specType == ItemSpecType::SLIP) {
-				const auto& spec = datum.originalEntry.spec.slip;
-			  for (auto value : spec.ukn) {
-					csv.NewCell(toUtf8(value));
-				}
-			} else if (specType == ItemSpecType::CURRENCY) {
-				const auto& spec = datum.originalEntry.spec.currency;
-				csv.NewCell(toUtf8(spec.ukn));
-			} else if (specType == ItemSpecType::INSTINCT) {
-				const auto& spec = datum.originalEntry.spec.instinct;
-			  for (auto value : spec.ukn) {
-					csv.NewCell(toUtf8(value));
-				}
+				// v10 ships the unknown tail of this spec as two bytes, not as one word.
+				if constexpr (requires { spec.ukn[0]; })
+					for (auto value : spec.ukn) csv.NewCell(toUtf8(static_cast<unsigned>(value)));
+				else
+					csv.NewCell(toUtf8(static_cast<unsigned>(spec.ukn)));
+				break;
 			}
+			case ItemSpecType::SLIP:
+			{
+				const auto& spec = datum.originalEntry.spec.slip;
+				for (auto value : spec.ukn) {
+					csv.NewCell(toUtf8(static_cast<unsigned>(static_cast<uint8_t>(value))));
+				}
+				break;
+			}
+			case ItemSpecType::CURRENCY:
+			{
+				const auto& spec = datum.originalEntry.spec.currency;
+				// v10 models this byte as an array of two, the other versions as the
+				// word itself; both print the same value.
+				if constexpr (requires { spec.ukn[0]; })
+					csv.NewCell(toUtf8(static_cast<unsigned>(spec.ukn[0])));
+				else
+					csv.NewCell(toUtf8(static_cast<unsigned>(spec.ukn)));
+				break;
+			}
+			case ItemSpecType::INSTINCT:
+			{
+				const auto& spec = datum.originalEntry.spec.instinct;
+				for (auto value : spec.ukn) {
+					csv.NewCell(toUtf8(static_cast<unsigned>(value)));
+				}
+				break;
+			}
+			}
+			
 
 			csv.NewLine();
 
@@ -1591,6 +1638,7 @@ void ExportItemData(void)
 					// Ignore image export errors
 				}
 			}
+			});
 		}
 
 		csv.Close();

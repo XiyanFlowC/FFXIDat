@@ -15,6 +15,7 @@ public:
 
 	static void ResetValidationSummary();
 	static size_t GetSkippedValidationCount();
+	static size_t GetDotMissingCount();
 
 	std::u8string Process(
 		const std::u8string& translatedText,
@@ -90,6 +91,9 @@ private:
 	static std::u8string ReplaceAll(const std::u8string& text, const std::u8string& from, const std::u8string& to);
 
   static size_t skippedValidationCount;
+  static size_t dotMissingCount;
+
+	static bool IsMissingTranslation(const std::u8string& text);
 
 	std::u8string comment;
 	std::u8string type;

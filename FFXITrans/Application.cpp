@@ -390,7 +390,7 @@ namespace
 			if (datum.name() == u8".")
 				continue;
 
-			output.NewCell(xybase::string::itos<char8_t>(datum.id));
+			output.NewCell(xybase::string::itos<char8_t>(datum.id()));
 			output.NewCell(datum.name());
 			output.NewCell(datum.description());
 			output.NewLine();
@@ -689,7 +689,7 @@ bool Application::Initialize()
 
 	// Initialize mismatch log
 	TranslationDatabase::Instance().InitializeMismatchLog(progRoot / "text_mismatch.txt");
-   FinalTextProcessor::ResetValidationSummary();
+	FinalTextProcessor::ResetValidationSummary();
 	Logger::Instance().Info("Application initialize completed.");
 
 	return true;
@@ -876,16 +876,27 @@ int Application::Run(int argc, char** argv)
 		std::wcout << L"处理完毕。" << std::endl;
 		std::wcout << L"共有 " << std::to_wstring(TranslationDatabase::Instance().GetMismatchCount())
 			<< L" 条文本失配。失配文本已经保存到 text_mismatch.txt 中。" << std::endl;
+		if (FinalTextProcessor::GetDotMissingCount() > 0)
+		{
+			std::wcout << L"有 " << std::to_wstring(FinalTextProcessor::GetDotMissingCount())
+				<< L" 条取到的译文为 \".\"（视为无译文），已保留原文。" << std::endl;
+		}
 		if (FinalTextProcessor::GetSkippedValidationCount() > 0)
 		{
 			std::wcerr << L"警告：有 " << std::to_wstring(FinalTextProcessor::GetSkippedValidationCount())
 				<< L" 条文本因控制序列校验失败而回退为原文。详情见 log.txt。" << std::endl;
 		}
 
-        std::wstring finalMessage =
+		std::wstring finalMessage =
 			L"处理完毕。\n\n共有 "
 			+ std::to_wstring(TranslationDatabase::Instance().GetMismatchCount())
-            + L" 条文本失配。失配文本已经保存到 text_mismatch.txt 中。";
+			+ L" 条文本失配。失配文本已经保存到 text_mismatch.txt 中。";
+		if (FinalTextProcessor::GetDotMissingCount() > 0)
+		{
+			finalMessage += L"\n\n有 "
+				+ std::to_wstring(FinalTextProcessor::GetDotMissingCount())
+				+ L" 条取到的译文为 \".\"（视为无译文），已保留原文。";
+		}
 		if (FinalTextProcessor::GetSkippedValidationCount() > 0)
 		{
 			finalMessage += L"\n\n警告：有 "

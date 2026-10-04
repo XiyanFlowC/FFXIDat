@@ -167,6 +167,31 @@ namespace
 }
 
 size_t FinalTextProcessor::skippedValidationCount = 0;
+size_t FinalTextProcessor::dotMissingCount = 0;
+
+// 本地化 DAT 表用单个句点 "." 表示“无值 / 无译文”（例如 ROM/307/16 的 cell3）。
+// 取到的译文若只是这种占位符，就必须当作缺失处理，绝不能再写回 DAT。
+// 比较前先做首尾空白 trim，因为表格里可能带空白。
+bool FinalTextProcessor::IsMissingTranslation(const std::u8string& text)
+{
+	size_t begin = 0;
+	size_t end = text.size();
+	while (begin < end)
+	{
+		const unsigned char ch = static_cast<unsigned char>(text[begin]);
+		if (ch != ' ' && ch != '\t' && ch != '\r' && ch != '\n' && ch != '\v' && ch != '\f')
+			break;
+		++begin;
+	}
+	while (end > begin)
+	{
+		const unsigned char ch = static_cast<unsigned char>(text[end - 1]);
+		if (ch != ' ' && ch != '\t' && ch != '\r' && ch != '\n' && ch != '\v' && ch != '\f')
+			break;
+		--end;
+	}
+	return (end - begin) == 1 && text[begin] == u8'.';
+}
 
 FinalTextProcessor::FinalTextProcessor(const std::u8string& comment, const std::u8string& type)
 	: comment(comment), type(type)
@@ -177,11 +202,17 @@ FinalTextProcessor::FinalTextProcessor(const std::u8string& comment, const std::
 void FinalTextProcessor::ResetValidationSummary()
 {
 	skippedValidationCount = 0;
+	dotMissingCount = 0;
 }
 
 size_t FinalTextProcessor::GetSkippedValidationCount()
 {
 	return skippedValidationCount;
+}
+
+size_t FinalTextProcessor::GetDotMissingCount()
+{
+	return dotMissingCount;
 }
 
 std::u8string FinalTextProcessor::Process(
@@ -197,9 +228,21 @@ std::u8string FinalTextProcessor::Process(
 	{
 		result = pendingNextTextOverride;
 		pendingNextTextOverride.clear();
+		if (IsMissingTranslation(result))
+		{
+			++dotMissingCount;
+			return originalText;
+		}
 		result = ChsToSJis::Instance().ReplaceHanzi(result);
 		result = ValidateResult(result, originalText, rowOrId, colOrColId);
 		return result;
+	}
+
+	// 取到的译文只是占位符 "." 时按“缺失译文”处理：回退为原文，不写进 DAT。
+	if (IsMissingTranslation(result))
+	{
+		++dotMissingCount;
+		return originalText;
 	}
 
 	const std::string originalTextStr = ToString(originalText);

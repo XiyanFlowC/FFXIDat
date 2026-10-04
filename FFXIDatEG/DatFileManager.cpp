@@ -22,7 +22,7 @@ namespace {
 	// Helper function to count lines in text
 	int CountLines(const std::wstring& text) {
 		if (text.empty()) return 1;
-		
+
 		int lineCount = 1;
 		for (size_t i = 0; i < text.length(); ++i) {
 			wchar_t ch = text[i];
@@ -175,7 +175,7 @@ void DatFileManager::BuildFileTree(const std::vector<DatFileInfo>& fileInfos,
 		std::vector<const DatFileInfo*> files;
 		std::string name;
 	};
-	
+
 	Node root;
 
 	for (const auto& info : fileInfos)
@@ -207,15 +207,15 @@ void DatFileManager::BuildFileTree(const std::vector<DatFileInfo>& fileInfos,
 	struct TreeBuilder {
 		DatFileManager* mgr;
 		HWND hTree;
-		
+
 		void Populate(Node* node, HTREEITEM hParent) {
-			
+
 			// Part A: Process Folders (Subcategories)
 			// Sort Order: Nodes with sub-sub-folders come first (Non-Leaf Categories), then others
 			std::vector<Node*> sortedInternalNodes;
 			for (auto& pair : node->children) sortedInternalNodes.push_back(pair.second.get());
 
-			std::sort(sortedInternalNodes.begin(), sortedInternalNodes.end(), 
+			std::sort(sortedInternalNodes.begin(), sortedInternalNodes.end(),
 				[](const Node* a, const Node* b) {
 					bool aHasChildren = !a->children.empty();
 					bool bHasChildren = !b->children.empty();
@@ -229,7 +229,7 @@ void DatFileManager::BuildFileTree(const std::vector<DatFileInfo>& fileInfos,
 				tvis.hParent = hParent;
 				tvis.hInsertAfter = TVI_LAST;
 				tvis.item.mask = TVIF_TEXT;
-				
+
 				std::wstring wName(child->name.begin(), child->name.end());
 				tvis.item.pszText = const_cast<LPWSTR>(wName.c_str());
 
@@ -239,7 +239,7 @@ void DatFileManager::BuildFileTree(const std::vector<DatFileInfo>& fileInfos,
 
 			// Part B: Process Files (Leafs)
 			std::vector<const DatFileInfo*> sortedFiles = node->files;
-			std::sort(sortedFiles.begin(), sortedFiles.end(), 
+			std::sort(sortedFiles.begin(), sortedFiles.end(),
 				[](const DatFileInfo* a, const DatFileInfo* b) {
 					return a->friendlyName < b->friendlyName;
 				});
@@ -263,16 +263,16 @@ void DatFileManager::BuildFileTree(const std::vector<DatFileInfo>& fileInfos,
 				if (!dispName.empty()) dispName += " - ";
 				int globalId = mgr->GetGlobalFileId(info->romFolder, info->localFileId);
 				dispName += std::to_string(globalId);
-				
+
 				if (!info->fileType.empty()) dispName += " [" + info->fileType + "]";
 				if (!info->language.empty()) dispName += " (" + info->language + ")";
-				
+
 				// Fallback if empty
 				if (dispName.empty()) dispName = std::to_string(globalId);
 
 				std::wstring wName(dispName.begin(), dispName.end());
 				tvis.item.pszText = const_cast<LPWSTR>(wName.c_str());
-				
+
 				tvis.item.lParam = globalId;
 
 				HTREEITEM hItem = TreeView_InsertItem(hTree, &tvis);
@@ -750,26 +750,26 @@ bool DatFileManager::ResolveGlobalId(int globalId, std::string& romFolder, int& 
 		// Read VTABLE and FTABLE for this ROM
 		std::vector<uint8_t> vtable = ReadVTable(romNumber);
 		std::vector<uint16_t> ftable = ReadFTable(romNumber);
-		
+
 		// Check if files exist and are valid
 		if (vtable.empty() || ftable.empty())
 			continue;
-		
+
 		// Check bounds
-		if (globalId >= static_cast<int>(vtable.size()) || 
+		if (globalId >= static_cast<int>(vtable.size()) ||
 			(globalId) >= static_cast<int>(ftable.size()))
 			continue;
-		
+
 		// Get ROM volume from VTABLE
 		uint8_t romVolume = vtable[globalId];
-		
+
 		// Check if this ROM matches
 		if (romVolume != romNumber)
 			continue;
-		
+
 		// Get encoded value from FTABLE
 		localFileId = ftable[globalId];
-		
+
 		// Set ROM folder name
 		if (romNumber == 1)
 		{
@@ -779,14 +779,14 @@ bool DatFileManager::ResolveGlobalId(int globalId, std::string& romFolder, int& 
 		{
 			romFolder = "ROM" + std::to_string(romNumber);
 		}
-		
+
 		std::filesystem::path datPath = GetDatFilePath(localFileId, romFolder);
 		if (std::filesystem::exists(datPath))
 		{
 			return true;
 		}
 	}
-	
+
 	return false;
 }
 
@@ -795,22 +795,22 @@ const DatFileInfo* DatFileManager::GetFileInfo(HTREEITEM itemId) const
 	auto it = m_treeItemToFileId.find(itemId);
 	if (it == m_treeItemToFileId.end())
 		return nullptr;
-	
+
 	auto infoIt = m_fileRegistry.find(it->second);
 	if (infoIt == m_fileRegistry.end())
 		return nullptr;
-	
+
 	return &infoIt->second;
 }
 
-std::filesystem::path DatFileManager::GetDatFilePath(int fileId, 
-													  const std::string& romFolder) const
+std::filesystem::path DatFileManager::GetDatFilePath(int fileId,
+	const std::string& romFolder) const
 {
 	auto [dir, file] = CalculateDatPath(fileId);
-	
+
 	std::ostringstream oss;
 	oss << dir << "/" << file << ".DAT";
-	
+
 	return m_gamePath / romFolder / oss.str();
 }
 
@@ -871,8 +871,8 @@ std::pair<int, int> DatFileManager::CalculateDatPath(int fileId)
 {
 	int dir = fileId / 128;
 	int file = fileId % 128;
-	
-	return {dir, file};
+
+	return { dir, file };
 }
 
 bool DatFileManager::IsImageCell(int row, int col) const
@@ -889,16 +889,16 @@ bool DatFileManager::IsCurrentFileMenu() const
 bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentView)
 {
 	m_currentFile = info;
-	
+
 	std::filesystem::path filePath = GetDatFilePath(info.localFileId, info.romFolder);
-	
+
 	if (!std::filesystem::exists(filePath))
 	{
 		std::wstring msg = L"File not found: " + filePath.wstring();
 		MessageBoxW(nullptr, msg.c_str(), L"Error", MB_OK | MB_ICONERROR);
 		return false;
 	}
-	
+
 	// Clear previous data
 	m_currentDMsg.reset();
 	m_currentXiString.reset();
@@ -908,7 +908,7 @@ bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentVi
 	m_currentFixedPhrase.reset();
 	m_currentMonBridge.reset();
 	m_currentRoe.reset();
-	
+
 	// Load appropriate file type
 	try
 	{
@@ -1041,7 +1041,7 @@ bool DatFileManager::LoadGlobalId(int globalId, const std::string& fileType, Con
 		MessageBoxW(nullptr, L"Could not resolve Global ID to a file path.", L"Error", MB_OK | MB_ICONERROR);
 		return false;
 	}
-	
+
 	DatFileInfo info;
 	info.localFileId = localFileId;
 	info.fileType = fileType;
@@ -1066,9 +1066,9 @@ bool DatFileManager::LoadDMsgFile(const std::filesystem::path& filePath, Content
 {
 	m_currentDMsg = std::make_unique<DMsg>(filePath);
 	m_currentDMsg->Read();
-	
+
 	contentView->Clear();
-	
+
 	// Find maximum number of columns
 	int maxCols = 0;
 	for (const auto& row : *m_currentDMsg)
@@ -1077,10 +1077,10 @@ bool DatFileManager::LoadDMsgFile(const std::filesystem::path& filePath, Content
 		if (cols > maxCols)
 			maxCols = cols;
 	}
-	
+
 	if (maxCols == 0)
 		maxCols = 1;
-	
+
 	// Set columns
 	contentView->SetColumnCount(maxCols + 1);
 	contentView->SetColumnTitle(0, L"Index");
@@ -1098,17 +1098,17 @@ bool DatFileManager::LoadDMsgFile(const std::filesystem::path& filePath, Content
 	}
 
 	int index = 0;
-	
+
 	// Add items
 	for (const auto& row : *m_currentDMsg)
 	{
 		auto item = std::make_unique<ContentItem>();
-		
+
 		bool hasMultilineText = false;
 		int maxLines = 1;
 
 		item->columns.push_back(ColumnData::MakeInteger(index++));
-		
+
 		for (const auto& cell : row.GetCellsConst())
 		{
 			if (cell.GetType() == 1)  // Integer
@@ -1121,7 +1121,7 @@ bool DatFileManager::LoadDMsgFile(const std::filesystem::path& filePath, Content
 			std::u8string cellStr = cell.Get<std::u8string>();
 			std::wstring wstr = xybase::string::to_wstring(cellStr);
 			item->columns.push_back(ColumnData::MakeMultilineText(wstr));
-			
+
 			// Check if this cell contains line breaks
 			if (ContainsLineBreaks(wstr))
 			{
@@ -1131,7 +1131,7 @@ bool DatFileManager::LoadDMsgFile(const std::filesystem::path& filePath, Content
 					maxLines = lineCount;
 			}
 		}
-		
+
 		// Set type and custom height for multi-line items
 		if (hasMultilineText)
 		{
@@ -1142,10 +1142,10 @@ bool DatFileManager::LoadDMsgFile(const std::filesystem::path& filePath, Content
 		{
 			item->type = ContentItemType::Multiline;
 		}
-		
+
 		contentView->AddItem(std::move(item));
 	}
-	
+
 	return true;
 }
 
@@ -1153,9 +1153,9 @@ bool DatFileManager::LoadXiStringFile(const std::filesystem::path& filePath, Con
 {
 	m_currentXiString = std::make_unique<XiString>(filePath);
 	m_currentXiString->Read();
-	
+
 	contentView->Clear();
-	
+
 	// Set columns: Index, String, Flag1, Flag2, Flag3
 	contentView->SetColumnCount(5);
 	contentView->SetColumnTitle(0, L"Index");
@@ -1168,21 +1168,21 @@ bool DatFileManager::LoadXiStringFile(const std::filesystem::path& filePath, Con
 	contentView->SetColumnWidth(3, 40);
 	contentView->SetColumnTitle(4, L"Flag3");
 	contentView->SetColumnWidth(4, 40);
-	
+
 	// Add items
 	int index = 0;
 	for (const auto& entry : *m_currentXiString)
 	{
 		auto item = std::make_unique<ContentItem>();
-		
+
 		std::wstring wstr = xybase::string::to_wstring(XiString::Decode(entry.str));
-		
-		item->columns.push_back(ColumnData::MakeInteger( (index)) );
-		item->columns.push_back(ColumnData::MakeMultilineText( wstr ));
+
+		item->columns.push_back(ColumnData::MakeInteger((index)));
+		item->columns.push_back(ColumnData::MakeMultilineText(wstr));
 		item->columns.push_back(ColumnData::MakeText(std::to_wstring(entry.flag1)));
 		item->columns.push_back(ColumnData::MakeText(std::to_wstring(entry.flag2)));
 		item->columns.push_back(ColumnData::MakeText(std::to_wstring(entry.flag3)));
-		
+
 		// Check if the string contains line breaks
 		if (ContainsLineBreaks(wstr))
 		{
@@ -1194,11 +1194,11 @@ bool DatFileManager::LoadXiStringFile(const std::filesystem::path& filePath, Con
 		{
 			item->type = ContentItemType::Multiline;
 		}
-		
+
 		contentView->AddItem(std::move(item));
 		index++;
 	}
-	
+
 	return true;
 }
 
@@ -1206,30 +1206,30 @@ bool DatFileManager::LoadEventStringFile(const std::filesystem::path& filePath, 
 {
 	m_currentEventString = std::make_unique<EventStringBase>(filePath);
 	m_currentEventString->Read();
-	
+
 	contentView->Clear();
-	
+
 	// Set columns: Index, String
 	contentView->SetColumnCount(2);
 	contentView->SetColumnTitle(0, L"Index");
 	contentView->SetColumnWidth(0, 60);
 	contentView->SetColumnTitle(1, L"String");
 	contentView->SetColumnWidth(1, 600);
-	
+
 	// Add items
 	for (size_t i = 0; i < m_currentEventString->Size(); ++i)
 	{
 		auto item = std::make_unique<ContentItem>();
 		item->type = ContentItemType::Multiline;
-		
+
 		item->columns.push_back(ColumnData::MakeInteger(i));
-		
+
 		const auto& str = (*m_currentEventString)[i];
-		item->columns.push_back(ColumnData::MakeMultilineText( xybase::string::to_wstring(str) ));
-		
+		item->columns.push_back(ColumnData::MakeMultilineText(xybase::string::to_wstring(str)));
+
 		contentView->AddItem(std::move(item));
 	}
-	
+
 	return true;
 }
 
@@ -1237,9 +1237,9 @@ bool DatFileManager::LoadStatusDataFile(const std::filesystem::path& filePath, C
 {
 	m_currentStatusData = std::make_unique<StatusData>();
 	m_currentStatusData->Read(filePath.wstring());
-	
+
 	contentView->Clear();
-	
+
 	// Set columns: ID, Flag, Description
 	contentView->SetColumnCount(4);
 	contentView->SetColumnTitle(0, L"ID");
@@ -1249,24 +1249,24 @@ bool DatFileManager::LoadStatusDataFile(const std::filesystem::path& filePath, C
 	contentView->SetColumnTitle(2, L"Description");
 	contentView->SetColumnWidth(2, 400);
 	contentView->SetColumnTitle(3, L"Image");
-	
+
 	// Add items
 	for (auto& datum : m_currentStatusData->data)
 	{
 		auto item = std::make_unique<ContentItem>();
-		
+
 		// ID column
 		item->columns.push_back(ColumnData::MakeInteger(datum.id));
-		
+
 		// Flag column (displayed as hex)
 		wchar_t flagStr[32];
 		swprintf_s(flagStr, L"0x%04X", datum.flg);
 		item->columns.push_back(ColumnData::MakeText(flagStr));
-		
+
 		// Description column
 		std::wstring description = xybase::string::to_wstring(datum.description);
 		item->columns.push_back(ColumnData::MakeMultilineText(description));
-		
+
 		// Check if description contains line breaks
 		if (ContainsLineBreaks(description))
 		{
@@ -1283,7 +1283,7 @@ bool DatFileManager::LoadStatusDataFile(const std::filesystem::path& filePath, C
 
 		contentView->AddItem(std::move(item));
 	}
-	
+
 	return true;
 }
 
@@ -1384,7 +1384,8 @@ bool DatFileManager::LoadFixedPhraseFile(const std::filesystem::path& filePath, 
 					int jobIndex = xybase::string::stoi(entry.text.substr(2), 16);
 					try {
 						resolvedName = xybase::string::to_wstring(job[jobIndex][0].Get<std::u8string>());
-					}catch(...) {
+					}
+					catch (...) {
 						resolvedName = L"[Invalid Job Reference]";
 					}
 				}
@@ -1393,7 +1394,8 @@ bool DatFileManager::LoadFixedPhraseFile(const std::filesystem::path& filePath, 
 					int areaIndex = xybase::string::stoi(entry.text.substr(2), 16);
 					try {
 						resolvedName = xybase::string::to_wstring(area[areaIndex][0].Get<std::u8string>());
-					}catch(...) {
+					}
+					catch (...) {
 						resolvedName = L"[Invalid Area Reference]";
 					}
 				}
@@ -1402,7 +1404,8 @@ bool DatFileManager::LoadFixedPhraseFile(const std::filesystem::path& filePath, 
 					int abilityIndex = xybase::string::stoi(entry.text.substr(2), 16);
 					try {
 						resolvedName = xybase::string::to_wstring(ability[abilityIndex][0].Get<std::u8string>());
-					}catch(...) {
+					}
+					catch (...) {
 						resolvedName = L"[Invalid Ability Reference]";
 					}
 				}
@@ -1411,7 +1414,8 @@ bool DatFileManager::LoadFixedPhraseFile(const std::filesystem::path& filePath, 
 					int magicIndex = xybase::string::stoi(entry.text.substr(2), 16);
 					try {
 						resolvedName = xybase::string::to_wstring(magic[magicIndex][0].Get<std::u8string>());
-					}catch(...) {
+					}
+					catch (...) {
 						resolvedName = L"[Invalid Magic Reference]";
 					}
 				}
@@ -1525,8 +1529,8 @@ bool DatFileManager::LoadItemDataFile(const std::filesystem::path& filePath, con
 		bool hasMultilineText = false;
 		int maxLines = 1;
 
-		item->columns.push_back(ColumnData::MakeInteger(datum.id));
-		item->columns.push_back(ColumnData::MakeImage(std::make_shared<Image>(datum.image)));
+		item->columns.push_back(ColumnData::MakeInteger(datum.id()));
+		item->columns.push_back(ColumnData::MakeImage(std::make_shared<Image>(datum.image())));
 
 		for (const auto& cell : datum.row())
 		{
@@ -1555,183 +1559,184 @@ bool DatFileManager::LoadItemDataFile(const std::filesystem::path& filePath, con
 		}
 
 		// Append non-editable metadata columns
-		{
-			// Combined flags: Alt / Ex / Rare (others can be added later)
-			std::wstring flagsStr;
-			const auto& flg = datum.flags();
-			if (flg.is_alt) {
-				if (!flagsStr.empty()) flagsStr += L" ";
-				flagsStr += L"Alt";
-			}
-			if (flg.is_ex) {
-				if (!flagsStr.empty()) flagsStr += L" ";
-				flagsStr += L"Ex";
-			}
-			if (flg.is_rare) {
-				if (!flagsStr.empty()) flagsStr += L" ";
-				flagsStr += L"Rare";
-			}
-			if (flagsStr.empty()) flagsStr = L"-";
+		datum.visit([&](const auto& record) {
 
-			ColumnData flagsCol = ColumnData::MakeText(flagsStr);
-			flagsCol.editable = false;
-			item->columns.push_back(flagsCol);
-
-			// Stack size
-			ColumnData stackCol = ColumnData::MakeInteger(datum.stack_size());
-			stackCol.editable = false;
-			item->columns.push_back(stackCol);
-
-			// SubFlags
-			std::wstring subFlagsStr;
-			if (flg.is_equipment) subFlagsStr += L"Equip ";
-			if (flg.is_gm_item) subFlagsStr += L"GM ";
-			if (flg.is_inscribable) subFlagsStr += L"Inscribable ";
-			if (flg.is_in_mystery_box) subFlagsStr += L"MysteryBox ";
-			if (flg.is_linkshell) subFlagsStr += L"Linkshell ";
-			if (flg.is_not_listable) subFlagsStr += L"NotListable ";
-			if (flg.is_npc_tradeable) subFlagsStr += L"Tradeable ";
-			if (flg.is_scroll) subFlagsStr += L"Scroll ";
-			if (flg.is_unmailable) subFlagsStr += L"Unmailable ";
-			if (flg.is_unsellable) subFlagsStr += L"Unsellable ";
-			if (flg.is_usable) subFlagsStr += L"Usable ";
-			if (flg.is_wall_decoration) subFlagsStr += L"WallDeco ";
-			ColumnData subFlagsCol = ColumnData::MakeText(subFlagsStr.empty() ? L"-" : subFlagsStr);
-			subFlagsCol.editable = false;
-			item->columns.push_back(subFlagsCol);
-
-			// Type column
-			ColumnData typeCol;
-			switch (datum.item_type())
 			{
-			case 1:
-				typeCol = ColumnData::MakeText(L"Item");
-				break;
-			case 2:
-				typeCol = ColumnData::MakeText(L"Quest Item");
-				break;
-			case 3:
-				typeCol = ColumnData::MakeText(L"Fish");
-				break;
-			case 4:
-				typeCol = ColumnData::MakeText(L"Weapon");
-				break;
-			case 5:
-				typeCol = ColumnData::MakeText(L"Armor");
-				break;
-			case 6:
-				typeCol = ColumnData::MakeText(L"Linkshell");
-				break;
-			case 7:
-				typeCol = ColumnData::MakeText(L"Usable Item");
-				break;
-			case 8:
-				typeCol = ColumnData::MakeText(L"Crystal");
-				break;
-			case 10:
-				typeCol = ColumnData::MakeText(L"Furnishing");
-				break;
-			case 11:
-				typeCol = ColumnData::MakeText(L"Plant");
-				break;
-			case 12:
-				typeCol = ColumnData::MakeText(L"Flowerpot");
-				break;
-			case 13:
-				typeCol = ColumnData::MakeText(L"Material");
-				break;
-			case 14:
-				typeCol = ColumnData::MakeText(L"Mannequin");
-				break;
-			case 15:
-				typeCol = ColumnData::MakeText(L"Book");
-				break;
-			case 16:
-				typeCol = ColumnData::MakeText(L"Chocobo Breeding");
-				break;
-			case 17:
-				typeCol = ColumnData::MakeText(L"Chocobo Racing");
-				break;
-			case 18:
-				typeCol = ColumnData::MakeText(L"Pankration Plate");
-				break;
-			case 19:
-				typeCol = ColumnData::MakeText(L"Pankration Mirror");
-				break;
-			case 20:
-				typeCol = ColumnData::MakeText(L"Assault/Imperial");
-				break;
-			case 21:
-				typeCol = ColumnData::MakeText(L"Mog Bonanza");
-				break;
-			case 22:
-				typeCol = ColumnData::MakeText(L"MMM Tabula M");
-				break;
-			case 23:
-				typeCol = ColumnData::MakeText(L"MMM Tabula R");
-				break;
-			case 24:
-				typeCol = ColumnData::MakeText(L"MMM Voucher");
-				break;
-			case 25:
-				typeCol = ColumnData::MakeText(L"MMM Rune");
-				break;
-			case 26:
-				typeCol = ColumnData::MakeText(L"Evolith");
-				break;
-			case 27:
-				typeCol = ColumnData::MakeText(L"Storage Slip");
-				break;
-			case 28:
-				typeCol = ColumnData::MakeText(L"Legion/Ambuscade");
-				break;
-			case 29:
-				typeCol = ColumnData::MakeText(L"Skirmish");
-				break;
-			case 31:
-				typeCol = ColumnData::MakeText(L"Guild/Crafting");
-				break;
-			case 0:
-			default:
-				typeCol = ColumnData::MakeText(L"Invalid");
-				break;
+				std::wstring flagsStr;
+				const auto& flg = record.flags();
+				if (flg.is_alt) {
+					if (!flagsStr.empty()) flagsStr += L" ";
+					flagsStr += L"Alt";
+				}
+				if (flg.is_ex) {
+					if (!flagsStr.empty()) flagsStr += L" ";
+					flagsStr += L"Ex";
+				}
+				if (flg.is_rare) {
+					if (!flagsStr.empty()) flagsStr += L" ";
+					flagsStr += L"Rare";
+				}
+				if (flagsStr.empty()) flagsStr = L"-";
+
+				ColumnData flagsCol = ColumnData::MakeText(flagsStr);
+				flagsCol.editable = false;
+				item->columns.push_back(flagsCol);
+
+				// Stack size
+				ColumnData stackCol = ColumnData::MakeInteger(datum.stack_size());
+				stackCol.editable = false;
+				item->columns.push_back(stackCol);
+
+				// SubFlags
+				std::wstring subFlagsStr;
+				if (flg.is_equipment) subFlagsStr += L"Equip ";
+				if (flg.is_gm_item) subFlagsStr += L"GM ";
+				if (flg.is_inscribable) subFlagsStr += L"Inscribable ";
+				if (flg.is_in_mystery_box) subFlagsStr += L"MysteryBox ";
+				if (flg.is_linkshell) subFlagsStr += L"Linkshell ";
+				if (flg.is_not_listable) subFlagsStr += L"NotListable ";
+				if (flg.is_npc_tradeable) subFlagsStr += L"Tradeable ";
+				if (flg.is_scroll) subFlagsStr += L"Scroll ";
+				if (flg.is_unmailable) subFlagsStr += L"Unmailable ";
+				if (flg.is_unsellable) subFlagsStr += L"Unsellable ";
+				if (flg.is_usable) subFlagsStr += L"Usable ";
+				if (flg.is_wall_decoration) subFlagsStr += L"WallDeco ";
+				ColumnData subFlagsCol = ColumnData::MakeText(subFlagsStr.empty() ? L"-" : subFlagsStr);
+				subFlagsCol.editable = false;
+				item->columns.push_back(subFlagsCol);
+
+				// Type column
+				ColumnData typeCol;
+				switch (datum.item_type())
+				{
+				case 1:
+					typeCol = ColumnData::MakeText(L"Item");
+					break;
+				case 2:
+					typeCol = ColumnData::MakeText(L"Quest Item");
+					break;
+				case 3:
+					typeCol = ColumnData::MakeText(L"Fish");
+					break;
+				case 4:
+					typeCol = ColumnData::MakeText(L"Weapon");
+					break;
+				case 5:
+					typeCol = ColumnData::MakeText(L"Armor");
+					break;
+				case 6:
+					typeCol = ColumnData::MakeText(L"Linkshell");
+					break;
+				case 7:
+					typeCol = ColumnData::MakeText(L"Usable Item");
+					break;
+				case 8:
+					typeCol = ColumnData::MakeText(L"Crystal");
+					break;
+				case 10:
+					typeCol = ColumnData::MakeText(L"Furnishing");
+					break;
+				case 11:
+					typeCol = ColumnData::MakeText(L"Plant");
+					break;
+				case 12:
+					typeCol = ColumnData::MakeText(L"Flowerpot");
+					break;
+				case 13:
+					typeCol = ColumnData::MakeText(L"Material");
+					break;
+				case 14:
+					typeCol = ColumnData::MakeText(L"Mannequin");
+					break;
+				case 15:
+					typeCol = ColumnData::MakeText(L"Book");
+					break;
+				case 16:
+					typeCol = ColumnData::MakeText(L"Chocobo Breeding");
+					break;
+				case 17:
+					typeCol = ColumnData::MakeText(L"Chocobo Racing");
+					break;
+				case 18:
+					typeCol = ColumnData::MakeText(L"Pankration Plate");
+					break;
+				case 19:
+					typeCol = ColumnData::MakeText(L"Pankration Mirror");
+					break;
+				case 20:
+					typeCol = ColumnData::MakeText(L"Assault/Imperial");
+					break;
+				case 21:
+					typeCol = ColumnData::MakeText(L"Mog Bonanza");
+					break;
+				case 22:
+					typeCol = ColumnData::MakeText(L"MMM Tabula M");
+					break;
+				case 23:
+					typeCol = ColumnData::MakeText(L"MMM Tabula R");
+					break;
+				case 24:
+					typeCol = ColumnData::MakeText(L"MMM Voucher");
+					break;
+				case 25:
+					typeCol = ColumnData::MakeText(L"MMM Rune");
+					break;
+				case 26:
+					typeCol = ColumnData::MakeText(L"Evolith");
+					break;
+				case 27:
+					typeCol = ColumnData::MakeText(L"Storage Slip");
+					break;
+				case 28:
+					typeCol = ColumnData::MakeText(L"Legion/Ambuscade");
+					break;
+				case 29:
+					typeCol = ColumnData::MakeText(L"Skirmish");
+					break;
+				case 31:
+					typeCol = ColumnData::MakeText(L"Guild/Crafting");
+					break;
+				case 0:
+				default:
+					typeCol = ColumnData::MakeText(L"Invalid");
+					break;
+				}
+				typeCol.editable = false;
+				item->columns.push_back(typeCol);
+
+				// ResourceId column
+				ColumnData resourceIdCol = ColumnData::MakeInteger(datum.resource_id());
+				resourceIdCol.editable = false;
+				item->columns.push_back(resourceIdCol);
+
+				// ValidTarget column
+				ColumnData validTargetCol = ColumnData::MakeInteger(datum.valid_targets());
+				validTargetCol.editable = false;
+				item->columns.push_back(validTargetCol);
+
+				switch (specType)
+				{
+				case ItemSpecType::NORMAL:
+					break;
+				case ItemSpecType::USABLE:
+					break;
+				case ItemSpecType::WEAPON:
+					break;
+				case ItemSpecType::ARMOUR:
+					break;
+				case ItemSpecType::PUPPET:
+					break;
+				case ItemSpecType::SLIP:
+					break;
+				case ItemSpecType::CURRENCY:
+					break;
+				case ItemSpecType::INSTINCT:
+					break;
+				default:
+					break;
+				}
 			}
-			typeCol.editable = false;
-			item->columns.push_back(typeCol);
-
-			// ResourceId column
-			ColumnData resourceIdCol = ColumnData::MakeInteger(datum.resource_id());
-			resourceIdCol.editable = false;
-			item->columns.push_back(resourceIdCol);
-
-			// ValidTarget column
-			ColumnData validTargetCol = ColumnData::MakeInteger(datum.valid_targets());
-			validTargetCol.editable = false;
-			item->columns.push_back(validTargetCol);
-
-			switch (specType)
-			{
-			case ItemSpecType::NORMAL:
-				break;
-			case ItemSpecType::USABLE:
-				break;
-			case ItemSpecType::WEAPON:
-				break;
-			case ItemSpecType::ARMOUR:
-				break;
-			case ItemSpecType::PUPPET:
-				break;
-			case ItemSpecType::SLIP:
-				break;
-			case ItemSpecType::CURRENCY:
-				break;
-			case ItemSpecType::INSTINCT:
-				break;
-			default:
-				break;
-			}
-		}
-
+			});
 		item->customHeight = 3 * 24;
 		contentView->AddItem(std::move(item));
 	}
@@ -1801,7 +1806,7 @@ bool DatFileManager::LoadRoeQuestFile(const std::filesystem::path& filePath, Con
 	{
 		std::wstring colName = L"Field " + std::to_wstring(col);
 		contentView->SetColumnTitle(col + 1, colName);
-		contentView->SetColumnWidth(col +1 , 150);
+		contentView->SetColumnWidth(col + 1, 150);
 	}
 	contentView->SetColumnTitle(maxCols + 1, L"EXP");
 	contentView->SetColumnWidth(maxCols + 1, 50);
@@ -1926,21 +1931,21 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 		{
 			// Update existing rows with data from ContentView
 			size_t rowCount = min(contentView->GetItemCount(), m_currentDMsg->Count());
-			
+
 			for (size_t i = 0; i < rowCount; ++i)
 			{
 				const ContentItem* item = contentView->GetItem(i);
 				if (!item) continue;
-				
+
 				Row& row = m_currentDMsg->operator[](i);
-				
+
 				// Skip first column (index), update remaining columns
 				size_t cellCount = min(item->columns.size() - 1, row.GetCells().size());
 				for (size_t col = 0; col < cellCount; ++col)
 				{
 					const ColumnData& colData = item->columns[col + 1]; // +1 to skip index column
 					Cell& cell = row.GetCells()[col];
-					
+
 					if (cell.GetType() == 1) // Integer
 					{
 						if (colData.type == ColumnDataType::Integer)
@@ -1958,7 +1963,7 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 					}
 				}
 			}
-			
+
 			m_currentDMsg->path = filePath;
 			m_currentDMsg->Write();
 			return true;
@@ -1967,17 +1972,17 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 		{
 			// Update existing entries with data from ContentView
 			size_t entryCount = min(contentView->GetItemCount(), (size_t)std::distance(m_currentXiString->begin(), m_currentXiString->end()));
-			
+
 			auto it = m_currentXiString->begin();
 			for (size_t i = 0; i < entryCount; ++i, ++it)
 			{
 				const ContentItem* item = contentView->GetItem(i);
 				if (!item || item->columns.size() < 5) continue;
-				
+
 				// Column 1 is the string
 				std::u8string u8str = xybase::string::to_utf8(item->columns[1].textValue);
 				it->str = m_currentXiString->Encode(xybase::string::to_string(u8str));
-				
+
 				// Columns 2, 3, 4 are flags
 				try {
 					if (item->columns[2].type == ColumnDataType::Text)
@@ -1986,11 +1991,12 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 						it->flag2 = static_cast<uint16_t>(std::stoi(xybase::string::to_string(xybase::string::to_utf8(item->columns[3].textValue))));
 					if (item->columns[4].type == ColumnDataType::Text)
 						it->flag3 = static_cast<uint16_t>(std::stoi(xybase::string::to_string(xybase::string::to_utf8(item->columns[4].textValue))));
-				} catch (...) {
+				}
+				catch (...) {
 					// Ignore parse errors for flags
 				}
 			}
-			
+
 			m_currentXiString->path = filePath;
 			m_currentXiString->Write();
 			return true;
@@ -1999,16 +2005,16 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 		{
 			// Update existing strings with data from ContentView
 			size_t stringCount = min(contentView->GetItemCount(), m_currentEventString->Size());
-			
+
 			for (size_t i = 0; i < stringCount; ++i)
 			{
 				const ContentItem* item = contentView->GetItem(i);
 				if (!item || item->columns.size() < 2) continue;
-				
+
 				std::u8string u8str = xybase::string::to_utf8(item->columns[1].textValue);
 				(*m_currentEventString)[i] = u8str;
 			}
-			
+
 			m_currentEventString->path = filePath;
 			m_currentEventString->Write();
 			return true;
@@ -2017,37 +2023,38 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 		{
 			// Update existing data with data from ContentView
 			size_t dataCount = min(contentView->GetItemCount(), m_currentStatusData->data.size());
-			
+
 			for (size_t i = 0; i < dataCount; ++i)
 			{
 				const ContentItem* item = contentView->GetItem(i);
 				if (!item || item->columns.size() < 3) continue;
-				
+
 				StatusData::StatusDatum& datum = m_currentStatusData->data[i];
-				
+
 				// ID is in column 0
 				if (item->columns[0].type == ColumnDataType::Integer)
 					datum.id = static_cast<uint32_t>(item->columns[0].intValue);
-				
+
 				// Parse flag from hex string in column 1
 				if (item->columns[1].type == ColumnDataType::Text)
 				{
 					try {
 						std::wstring flagStr = item->columns[1].textValue;
 						datum.flg = static_cast<uint16_t>(std::stoi(flagStr, nullptr, 16));
-					} catch (...) {
+					}
+					catch (...) {
 						// Keep original flag on parse error
 					}
 				}
-				
+
 				// Description in column 2
 				if (item->columns[2].type == ColumnDataType::Text || item->columns[2].type == ColumnDataType::MultilineText)
 					datum.description = xybase::string::to_utf8(item->columns[2].textValue);
-				
+
 				// Image in column 3 (if exists) - but we preserve original image since it can't be edited
 				// No action needed - image is preserved from original data
 			}
-			
+
 			m_currentStatusData->Write(filePath.wstring());
 			return true;
 		}
@@ -2055,23 +2062,23 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 		{
 			// Update existing item data with data from ContentView
 			size_t itemCount = min(contentView->GetItemCount(), m_currentItemData->data.size());
-			
+
 			for (size_t i = 0; i < itemCount; ++i)
 			{
 				const ContentItem* item = contentView->GetItem(i);
 				if (!item) continue;
-				
-				auto& datum = m_currentItemData->data[i];
-				
-			// Skip columns 0 (ID) and 1 (Icon), and stop before non-editable columns
-			// Non-editable columns are the last 2 columns (Flags, Stack)
-			size_t editableColCount = item->columns.size() >= 2 ? item->columns.size() - 2 : 0;
-			size_t cellIndex = 0;
-			for (size_t col = 2; col < editableColCount && cellIndex < datum.row().GetCells().size(); ++col, ++cellIndex)
+
+				auto datum = m_currentItemData->data[i];
+
+				// Skip columns 0 (ID) and 1 (Icon), and stop before non-editable columns
+				// Non-editable columns are the last 2 columns (Flags, Stack)
+				size_t editableColCount = item->columns.size() >= 2 ? item->columns.size() - 2 : 0;
+				size_t cellIndex = 0;
+				for (size_t col = 2; col < editableColCount && cellIndex < datum.row().GetCells().size(); ++col, ++cellIndex)
 				{
 					const ColumnData& colData = item->columns[col];
 					Cell& cell = datum.row().GetCells()[cellIndex];
-					
+
 					if (cell.GetType() == 0) // String type
 					{
 						if (colData.type == ColumnDataType::Text || colData.type == ColumnDataType::MultilineText)
@@ -2089,7 +2096,7 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 					}
 				}
 			}
-			
+
 			m_currentItemData->Write(filePath);
 			return true;
 		}
@@ -2102,19 +2109,19 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 				for (auto& entry : category.entries)
 				{
 					if (itemIndex >= contentView->GetItemCount()) break;
-					
+
 					const ContentItem* item = contentView->GetItem(itemIndex++);
 					if (!item) continue;
-					
+
 					// Update entry text (column 1) and pronunciation (column 2)
 					if (item->columns[1].type == ColumnDataType::Text || item->columns[1].type == ColumnDataType::MultilineText)
 						entry.text = xybase::string::to_utf8(item->columns[1].textValue);
-					
+
 					if (item->columns[2].type == ColumnDataType::Text || item->columns[2].type == ColumnDataType::MultilineText)
 						entry.pron = xybase::string::to_utf8(item->columns[2].textValue);
 				}
 			}
-			
+
 			m_currentFixedPhrase->Write(filePath.wstring());
 			return true;
 		}
@@ -2122,23 +2129,23 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 		{
 			// Update existing data with data from ContentView
 			size_t dataCount = min(contentView->GetItemCount(), m_currentMonBridge->data.size());
-			
+
 			for (size_t i = 0; i < dataCount; ++i)
 			{
 				const ContentItem* item = contentView->GetItem(i);
-			if (!item || item->columns.size() < 4) continue; // ID, Icon, Internal, Display
-				
+				if (!item || item->columns.size() < 4) continue; // ID, Icon, Internal, Display
+
 				auto& datum = m_currentMonBridge->data[i];
-				
-			// Update internal name (column 2)
-			if (item->columns[2].type == ColumnDataType::Text)
-				datum.internalName = xybase::string::to_utf8(item->columns[2].textValue);
-				
-			// Update display name (column 3)
-			if (item->columns[3].type == ColumnDataType::Text || item->columns[3].type == ColumnDataType::MultilineText)
-				datum.displayName = xybase::string::to_utf8(item->columns[3].textValue);
+
+				// Update internal name (column 2)
+				if (item->columns[2].type == ColumnDataType::Text)
+					datum.internalName = xybase::string::to_utf8(item->columns[2].textValue);
+
+				// Update display name (column 3)
+				if (item->columns[3].type == ColumnDataType::Text || item->columns[3].type == ColumnDataType::MultilineText)
+					datum.displayName = xybase::string::to_utf8(item->columns[3].textValue);
 			}
-			
+
 			m_currentMonBridge->Write(filePath.wstring());
 			return true;
 		}
@@ -2149,21 +2156,21 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 			{
 				// It's a quest file - update existing quest data
 				size_t questCount = min(contentView->GetItemCount(), m_currentRoe->questData.size());
-				
+
 				for (size_t i = 0; i < questCount; ++i)
 				{
 					const ContentItem* item = contentView->GetItem(i);
 					if (!item) continue;
-					
+
 					auto& datum = m_currentRoe->questData[i];
-					
+
 					// Update cells in the row
 					size_t cellIndex = 0;
 					for (size_t col = 1; col < item->columns.size() && cellIndex < datum.row().GetCells().size(); ++col, ++cellIndex)
 					{
 						const ColumnData& colData = item->columns[col];
 						Cell& cell = datum.row().GetCells()[cellIndex];
-						
+
 						if (cell.GetType() == 0) // String type
 						{
 							if (colData.type == ColumnDataType::Text || colData.type == ColumnDataType::MultilineText)
@@ -2181,7 +2188,7 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 						}
 					}
 				}
-				
+
 				m_currentRoe->WriteQuest(filePath.wstring());
 				return true;
 			}
@@ -2189,14 +2196,14 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 			{
 				// It's a category file - update existing category data
 				size_t catCount = min(contentView->GetItemCount(), m_currentRoe->categoryData.size());
-				
+
 				for (size_t i = 0; i < catCount; ++i)
 				{
 					const ContentItem* item = contentView->GetItem(i);
 					if (!item || item->columns.size() < 2) continue;
-					
+
 					auto& datum = m_currentRoe->categoryData[i];
-					
+
 					// Update category name (column 1)
 					if (item->columns[1].type == ColumnDataType::Text || item->columns[1].type == ColumnDataType::MultilineText)
 					{
@@ -2204,12 +2211,12 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 						datum.setCategoryName(categoryName);
 					}
 				}
-				
+
 				m_currentRoe->WriteCategory(filePath.wstring());
 				return true;
 			}
 		}
-		
+
 		// Unknown or unsupported file type
 		return false;
 	}
