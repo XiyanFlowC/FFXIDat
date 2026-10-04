@@ -3,6 +3,8 @@
 #include <filesystem>
 #include <string>
 
+#include "ProcessorUtils.h"
+
 // CSV translation structures
 struct ItemCsvTranslation
 {
@@ -10,12 +12,10 @@ struct ItemCsvTranslation
     std::u8string description;
 };
 
-struct RoeQuestCsvTranslation
-{
-    std::u8string questName;
-    std::u8string description;
-    std::u8string note;
-};
+// One row of a Records of Eminence quest CSV: the file holds one column set per
+// schema, so the shape is shared by the loader, the id staleness check and the
+// processors instead of being repeated next to each of them.
+using RoeQuestCsvTranslation = ProcessorUtils::RoeQuestTextById;
 
 struct QuestDMsgCsvTranslation
 {

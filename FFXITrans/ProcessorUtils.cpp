@@ -1,5 +1,6 @@
 #include "ProcessorUtils.h"
 #include "Config.h"
+#include "CsvTranslationLoader.h"
 #include <sstream>
 #include <set>
 #include <regex>
@@ -515,6 +516,113 @@ namespace ProcessorUtils
 		}
 
 		return result;
+	}
+
+	std::map<uint32_t, RoeQuestTextById> CollectRoeQuestTextsById(const std::filesystem::path& datPath, const std::u8string& type)
+	{
+		std::map<uint32_t, RoeQuestTextById> result;
+
+		if (!std::filesystem::exists(datPath))
+			return result;
+
+		RecordsOfEminence roe;
+		roe.ReadQuest(datPath, VersionForTypeCode(type));
+
+		for (const auto& datum : roe.questData)
+		{
+			RoeQuestTextById texts;
+			try { texts.questName = xybase::string::escape(datum.questName()); } catch (...) {}
+			try { texts.description = xybase::string::escape(datum.description()); } catch (...) {}
+			try { texts.note = xybase::string::escape(datum.note()); } catch (...) {}
+			result[datum.id] = std::move(texts);
+		}
+
+		return result;
+	}
+
+	std::map<uint32_t, std::u8string> CollectRoeCategoryTextsById(const std::filesystem::path& datPath, const std::u8string& type)
+	{
+		std::map<uint32_t, std::u8string> result;
+
+		if (!std::filesystem::exists(datPath))
+			return result;
+
+		RecordsOfEminence roe;
+		roe.ReadCategory(datPath, VersionForTypeCode(type));
+
+		for (const auto& datum : roe.categoryData)
+		{
+			try
+			{
+				std::u8string name = datum.categoryName();
+				if (!name.empty())
+					result[datum.id] = xybase::string::escape(name);
+			}
+			catch (...) {}
+		}
+
+		return result;
+	}
+
+	std::u8string GetRoeQuestReferenceAt(const std::map<uint32_t, RoeQuestTextById>& jaTextsById, uint32_t id, int cellIndex)
+	{
+		auto itr = jaTextsById.find(id);
+		if (itr == jaTextsById.end())
+			return u8"";
+
+		switch (cellIndex)
+		{
+		case 1: return itr->second.questName;
+		case 2: return itr->second.description;
+		case 3: return itr->second.note;
+		}
+		return u8"";
+	}
+
+	std::set<uint32_t> FindStaleRoeQuestIds(
+		const std::filesystem::path& jaDatPath,
+		const std::u8string& jaType,
+		const std::map<uint32_t, RoeQuestTextById>& srcRows)
+	{
+		std::set<uint32_t> stale;
+
+		auto current = CollectRoeQuestTextsById(jaDatPath, jaType);
+		for (const auto& [id, src] : srcRows)
+		{
+			auto itr = current.find(id);
+			if (itr == current.end())
+			{
+				// The id is gone from the source table, so the translation that
+				// was exported under it has no record to belong to any more.
+				stale.insert(id);
+				continue;
+			}
+
+			if (itr->second.questName != src.questName ||
+				itr->second.description != src.description ||
+				itr->second.note != src.note)
+				stale.insert(id);
+		}
+
+		return stale;
+	}
+
+	std::set<uint32_t> FindStaleRoeCategoryIds(
+		const std::filesystem::path& jaDatPath,
+		const std::u8string& jaType,
+		const std::map<uint32_t, std::u8string>& srcRows)
+	{
+		std::set<uint32_t> stale;
+
+		auto current = CollectRoeCategoryTextsById(jaDatPath, jaType);
+		for (const auto& [id, src] : srcRows)
+		{
+			auto itr = current.find(id);
+			if (itr == current.end() || itr->second != src)
+				stale.insert(id);
+		}
+
+		return stale;
 	}
 
 	std::vector<std::u8string> CollectStrings(const std::filesystem::path& datPath, const std::u8string& type, const std::u8string& cellIndicesStr)

@@ -83,9 +83,49 @@ bool RoeProcessor::ProcessQuestData(
 				csvLoader.GetSrcCsvPath(fileDef.comment));
 		}
 
+		// Id staleness detection. The CSV is keyed by id, so a row stands for
+		// the record the id held when the CSV was exported. Comparing the source
+		// side of the pair against the current source table tells which ids have
+		// been relaid out or rewritten since then, and those rows must not be
+		// applied.
+		//
+		// The ja/en Records of Eminence records are the only pair of this
+		// comment with a source side that stays parallel to the table on disk,
+		// so the check is limited to English runs against the ja table of the
+		// very same type. A type without a ja definition (the _o, de/fr records)
+		// has no source side to compare with and simply keeps its current
+		// behaviour.
+		std::set<uint32_t> staleIds;
+		if (Config::Instance().IsEnglishMode() && Config::Instance().IsEnAsJa() && csvLoader.HasSrcCsv(fileDef.comment))
+		{
+			auto jqItr = jpDefsByComment.find(fileDef.comment);
+			if (jqItr != jpDefsByComment.end() && jqItr->second.type == fileDef.type)
+			{
+				std::filesystem::path jaDatPath = Config::Instance().GetGameRoot() / (jqItr->second.path + u8".DAT");
+				if (std::filesystem::exists(jaDatPath))
+				{
+					auto jaSrcRows = csvLoader.LoadRoeQuestCsvTranslations(
+						csvLoader.GetSrcCsvPath(fileDef.comment));
+
+					staleIds = ProcessorUtils::FindStaleRoeQuestIds(jaDatPath, jqItr->second.type, jaSrcRows);
+
+					Logger::Instance().Info("RoeProcessor id staleness check on quest id. comment=" + Logger::ToUtf8(fileDef.comment)
+						+ ", srcRows=" + std::to_string(jaSrcRows.size())
+						+ ", staleIds=" + std::to_string(staleIds.size()));
+				}
+			}
+		}
+
 		for (auto& datum : roe.questData)
 		{
-			bool skipCsv = false;
+			bool skipCsv = staleIds.count(datum.id) > 0;
+			if (skipCsv)
+			{
+				Logger::Instance().Warning(
+					"RoeProcessor id staleness rejected quest id=" + std::to_string(datum.id)
+					+ " - falling back to TransDB");
+			}
+
 			if (srcValidationEnabled && !srcCsvTranslations.empty())
 			{
 				auto itrSrc = srcCsvTranslations.find(datum.id);
@@ -191,6 +231,23 @@ bool RoeProcessor::ProcessQuestData(
 	std::vector<std::u8string> referenceTexts;
 	bool useJaReference = TryGetJapaneseReference(fileDef, jpDefsByComment, referenceTexts);
 
+	// The ja reference of a record, fetched by id from the ja table on disk
+	// instead of by position. Position only lines up while the two tables hold
+	// the same records in the same order, and it pairs the cells of one language
+	// layout with the cells of the other; the id is the same key the ja/en pair
+	// shares, so it stays correct when a record is inserted or rewritten.
+	std::map<uint32_t, ProcessorUtils::RoeQuestTextById> jaTextsById;
+	if (Config::Instance().IsEnglishMode() && Config::Instance().IsEnAsJa())
+	{
+		auto jqItr = jpDefsByComment.find(fileDef.comment);
+		if (jqItr != jpDefsByComment.end() && jqItr->second.type == fileDef.type)
+		{
+			std::filesystem::path jaDatPath = Config::Instance().GetGameRoot() / (jqItr->second.path + u8".DAT");
+			jaTextsById = ProcessorUtils::CollectRoeQuestTextsById(jaDatPath, jqItr->second.type);
+		}
+	}
+	bool useJaReferenceById = !jaTextsById.empty();
+
 	auto& db = TranslationDatabase::Instance();
 	size_t textIdx = 0;
 
@@ -208,7 +265,16 @@ bool RoeProcessor::ProcessQuestData(
 					std::u8string text = xybase::string::escape(cell.Get<std::u8string>());
 					std::u8string translated;
 
-					if (useJaReference && textIdx < referenceTexts.size())
+					if (useJaReferenceById)
+					{
+						// A plain lookup keyed by the ja text of this very id. The
+						// reference variant is not used here: it resolves a text
+						// rather than a record, so it mixes the translations of
+						// records that share one source text.
+						std::u8string jaText = ProcessorUtils::GetRoeQuestReferenceAt(jaTextsById, datum.id, cellIndex);
+						translated = jaText.empty() ? db.GetTranslation(text) : db.GetTranslation(jaText);
+					}
+					else if (useJaReference && textIdx < referenceTexts.size())
 					{
 						translated = db.GetTranslationFromReference(text, referenceTexts[textIdx]);
 					}
@@ -270,9 +336,41 @@ bool RoeProcessor::ProcessCategoryData(
 				csvLoader.GetSrcCsvPath(fileDef.comment));
 		}
 
+		// Id staleness detection, the category counterpart of the quest check
+		// above: a row of the CSV stands for the record its id held when the CSV
+		// was exported, so an id whose ja source text changed since then must not
+		// take the translation that sits next to it.
+		std::set<uint32_t> staleIds;
+		if (Config::Instance().IsEnglishMode() && Config::Instance().IsEnAsJa() && csvLoader.HasSrcCsv(fileDef.comment))
+		{
+			auto jcItr = jpDefsByComment.find(fileDef.comment);
+			if (jcItr != jpDefsByComment.end() && jcItr->second.type == fileDef.type)
+			{
+				std::filesystem::path jaDatPath = Config::Instance().GetGameRoot() / (jcItr->second.path + u8".DAT");
+				if (std::filesystem::exists(jaDatPath))
+				{
+					auto jaSrcRows = csvLoader.LoadRoeCategoryCsvTranslations(
+						csvLoader.GetSrcCsvPath(fileDef.comment));
+
+					staleIds = ProcessorUtils::FindStaleRoeCategoryIds(jaDatPath, jcItr->second.type, jaSrcRows);
+
+					Logger::Instance().Info("RoeProcessor id staleness check on category id. comment=" + Logger::ToUtf8(fileDef.comment)
+						+ ", srcRows=" + std::to_string(jaSrcRows.size())
+						+ ", staleIds=" + std::to_string(staleIds.size()));
+				}
+			}
+		}
+
 		for (auto& datum : roe.categoryData)
 		{
-			bool skipCsv = false;
+			bool skipCsv = staleIds.count(datum.id) > 0;
+			if (skipCsv)
+			{
+				Logger::Instance().Warning(
+					"RoeProcessor id staleness rejected category id=" + std::to_string(datum.id)
+					+ " - falling back to TransDB");
+			}
+
 			if (srcValidationEnabled && !srcCsvTranslations.empty())
 			{
 				auto itrSrc = srcCsvTranslations.find(datum.id);
@@ -320,6 +418,19 @@ bool RoeProcessor::ProcessCategoryData(
 	std::vector<std::u8string> referenceTexts;
 	bool useJaReference = TryGetJapaneseReference(fileDef, jpDefsByComment, referenceTexts);
 
+	// The ja reference of a category, fetched by id from the ja table on disk.
+	// See the quest counterpart above for why the position is not used.
+	std::map<uint32_t, std::u8string> jaTextsById;
+	if (Config::Instance().IsEnglishMode() && Config::Instance().IsEnAsJa())
+	{
+		auto jcItr = jpDefsByComment.find(fileDef.comment);
+		if (jcItr != jpDefsByComment.end() && jcItr->second.type == fileDef.type)
+		{
+			std::filesystem::path jaDatPath = Config::Instance().GetGameRoot() / (jcItr->second.path + u8".DAT");
+			jaTextsById = ProcessorUtils::CollectRoeCategoryTextsById(jaDatPath, jcItr->second.type);
+		}
+	}
+
 	auto& db = TranslationDatabase::Instance();
 	size_t textIdx = 0;
 
@@ -333,7 +444,14 @@ bool RoeProcessor::ProcessCategoryData(
 				std::u8string text = xybase::string::escape(catName);
 				std::u8string translated;
 
-				if (useJaReference && textIdx < referenceTexts.size())
+				auto jaItr = jaTextsById.find(datum.id);
+				if (jaItr != jaTextsById.end())
+				{
+					// A plain lookup keyed by the ja text of this very id, for
+					// the reason the quest path documents.
+					translated = db.GetTranslation(jaItr->second);
+				}
+				else if (useJaReference && textIdx < referenceTexts.size())
 				{
 					translated = db.GetTranslationFromReference(text, referenceTexts[textIdx]);
 				}
