@@ -172,8 +172,13 @@ size_t FinalTextProcessor::dotMissingCount = 0;
 // 本地化 DAT 表用单个句点 "." 表示“无值 / 无译文”（例如 ROM/307/16 的 cell3）。
 // 取到的译文若只是这种占位符，就必须当作缺失处理，绝不能再写回 DAT。
 // 比较前先做首尾空白 trim，因为表格里可能带空白。
-bool FinalTextProcessor::IsMissingTranslation(const std::u8string& text)
+bool FinalTextProcessor::IsMissingTranslation(const std::u8string& text, const std::u8string& original)
 {
+	if (text.empty())
+		return false;
+	if (text == u8".")
+		return false;
+
 	size_t begin = 0;
 	size_t end = text.size();
 	while (begin < end)
@@ -228,7 +233,7 @@ std::u8string FinalTextProcessor::Process(
 	{
 		result = pendingNextTextOverride;
 		pendingNextTextOverride.clear();
-		if (IsMissingTranslation(result))
+		if (IsMissingTranslation(result, originalText))
 		{
 			++dotMissingCount;
 			return originalText;
@@ -239,7 +244,7 @@ std::u8string FinalTextProcessor::Process(
 	}
 
 	// 取到的译文只是占位符 "." 时按“缺失译文”处理：回退为原文，不写进 DAT。
-	if (IsMissingTranslation(result))
+	if (IsMissingTranslation(result, originalText))
 	{
 		++dotMissingCount;
 		return originalText;

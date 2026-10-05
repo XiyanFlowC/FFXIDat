@@ -95,6 +95,14 @@ bool RoeProcessor::ProcessQuestData(
 		// very same type. A type without a ja definition (the _o, de/fr records)
 		// has no source side to compare with and simply keeps its current
 		// behaviour.
+		//
+		// The same ja table is what the fallback needs as well. The translation
+		// database of an English run is keyed by the ja text, so a field whose
+		// CSV row is missing or stale has to be looked up by the ja text of its
+		// id: looking the English text up is a guaranteed miss, and it reports
+		// placeholder fields that hold nothing but a "." as mismatches too.
+		std::map<uint32_t, ProcessorUtils::RoeQuestTextById> jaTextsById;
+
 		std::set<uint32_t> staleIds;
 		if (Config::Instance().IsEnglishMode() && Config::Instance().IsEnAsJa() && csvLoader.HasSrcCsv(fileDef.comment))
 		{
@@ -104,6 +112,8 @@ bool RoeProcessor::ProcessQuestData(
 				std::filesystem::path jaDatPath = Config::Instance().GetGameRoot() / (jqItr->second.path + u8".DAT");
 				if (std::filesystem::exists(jaDatPath))
 				{
+					jaTextsById = ProcessorUtils::CollectRoeQuestTextsById(jaDatPath, jqItr->second.type);
+
 					auto jaSrcRows = csvLoader.LoadRoeQuestCsvTranslations(
 						csvLoader.GetSrcCsvPath(fileDef.comment));
 
@@ -115,6 +125,19 @@ bool RoeProcessor::ProcessQuestData(
 				}
 			}
 		}
+
+		// Resolve one field of one record through the translation database. The
+		// ja reference of this very id is preferred, because that is the key an
+		// English run's database holds; the English text is only the last resort
+		// for a record without a ja counterpart.
+		auto resolveTranslation = [&](const std::u8string& englishText, uint32_t id, int cellIndex)
+		{
+			std::u8string jaText = ProcessorUtils::GetRoeQuestReferenceAt(jaTextsById, id, cellIndex);
+			if (!jaText.empty())
+				return TranslationDatabase::Instance().GetTranslation(jaText);
+
+			return TranslationDatabase::Instance().GetTranslation(xybase::string::escape(englishText));
+		};
 
 		for (auto& datum : roe.questData)
 		{
@@ -159,13 +182,13 @@ bool RoeProcessor::ProcessQuestData(
 
 				if (!config.IsNoName())
 					datum.setQuestName(processEscaped(
-						TranslationDatabase::Instance().GetTranslation(xybase::string::escape(originalName)),
+						resolveTranslation(originalName, datum.id, 1),
 						xybase::string::escape(originalName),
 						datum.id,
 						1));
 
 				std::u8string translatedDesc = processEscaped(
-					TranslationDatabase::Instance().GetTranslation(xybase::string::escape(datum.description())),
+					resolveTranslation(datum.description(), datum.id, 2),
 					xybase::string::escape(datum.description()),
 					datum.id,
 					2);
@@ -173,7 +196,7 @@ bool RoeProcessor::ProcessQuestData(
 				datum.setDescription(translatedDesc);
 
 				datum.setNote(processEscaped(
-					TranslationDatabase::Instance().GetTranslation(xybase::string::escape(datum.note())),
+					resolveTranslation(datum.note(), datum.id, 3),
 					xybase::string::escape(datum.note()),
 					datum.id,
 					3));
@@ -192,7 +215,7 @@ bool RoeProcessor::ProcessQuestData(
 					datum.setQuestName(processText(itrCsv->second.questName, originalName, datum.id, 1));
 				else
 					datum.setQuestName(processEscaped(
-						TranslationDatabase::Instance().GetTranslation(xybase::string::escape(originalName)),
+						resolveTranslation(originalName, datum.id, 1),
 						xybase::string::escape(originalName),
 						datum.id,
 						1));
@@ -203,10 +226,11 @@ bool RoeProcessor::ProcessQuestData(
 				translatedDesc = processText(itrCsv->second.description, datum.description(), datum.id, 2);
 			else
 				translatedDesc = processEscaped(
-					TranslationDatabase::Instance().GetTranslation(xybase::string::escape(datum.description())),
+					resolveTranslation(datum.description(), datum.id, 2),
 					xybase::string::escape(datum.description()),
 					datum.id,
 					2);
+
 			translatedDesc = ProcessorUtils::PrependBabelText(translatedDesc, originalName, alternateOriginalName);
 			datum.setDescription(translatedDesc);
 
@@ -214,7 +238,7 @@ bool RoeProcessor::ProcessQuestData(
 				datum.setNote(processText(itrCsv->second.note, datum.note(), datum.id, 3));
 			else
 				datum.setNote(processEscaped(
-					TranslationDatabase::Instance().GetTranslation(xybase::string::escape(datum.note())),
+					resolveTranslation(datum.note(), datum.id, 3),
 					xybase::string::escape(datum.note()),
 					datum.id,
 					3));
@@ -340,6 +364,11 @@ bool RoeProcessor::ProcessCategoryData(
 		// above: a row of the CSV stands for the record its id held when the CSV
 		// was exported, so an id whose ja source text changed since then must not
 		// take the translation that sits next to it.
+		//
+		// As in the quest path, the ja table read here is also the key the
+		// fallback needs: an English run's translation database holds ja keys.
+		std::map<uint32_t, std::u8string> jaTextsById;
+
 		std::set<uint32_t> staleIds;
 		if (Config::Instance().IsEnglishMode() && Config::Instance().IsEnAsJa() && csvLoader.HasSrcCsv(fileDef.comment))
 		{
@@ -349,6 +378,8 @@ bool RoeProcessor::ProcessCategoryData(
 				std::filesystem::path jaDatPath = Config::Instance().GetGameRoot() / (jcItr->second.path + u8".DAT");
 				if (std::filesystem::exists(jaDatPath))
 				{
+					jaTextsById = ProcessorUtils::CollectRoeCategoryTextsById(jaDatPath, jcItr->second.type);
+
 					auto jaSrcRows = csvLoader.LoadRoeCategoryCsvTranslations(
 						csvLoader.GetSrcCsvPath(fileDef.comment));
 
@@ -360,6 +391,17 @@ bool RoeProcessor::ProcessCategoryData(
 				}
 			}
 		}
+
+		// Resolve a category name through the translation database, by the ja
+		// text of its id when there is one.
+		auto resolveTranslation = [&](const std::u8string& englishText, uint32_t id)
+		{
+			auto jaItr = jaTextsById.find(id);
+			if (jaItr != jaTextsById.end() && !jaItr->second.empty())
+				return TranslationDatabase::Instance().GetTranslation(jaItr->second);
+
+			return TranslationDatabase::Instance().GetTranslation(xybase::string::escape(englishText));
+		};
 
 		for (auto& datum : roe.categoryData)
 		{
@@ -393,7 +435,7 @@ bool RoeProcessor::ProcessCategoryData(
 			if (itrCsv == csvTranslations.end() || skipCsv)
 			{
 				datum.setCategoryName(processEscaped(
-					TranslationDatabase::Instance().GetTranslation(xybase::string::escape(datum.categoryName())),
+					resolveTranslation(datum.categoryName(), datum.id),
 					xybase::string::escape(datum.categoryName()),
 					datum.id,
 					1));
@@ -404,7 +446,7 @@ bool RoeProcessor::ProcessCategoryData(
 				datum.setCategoryName(processText(itrCsv->second, datum.categoryName(), datum.id, 1));
 			else
 				datum.setCategoryName(processEscaped(
-					TranslationDatabase::Instance().GetTranslation(xybase::string::escape(datum.categoryName())),
+					resolveTranslation(datum.categoryName(), datum.id),
 					xybase::string::escape(datum.categoryName()),
 					datum.id,
 					1));

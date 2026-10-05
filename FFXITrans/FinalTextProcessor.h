@@ -93,7 +93,7 @@ private:
   static size_t skippedValidationCount;
   static size_t dotMissingCount;
 
-	static bool IsMissingTranslation(const std::u8string& text);
+	static bool IsMissingTranslation(const std::u8string& text, const std::u8string &original);
 
 	std::u8string comment;
 	std::u8string type;
