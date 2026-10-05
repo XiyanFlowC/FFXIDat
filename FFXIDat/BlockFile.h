@@ -41,7 +41,8 @@ struct BlockHeader
 {
 	char name[4];
 	uint32_t type : 7;
-	uint32_t size : 25;
+	uint32_t size : 19;
+	uint32_t ukn : 6;
 	uint32_t padding[2];
 };
 

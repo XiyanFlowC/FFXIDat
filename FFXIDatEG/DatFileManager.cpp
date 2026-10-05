@@ -10,6 +10,8 @@
 #include <FixedPhrase.h>
 #include <MonBridge.h>
 #include <RecordsOfEminence.h>
+#include <HelpData.h>
+#include <HelpCategory.h>
 #include <CsvFile.h>
 #include <xystring.h>
 
@@ -416,6 +418,20 @@ bool DatFileManager::ExportDatToCsv(const DatFileInfo& info, const std::filesyst
 			f.ToCsv(csvPath.wstring());
 			return true;
 		}
+		if (info.fileType == "hlp")
+		{
+			HelpData f;
+			f.Read(datPath.wstring());
+			f.ToICsv(csvPath.wstring());
+			return true;
+		}
+		if (info.fileType == "hlc")
+		{
+			HelpCategory f;
+			f.Read(datPath.wstring());
+			f.ToICsv(csvPath.wstring());
+			return true;
+		}
 		if (IsItemTypeCode(info.fileType))
 		{
 			const std::string baseType = BaseTypeOf(info.fileType);
@@ -515,6 +531,24 @@ bool DatFileManager::ImportCsvToDat(const DatFileInfo& info, const std::filesyst
 		if (info.fileType == "fp")
 		{
 			FixedPhrase f;
+			f.Read(datPath.wstring());
+			f.FromCsv(csvPath.wstring());
+			f.Write(datPath.wstring());
+			return true;
+		}
+
+		if (info.fileType == "hlp")
+		{
+			HelpData f;
+			f.Read(datPath.wstring());
+			f.FromCsv(csvPath.wstring());
+			f.Write(datPath.wstring());
+			return true;
+		}
+
+		if (info.fileType == "hlc")
+		{
+			HelpCategory f;
 			f.Read(datPath.wstring());
 			f.FromCsv(csvPath.wstring());
 			f.Write(datPath.wstring());
@@ -908,6 +942,8 @@ bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentVi
 	m_currentFixedPhrase.reset();
 	m_currentMonBridge.reset();
 	m_currentRoe.reset();
+	m_currentHelpData.reset();
+	m_currentHelpCategory.reset();
 
 	// Load appropriate file type
 	try
@@ -932,6 +968,14 @@ bool DatFileManager::LoadDatFile(const DatFileInfo& info, ContentView* contentVi
 		{
 			std::string lang = info.language;
 			return LoadFixedPhraseFile(filePath, contentView, lang);
+		}
+		else if (info.fileType == "hlp")
+		{
+			return LoadHelpDataFile(filePath, contentView);
+		}
+		else if (info.fileType == "hlc")
+		{
+			return LoadHelpCategoryFile(filePath, contentView);
 		}
 		else if (IsItemTypeCode(info.fileType))
 		{
@@ -1001,6 +1045,8 @@ bool DatFileManager::LoadArbitraryFile(const std::filesystem::path& filePath, co
 	m_currentFixedPhrase.reset();
 	m_currentMonBridge.reset();
 	m_currentRoe.reset();
+	m_currentHelpData.reset();
+	m_currentHelpCategory.reset();
 
 	try
 	{
@@ -1009,6 +1055,8 @@ bool DatFileManager::LoadArbitraryFile(const std::filesystem::path& filePath, co
 		else if (fileType == "evsb") return LoadEventStringFile(filePath, contentView);
 		else if (fileType == "sd") return LoadStatusDataFile(filePath, contentView);
 		else if (fileType == "fp") return LoadFixedPhraseFile(filePath, contentView, info.language);
+		else if (fileType == "hlp") return LoadHelpDataFile(filePath, contentView);
+		else if (fileType == "hlc") return LoadHelpCategoryFile(filePath, contentView);
 		else if (IsItemTypeCode(fileType)) return LoadItemDataFile(filePath, fileType, contentView);
 		else if (BaseTypeOf(fileType) == "mbd") return LoadMonBridgeFile(filePath, contentView, VersionForTypeCode(fileType));
 		else if (BaseTypeOf(fileType) == "erq") return LoadRoeQuestFile(filePath, contentView, VersionForTypeCode(fileType));
@@ -1744,6 +1792,98 @@ bool DatFileManager::LoadItemDataFile(const std::filesystem::path& filePath, con
 	return true;
 }
 
+bool DatFileManager::LoadHelpDataFile(const std::filesystem::path& filePath, ContentView* contentView)
+{
+	auto file = std::make_unique<HelpData>();
+	file->Read(filePath.wstring());
+	const size_t cells = file->data.front().row().GetCellsConst().size();
+	for (const auto& datum : file->data)
+		if (datum.row().GetCellsConst().size() != cells)
+			throw std::runtime_error("Mixed help text layouts");
+	m_currentHelpData = std::move(file);
+	contentView->Clear();
+	const std::vector<std::wstring> titles = cells == 5
+		? std::vector<std::wstring>{ L"ID", L"Index", L"Unknown", L"Reserved", L"Title", L"Text Integer", L"Name 2", L"Name 3", L"Description" }
+		: std::vector<std::wstring>{ L"ID", L"Index", L"Unknown", L"Reserved", L"Title", L"Description" };
+	contentView->SetColumnCount(static_cast<int>(titles.size()));
+	for (size_t col = 0; col < titles.size(); ++col)
+	{
+		contentView->SetColumnTitle(static_cast<int>(col), titles[col]);
+		contentView->SetColumnWidth(static_cast<int>(col), col < 4 ? 70 : (col == titles.size() - 1 ? 500 : 180));
+	}
+	for (const auto& datum : m_currentHelpData->data)
+	{
+		auto item = std::make_unique<ContentItem>();
+		item->type = ContentItemType::Multiline;
+		item->columns.push_back(ColumnData::MakeInteger(datum.id));
+		item->columns.push_back(ColumnData::MakeInteger(datum.index));
+		item->columns.push_back(ColumnData::MakeInteger(datum.unknown));
+		item->columns.push_back(ColumnData::MakeInteger(datum.reserved));
+		for (auto& column : item->columns)
+			column.editable = false;
+		for (const auto& cell : datum.row().GetCellsConst())
+		{
+			if (cell.GetType() == 0)
+				item->columns.push_back(ColumnData::MakeMultilineText(xybase::string::to_wstring(cell.Get<std::u8string>())));
+			else
+			{
+				auto column = ColumnData::MakeInteger(cell.Get<int>());
+				column.editable = false;
+				item->columns.push_back(std::move(column));
+			}
+		}
+		item->customHeight = 48;
+		contentView->AddItem(std::move(item));
+	}
+	return true;
+}
+
+bool DatFileManager::LoadHelpCategoryFile(const std::filesystem::path& filePath, ContentView* contentView)
+{
+	auto file = std::make_unique<HelpCategory>();
+	file->Read(filePath.wstring());
+	const size_t cells = file->data.front().row().GetCellsConst().size();
+	for (const auto& datum : file->data)
+		if (datum.row().GetCellsConst().size() != cells)
+			throw std::runtime_error("Mixed help category text layouts");
+	m_currentHelpCategory = std::move(file);
+	contentView->Clear();
+	const std::vector<std::wstring> titles = cells == 5
+		? std::vector<std::wstring>{ L"ID", L"Index", L"Count", L"Members", L"Title", L"Text Integer", L"Name 2", L"Name 3", L"Description" }
+		: std::vector<std::wstring>{ L"ID", L"Index", L"Count", L"Members", L"Title", L"Description" };
+	contentView->SetColumnCount(static_cast<int>(titles.size()));
+	for (size_t col = 0; col < titles.size(); ++col)
+	{
+		contentView->SetColumnTitle(static_cast<int>(col), titles[col]);
+		contentView->SetColumnWidth(static_cast<int>(col), col < 3 ? 70 : (col == 3 ? 300 : (col == titles.size() - 1 ? 500 : 180)));
+	}
+	for (const auto& datum : m_currentHelpCategory->data)
+	{
+		auto item = std::make_unique<ContentItem>();
+		item->type = ContentItemType::Multiline;
+		item->columns.push_back(ColumnData::MakeInteger(datum.id));
+		item->columns.push_back(ColumnData::MakeInteger(datum.index));
+		item->columns.push_back(ColumnData::MakeInteger(datum.members.size()));
+		item->columns.push_back(ColumnData::MakeMultilineText(xybase::string::to_wstring(HelpCategory::MemberIds(datum))));
+		for (auto& column : item->columns)
+			column.editable = false;
+		for (const auto& cell : datum.row().GetCellsConst())
+		{
+			if (cell.GetType() == 0)
+				item->columns.push_back(ColumnData::MakeMultilineText(xybase::string::to_wstring(cell.Get<std::u8string>())));
+			else
+			{
+				auto column = ColumnData::MakeInteger(cell.Get<int>());
+				column.editable = false;
+				item->columns.push_back(std::move(column));
+			}
+		}
+		item->customHeight = 48;
+		contentView->AddItem(std::move(item));
+	}
+	return true;
+}
+
 // ==================== MonBridge (mbd) ====================
 bool DatFileManager::LoadMonBridgeFile(const std::filesystem::path& filePath, ContentView* contentView, slotfile::Version version)
 {
@@ -2123,6 +2263,62 @@ bool DatFileManager::SaveCurrentFile(ContentView* contentView, const std::filesy
 			}
 
 			m_currentFixedPhrase->Write(filePath.wstring());
+			return true;
+		}
+		else if (m_currentHelpData)
+		{
+			auto records = m_currentHelpData->data;
+			if (contentView->GetItemCount() != records.size())
+				throw std::runtime_error("Help record count changed");
+			for (size_t i = 0; i < records.size(); ++i)
+			{
+				const ContentItem* item = contentView->GetItem(i);
+				auto& cells = records[i].row().GetCells();
+				if (!item || item->columns.size() != cells.size() + 4)
+					throw std::runtime_error("Invalid help editor row");
+				for (size_t j = 0; j < cells.size(); ++j)
+				{
+					const auto& cell = item->columns[j + 4];
+					if (cells[j].GetType() == 0)
+					{
+						if (cell.type != ColumnDataType::Text && cell.type != ColumnDataType::MultilineText)
+							throw std::runtime_error("Help text must be a string");
+						cells[j].Set(xybase::string::to_utf8(cell.textValue));
+					}
+					else if (cell.type != ColumnDataType::Integer || cell.intValue != cells[j].Get<int>())
+						throw std::runtime_error("Help text integer must not change");
+				}
+			}
+			m_currentHelpData->Write(filePath.wstring(), records);
+			m_currentHelpData->data = std::move(records);
+			return true;
+		}
+		else if (m_currentHelpCategory)
+		{
+			auto records = m_currentHelpCategory->data;
+			if (contentView->GetItemCount() != records.size())
+				throw std::runtime_error("Help category record count changed");
+			for (size_t i = 0; i < records.size(); ++i)
+			{
+				const ContentItem* item = contentView->GetItem(i);
+				auto& cells = records[i].row().GetCells();
+				if (!item || item->columns.size() != cells.size() + 4)
+					throw std::runtime_error("Invalid help category editor row");
+				for (size_t j = 0; j < cells.size(); ++j)
+				{
+					const auto& cell = item->columns[j + 4];
+					if (cells[j].GetType() == 0)
+					{
+						if (cell.type != ColumnDataType::Text && cell.type != ColumnDataType::MultilineText)
+							throw std::runtime_error("Help category text must be a string");
+						cells[j].Set(xybase::string::to_utf8(cell.textValue));
+					}
+					else if (cell.type != ColumnDataType::Integer || cell.intValue != cells[j].Get<int>())
+						throw std::runtime_error("Help category text integer must not change");
+				}
+			}
+			m_currentHelpCategory->Write(filePath.wstring(), records);
+			m_currentHelpCategory->data = std::move(records);
 			return true;
 		}
 		else if (m_currentMonBridge)

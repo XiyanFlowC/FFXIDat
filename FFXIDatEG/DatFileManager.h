@@ -20,6 +20,8 @@ class StatusData;
 class FixedPhrase;
 class MonBridge;
 class RecordsOfEminence;
+class HelpData;
+class HelpCategory;
 class ContentView;
 class Image;
 
@@ -43,7 +45,7 @@ public:
 	
 	// Load all ROM definition files (FLIST.csv first, then ROM.csv, ROM2.csv, ROM3.csv, etc. as fallback)
 	void LoadAllROMDefinitions(const std::filesystem::path& csvDir,
-							  HWND hTreeView, bool cateSub);
+		HWND hTreeView, bool cateSub);
 	
 	// Get file info by tree item
 	const DatFileInfo* GetFileInfo(HTREEITEM itemId) const;
@@ -112,6 +114,8 @@ private:
 	std::unique_ptr<FixedPhrase> m_currentFixedPhrase;
 	std::unique_ptr<MonBridge> m_currentMonBridge;
 	std::unique_ptr<RecordsOfEminence> m_currentRoe;
+	std::unique_ptr<HelpData> m_currentHelpData;
+	std::unique_ptr<HelpCategory> m_currentHelpCategory;
 
 	int GetGlobalFileId(const std::string& romFolder, int localFileId) const;
 	
@@ -140,5 +144,7 @@ private:
 	bool LoadFixedPhraseFile(const std::filesystem::path& filePath, ContentView* contentView, std::string& lang);
 	bool LoadMonBridgeFile(const std::filesystem::path& filePath, ContentView* contentView, slotfile::Version version = slotfile::Version::V30);
 	bool LoadRoeQuestFile(const std::filesystem::path& filePath, ContentView* contentView, slotfile::Version version = slotfile::Version::V30);
+	bool LoadHelpDataFile(const std::filesystem::path& filePath, ContentView* contentView);
+	bool LoadHelpCategoryFile(const std::filesystem::path& filePath, ContentView* contentView);
 	bool LoadRoeCategoryFile(const std::filesystem::path& filePath, ContentView* contentView, slotfile::Version version = slotfile::Version::V30);
 };

@@ -152,6 +152,10 @@
     <ClInclude Include="EventStringBase.h" />
     <ClInclude Include="FixedPhrase.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="HelpData.h" />
+    <ClInclude Include="HelpFormat.h" />
+    <ClInclude Include="HelpCategory.h" />
+    <ClInclude Include="HelpCategoryFormat.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="ItemData.h" />
     <ClInclude Include="ItemDatum.h" />
@@ -187,6 +191,8 @@
     <ClCompile Include="EventString.cpp" />
     <ClCompile Include="EventStringBase.cpp" />
     <ClCompile Include="FixedPhrase.cpp" />
+    <ClCompile Include="HelpData.cpp" />
+    <ClCompile Include="HelpCategory.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="ItemData.cpp" />
     <ClCompile Include="ItemFormatsCsv.cpp" />

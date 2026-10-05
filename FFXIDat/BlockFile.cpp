@@ -73,6 +73,9 @@ void BlockFile::Write()
 
 		size_t endPos = pen.tellp();
 		size_t size = endPos - startPos;
+		// the size field can hold only up to 19bits
+		if (size & ~((0x1ull << 35) - 1))
+			throw std::runtime_error("BlockFile: Block too large to save.");
 		block->blockHeader.size = size / 16;
 		pen.seekp(startPos);
 		pen.write((char *)&block->blockHeader, sizeof(BlockHeader));

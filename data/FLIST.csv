@@ -576,7 +576,8 @@
 55553,erc,ja,roe/roe_category,
 55554,dmsg,ja,sys/jobpoint_text_2,1
 55556,dmsg,ja,sys/emote_command,1
-55557,iub,ja,dbg/ukncmd,
+55557,hlp,ja,sys/menu/guide,
+55558,hlc,ja,sys/menu/guide_category,
 55559,dmsg,ja,sys/kupoevent,
 55561,dmsg,ja,sys/mount,1
 55562,dmsg,ja,sys/mount_help,1
@@ -663,6 +664,8 @@
 55673,erc,en,roe/roe_category,
 55674,dmsg,en,sys/jobpoint_text_2,
 55676,dmsg,en,sys/emote_command,
+55677,hlp,en,sys/menu/guide,
+55678,hlc,en,sys/menu/guide_category,
 55679,dmsg,en,sys/kupoevent,
 55681,dmsg,en,sys/mount,
 55682,dmsg,en,sys/mount_help,

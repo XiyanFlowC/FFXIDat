@@ -108,6 +108,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="eventstringtest.cpp" />
+    <ClCompile Include="helpcategorytest.cpp" />
+    <ClCompile Include="helpdatatest.cpp" />
+    <ClCompile Include="helprelationstest.cpp" />
     <ClCompile Include="xistringtest.cpp" />
     <ClCompile Include="itemdatatest.cpp" />
     <ClCompile Include="pch.cpp">
