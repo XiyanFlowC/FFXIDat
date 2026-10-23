@@ -244,6 +244,25 @@ bool TranslationDatabase::TryGetTranslationFromReference(const std::u8string& so
 	return true;
 }
 
+std::u8string TranslationDatabase::GetTranslationPreferringReference(const std::u8string& sourceText, const std::u8string& referenceText)
+{
+	if (!referenceText.empty())
+	{
+		auto lit = localMapping.find(referenceText);
+		if (lit != localMapping.end())
+			return lit->second;
+
+		auto itr = textMapping.find(referenceText);
+		if (itr != textMapping.end())
+			return itr->second;
+	}
+
+	// The reference is unknown to the database, or there is none at all. Fall
+	// back to the text of the language being processed instead of handing the
+	// reference back, which would write a foreign-language text to the output.
+	return GetTranslation(sourceText);
+}
+
 int TranslationDatabase::LoadTextPair(const std::filesystem::path& textPath, const std::filesystem::path& transPath)
 {
 	namespace fs = std::filesystem;

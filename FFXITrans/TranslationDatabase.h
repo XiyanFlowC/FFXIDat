@@ -19,6 +19,10 @@ public:
 	std::u8string GetTranslation(const std::u8string& text);
 	std::u8string GetTranslationFromReference(const std::u8string& sourceText, const std::u8string& referenceText);
 	bool TryGetTranslationFromReference(const std::u8string& sourceText, const std::u8string& referenceText, std::u8string& translation);
+	// Translate referenceText when the database holds it, otherwise translate
+	// sourceText. Never returns referenceText itself: a reference of another
+	// language that the database does not know must not be written to the output.
+	std::u8string GetTranslationPreferringReference(const std::u8string& sourceText, const std::u8string& referenceText);
 
 	// Local scope -- per-file translation priority (comment-keyed src/tgt pairs)
 	void LoadLocalScope(const std::filesystem::path& srcPath, const std::filesystem::path& tgtPath);

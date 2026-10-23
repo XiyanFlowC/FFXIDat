@@ -96,11 +96,11 @@ bool RoeProcessor::ProcessQuestData(
 		// has no source side to compare with and simply keeps its current
 		// behaviour.
 		//
-		// The same ja table is what the fallback needs as well. The translation
-		// database of an English run is keyed by the ja text, so a field whose
-		// CSV row is missing or stale has to be looked up by the ja text of its
-		// id: looking the English text up is a guaranteed miss, and it reports
-		// placeholder fields that hold nothing but a "." as mismatches too.
+		// The same ja table is what the fallback needs as well. An English run's
+		// translation database may hold ja keys, so a field whose CSV row is
+		// missing or stale is first looked up by the ja text of its id; when the
+		// database does not hold it, the lookup falls back to the English text
+		// of the record instead of writing the ja text into the English DAT.
 		std::map<uint32_t, ProcessorUtils::RoeQuestTextById> jaTextsById;
 
 		std::set<uint32_t> staleIds;
@@ -128,15 +128,14 @@ bool RoeProcessor::ProcessQuestData(
 
 		// Resolve one field of one record through the translation database. The
 		// ja reference of this very id is preferred, because that is the key an
-		// English run's database holds; the English text is only the last resort
-		// for a record without a ja counterpart.
+		// English run's database may hold; the English text is the fallback for
+		// a reference the database does not know, so that a missing entry keeps
+		// the current-language text instead of writing the ja text into it.
 		auto resolveTranslation = [&](const std::u8string& englishText, uint32_t id, int cellIndex)
 		{
-			std::u8string jaText = ProcessorUtils::GetRoeQuestReferenceAt(jaTextsById, id, cellIndex);
-			if (!jaText.empty())
-				return TranslationDatabase::Instance().GetTranslation(jaText);
-
-			return TranslationDatabase::Instance().GetTranslation(xybase::string::escape(englishText));
+			return TranslationDatabase::Instance().GetTranslationPreferringReference(
+				xybase::string::escape(englishText),
+				ProcessorUtils::GetRoeQuestReferenceAt(jaTextsById, id, cellIndex));
 		};
 
 		for (auto& datum : roe.questData)
@@ -291,12 +290,14 @@ bool RoeProcessor::ProcessQuestData(
 
 					if (useJaReferenceById)
 					{
-						// A plain lookup keyed by the ja text of this very id. The
-						// reference variant is not used here: it resolves a text
-						// rather than a record, so it mixes the translations of
-						// records that share one source text.
-						std::u8string jaText = ProcessorUtils::GetRoeQuestReferenceAt(jaTextsById, datum.id, cellIndex);
-						translated = jaText.empty() ? db.GetTranslation(text) : db.GetTranslation(jaText);
+						// A lookup preferring the ja text of this very id, with
+						// the current-language text as the fallback. The reference
+						// variant of GetTranslationFromReference is not used here:
+						// it resolves a text rather than a record, so it mixes the
+						// translations of records that share one source text.
+						translated = db.GetTranslationPreferringReference(
+							text,
+							ProcessorUtils::GetRoeQuestReferenceAt(jaTextsById, datum.id, cellIndex));
 					}
 					else if (useJaReference && textIdx < referenceTexts.size())
 					{
@@ -365,8 +366,9 @@ bool RoeProcessor::ProcessCategoryData(
 		// was exported, so an id whose ja source text changed since then must not
 		// take the translation that sits next to it.
 		//
-		// As in the quest path, the ja table read here is also the key the
-		// fallback needs: an English run's translation database holds ja keys.
+		// As in the quest path, the ja table read here is also the preferred key
+		// of the fallback, with the English text taking over when the database
+		// does not know the ja text.
 		std::map<uint32_t, std::u8string> jaTextsById;
 
 		std::set<uint32_t> staleIds;
@@ -393,14 +395,15 @@ bool RoeProcessor::ProcessCategoryData(
 		}
 
 		// Resolve a category name through the translation database, by the ja
-		// text of its id when there is one.
+		// text of its id when the database knows it.
 		auto resolveTranslation = [&](const std::u8string& englishText, uint32_t id)
 		{
-			auto jaItr = jaTextsById.find(id);
-			if (jaItr != jaTextsById.end() && !jaItr->second.empty())
-				return TranslationDatabase::Instance().GetTranslation(jaItr->second);
+			std::u8string jaText;
+			if (auto jaItr = jaTextsById.find(id); jaItr != jaTextsById.end())
+				jaText = jaItr->second;
 
-			return TranslationDatabase::Instance().GetTranslation(xybase::string::escape(englishText));
+			return TranslationDatabase::Instance().GetTranslationPreferringReference(
+				xybase::string::escape(englishText), jaText);
 		};
 
 		for (auto& datum : roe.categoryData)
@@ -489,9 +492,9 @@ bool RoeProcessor::ProcessCategoryData(
 				auto jaItr = jaTextsById.find(datum.id);
 				if (jaItr != jaTextsById.end())
 				{
-					// A plain lookup keyed by the ja text of this very id, for
-					// the reason the quest path documents.
-					translated = db.GetTranslation(jaItr->second);
+					// Same preference as the quest path: the ja text of this id,
+					// the current-language text when the database does not know it.
+					translated = db.GetTranslationPreferringReference(text, jaItr->second);
 				}
 				else if (useJaReference && textIdx < referenceTexts.size())
 				{

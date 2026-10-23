@@ -598,9 +598,15 @@ namespace ProcessorUtils
 				continue;
 			}
 
-			if (itr->second.questName != src.questName ||
-				itr->second.description != src.description ||
-				itr->second.note != src.note)
+			// The src CSV holds the raw text of the table it was exported from
+			// (the prepare export writes the field as is, a line break stays a
+			// line break), while the collected table side is escape()d. Escaping
+			// the CSV side first is what makes the two comparable: a plain byte
+			// comparison reports every record whose text spans a line as
+			// rewritten, and drops its translation on that account.
+			if (itr->second.questName != xybase::string::escape(src.questName) ||
+				itr->second.description != xybase::string::escape(src.description) ||
+				itr->second.note != xybase::string::escape(src.note))
 				stale.insert(id);
 		}
 
@@ -618,7 +624,9 @@ namespace ProcessorUtils
 		for (const auto& [id, src] : srcRows)
 		{
 			auto itr = current.find(id);
-			if (itr == current.end() || itr->second != src)
+			// Escaped for the reason the quest counterpart documents: the CSV
+			// side is raw text.
+			if (itr == current.end() || itr->second != xybase::string::escape(src))
 				stale.insert(id);
 		}
 
