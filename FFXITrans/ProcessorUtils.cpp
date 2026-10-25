@@ -439,28 +439,18 @@ namespace ProcessorUtils
 		return ItemSpecType::NORMAL;
 	}
 
-	std::map<uint32_t, std::vector<std::u8string>> CollectItemTextsById(const std::filesystem::path& datPath, const std::u8string& type)
+	std::map<uint32_t, ItemTextById> CollectItemTextsById(const std::filesystem::path& datPath, const std::u8string& type)
 	{
-		std::map<uint32_t, std::vector<std::u8string>> result;
+		std::map<uint32_t, ItemTextById> result;
 		ItemData itemData;
 		itemData.Read(datPath, GetItemSpecType(type), VersionForTypeCode(type));
 
 		for (const auto& datum : itemData.data)
 		{
-			auto& texts = result[datum.id()];
-			try
-			{
-				auto name = datum.name();
-				if (!name.empty()) texts.push_back(xybase::string::escape(name));
-			}
-			catch (...) {}
-
-			try
-			{
-				auto desc = datum.description();
-				if (!desc.empty()) texts.push_back(xybase::string::escape(desc));
-			}
-			catch (...) {}
+			ItemTextById texts;
+			try { texts.name = xybase::string::escape(datum.name()); } catch (...) {}
+			try { texts.description = xybase::string::escape(datum.description()); } catch (...) {}
+			result[datum.id()] = std::move(texts);
 		}
 
 		return result;
@@ -627,6 +617,36 @@ namespace ProcessorUtils
 			// Escaped for the reason the quest counterpart documents: the CSV
 			// side is raw text.
 			if (itr == current.end() || itr->second != xybase::string::escape(src))
+				stale.insert(id);
+		}
+
+		return stale;
+	}
+
+	std::set<uint32_t> FindStaleItemIds(
+		const std::filesystem::path& jaDatPath,
+		const std::u8string& jaType,
+		const std::map<uint32_t, ItemTextById>& srcRows)
+	{
+		std::set<uint32_t> stale;
+
+		auto current = CollectItemTextsById(jaDatPath, jaType);
+		for (const auto& [id, src] : srcRows)
+		{
+			auto itr = current.find(id);
+			if (itr == current.end())
+			{
+				// The id is gone from the item table, so the translation exported
+				// under it has no item to belong to any more.
+				stale.insert(id);
+				continue;
+			}
+
+			// Escaped for the reason the Records of Eminence counterpart
+			// documents: the src CSV holds the raw text of the table it was
+			// exported from, while the collected table side is escape()d.
+			if (itr->second.name != xybase::string::escape(src.name) ||
+				itr->second.description != xybase::string::escape(src.description))
 				stale.insert(id);
 		}
 

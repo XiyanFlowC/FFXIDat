@@ -5,12 +5,10 @@
 
 #include "ProcessorUtils.h"
 
-// CSV translation structures
-struct ItemCsvTranslation
-{
-    std::u8string name;
-    std::u8string description;
-};
+// One row of an item CSV: the file holds one name and one description per item
+// id, the shape ProcessorUtils::ItemTextById also gives the item table on disk,
+// so the loader, the id staleness check and the processors share it.
+using ItemCsvTranslation = ProcessorUtils::ItemTextById;
 
 // One row of a Records of Eminence quest CSV: the file holds one column set per
 // schema, so the shape is shared by the loader, the id staleness check and the

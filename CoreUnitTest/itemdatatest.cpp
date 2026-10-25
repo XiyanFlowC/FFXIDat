@@ -631,6 +631,75 @@ TEST_F(ItemDataTest, InstalledRoeRoundTripByteIdentically)
 	}
 }
 
+// One call of the name accessor has to write the whole name of a record: the
+// primary cell and the long name cells of the layout. A translation CSV carries
+// the name once, so a long name that differed from the primary cell before the
+// call must follow too - that is exactly the case a conditional update would
+// silently leave in the source language.
+TEST_F(ItemDataTest, QuestSetNameWritesEveryNameCellOfTheLayout)
+{
+	auto makeQuest = [](std::vector<Cell> cells) {
+		roefmt::QuestDatum quest;
+		quest.id = 7;
+		quest.hasOriginalRow = true;
+		quest.originalRow.GetCells() = std::move(cells);
+		return quest;
+	};
+	auto cellText = [](const roefmt::QuestDatum& quest, size_t index) {
+		const auto& cells = quest.originalRow.GetCellsConst();
+		EXPECT_LT(index, cells.size());
+		return cells[index].Get<std::u8string>();
+	};
+	const std::u8string translated = u8"Translated name";
+
+	// en: 0 name, 1 flag, 2 long name, 3 empty, 4 description, 5 empty. The long
+	// name holds the full form of the name here, so it differs from cell 0.
+	{
+		auto quest = makeQuest({
+			Cell(u8"Short name"), Cell(1), Cell(u8"Full short name"),
+			Cell(u8""), Cell(u8"Description"), Cell(u8"")});
+		ASSERT_TRUE(quest.setQuestName(translated));
+		EXPECT_TRUE(cellText(quest, 0) == translated);
+		EXPECT_TRUE(cellText(quest, 2) == translated);
+		EXPECT_TRUE(cellText(quest, 4) == u8"Description");
+	}
+
+	// fr: 0 name, 1 flag, 2 int, 3 long name, 4 long name, 5 description, 6 empty.
+	{
+		auto quest = makeQuest({
+			Cell(u8"Nom"), Cell(1), Cell(2), Cell(u8"Nom complet"),
+			Cell(u8"Nom complet"), Cell(u8"Description"), Cell(u8"")});
+		ASSERT_TRUE(quest.setQuestName(translated));
+		EXPECT_TRUE(cellText(quest, 0) == translated);
+		EXPECT_TRUE(cellText(quest, 3) == translated);
+		EXPECT_TRUE(cellText(quest, 4) == translated);
+		EXPECT_TRUE(cellText(quest, 5) == u8"Description");
+	}
+
+	// de: 0 name, 1 flag, 2 int, 3 int, 4 long name, 5 int, 6 int, 7 long name,
+	// 8 description, 9 empty.
+	{
+		auto quest = makeQuest({
+			Cell(u8"Name"), Cell(1), Cell(2), Cell(3), Cell(u8"Voller Name"),
+			Cell(4), Cell(5), Cell(u8"Voller Name"), Cell(u8"Beschreibung"), Cell(u8"")});
+		ASSERT_TRUE(quest.setQuestName(translated));
+		EXPECT_TRUE(cellText(quest, 0) == translated);
+		EXPECT_TRUE(cellText(quest, 4) == translated);
+		EXPECT_TRUE(cellText(quest, 7) == translated);
+		EXPECT_TRUE(cellText(quest, 8) == u8"Beschreibung");
+	}
+
+	// ja: 0 name, 1 description, 2 empty. A layout without a long name cell only
+	// has its primary cell written.
+	{
+		auto quest = makeQuest({Cell(u8"Name"), Cell(u8"Description"), Cell(u8"")});
+		ASSERT_TRUE(quest.setQuestName(translated));
+		EXPECT_TRUE(cellText(quest, 0) == translated);
+		EXPECT_TRUE(cellText(quest, 1) == u8"Description");
+		EXPECT_TRUE(cellText(quest, 2) == u8"");
+	}
+}
+
 // The layout header has to agree with the constants measured from the live files.
 TEST_F(ItemDataTest, ItemFormatV30ConstantsMatchMeasurements)
 {

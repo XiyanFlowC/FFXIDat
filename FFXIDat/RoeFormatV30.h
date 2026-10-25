@@ -200,9 +200,18 @@ public:
 		return cells[0].Get<std::u8string>();
 	}
 
-	// Set quest name (Cell 0). The long name cells of the layout (en cell 2, fr
-	// cells 3 and 4, de cells 4 and 7) are updated as well, but only where they
-	// still agree with cell 0.
+	// Set quest name (Cell 0) together with the long name cells of the layout
+	// (en cell 2, fr cells 3 and 4, de cells 4 and 7). One call writes the whole
+	// name of a record, which is what a translation needs: the translation CSV
+	// carries the name once, and every name cell of the record has to follow it.
+	//
+	// The long cells are not always copies of cell 0: on the live tables they hold
+	// the full form of the same name (16 of 8176 fr rows, 14 of 8176 de rows and
+	// 57 of 4088 en rows differ from cell 0, where cell 0 holds an abbreviation),
+	// so writing them here replaces that form with the same translated name. A
+	// caller that has the full form on its own uses setQuestNameLong instead; the
+	// list of those cells comes from the same table as questNameLong, so the
+	// layout is written down once.
 	bool setQuestName(const std::u8string &newName)
 	{
 		if (!hasOriginalRow) return false;
@@ -210,21 +219,12 @@ public:
 		auto &cells = originalRow.GetCells();
 		if (cells.empty()) return false;
 
-		// The long name cells are not plain copies: on the live tables they hold the
-		// full form of the same name (16 of 8176 fr rows, 14 of 8176 de rows and
-		// 57 of 4088 en rows differ from cell 0). Only the cells that agreed with
-		// cell 0 are updated, so a full form is never overwritten by the short one.
-		// The list of those cells comes from the same table as questNameLong, so
-		// the layout is written down once.
-		std::u8string previous;
-		if (cells[0].GetType() == 0) previous = cells[0].Get<std::u8string>();
 		cells[0].Set(newName);
 		const size_t longNames = LongNameCount(cells.size());
 		for (size_t i = 0; i < longNames; ++i)
 		{
 			const size_t index = LongNameCell(cells.size(), i);
-			if (index < cells.size() && cells[index].GetType() == 0 &&
-				cells[index].Get<std::u8string>() == previous)
+			if (index < cells.size() && cells[index].GetType() == 0)
 				cells[index].Set(newName);
 		}
 		return true;

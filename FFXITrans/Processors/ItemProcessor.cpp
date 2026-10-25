@@ -66,8 +66,8 @@ bool ItemProcessor::Process(
 				auto alternateTextsById = ProcessorUtils::CollectItemTextsById(alternateDatPath, fileDef.type);
 				for (const auto& [id, texts] : alternateTextsById)
 				{
-					if (!texts.empty())
-						alternateNamesById[id] = xybase::string::unescape(texts.front());
+					if (!texts.name.empty())
+						alternateNamesById[id] = xybase::string::unescape(texts.name);
 				}
 			}
 		}
@@ -91,9 +91,67 @@ bool ItemProcessor::Process(
 				csvLoader.GetSrcCsvPath(fileDef.comment));
 		}
 
+		// Id staleness detection, the item counterpart of the Records of
+		// Eminence check in RoeProcessor. The CSV is keyed by item id, so a row
+		// stands for the item the id held when the CSV was exported; comparing
+		// the source side of the pair against the current ja item table tells
+		// which ids have been relaid out or rewritten since then, and those rows
+		// must not be applied.
+		//
+		// The same ja table is what the fallback needs as well: an English run's
+		// translation database may hold ja keys, so a field whose CSV row is
+		// missing or stale is first looked up by the ja text of its id, with the
+		// English text as the last resort instead of writing the ja text into the
+		// English DAT.
+		std::map<uint32_t, ProcessorUtils::ItemTextById> jaTextsById;
+
+		std::set<uint32_t> staleIds;
+		if (Config::Instance().IsEnglishMode() && Config::Instance().IsEnAsJa() && csvLoader.HasSrcCsv(fileDef.comment))
+		{
+			auto jpItr = jpDefsByComment.find(fileDef.comment);
+			if (jpItr != jpDefsByComment.end() && jpItr->second.type == fileDef.type)
+			{
+				std::filesystem::path jaDatPath = Config::Instance().GetGameRoot() / (jpItr->second.path + u8".DAT");
+				if (std::filesystem::exists(jaDatPath))
+				{
+					jaTextsById = ProcessorUtils::CollectItemTextsById(jaDatPath, jpItr->second.type);
+
+					auto jaSrcRows = csvLoader.LoadItemCsvTranslations(
+						csvLoader.GetSrcCsvPath(fileDef.comment));
+
+					staleIds = ProcessorUtils::FindStaleItemIds(jaDatPath, jpItr->second.type, jaSrcRows);
+
+					Logger::Instance().Info("ItemProcessor id staleness check on item id. comment=" + Logger::ToUtf8(fileDef.comment)
+						+ ", srcRows=" + std::to_string(jaSrcRows.size())
+						+ ", staleIds=" + std::to_string(staleIds.size()));
+				}
+			}
+		}
+
+		// Resolve one field of one item through the translation database: the ja
+		// reference of this very id is preferred, because that is the key an
+		// English run's database may hold, and the English text is the fallback
+		// when the database does not know it.
+		auto resolveTranslation = [&](const std::u8string& englishText, uint32_t id, int cellIndex)
+		{
+			std::u8string reference;
+			if (auto jaItr = jaTextsById.find(id); jaItr != jaTextsById.end())
+				reference = cellIndex == 1 ? jaItr->second.name : jaItr->second.description;
+
+			return TranslationDatabase::Instance().GetTranslationPreferringReference(
+				xybase::string::escape(englishText), reference);
+		};
+
 		for (auto datum : itemData.data)
 		{
-			bool skipCsv = false;
+			bool skipCsv = staleIds.count(datum.id()) > 0;
+			if (skipCsv)
+			{
+				Logger::Instance().Warning(
+					"ItemProcessor id staleness rejected item id=" + std::to_string(datum.id())
+					+ " - falling back to TransDB");
+			}
+
 			if (srcValidationEnabled && !srcCsvTranslations.empty())
 			{
 				auto itrSrc = srcCsvTranslations.find(datum.id());
@@ -130,7 +188,7 @@ bool ItemProcessor::Process(
 
 				if ((translateAllCells || targetCells.count(1)) && !config.IsNoName())
 					datum.setName(processEscaped(
-						db.GetTranslation(xybase::string::escape(originalName)),
+						resolveTranslation(originalName, datum.id(), 1),
 						xybase::string::escape(originalName),
 						datum.id(),
 						1));
@@ -138,7 +196,7 @@ bool ItemProcessor::Process(
 				if (translateAllCells || targetCells.count(2))
 				{
 					std::u8string translatedDesc = processEscaped(
-						db.GetTranslation(xybase::string::escape(datum.description())),
+						resolveTranslation(datum.description(), datum.id(), 2),
 						xybase::string::escape(datum.description()),
 						datum.id(),
 						2);
@@ -167,7 +225,7 @@ bool ItemProcessor::Process(
 				else if (translateAllCells || targetCells.count(1))
 				{
 					datum.setName(processEscaped(
-						db.GetTranslation(xybase::string::escape(originalName)),
+						resolveTranslation(originalName, datum.id(), 1),
 						xybase::string::escape(originalName),
 						datum.id(),
 						1));
@@ -184,7 +242,7 @@ bool ItemProcessor::Process(
 				else
 				{
 					translatedDesc = processEscaped(
-						db.GetTranslation(xybase::string::escape(datum.description())),
+						resolveTranslation(datum.description(), datum.id(), 2),
 						xybase::string::escape(datum.description()),
 						datum.id(),
 						2);
@@ -201,7 +259,7 @@ bool ItemProcessor::Process(
 	}
 
 	// Check for ID-mapped reference (en_as_ja mode)
-	std::map<uint32_t, std::vector<std::u8string>> jpTextsById;
+	std::map<uint32_t, ProcessorUtils::ItemTextById> jpTextsById;
 	if (Config::Instance().IsEnglishMode() && Config::Instance().IsEnAsJa())
 	{
 		auto jpItr = jpDefsByComment.find(fileDef.comment);
@@ -235,10 +293,10 @@ bool ItemProcessor::Process(
 			auto jpTextItr = jpTextsById.find(datum.id());
 			if (jpTextItr != jpTextsById.end())
 			{
-				if (!jpTextItr->second.empty() && (translateAllCells || targetCells.count(1)) && !config.IsNoName())
+				if (!jpTextItr->second.name.empty() && (translateAllCells || targetCells.count(1)) && !config.IsNoName())
 				{
 					auto translatedName = db.GetTranslationFromReference(
-						xybase::string::escape(originalName), jpTextItr->second[0]);
+						xybase::string::escape(originalName), jpTextItr->second.name);
 					auto unescapedName = processEscaped(
 						translatedName,
 						xybase::string::escape(originalName),
@@ -248,10 +306,10 @@ bool ItemProcessor::Process(
 					datum.setName_sg(unescapedName);
 					datum.setName_pl(unescapedName);
 				}
-				if (jpTextItr->second.size() >= 2 && (translateAllCells || targetCells.count(2)))
+				if (!jpTextItr->second.description.empty() && (translateAllCells || targetCells.count(2)))
 				{
 					auto translatedDesc = db.GetTranslationFromReference(
-						xybase::string::escape(datum.description()), jpTextItr->second.back());
+						xybase::string::escape(datum.description()), jpTextItr->second.description);
 					std::u8string finalDesc = processEscaped(
 						translatedDesc,
 						xybase::string::escape(datum.description()),

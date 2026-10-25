@@ -176,8 +176,6 @@ bool FinalTextProcessor::IsMissingTranslation(const std::u8string& text, const s
 {
 	if (text.empty())
 		return false;
-	if (text == u8".")
-		return false;
 
 	size_t begin = 0;
 	size_t end = text.size();
@@ -195,7 +193,15 @@ bool FinalTextProcessor::IsMissingTranslation(const std::u8string& text, const s
 			break;
 		--end;
 	}
-	return (end - begin) == 1 && text[begin] == u8'.';
+	if ((end - begin) == 1 && text[begin] == u8'.')
+	{
+		// A single dot is the table's placeholder for a field that has no value or no
+		// translation. When the source itself is that placeholder there is no
+		// translation to lose, so it is not reported; otherwise the dot is a missing
+		// translation and the caller keeps the original instead of writing it back.
+		return text != original;
+	}
+	return false;
 }
 
 FinalTextProcessor::FinalTextProcessor(const std::u8string& comment, const std::u8string& type)

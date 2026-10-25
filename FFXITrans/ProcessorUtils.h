@@ -48,9 +48,20 @@ namespace ProcessorUtils
 
     // Collect strings from various file types
     std::vector<std::u8string> CollectStrings(const std::filesystem::path& datPath, const std::u8string& type, const std::u8string& cellIndicesStr);
-    std::map<uint32_t, std::vector<std::u8string>> CollectItemTextsById(const std::filesystem::path& datPath, const std::u8string& type);
     std::map<int, std::vector<std::u8string>> CollectDMsgTextsById(const std::filesystem::path& datPath, const std::u8string& cellIndicesStr);
     std::map<uint32_t, std::u8string> CollectMonBridgeTextsById(const std::filesystem::path& datPath);
+
+    // Item text indexed by item id: the exact pair the id-keyed item CSV holds,
+    // escaped like the other Collect* helpers. The struct is the shared shape of
+    // the loader, the id staleness check and the processors, like
+    // RoeQuestTextById below.
+    struct ItemTextById
+    {
+        std::u8string name;
+        std::u8string description;
+    };
+
+    std::map<uint32_t, ItemTextById> CollectItemTextsById(const std::filesystem::path& datPath, const std::u8string& type);
 
     // Records of Eminence text indexed by entry id, so that an entry of one
     // language can be looked up in another language without relying on the
@@ -93,5 +104,16 @@ namespace ProcessorUtils
         const std::filesystem::path& jaDatPath,
         const std::u8string& jaType,
         const std::map<uint32_t, std::u8string>& srcRows);
+
+    // Id staleness detection of the item translation CSV: the item counterpart
+    // of FindStaleRoeQuestIds above. The CSV is keyed by item id, so a row
+    // stands for the item the id held when the CSV was exported; an id whose ja
+    // source text differs between the src CSV and the ja item table on disk has
+    // been relaid out or rewritten since the export, and the translation next to
+    // it belongs to another item and must not be applied.
+    std::set<uint32_t> FindStaleItemIds(
+        const std::filesystem::path& jaDatPath,
+        const std::u8string& jaType,
+        const std::map<uint32_t, ItemTextById>& srcRows);
 }
 
