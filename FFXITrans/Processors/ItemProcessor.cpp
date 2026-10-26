@@ -187,11 +187,16 @@ bool ItemProcessor::Process(
 					alternateOriginalName = altItr->second;
 
 				if ((translateAllCells || targetCells.count(1)) && !config.IsNoName())
-					datum.setName(processEscaped(
+				{
+					auto res = processEscaped(
 						resolveTranslation(originalName, datum.id(), 1),
 						xybase::string::escape(originalName),
 						datum.id(),
-						1));
+						1);
+					datum.setName(res);
+					datum.setName_pl(res);
+					datum.setName_sg(res);
+				}
 
 				if (translateAllCells || targetCells.count(2))
 				{
@@ -224,11 +229,14 @@ bool ItemProcessor::Process(
 				}
 				else if (translateAllCells || targetCells.count(1))
 				{
-					datum.setName(processEscaped(
+					auto res = processEscaped(
 						resolveTranslation(originalName, datum.id(), 1),
 						xybase::string::escape(originalName),
 						datum.id(),
-						1));
+						1);
+					datum.setName(res);
+					datum.setName_pl(res);
+					datum.setName_sg(res);
 				}
 			}
 

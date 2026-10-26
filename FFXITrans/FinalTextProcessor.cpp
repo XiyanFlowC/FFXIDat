@@ -169,38 +169,17 @@ namespace
 size_t FinalTextProcessor::skippedValidationCount = 0;
 size_t FinalTextProcessor::dotMissingCount = 0;
 
-// 本地化 DAT 表用单个句点 "." 表示“无值 / 无译文”（例如 ROM/307/16 的 cell3）。
-// 取到的译文若只是这种占位符，就必须当作缺失处理，绝不能再写回 DAT。
-// 比较前先做首尾空白 trim，因为表格里可能带空白。
 bool FinalTextProcessor::IsMissingTranslation(const std::u8string& text, const std::u8string& original)
 {
 	if (text.empty())
 		return false;
 
-	size_t begin = 0;
-	size_t end = text.size();
-	while (begin < end)
-	{
-		const unsigned char ch = static_cast<unsigned char>(text[begin]);
-		if (ch != ' ' && ch != '\t' && ch != '\r' && ch != '\n' && ch != '\v' && ch != '\f')
-			break;
-		++begin;
-	}
-	while (end > begin)
-	{
-		const unsigned char ch = static_cast<unsigned char>(text[end - 1]);
-		if (ch != ' ' && ch != '\t' && ch != '\r' && ch != '\n' && ch != '\v' && ch != '\f')
-			break;
-		--end;
-	}
-	if ((end - begin) == 1 && text[begin] == u8'.')
-	{
-		// A single dot is the table's placeholder for a field that has no value or no
-		// translation. When the source itself is that placeholder there is no
-		// translation to lose, so it is not reported; otherwise the dot is a missing
-		// translation and the caller keeps the original instead of writing it back.
-		return text != original;
-	}
+	if (text == original && text == u8".")
+		return false; // 不要把原文是 "." 的情况当作缺失译文。
+
+	if (text == u8".") // 译文是 "."，但原文不是 "."，按缺失译文处理。
+		return true;
+
 	return false;
 }
 
@@ -252,6 +231,7 @@ std::u8string FinalTextProcessor::Process(
 	// 取到的译文只是占位符 "." 时按“缺失译文”处理：回退为原文，不写进 DAT。
 	if (IsMissingTranslation(result, originalText))
 	{
+		Logger::Instance().Warning("A dot is used as translation for none dot source: " + ToString(originalText));
 		++dotMissingCount;
 		return originalText;
 	}
